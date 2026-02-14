@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FCE4EC"/>
+      <stop offset="100%" stop-color="#F8BBD0"/>
+    </radialGradient>
+    <radialGradient id="body" cx="45%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFD5DC"/>
+      <stop offset="100%" stop-color="#F8BBD0"/>
+    </radialGradient>
+    <radialGradient id="cheek" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F48FB1"/>
+      <stop offset="100%" stop-color="#F48FB1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="190" fill="url(#bg)"/>
+
+  <!-- Body -->
+  <ellipse cx="200" cy="250" rx="100" ry="110" fill="url(#body)"/>
+
+  <!-- T-shirt -->
+  <path d="M120 230 Q120 200 150 195 Q175 190 200 188 Q225 190 250 195 Q280 200 280 230 L280 310 Q280 330 260 330 L140 330 Q120 330 120 310 Z" fill="#BDBDBD" opacity="0.6"/>
+  <path d="M120 230 Q120 200 150 195 Q175 190 200 188 Q225 190 250 195 Q280 200 280 230 L280 310 Q280 330 260 330 L140 330 Q120 330 120 310 Z" fill="none" stroke="#9E9E9E" stroke-width="1" opacity="0.3"/>
+
+  <!-- Head -->
+  <circle cx="200" cy="160" r="80" fill="url(#body)"/>
+
+  <!-- Ears -->
+  <ellipse cx="140" cy="100" rx="25" ry="35" fill="#F8BBD0" transform="rotate(-15 140 100)"/>
+  <ellipse cx="140" cy="100" rx="15" ry="22" fill="#F48FB1" transform="rotate(-15 140 100)"/>
+  <ellipse cx="260" cy="100" rx="25" ry="35" fill="#F8BBD0" transform="rotate(15 260 100)"/>
+  <ellipse cx="260" cy="100" rx="15" ry="22" fill="#F48FB1" transform="rotate(15 260 100)"/>
+
+  <!-- Eyes -->
+  <circle cx="175" cy="148" r="10" fill="#1A1A2E"/>
+  <circle cx="225" cy="148" r="10" fill="#1A1A2E"/>
+  <circle cx="178" cy="145" r="3.5" fill="white"/>
+  <circle cx="228" cy="145" r="3.5" fill="white"/>
+
+  <!-- Cheeks -->
+  <circle cx="152" cy="170" r="15" fill="url(#cheek)" opacity="0.5"/>
+  <circle cx="248" cy="170" r="15" fill="url(#cheek)" opacity="0.5"/>
+
+  <!-- Snout -->
+  <ellipse cx="200" cy="178" rx="30" ry="20" fill="#F48FB1"/>
+  <circle cx="190" cy="178" r="5" fill="#E91E63"/>
+  <circle cx="210" cy="178" r="5" fill="#E91E63"/>
+
+  <!-- Mouth -->
+  <path d="M188 192 Q200 200 212 192" stroke="#E91E63" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Coin -->
+  <circle cx="200" cy="290" r="35" fill="#FFD700"/>
+  <circle cx="200" cy="290" r="30" fill="#FFC107"/>
+  <circle cx="200" cy="290" r="27" fill="none" stroke="#FFD700" stroke-width="2"/>
+  <text x="200" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#F57F17">$</text>
+
+  <!-- Arms holding coin -->
+  <path d="M140 260 Q150 280 170 285" stroke="#F8BBD0" stroke-width="16" fill="none" stroke-linecap="round"/>
+  <path d="M260 260 Q250 280 230 285" stroke="#F8BBD0" stroke-width="16" fill="none" stroke-linecap="round"/>
+</svg>
