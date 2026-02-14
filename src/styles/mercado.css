@@ -1,0 +1,65 @@
+/* ============================================
+   PIGGY APP — Mercado Styles
+   ============================================ */
+
+.mercado-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+}
+
+.mercado-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.mercado-card__image {
+    height: 120px;
+    background-color: #FFEBF2; /* Soft pink */
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: var(--color-primary);
+}
+
+.mercado-card__bonus {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: white;
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: var(--font-bold);
+    padding: 2px 6px;
+    border-radius: var(--radius-img);
+    box-shadow: var(--shadow-sm);
+}
+
+.mercado-card__name {
+    font-size: var(--text-md);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--space-xs);
+}
+
+.mercado-card__desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+    line-height: var(--leading-normal);
+}
+
+.mercado-card__footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mercado-card__price {
+    font-size: var(--text-md);
+    font-weight: var(--font-bold);
+    color: var(--color-text);
+}

@@ -1,0 +1,133 @@
+/* ============================================
+   PIGGY APP — Auth Styles
+   ============================================ */
+
+.auth-page {
+    /* Handled by global .page base */
+    background: linear-gradient(135deg, #FFF0F5 0%, #FFFFFF 100%);
+}
+
+.auth-page__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* --- Logo & Mascot --- */
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+    color: var(--color-primary);
+}
+
+.auth-logo__text {
+    font-size: var(--text-xl);
+    font-weight: var(--font-extrabold);
+    letter-spacing: -0.5px;
+}
+
+.auth-mascot {
+    margin-bottom: var(--space-xl);
+    position: relative;
+}
+
+.auth-mascot__circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    /* Subtle gradient behind mascot */
+    background: radial-gradient(circle at 50% 30%, var(--color-surface) 0%, #fce4ec 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    border: 4px solid white;
+}
+
+.auth-mascot__img {
+    width: 140px;
+    height: auto;
+    /* Gentle floating animation */
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* --- Headline --- */
+.auth-headline {
+    text-align: center;
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    color: var(--color-text);
+    margin-bottom: var(--space-xl);
+}
+
+/* --- Tabs --- */
+.auth-tabs {
+    margin-bottom: var(--space-lg);
+    width: 100%;
+}
+
+/* --- Form --- */
+.auth-form {
+    width: 100%;
+    background: white;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-lg);
+    border: 1px solid var(--color-border);
+}
+
+.auth-form__error {
+    background-color: #fee2e2;
+    color: #ef4444;
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    margin-top: var(--space-md);
+    text-align: center;
+    display: none; /* Hidden by default */
+}
+
+.auth-form__error--visible {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.auth-submit {
+    margin-top: var(--space-lg);
+}
+
+/* --- Trust Badges --- */
+.auth-trust {
+    margin-top: var(--space-xl);
+    text-align: center;
+    opacity: 0.8;
+}
+
+.auth-trust__label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+    font-weight: var(--font-bold);
+}
+
+.auth-trust__icons {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    color: var(--color-text-light);
+}

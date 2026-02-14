@@ -1,0 +1,135 @@
+/* ============================================
+   PIGGY APP — Aliados Styles
+   ============================================ */
+
+.aliados-page {
+    /* Uses global page layout */
+}
+
+.aliados-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+}
+
+.aliados-subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-lg);
+    line-height: var(--leading-relaxed);
+}
+
+/* --- Filters --- */
+.aliados-filters {
+    display: flex;
+    overflow-x: auto;
+    gap: var(--space-sm);
+    padding-bottom: var(--space-md);
+    margin-bottom: var(--space-md);
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+}
+
+.aliados-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.aliados-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    white-space: nowrap;
+    padding: var(--space-xs) var(--space-md);
+    background-color: var(--color-surface);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.aliados-filter:hover {
+    background-color: var(--color-background);
+    border-color: var(--color-primary-light);
+}
+
+.aliados-filter--active {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.aliados-filter--active:hover {
+    background-color: var(--color-primary-dark);
+}
+
+/* --- List & Cards --- */
+.aliados-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.ally-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.ally-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.ally-card__logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--color-surface), var(--color-background));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+}
+
+.ally-card__info {
+    flex: 1;
+    margin-left: var(--space-md);
+}
+
+.ally-card__name {
+    font-size: var(--text-md);
+    font-weight: var(--font-bold);
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+}
+
+.ally-card__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.ally-card__location,
+.ally-card__discount {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.ally-card__discount {
+    color: var(--color-success);
+    font-weight: var(--font-medium);
+}
