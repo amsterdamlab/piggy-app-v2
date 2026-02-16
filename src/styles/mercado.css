@@ -1,65 +1,88 @@
 /* ============================================
-   PIGGY APP — Mercado Styles
+   PIGGY APP — Mercado View Styles
    ============================================ */
 
+.mercado-page {
+    background: var(--color-bg);
+}
+
+.mercado-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-extrabold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.mercado-subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-xl);
+    line-height: var(--leading-relaxed);
+}
+
 .mercado-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
 }
 
+/* Marketplace Card */
 .mercado-card {
-    display: flex;
-    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
 }
 
 .mercado-card__image {
-    height: 120px;
-    background-color: #FFEBF2; /* Soft pink */
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-bg) 100%);
+    padding: var(--space-xl) var(--space-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    color: var(--color-primary);
 }
 
 .mercado-card__bonus {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: white;
-    color: var(--color-primary);
-    font-size: 10px;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: var(--gradient-cta);
+    color: var(--color-text-on-primary);
+    font-size: var(--text-xs);
     font-weight: var(--font-bold);
-    padding: 2px 6px;
-    border-radius: var(--radius-img);
-    box-shadow: var(--shadow-sm);
+    padding: 4px var(--space-sm);
+    border-radius: var(--radius-full);
+}
+
+.mercado-card__body {
+    padding: var(--space-md) var(--space-lg) var(--space-lg);
 }
 
 .mercado-card__name {
     font-size: var(--text-md);
     font-weight: var(--font-bold);
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-2xs);
 }
 
 .mercado-card__desc {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
     margin-bottom: var(--space-md);
-    line-height: var(--leading-normal);
 }
 
 .mercado-card__footer {
-    margin-top: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: var(--space-xs);
 }
 
 .mercado-card__price {
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
     font-weight: var(--font-bold);
-    color: var(--color-text);
+    color: var(--color-text-primary);
+}
+
+.mercado-card__stock {
+    text-align: right;
 }
