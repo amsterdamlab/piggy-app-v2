@@ -1,71 +1,77 @@
 /* ============================================
    PIGGY APP — Legal Modal Component
-   Persistent modal for Terms + Habeas Data
+   Persistent modal for Terms & Conditions
    ============================================ */
 
-import { renderIcon } from '../icons.js';
 import { acceptTerms } from '../services/authService.js';
-import { AppState } from '../state.js';
+import { renderIcon } from '../icons.js';
 
 /**
- * Render the legal modal (Terms + Habeas Data).
- * This is a persistent modal — cannot be dismissed without accepting.
+ * Render the legal modal and block interaction until accepted.
  */
 export function renderLegalModal() {
-    // Remove existing modal if any
-    const existing = document.getElementById('legal-modal');
-    if (existing) existing.remove();
+    // Prevent duplicates
+    if (document.getElementById('legal-modal')) return;
 
     const modal = document.createElement('div');
     modal.id = 'legal-modal';
-    modal.className = 'modal-overlay';
+    modal.className = 'modal-overlay animate-fade-in';
     modal.innerHTML = `
-    <div class="modal">
-      <div class="modal__handle"></div>
-      <div class="modal__title">
-        ${renderIcon('shield', '', '24')}
-        Términos Legales
+    <div class="modal animate-scale-in">
+      <div class="modal__header">
+        <h3 class="modal__title">Antes de comenzar 🐷</h3>
       </div>
-      <p class="text-sm text-muted mb-md" style="line-height:var(--leading-relaxed);">
-        Para continuar usando Piggy App, debes aceptar nuestros términos y autorizar el tratamiento de tus datos personales según la Ley 1581 de 2012.
-      </p>
+      <div class="modal__body">
+        <p class="text-secondary mb-md">
+          Para garantizar tu seguridad y cumplir con la normativa vigente, necesitamos que aceptes nuestros términos legales.
+        </p>
 
-      <div class="legal-checkbox-group">
-        <label class="checkbox" for="check-terms">
-          <input type="checkbox" class="checkbox__input" id="check-terms" />
-          <span class="checkbox__label">
-            Acepto los <a href="#" class="text-primary font-semibold">Términos y Condiciones</a> de uso de la plataforma Piggy App.
+        <label class="checkbox-wrapper mb-sm">
+          <input type="checkbox" id="check-terms" />
+          <span class="checkbox-custom"></span>
+          <span class="checkbox-label">
+            Acepto los <a href="#" class="text-highlight">Términos y Condiciones</a> de uso de la plataforma.
           </span>
         </label>
 
-        <label class="checkbox" for="check-habeas">
-          <input type="checkbox" class="checkbox__input" id="check-habeas" />
-          <span class="checkbox__label">
-            Autorizo el <a href="#" class="text-primary font-semibold">Tratamiento de Datos Personales</a> (Habeas Data) según la normativa colombiana vigente.
+        <label class="checkbox-wrapper">
+          <input type="checkbox" id="check-habeas" />
+          <span class="checkbox-custom"></span>
+          <span class="checkbox-label">
+            Autorizo el tratamiento de mis datos personales según la ley de <a href="#" class="text-highlight">Habeas Data</a>.
           </span>
         </label>
       </div>
-
-      <button
-        class="btn btn--primary btn--block mt-lg"
-        id="btn-accept-terms"
-        disabled
-      >
-        Continuar
-      </button>
-
-      <p class="text-xs text-muted text-center mt-md" style="line-height:var(--leading-relaxed);">
-        Al aceptar, confirmas que has leído y comprendido nuestras políticas de privacidad y tratamiento de datos.
-      </p>
+      <div class="modal__footer">
+        <button class="btn btn--primary btn--block" id="btn-accept-legal" disabled>
+          Continuar
+        </button>
+      </div>
     </div>
   `;
 
     document.body.appendChild(modal);
+    attachListeners(modal);
+}
 
-    // Checkbox logic
-    const checkTerms = document.getElementById('check-terms');
-    const checkHabeas = document.getElementById('check-habeas');
-    const btnAccept = document.getElementById('btn-accept-terms');
+/**
+ * Remove the legal modal.
+ */
+export function removeLegalModal() {
+    const modal = document.getElementById('legal-modal');
+    if (modal) {
+        modal.classList.add('animate-fade-out');
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+/**
+ * Attach listeners for checkboxes and button.
+ */
+function attachListeners(modal) {
+    const checkTerms = modal.querySelector('#check-terms');
+    const checkHabeas = modal.querySelector('#check-habeas');
+    const btnAccept = modal.querySelector('#btn-accept-legal');
 
     function updateButtonState() {
         const allChecked = checkTerms.checked && checkHabeas.checked;
@@ -75,29 +81,9 @@ export function renderLegalModal() {
     checkTerms.addEventListener('change', updateButtonState);
     checkHabeas.addEventListener('change', updateButtonState);
 
-    // Accept terms
     btnAccept.addEventListener('click', async () => {
         btnAccept.disabled = true;
-        btnAccept.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
-
-        const { error } = await acceptTerms();
-
-        if (error) {
-            btnAccept.disabled = false;
-            btnAccept.textContent = 'Continuar';
-            alert('Error al aceptar términos: ' + error);
-            return;
-        }
-
-        // Remove modal
-        modal.remove();
+        btnAccept.textContent = 'Procesando...';
+        await acceptTerms();
     });
-}
-
-/**
- * Remove the legal modal.
- */
-export function removeLegalModal() {
-    const modal = document.getElementById('legal-modal');
-    if (modal) modal.remove();
 }
