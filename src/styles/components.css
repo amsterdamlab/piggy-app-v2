@@ -290,12 +290,12 @@
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.6);
+    /* backdrop-filter: blur(4px); Temporarily removed to prevent rendering issues */
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     animation: fadeIn var(--transition-fast) ease-out;
 }
 
@@ -308,6 +308,8 @@
     animation: slideUp var(--transition-base) ease-out;
     max-height: 90vh;
     overflow-y: auto;
+    position: relative;
+    z-index: 10000;
 }
 
 .modal__handle {
