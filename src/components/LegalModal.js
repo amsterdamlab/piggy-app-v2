@@ -86,6 +86,7 @@ const LEGAL_TEXT = `
  * @param {Function} [options.onReject] - Called when user cancels (callback mode only).
  */
 export function renderLegalModal(options = {}) {
+  console.log('🐷 Render Legal Modal triggered');
   pendingOnAccept = options.onAccept || null;
   pendingOnReject = options.onReject || null;
 
@@ -98,6 +99,11 @@ export function renderLegalModal(options = {}) {
   const modal = document.createElement('div');
   modal.id = 'legal-modal';
   modal.className = 'modal-overlay';
+  
+  // Force high z-index and styles inline to ensure visibility
+  modal.style.zIndex = '10000';
+  modal.style.display = 'flex';
+  
   modal.innerHTML = `
     <div class="modal legal-modal">
       <div class="modal__handle"></div>
@@ -148,12 +154,8 @@ export function renderLegalModal(options = {}) {
     </div>
   `;
 
-  const modalRoot = document.getElementById('modal-root');
-  if (modalRoot) {
-    modalRoot.appendChild(modal);
-  } else {
-    document.body.appendChild(modal);
-  }
+  // Always append to body to avoid stacking context issues
+  document.body.appendChild(modal);
 
   // Checkbox logic
   const checkTerms = document.getElementById('check-terms');
