@@ -54,6 +54,49 @@ export async function getPiggyById(piggyId) {
 }
 
 /**
+ * Adopt a new piggy.
+ */
+export async function adoptPiggy(piggyName) {
+    if (isUsingMockData()) {
+        const newPiggy = {
+            id: `mock-${Date.now()}`,
+            user_id: 'mock-user',
+            name: piggyName,
+            status: 'engorde',
+            purchase_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            investment_amount: 250000,
+            extra_roi_bonus: 0,
+            current_weight: 15.0,
+        };
+        MOCK_PIGGIES.unshift(newPiggy);
+        return enrichPiggyData(newPiggy);
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('User not logged in');
+
+    const { data, error } = await client
+        .from('piggies')
+        .insert({
+            user_id: user.id,
+            name: piggyName,
+            investment_amount: 250000,
+            status: 'engorde',
+            current_weight: 15.0,
+            // purchase_date and end_date calculate automatically in DB default or trigger, 
+            // but let's rely on default for purchase_date. 
+            // end_date default is 4mo3wk from now in schema.
+        })
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return enrichPiggyData(data);
+}
+
+/**
  * Enrich a piggy record with computed fields for display.
  */
 function enrichPiggyData(piggy) {

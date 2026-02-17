@@ -6,6 +6,7 @@
 import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
 import { renderBottomNav } from './GranjaView.js';
+import { adoptPiggy } from '../services/piggiesService.js';
 
 /**
  * Render the Adopcion view.
@@ -97,16 +98,27 @@ function attachAdopcionListeners() {
     });
 
     // Adopt confirm
-    document.getElementById('btn-adopt-confirm')?.addEventListener('click', () => {
+    document.getElementById('btn-adopt-confirm')?.addEventListener('click', async () => {
         const name = input?.value?.trim();
         if (!name) {
             alert('¡Por favor ponle un nombre a tu cerdito!');
             return;
         }
 
-        // Mock purchase flow for now
-        alert(`¡Felicidades! Has adoptado a ${name}. Procesando pago...`);
-        // In real app -> Trigger payment or service call here
-        navigateTo('granja');
+        const btn = document.getElementById('btn-adopt-confirm');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span> Procesando...';
+
+        try {
+            await adoptPiggy(name);
+            alert(`¡Felicidades! Has adoptado a ${name}.`);
+            navigateTo('granja');
+        } catch (error) {
+            console.error(error);
+            alert('Error al adoptar: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     });
 }
