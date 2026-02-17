@@ -105,7 +105,7 @@ function renderMarketplaceCard(item) {
     return `
     <div class="mercado-card card animate-scale-in">
       <div class="mercado-card__image">
-        ${renderIcon('pigFace', '', '48')}
+        <span style="font-size: 48px;">🐷</span>
         ${item.hasBonus ? `
           <span class="mercado-card__bonus">${item.bonusText} ROI</span>
         ` : ''}

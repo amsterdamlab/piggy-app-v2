@@ -46,7 +46,7 @@ function buildGranjaShell(firstName) {
               </div>
             </div>
             <div class="stat-card__icon">
-              ${renderIcon('pigFace', '', '28')}
+              <span style="font-size: 28px;">🐷</span>
             </div>
           </div>
           <div class="grid-2">
@@ -129,7 +129,7 @@ function buildGranjaFull(firstName, piggies, stats) {
               <div class="stat-card__value">${stats.activeCount}</div>
             </div>
             <div class="stat-card__icon">
-              ${renderIcon('pigFace', '', '28')}
+              <span style="font-size: 28px;">🐷</span>
             </div>
           </div>
           <div class="grid-2">
@@ -236,7 +236,7 @@ function renderEmptyPiggies() {
     return `
     <div class="empty-state">
       <div class="empty-state__icon">
-        ${renderIcon('pigFace', '', '32')}
+        <span style="font-size: 32px;">🐷</span>
       </div>
       <div class="empty-state__title">No tienes cerdos aún</div>
       <div class="empty-state__description">
@@ -271,7 +271,7 @@ function renderPiggyCard(piggy, baseROI) {
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
-          ${renderIcon('pigFace', '', '36')}
+          <span style="font-size: 36px;">🐷</span>
         </div>
         <div class="piggy-card__info">
           <div class="piggy-card__name">${piggy.name}</div>

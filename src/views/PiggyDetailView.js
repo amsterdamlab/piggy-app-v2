@@ -68,7 +68,7 @@ async function loadPiggyDetail(piggyId) {
           <!-- Piggy hero -->
           <div class="piggy-detail__hero animate-scale-in">
             <div class="piggy-detail__avatar">
-              ${renderIcon('pigFace', '', '80')}
+              <span style="font-size: 80px; line-height: 1;">🐷</span>
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
             <span class="badge ${piggy.isComplete ? 'badge--success' : 'badge--primary'}">

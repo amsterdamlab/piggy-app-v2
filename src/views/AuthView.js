@@ -27,7 +27,7 @@ export function renderAuthView() {
 
         <!-- Logo -->
         <div class="auth-logo animate-fade-in">
-          ${renderIcon('pigFace', '', '28')}
+          <span style="font-size: 28px;">🐷</span>
           <span class="auth-logo__text">Piggy</span>
         </div>
 
@@ -41,7 +41,7 @@ export function renderAuthView() {
               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
             />
             <div class="auth-mascot__fallback" style="display:none;">
-              ${renderIcon('pigFace', '', '120')}
+              <span style="font-size: 100px; line-height: 1;">🐷</span>
             </div>
           </div>
         </div>
