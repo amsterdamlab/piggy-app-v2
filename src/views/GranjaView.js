@@ -7,7 +7,7 @@ import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
-import { signOut } from '../services/authService.js';
+// signOut removed as it is now in TopNav
 
 /**
  * Render the Granja (Dashboard) view.
