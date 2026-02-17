@@ -13,25 +13,25 @@ import { signOut } from '../services/authService.js';
  * Render the Granja (Dashboard) view.
  */
 export function renderGranjaView() {
-    const app = document.getElementById('app');
-    const profile = AppState.get('profile');
-    const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const app = document.getElementById('app');
+  const profile = AppState.get('profile');
+  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
-    // Show loading first, then fetch data
-    app.innerHTML = buildGranjaShell(firstName);
+  // Show loading first, then fetch data
+  app.innerHTML = buildGranjaShell(firstName);
 
-    loadGranjaData(firstName);
+  loadGranjaData(firstName);
 
-    return () => {
-        // cleanup if needed
-    };
+  return () => {
+    // cleanup if needed
+  };
 }
 
 /**
  * Build the shell (before data is loaded).
  */
 function buildGranjaShell(firstName) {
-    return `
+  return `
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
@@ -88,35 +88,35 @@ function buildGranjaShell(firstName) {
  * Load data and update the dashboard.
  */
 async function loadGranjaData(firstName) {
-    try {
-        const piggies = await getUserPiggies();
-        const stats = await getDashboardStats(piggies);
+  try {
+    const piggies = await getUserPiggies();
+    const stats = await getDashboardStats(piggies);
 
-        AppState.set({ piggies });
+    AppState.set({ piggies });
 
-        // Update stats
-        const app = document.getElementById('app');
-        app.innerHTML = buildGranjaFull(firstName, piggies, stats);
+    // Update stats
+    const app = document.getElementById('app');
+    app.innerHTML = buildGranjaFull(firstName, piggies, stats);
 
-        attachGranjaListeners();
-    } catch (error) {
-        console.error('Error loading granja data:', error);
-        const section = document.getElementById('piggies-section');
-        if (section) {
-            section.innerHTML = `
+    attachGranjaListeners();
+  } catch (error) {
+    console.error('Error loading granja data:', error);
+    const section = document.getElementById('piggies-section');
+    if (section) {
+      section.innerHTML = `
         <div class="auth-form__error auth-form__error--visible">
           Error al cargar datos. Intenta de nuevo.
         </div>
       `;
-        }
     }
+  }
 }
 
 /**
  * Build the full dashboard with data.
  */
 function buildGranjaFull(firstName, piggies, stats) {
-    return `
+  return `
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
@@ -215,8 +215,8 @@ function buildGranjaFull(firstName, piggies, stats) {
  * Render user greeting with avatar.
  */
 function renderGreeting(firstName) {
-    const initial = firstName.charAt(0).toUpperCase();
-    return `
+  const initial = firstName.charAt(0).toUpperCase();
+  return `
     <div class="granja-greeting animate-fade-in">
       <div class="granja-greeting__avatar">
         <span class="granja-greeting__initial">${initial}</span>
@@ -226,9 +226,6 @@ function renderGreeting(firstName) {
         <span class="granja-greeting__welcome">¡Bienvenido!</span>
         <span class="granja-greeting__name">Hola, ${firstName}</span>
       </div>
-      <button class="btn btn--ghost btn--sm" id="btn-logout" style="margin-left: auto; color: var(--color-danger);">
-        ${renderIcon('logout', '', '20')}
-      </button>
     </div>
   `;
 }
@@ -237,7 +234,7 @@ function renderGreeting(firstName) {
  * Render empty piggies state matching screen2.png.
  */
 function renderEmptyPiggies() {
-    return `
+  return `
     <div class="empty-state">
       <div class="empty-state__icon">
         <span style="font-size: 32px;">🐷</span>
@@ -257,7 +254,7 @@ function renderEmptyPiggies() {
  * Render piggies list.
  */
 function renderPiggiesList(piggies, baseROI) {
-    return `
+  return `
     <div class="piggies-list">
       ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
     </div>
@@ -268,10 +265,10 @@ function renderPiggiesList(piggies, baseROI) {
  * Render a single piggy card.
  */
 function renderPiggyCard(piggy, baseROI) {
-    const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
-    const projectedReturn = piggy.investment_amount * (1 + totalROI);
+  const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
+  const projectedReturn = piggy.investment_amount * (1 + totalROI);
 
-    return `
+  return `
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
@@ -281,9 +278,9 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-            ? '<span class="badge badge--success">Listo para liquidar</span>'
-            : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
-        }
+      ? '<span class="badge badge--success">Listo para liquidar</span>'
+      : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
+    }
           </div>
         </div>
         ${piggy.extra_roi_bonus > 0 ? `
@@ -319,7 +316,7 @@ function renderPiggyCard(piggy, baseROI) {
  * Render bottom navigation.
  */
 export function renderBottomNav(activeTab) {
-    return `
+  return `
     <nav class="bottom-nav" aria-label="Navegación principal">
       <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
@@ -341,24 +338,16 @@ export function renderBottomNav(activeTab) {
  * Attach event listeners.
  */
 function attachGranjaListeners() {
-    // Piggy card click → navigate to detail
-    document.querySelectorAll('.piggy-card').forEach((card) => {
-        card.addEventListener('click', () => {
-            const piggyId = card.dataset.piggyId;
-            navigateTo(`piggy/${piggyId}`);
-        });
+  // Piggy card click → navigate to detail
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
     });
+  });
 
-    // Offer banner click → marketplace
-    document.getElementById('offer-banner')?.addEventListener('click', () => {
-        navigateTo('mercado');
-    });
-
-    // Logout
-    document.getElementById('btn-logout')?.addEventListener('click', async () => {
-        if (confirm('¿Cerrar sesión?')) {
-            await signOut();
-            navigateTo('auth');
-        }
-    });
+  // Offer banner click → marketplace
+  document.getElementById('offer-banner')?.addEventListener('click', () => {
+    navigateTo('mercado');
+  });
 }

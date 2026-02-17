@@ -12,6 +12,7 @@ import './styles/mercado.css';
 import './styles/aliados.css';
 import './styles/piggy-detail.css';
 import './styles/adopcion.css';
+import './styles/header.css';
 
 // Core
 import { AppState } from './state.js';
@@ -28,53 +29,62 @@ import { renderPiggyDetailView } from './views/PiggyDetailView.js';
 import { renderAdopcionView } from './views/AdopcionView.js';
 
 // Components
+import { renderTopNav, removeTopNav } from './components/TopNav.js';
 import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
 
 /**
  * Boot the application.
  */
 async function boot() {
-    console.log('🐷 Piggy App — Booting...');
+  console.log('🐷 Piggy App — Booting...');
 
-    // Show loading screen
-    showLoadingScreen();
+  // Show loading screen
+  showLoadingScreen();
 
-    // Initialize Supabase
-    await initSupabase();
+  // Initialize Supabase
+  await initSupabase();
 
-    // Register routes
-    registerRoute('auth', renderAuthView);
-    registerRoute('granja', renderGranjaView);
-    registerRoute('mercado', renderMercadoView);
-    registerRoute('aliados', renderAliadosView);
-    registerRoute('piggy', renderPiggyDetailView);
-    registerRoute('adopcion', renderAdopcionView);
+  // Register routes
+  registerRoute('auth', renderAuthView);
+  registerRoute('granja', renderGranjaView);
+  registerRoute('mercado', renderMercadoView);
+  registerRoute('aliados', renderAliadosView);
+  registerRoute('piggy', renderPiggyDetailView);
+  registerRoute('adopcion', renderAdopcionView);
 
-    // Subscribe to state changes for legal modal
-    AppState.subscribe((state, previous) => {
-        if (state.showLegalModal && !previous.showLegalModal) {
-            renderLegalModal();
-        }
-        if (!state.showLegalModal && previous.showLegalModal) {
-            removeLegalModal();
-        }
-    });
+  // Subscribe to state changes
+  AppState.subscribe((state, previous) => {
+    // TopNav visibility
+    if (state.isAuthenticated && !previous.isAuthenticated) {
+      renderTopNav();
+    } else if (!state.isAuthenticated && previous.isAuthenticated) {
+      removeTopNav();
+    }
 
-    // Check existing session
-    await checkSession();
+    // Legal modal
+    if (state.showLegalModal && !previous.showLegalModal) {
+      renderLegalModal();
+    }
+    if (!state.showLegalModal && previous.showLegalModal) {
+      removeLegalModal();
+    }
+  });
 
-    // Start router
-    initRouter();
+  // Check existing session
+  await checkSession();
 
-    console.log('🐷 Piggy App — Ready!');
+  // Start router
+  initRouter();
+
+  console.log('🐷 Piggy App — Ready!');
 }
 
 /**
  * Show a loading screen while the app boots.
  */
 function showLoadingScreen() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
+  const app = document.getElementById('app');
+  app.innerHTML = `
     <div style="
       display: flex;
       flex-direction: column;
@@ -99,10 +109,10 @@ function showLoadingScreen() {
 
 // Start the app
 boot().catch((error) => {
-    console.error('🐷 Critical boot error:', error);
-    const app = document.getElementById('app');
-    if (app) {
-        app.innerHTML = `
+  console.error('🐷 Critical boot error:', error);
+  const app = document.getElementById('app');
+  if (app) {
+    app.innerHTML = `
       <div style="
         display: flex;
         flex-direction: column;
@@ -123,5 +133,5 @@ boot().catch((error) => {
         </button>
       </div>
     `;
-    }
+  }
 });

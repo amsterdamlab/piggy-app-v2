@@ -86,19 +86,19 @@ const LEGAL_TEXT = `
  * @param {Function} [options.onReject] - Called when user cancels (callback mode only).
  */
 export function renderLegalModal(options = {}) {
-    pendingOnAccept = options.onAccept || null;
-    pendingOnReject = options.onReject || null;
+  pendingOnAccept = options.onAccept || null;
+  pendingOnReject = options.onReject || null;
 
-    // Remove existing modal if any
-    const existing = document.getElementById('legal-modal');
-    if (existing) existing.remove();
+  // Remove existing modal if any
+  const existing = document.getElementById('legal-modal');
+  if (existing) existing.remove();
 
-    const isCallbackMode = !!pendingOnAccept;
+  const isCallbackMode = !!pendingOnAccept;
 
-    const modal = document.createElement('div');
-    modal.id = 'legal-modal';
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
+  const modal = document.createElement('div');
+  modal.id = 'legal-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
     <div class="modal legal-modal">
       <div class="modal__handle"></div>
 
@@ -148,65 +148,70 @@ export function renderLegalModal(options = {}) {
     </div>
   `;
 
+  const modalRoot = document.getElementById('modal-root');
+  if (modalRoot) {
+    modalRoot.appendChild(modal);
+  } else {
     document.body.appendChild(modal);
+  }
 
-    // Checkbox logic
-    const checkTerms = document.getElementById('check-terms');
-    const checkHabeas = document.getElementById('check-habeas');
-    const btnAccept = document.getElementById('btn-accept-terms');
+  // Checkbox logic
+  const checkTerms = document.getElementById('check-terms');
+  const checkHabeas = document.getElementById('check-habeas');
+  const btnAccept = document.getElementById('btn-accept-terms');
 
-    function updateButtonState() {
-        const allChecked = checkTerms.checked && checkHabeas.checked;
-        btnAccept.disabled = !allChecked;
+  function updateButtonState() {
+    const allChecked = checkTerms.checked && checkHabeas.checked;
+    btnAccept.disabled = !allChecked;
+  }
+
+  checkTerms.addEventListener('change', updateButtonState);
+  checkHabeas.addEventListener('change', updateButtonState);
+
+  // Accept terms
+  btnAccept.addEventListener('click', async () => {
+    btnAccept.disabled = true;
+    btnAccept.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
+
+    if (pendingOnAccept) {
+      // Callback mode: let the caller handle what happens next
+      await pendingOnAccept();
+      modal.remove();
+      pendingOnAccept = null;
+      pendingOnReject = null;
+    } else {
+      // State mode: update profile in Supabase
+      const { error } = await acceptTerms();
+      if (error) {
+        btnAccept.disabled = false;
+        btnAccept.textContent = 'Aceptar y Continuar';
+        alert('Error al aceptar términos: ' + error);
+        return;
+      }
+      modal.remove();
     }
+  });
 
-    checkTerms.addEventListener('change', updateButtonState);
-    checkHabeas.addEventListener('change', updateButtonState);
-
-    // Accept terms
-    btnAccept.addEventListener('click', async () => {
-        btnAccept.disabled = true;
-        btnAccept.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
-
-        if (pendingOnAccept) {
-            // Callback mode: let the caller handle what happens next
-            await pendingOnAccept();
-            modal.remove();
-            pendingOnAccept = null;
-            pendingOnReject = null;
-        } else {
-            // State mode: update profile in Supabase
-            const { error } = await acceptTerms();
-            if (error) {
-                btnAccept.disabled = false;
-                btnAccept.textContent = 'Aceptar y Continuar';
-                alert('Error al aceptar términos: ' + error);
-                return;
-            }
-            modal.remove();
-        }
+  // Reject/Cancel (callback mode only)
+  const btnReject = document.getElementById('btn-reject-terms');
+  if (btnReject) {
+    btnReject.addEventListener('click', () => {
+      modal.remove();
+      if (pendingOnReject) {
+        pendingOnReject();
+        pendingOnReject = null;
+        pendingOnAccept = null;
+      }
     });
-
-    // Reject/Cancel (callback mode only)
-    const btnReject = document.getElementById('btn-reject-terms');
-    if (btnReject) {
-        btnReject.addEventListener('click', () => {
-            modal.remove();
-            if (pendingOnReject) {
-                pendingOnReject();
-                pendingOnReject = null;
-                pendingOnAccept = null;
-            }
-        });
-    }
+  }
 }
 
 /**
  * Remove the legal modal.
  */
 export function removeLegalModal() {
-    const modal = document.getElementById('legal-modal');
-    if (modal) modal.remove();
-    pendingOnAccept = null;
-    pendingOnReject = null;
+  const modal = document.getElementById('legal-modal');
+  if (modal) modal.remove();
+  pendingOnAccept = null;
+  pendingOnReject = null;
 }

@@ -69,13 +69,21 @@ ol {
 }
 
 /* ---- App Shell ---- */
-#app {
+#ui-shell {
     max-width: var(--app-max-width);
     margin: 0 auto;
     min-height: 100dvh;
     position: relative;
     background-color: var(--color-white);
     box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+#app {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ---- Page Container ---- */
