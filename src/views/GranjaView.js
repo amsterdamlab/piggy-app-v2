@@ -7,6 +7,7 @@ import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
+import { signOut } from '../services/authService.js';
 
 /**
  * Render the Granja (Dashboard) view.
@@ -225,6 +226,9 @@ function renderGreeting(firstName) {
         <span class="granja-greeting__welcome">¡Bienvenido!</span>
         <span class="granja-greeting__name">Hola, ${firstName}</span>
       </div>
+      <button class="btn btn--ghost btn--sm" id="btn-logout" style="margin-left: auto; color: var(--color-danger);">
+        ${renderIcon('logout', '', '20')}
+      </button>
     </div>
   `;
 }
@@ -242,8 +246,8 @@ function renderEmptyPiggies() {
       <div class="empty-state__description">
         Comienza tu granja adoptando tu primer cerdo y empieza a generar ganancias.
       </div>
-      <button class="btn btn--primary" id="btn-adopt-empty" onclick="location.hash='#/mercado'">
-        Adopta un Nuevo Cerdo
+      <button class="btn btn--primary" id="btn-adopt-empty" onclick="location.hash='#/adopcion'">
+        Compra un nuevo Piggy
       </button>
     </div>
   `;
@@ -348,5 +352,13 @@ function attachGranjaListeners() {
     // Offer banner click → marketplace
     document.getElementById('offer-banner')?.addEventListener('click', () => {
         navigateTo('mercado');
+    });
+
+    // Logout
+    document.getElementById('btn-logout')?.addEventListener('click', async () => {
+        if (confirm('¿Cerrar sesión?')) {
+            await signOut();
+            navigateTo('auth');
+        }
     });
 }

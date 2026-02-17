@@ -11,6 +11,7 @@ import './styles/granja.css';
 import './styles/mercado.css';
 import './styles/aliados.css';
 import './styles/piggy-detail.css';
+import './styles/adopcion.css';
 
 // Core
 import { AppState } from './state.js';
@@ -24,6 +25,7 @@ import { renderGranjaView } from './views/GranjaView.js';
 import { renderMercadoView } from './views/MercadoView.js';
 import { renderAliadosView } from './views/AliadosView.js';
 import { renderPiggyDetailView } from './views/PiggyDetailView.js';
+import { renderAdopcionView } from './views/AdopcionView.js';
 
 // Components
 import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
@@ -46,6 +48,7 @@ async function boot() {
     registerRoute('mercado', renderMercadoView);
     registerRoute('aliados', renderAliadosView);
     registerRoute('piggy', renderPiggyDetailView);
+    registerRoute('adopcion', renderAdopcionView);
 
     // Subscribe to state changes for legal modal
     AppState.subscribe((state, previous) => {
