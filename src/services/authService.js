@@ -13,6 +13,7 @@ let mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted
 
 /**
  * Sign up with email and password.
+ * Terms are already accepted before calling this function.
  */
 export async function signUp({ email, password, fullName, whatsapp }) {
     if (isUsingMockData()) {
@@ -22,14 +23,13 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             full_name: fullName,
             whatsapp,
             email,
-            terms_accepted: false,
-            habeas_data_accepted: false,
+            terms_accepted: true,
+            habeas_data_accepted: true,
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email },
             profile: { ...mockProfile },
             isAuthenticated: true,
-            showLegalModal: true,
         });
         return { user: MOCK_USER, error: null };
     }
@@ -39,14 +39,27 @@ export async function signUp({ email, password, fullName, whatsapp }) {
 
     if (error) return { user: null, error: error.message };
 
-    // Create profile
+    // Create profile with terms already accepted
     if (data.user) {
-        await client.from('profiles').insert({
+        const profile = {
             id: data.user.id,
             full_name: fullName,
             whatsapp,
-            terms_accepted: false,
-            habeas_data_accepted: false,
+            terms_accepted: true,
+            habeas_data_accepted: true,
+        };
+
+        const { error: profileError } = await client.from('profiles').insert(profile);
+
+        if (profileError) {
+            console.warn('\uD83D\uDC37 Profile insert error:', profileError.message);
+        }
+
+        // Update AppState immediately
+        AppState.set({
+            currentUser: data.user,
+            profile: { ...profile },
+            isAuthenticated: true,
         });
     }
 
@@ -72,6 +85,17 @@ export async function signIn({ email, password }) {
     const { data, error } = await client.auth.signInWithPassword({ email, password });
 
     if (error) return { user: null, error: error.message };
+
+    // Fetch profile and update state
+    if (data.user) {
+        const profile = await getProfile();
+        AppState.set({
+            currentUser: data.user,
+            profile,
+            isAuthenticated: true,
+            showLegalModal: profile && !profile.terms_accepted,
+        });
+    }
 
     return { user: data.user, error: null };
 }
@@ -112,7 +136,7 @@ export async function getProfile() {
 }
 
 /**
- * Accept terms and habeas data.
+ * Accept terms and habeas data (for existing users who haven't accepted).
  */
 export async function acceptTerms() {
     if (isUsingMockData()) {

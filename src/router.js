@@ -54,7 +54,7 @@ function authGuard(route) {
     // Auth page is always accessible
     if (route === 'auth') {
         // If already authenticated, redirect to granja
-        if (state.isAuthenticated && state.profile?.terms_accepted) {
+        if (state.isAuthenticated) {
             navigateTo('granja');
             return false;
         }
@@ -67,7 +67,7 @@ function authGuard(route) {
         return false;
     }
 
-    // Check if terms are accepted
+    // For existing users who haven't accepted terms (edge case)
     if (state.profile && !state.profile.terms_accepted) {
         AppState.set({ showLegalModal: true });
     }

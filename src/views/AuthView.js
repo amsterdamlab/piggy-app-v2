@@ -5,6 +5,7 @@
 
 import { renderIcon } from '../icons.js';
 import { signUp, signIn } from '../services/authService.js';
+import { renderLegalModal } from '../components/LegalModal.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 
@@ -286,39 +287,92 @@ async function handleSubmit(e) {
         return;
     }
 
+    if (activeAuthTab === 'register') {
+        const fullName = formData.get('fullName')?.trim();
+        const whatsapp = formData.get('whatsapp')?.trim();
+
+        if (!fullName) {
+            showFormError('Por favor ingresa tu nombre completo.');
+            return;
+        }
+
+        // Show terms modal BEFORE creating account
+        renderLegalModal({
+            onAccept: async () => {
+                await performSignUp({ email, password, fullName, whatsapp });
+            },
+            onReject: () => {
+                // User cancelled — do nothing, stay on auth
+                console.log('\uD83D\uDC37 User declined terms, signup cancelled.');
+            },
+        });
+    } else {
+        // Login flow — direct
+        await performSignIn({ email, password });
+    }
+}
+
+/**
+ * Execute the signup after terms are accepted.
+ */
+async function performSignUp({ email, password, fullName, whatsapp }) {
     isSubmitting = true;
     updateSubmitButton();
 
     try {
-        let result;
-
-        if (activeAuthTab === 'register') {
-            const fullName = formData.get('fullName')?.trim();
-            const whatsapp = formData.get('whatsapp')?.trim();
-
-            if (!fullName) {
-                showFormError('Por favor ingresa tu nombre completo.');
-                isSubmitting = false;
-                updateSubmitButton();
-                return;
-            }
-
-            result = await signUp({ email, password, fullName, whatsapp });
-        } else {
-            result = await signIn({ email, password });
-        }
+        const result = await signUp({ email, password, fullName, whatsapp });
 
         if (result.error) {
-            showFormError(result.error);
+            showFormError(translateSupabaseError(result.error));
         } else {
             navigateTo('granja');
         }
     } catch (error) {
+        console.error('\uD83D\uDC37 SignUp error:', error);
         showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
     } finally {
         isSubmitting = false;
         updateSubmitButton();
     }
+}
+
+/**
+ * Execute the sign in.
+ */
+async function performSignIn({ email, password }) {
+    isSubmitting = true;
+    updateSubmitButton();
+
+    try {
+        const result = await signIn({ email, password });
+
+        if (result.error) {
+            showFormError(translateSupabaseError(result.error));
+        } else {
+            navigateTo('granja');
+        }
+    } catch (error) {
+        console.error('\uD83D\uDC37 SignIn error:', error);
+        showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
+    } finally {
+        isSubmitting = false;
+        updateSubmitButton();
+    }
+}
+
+/**
+ * Translate common Supabase error messages to Spanish.
+ */
+function translateSupabaseError(errorMessage) {
+    const translations = {
+        'Invalid login credentials': 'Correo o contraseña incorrectos.',
+        'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
+        'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+        'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
+        'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
+    };
+
+    return translations[errorMessage] || errorMessage;
 }
 
 /**
