@@ -3,11 +3,8 @@
 -- Run this in Supabase SQL Editor to enable real purchases with stock management
 -- =============================================
 
--- This function handles the purchase atomically:
--- 1. Checks stock
--- 2. Decrements stock
--- 3. Creates the piggy
--- 4. Bypasses RLS for the stock update (SECURITY DEFINER)
+-- Drop existing function first to avoid signature conflicts
+DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
 
 CREATE OR REPLACE FUNCTION buy_piggy(
   p_item_id bigint,
@@ -19,7 +16,7 @@ CREATE OR REPLACE FUNCTION buy_piggy(
 )
 RETURNS json
 LANGUAGE plpgsql
-SECURITY DEFINER -- Runs with elevated permissions to update stock
+SECURITY DEFINER
 AS $$
 DECLARE
   v_new_piggy_id uuid;
@@ -44,7 +41,7 @@ BEGIN
   SET stock = stock - 1
   WHERE id = p_item_id;
 
-  -- 3. Create User's Piggy
+  -- 3. Create User's Piggy (purchase_date uses DB default)
   INSERT INTO piggies (
     user_id, 
     name, 
@@ -52,8 +49,7 @@ BEGIN
     status, 
     extra_roi_bonus, 
     category, 
-    current_weight,
-    purchase_date -- Let DB handle default now()
+    current_weight
   )
   VALUES (
     p_user_id, 
@@ -71,6 +67,6 @@ BEGIN
 END;
 $$;
 
--- IMPORTANT: Grant permission to authenticated users
+-- Grant permission to authenticated users
 GRANT EXECUTE ON FUNCTION buy_piggy TO authenticated;
 GRANT EXECUTE ON FUNCTION buy_piggy TO service_role;
