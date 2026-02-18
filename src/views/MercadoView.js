@@ -1,6 +1,6 @@
 /* ============================================
    PIGGY APP — Mercado (Marketplace) View
-   Horizontal product cards with filters
+   Refined horizontal cards with category select filter
    ============================================ */
 
 import { renderIcon } from '../icons.js';
@@ -8,8 +8,9 @@ import { renderBottomNav } from './GranjaView.js';
 import { navigateTo } from '../router.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 
-/** In-memory state for current filter */
-let currentFilter = 'all';
+/** In-memory state for current filters */
+let currentFilterType = 'all'; // 'all' or 'stage'
+let currentCategory = 'all'; // 'all', 'standard', 'premium', 'silver', 'gold'
 let cachedItems = [];
 
 /**
@@ -25,18 +26,25 @@ export function renderMercadoView() {
         <!-- Header -->
         <div class="mercado-header animate-fade-in-up">
           <h2 class="mercado-title">Mercado</h2>
-          <p class="mercado-subtitle">Encuentra tu Piggy ideal y empieza a invertir.</p>
+          <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
         </div>
 
         <!-- Filter Bar -->
         <div class="mercado-filters animate-fade-in-up">
-          <button class="filter-chip filter-chip--active" data-filter="all">Todos</button>
-          <button class="filter-chip" data-filter="price">Menor precio</button>
-          <button class="filter-chip" data-filter="stage">Etapa avanzada</button>
-          <button class="filter-chip" data-filter="standard">Standard</button>
-          <button class="filter-chip" data-filter="premium">Premium</button>
-          <button class="filter-chip" data-filter="silver">Silver</button>
-          <button class="filter-chip" data-filter="gold">Gold</button>
+          <button class="filter-chip filter-chip--active" id="filter-all" data-filter="all">Todos</button>
+          <button class="filter-chip" id="filter-stage" data-filter="stage">Etapa avanzada</button>
+          
+          <!-- Category Select -->
+          <div class="filter-select-wrapper">
+             <select id="category-select" class="filter-chip-select">
+               <option value="all">Categoría</option>
+               <option value="standard">Standard</option>
+               <option value="premium">Premium</option>
+               <option value="silver">Silver</option>
+               <option value="gold">Gold</option>
+             </select>
+             ${renderIcon('chevronDown', 'filter-select-icon', '12')}
+          </div>
         </div>
 
         <!-- Products List -->
@@ -59,17 +67,47 @@ export function renderMercadoView() {
 }
 
 /**
- * Attach filter chip click listeners.
+ * Attach filter listeners.
  */
 function attachFilterListeners() {
-  document.querySelectorAll('.filter-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('filter-chip--active'));
-      chip.classList.add('filter-chip--active');
-      currentFilter = chip.dataset.filter;
-      renderItems(cachedItems);
-    });
+  const btnAll = document.getElementById('filter-all');
+  const btnStage = document.getElementById('filter-stage');
+  const selectCat = document.getElementById('category-select');
+
+  // "Todos" click
+  btnAll?.addEventListener('click', () => {
+    currentFilterType = 'all';
+    updateFilterUI();
+    renderItems(cachedItems);
   });
+
+  // "Etapa avanzada" click
+  btnStage?.addEventListener('click', () => {
+    currentFilterType = 'stage';
+    updateFilterUI();
+    renderItems(cachedItems);
+  });
+
+  // Category select change
+  selectCat?.addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    // When selecting a category, we might want to keep the current sort (all or stage) active
+    // No need to reset filter type unless requested. Let's keep them composable.
+    renderItems(cachedItems);
+  });
+}
+
+function updateFilterUI() {
+  const btnAll = document.getElementById('filter-all');
+  const btnStage = document.getElementById('filter-stage');
+
+  if (currentFilterType === 'all') {
+    btnAll?.classList.add('filter-chip--active');
+    btnStage?.classList.remove('filter-chip--active');
+  } else {
+    btnAll?.classList.remove('filter-chip--active');
+    btnStage?.classList.add('filter-chip--active');
+  }
 }
 
 /**
@@ -102,21 +140,18 @@ function renderItems(items) {
 
   let filtered = [...items];
 
-  switch (currentFilter) {
-    case 'price':
-      filtered.sort((a, b) => a.price - b.price);
-      break;
-    case 'stage':
-      filtered.sort((a, b) => (b.current_weight || 0) - (a.current_weight || 0));
-      break;
-    case 'standard':
-    case 'premium':
-    case 'silver':
-    case 'gold':
-      filtered = filtered.filter(item => item.category === currentFilter);
-      break;
-    default:
-      break;
+  // 1. Filter by Category
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(item => item.category === currentCategory);
+  }
+
+  // 2. Sort/Filter by Type
+  if (currentFilterType === 'stage') {
+    // Sort by weight descending
+    filtered.sort((a, b) => (b.current_weight || 0) - (a.current_weight || 0));
+  } else {
+    // Default sort (e.g. by price or ID) - keeping stable
+    filtered.sort((a, b) => a.price - b.price);
   }
 
   if (filtered.length === 0) {

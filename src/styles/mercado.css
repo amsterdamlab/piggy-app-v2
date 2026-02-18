@@ -1,6 +1,6 @@
 /* ============================================
    PIGGY APP — Mercado View Styles
-   Horizontal product cards with filters
+   Horizontal product cards with refined filters
    ============================================ */
 
 .mercado-page {
@@ -34,6 +34,7 @@
     margin-bottom: var(--space-lg);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    align-items: center;
 }
 
 .mercado-filters::-webkit-scrollbar {
@@ -65,6 +66,47 @@
     border-color: var(--color-primary);
 }
 
+/* Filter Select Wrapper */
+.filter-select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-chip-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 8px 32px 8px 16px; /* Space for icon */
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-primary-100);
+    background: var(--color-white);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.filter-chip-select:focus,
+.filter-chip-select:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Icon inside wrapper */
+.filter-select-wrapper svg {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--color-text-secondary);
+    width: 12px;
+    height: 12px;
+}
+
 /* ---- Product List ---- */
 .mercado-list {
     display: flex;
@@ -89,19 +131,19 @@
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* ROI Badge — top right of entire card */
+/* ROI Badge — Soft Pastel Pink */
 .mcard__roi-badge {
     position: absolute;
     top: 10px;
     right: 12px;
-    background: var(--gradient-cta);
-    color: #fff;
+    background: #FCE4EC; /* Pastel Pink */
+    color: #C2185B;       /* Darker Pink Text */
     font-size: 11px;
     font-weight: var(--font-bold);
     padding: 3px 10px;
     border-radius: var(--radius-full);
     z-index: 2;
-    box-shadow: 0 2px 6px rgba(233, 30, 99, 0.3);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
 /* ---- Left Column: Image + Category ---- */
@@ -129,6 +171,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scale(1.15); /* Zoom in to hide white corners */
 }
 
 /* Category label below image */
@@ -168,7 +211,7 @@
     display: flex;
     flex-direction: column;
     padding: var(--space-md) var(--space-md) var(--space-md) 0;
-    min-width: 0;
+    min-width: 0; 
 }
 
 .mcard__name {
@@ -190,7 +233,7 @@
     overflow: hidden;
 }
 
-/* Tags row: Mes X  |  XX kg */
+/* Tags row */
 .mcard__tags {
     display: flex;
     gap: var(--space-xs);
@@ -211,7 +254,7 @@
     color: #7B1FA2;
 }
 
-/* Price row: price + buy button */
+/* Price row */
 .mcard__price-row {
     display: flex;
     justify-content: space-between;
@@ -237,7 +280,7 @@
     margin-top: 1px;
 }
 
-/* Buy Button — pink rounded pill with icon */
+/* Buy Button */
 .mcard__buy-btn {
     display: inline-flex;
     align-items: center;

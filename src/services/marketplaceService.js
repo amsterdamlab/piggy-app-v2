@@ -13,7 +13,7 @@ import { formatCOP } from './mockData.js';
 const MOCK_MARKETPLACE_ITEMS = [
     {
         id: 1,
-        item_name: 'Piggy Clásico',
+        item_name: 'Rosita',
         description: 'Un cerdo de raza estándar, ideal para iniciarte en el mundo de la inversión agropecuaria.',
         price: 1000000,
         extra_roi: 0,
@@ -23,7 +23,7 @@ const MOCK_MARKETPLACE_ITEMS = [
     },
     {
         id: 2,
-        item_name: 'Piggy Premium',
+        item_name: 'Milu',
         description: 'Cerdo de raza premium con alimentación especial. Genera un bono extra en tu retorno.',
         price: 1000000,
         extra_roi: 0.01,
@@ -33,7 +33,7 @@ const MOCK_MARKETPLACE_ITEMS = [
     },
     {
         id: 3,
-        item_name: 'Piggy Silver',
+        item_name: 'Rocky',
         description: 'Cerdo de genética selecta con cuidados avanzados. Mayor rendimiento garantizado.',
         price: 1000000,
         extra_roi: 0.02,
@@ -43,7 +43,7 @@ const MOCK_MARKETPLACE_ITEMS = [
     },
     {
         id: 4,
-        item_name: 'Piggy Gold',
+        item_name: 'Max',
         description: 'La joya de la granja. Genética superior, alimentación orgánica y retorno máximo.',
         price: 1000000,
         extra_roi: 0.03,
@@ -53,7 +53,7 @@ const MOCK_MARKETPLACE_ITEMS = [
     },
     {
         id: 5,
-        item_name: 'Piggy Starter',
+        item_name: 'Lola',
         description: 'Perfecto para quienes dan su primer paso. Cerdo joven listo para crecer contigo.',
         price: 1000000,
         extra_roi: 0,
