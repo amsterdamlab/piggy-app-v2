@@ -148,56 +148,116 @@ function renderProductCard(item) {
 }
 
 /**
- * Show Checkout Modal for Direct Purchase.
+ * Show Full Screen Checkout for Direct Purchase.
  */
 function showCheckoutModal(item) {
   // Remove existing if any
   const existing = document.getElementById('checkout-modal');
   if (existing) existing.remove();
 
+  // 1. Lock Body Scroll
+  document.body.style.overflow = 'hidden';
+
   const modal = document.createElement('div');
   modal.id = 'checkout-modal';
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
+  modal.className = 'checkout-fullscreen animate-fade-in-up';
+  
+  // Style for full screen override
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100dvh'; // Dynamic viewport height
+  modal.style.backgroundColor = '#ffffff'; // Solid background
+  modal.style.zIndex = '99999';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.overflowY = 'auto'; // Internal scroll if needed
 
   modal.innerHTML = `
-    <div class="modal checkout-modal animate-fade-in-up">
-      <div class="modal__header-row">
-        <h3 class="modal-title text-white">Pasarela de Pago</h3>
-        <button class="checkout-close" id="checkout-close-btn">${renderIcon('close', '', '24')}</button>
-      </div>
-      
-      <div class="checkout-body">
-        <div class="checkout-summary mb-md">
-            <p>Estás comprando a <strong>${item.item_name}</strong></p>
-            <p class="text-xl font-bold text-primary">${item.priceFormatted}</p>
-        </div>
-
-        <p class="mb-md text-center text-muted">Selecciona tu método de pago seguro:</p>
+    <!-- Checkout Header -->
+    <div class="checkout-header" style="
+        padding: 16px 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between; 
+        background: var(--color-bg); 
+        border-bottom: 1px solid var(--color-border);
+        position: sticky; top: 0; z-index: 10;">
         
-        <div class="payment-methods">
-          <button class="payment-option" data-method="nequi">
-            <div class="payment-icon" style="background:#5500A1; color:white;">📱</div>
-            <span class="payment-name">Nequi</span>
-          </button>
+        <h3 class="modal-title" style="margin:0; font-size: 1.25rem;">Pasarela de Pago</h3>
+        <button class="checkout-close" id="checkout-close-btn" style="
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            padding: 8px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: #f0f0f0;">
+            ${renderIcon('close', '', '20')}
+        </button>
+    </div>
+    
+    <!-- Checklist Body -->
+    <div class="checkout-body" style="padding: 24px 20px; flex: 1; display: flex; flex-direction: column; align-items: center;">
+      
+      <!-- Summary Card -->
+      <div class="checkout-summary" style="
+          width: 100%; 
+          max-width: 400px; 
+          text-align: center; 
+          background: #FFF0F5; 
+          padding: 20px; 
+          border-radius: 16px; 
+          margin-bottom: 32px;
+          box-shadow: 0 4px 12px rgba(233, 30, 99, 0.05);">
           
-          <button class="payment-option" data-method="bancolombia">
-            <div class="payment-icon" style="background:#FDDA24; color:black;">🏛️</div>
-            <span class="payment-name">Bancolombia</span>
-          </button>
+          <div style="
+              width: 80px; 
+              height: 80px; 
+              margin: 0 auto 16px; 
+              border-radius: 50%; 
+              overflow: hidden; 
+              border: 3px solid white; 
+              box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+              <img src="pig1.png" style="width:100%; height:100%; object-fit:cover;">
+          </div>
           
-          <button class="payment-option" data-method="pse">
-             <div class="payment-icon" style="background:#3366CC; color:white;">🌐</div>
-            <span class="payment-name">PSE</span>
-          </button>
-        </div>
+          <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 4px;">Estás comprando a</p>
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">${item.item_name}</h2>
+          <p style="font-size: 1.75rem; font-weight: 900; color: var(--color-primary);">${item.priceFormatted}</p>
+      </div>
 
-        <div class="checkout-footer mt-lg">
-           <div class="secure-badge">
-              <span>🔒 Pagos seguros</span>
-              <span>🛡️ Cifrado SSL</span>
-           </div>
-        </div>
+      <p class="mb-md text-center text-muted" style="margin-bottom: 24px;">Selecciona tu método de pago:</p>
+      
+      <div class="payment-methods" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
+        
+        <button class="payment-option" data-method="nequi" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
+          <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#5500A1; color:white; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">📱</div>
+          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">Nequi</span>
+          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
+        </button>
+        
+        <button class="payment-option" data-method="bancolombia" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
+          <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#FDDA24; color:black; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">🏛️</div>
+          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">Bancolombia</span>
+          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
+        </button>
+        
+        <button class="payment-option" data-method="pse" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
+           <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#3366CC; color:white; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">🌐</div>
+          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">PSE</span>
+          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
+        </button>
+      </div>
+
+      <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 40px; padding-bottom: 20px; display: flex; justify-content: center;">
+         <div class="secure-badge" style="display: flex; gap: 16px; color: var(--color-text-tertiary); font-size: 0.8rem;">
+            <span>🔒 Pagos seguros</span>
+            <span>🛡️ Cifrado SSL</span>
+         </div>
       </div>
     </div>
   `;
@@ -205,19 +265,24 @@ function showCheckoutModal(item) {
   document.body.appendChild(modal);
 
   // Close Logic
-  const close = () => modal.remove();
+  const close = () => {
+      document.body.style.overflow = ''; // Unlock scroll
+      modal.remove();
+  };
+  
   document.getElementById('checkout-close-btn').addEventListener('click', close);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) close();
-  });
-
+  
   // Payment Logic
   document.querySelectorAll('.payment-option').forEach(btn => {
     btn.addEventListener('click', async () => {
       const method = btn.dataset.method;
-      btn.classList.add('payment-option--loading');
-      btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:var(--color-text-primary) transparent transparent transparent;"></span> Procesando...';
       
+      // Visual feedback on button
+      const originalContent = btn.innerHTML;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border:2px solid #555;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite; margin-right: 10px; display:inline-block;"></span> Procesando...';
+      
+      // Disable all
       document.querySelectorAll('.payment-option').forEach(b => b.disabled = true);
 
       // Simulate network delay
@@ -228,19 +293,15 @@ function showCheckoutModal(item) {
         await buyMarketplaceItem(item);
         
         close();
-        // Success
-        // Use a nice native notification or navigate directly
-        // alert(`¡Compra exitosa! ${item.item_name} ahora está en tu granja.`);
         navigateTo('granja');
 
       } catch (error) {
         console.error(error);
         alert('Error en la transacción: ' + error.message);
-        btn.classList.remove('payment-option--loading');
-        // Reset Text
-        if(method === 'nequi') btn.innerHTML = '<div class="payment-icon" style="background:#5500A1; color:white;">📱</div><span class="payment-name">Nequi</span>';
-        if(method === 'bancolombia') btn.innerHTML = '<div class="payment-icon" style="background:#FDDA24; color:black;">🏛️</div><span class="payment-name">Bancolombia</span>';
-        if(method === 'pse') btn.innerHTML = '<div class="payment-icon" style="background:#3366CC; color:white;">🌐</div><span class="payment-name">PSE</span>';
+        
+        // Reset
+        btn.style.opacity = '1';
+        btn.innerHTML = originalContent;
         document.querySelectorAll('.payment-option').forEach(b => b.disabled = false);
       }
     });
