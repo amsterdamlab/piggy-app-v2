@@ -30,7 +30,7 @@ export function renderAdopcionView() {
         <div class="adopcion-image-wrapper animate-scale-in">
           <div class="adopcion-image adopcion-image--clean">
             <!-- Clean image without badge -->
-            <img src="/src/assets/pig1.png" alt="Piggy Bank" class="adopcion-image__img" />
+            <img src="img/pig1.png" alt="Piggy Bank" class="adopcion-image__img" />
           </div>
         </div>
 
