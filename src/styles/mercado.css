@@ -1,6 +1,6 @@
 /* ============================================
    PIGGY APP — Mercado View Styles
-   Product listing with filters
+   Horizontal product cards with filters
    ============================================ */
 
 .mercado-page {
@@ -25,7 +25,7 @@
     line-height: var(--leading-relaxed);
 }
 
-/* Filter Bar */
+/* ---- Filter Bar ---- */
 .mercado-filters {
     display: flex;
     gap: var(--space-sm);
@@ -65,108 +65,122 @@
     border-color: var(--color-primary);
 }
 
-/* Grid */
-.mercado-grid {
+/* ---- Product List ---- */
+.mercado-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: var(--space-md);
 }
 
-/* Product Card */
-.mercado-card {
-    padding: 0;
-    overflow: hidden;
-    border-radius: var(--radius-xl);
+/* ---- Horizontal Product Card (mcard) ---- */
+.mcard {
+    display: flex;
+    align-items: stretch;
     background: var(--color-white);
-    box-shadow: var(--shadow-card);
-    display: flex;
-    flex-direction: column;
-}
-
-/* Image Section */
-.mercado-card__image-section {
+    border-radius: var(--radius-xl);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
     position: relative;
-    background: linear-gradient(145deg, #FFF0F5 0%, #FCE4EC 50%, #F8BBD0 100%);
-    padding: var(--space-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 180px;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.mercado-card__img {
-    width: 140px;
-    height: 140px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid rgba(255,255,255,0.8);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+.mcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
-/* ROI Badge (top-right) */
-.mercado-card__roi-badge {
+/* ROI Badge — top right of entire card */
+.mcard__roi-badge {
     position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
+    top: 10px;
+    right: 12px;
     background: var(--gradient-cta);
     color: #fff;
     font-size: 11px;
     font-weight: var(--font-bold);
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(233, 30, 99, 0.3);
 }
 
-/* Category Tag (top-left) */
-.mercado-card__category-tag {
-    position: absolute;
-    top: var(--space-sm);
-    left: var(--space-sm);
-    font-size: 11px;
+/* ---- Left Column: Image + Category ---- */
+.mcard__left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    gap: var(--space-xs);
+    flex-shrink: 0;
+    width: 120px;
+}
+
+.mcard__img-wrap {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.mcard__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Category label below image */
+.mcard__cat {
+    font-size: 10px;
     font-weight: var(--font-bold);
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    text-align: center;
 }
 
-.mercado-card__cat--standard {
+.mcard__cat--standard {
     background: #E8F5E9;
     color: #2E7D32;
 }
 
-.mercado-card__cat--premium {
+.mcard__cat--premium {
     background: #E3F2FD;
     color: #1565C0;
 }
 
-.mercado-card__cat--silver {
+.mcard__cat--silver {
     background: #ECEFF1;
     color: #546E7A;
 }
 
-.mercado-card__cat--gold {
+.mcard__cat--gold {
     background: #FFF8E1;
     color: #F57F17;
 }
 
-/* Info Section */
-.mercado-card__info {
-    padding: var(--space-md) var(--space-lg) var(--space-lg);
+/* ---- Right Column: Info ---- */
+.mcard__right {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-md) var(--space-md) 0;
+    min-width: 0;
 }
 
-.mercado-card__name {
-    font-size: var(--text-lg);
+.mcard__name {
+    font-size: var(--text-md);
     font-weight: var(--font-bold);
     color: var(--color-text-primary);
+    margin-bottom: 2px;
+    padding-right: 50px;
 }
 
-.mercado-card__desc {
-    font-size: var(--text-sm);
+.mcard__desc {
+    font-size: var(--text-xs);
     color: var(--color-text-secondary);
     line-height: var(--leading-relaxed);
     margin-bottom: var(--space-sm);
@@ -176,39 +190,87 @@
     overflow: hidden;
 }
 
-/* Bottom Row: Price + Buy Button */
-.mercado-card__bottom {
+/* Tags row: Mes X  |  XX kg */
+.mcard__tags {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.mcard__tag {
+    font-size: 11px;
+    font-weight: var(--font-medium);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    background: #F5F5F5;
+    color: var(--color-text-secondary);
+}
+
+.mcard__tag--purple {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+/* Price row: price + buy button */
+.mcard__price-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     margin-top: auto;
 }
 
-.mercado-card__pricing {
+.mcard__price-block {
     display: flex;
     flex-direction: column;
 }
 
-.mercado-card__price {
-    font-size: var(--text-lg);
+.mcard__price {
+    font-size: var(--text-md);
     font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
+    line-height: 1.2;
 }
 
-.mercado-card__stock {
-    font-size: var(--text-xs);
+.mcard__stock {
+    font-size: 10px;
     color: var(--color-text-tertiary);
+    margin-top: 1px;
 }
 
-/* Buy Button — smaller and pink */
-.mercado-card__buy-btn {
-    padding: 8px 20px !important;
-    font-size: var(--text-sm) !important;
-    border-radius: var(--radius-full) !important;
-    min-width: auto;
+/* Buy Button — pink rounded pill with icon */
+.mcard__buy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: var(--font-bold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-/* Empty State */
+.mcard__buy-btn:hover {
+    background: var(--color-primary-dark, #C2185B);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);
+}
+
+.mcard__buy-btn:active {
+    transform: translateY(0);
+}
+
+.mcard__buy-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ---- Empty State ---- */
 .mercado-empty {
     text-align: center;
     padding: var(--space-3xl) var(--space-lg);

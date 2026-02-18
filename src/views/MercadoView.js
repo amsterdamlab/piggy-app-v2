@@ -1,6 +1,6 @@
 /* ============================================
    PIGGY APP — Mercado (Marketplace) View
-   Redesigned product listing with filters
+   Horizontal product cards with filters
    ============================================ */
 
 import { renderIcon } from '../icons.js';
@@ -39,7 +39,7 @@ export function renderMercadoView() {
           <button class="filter-chip" data-filter="gold">Gold</button>
         </div>
 
-        <!-- Products Grid -->
+        <!-- Products List -->
         <div id="mercado-content">
           <div class="loading-container">
             <div class="spinner"></div>
@@ -64,10 +64,8 @@ export function renderMercadoView() {
 function attachFilterListeners() {
   document.querySelectorAll('.filter-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      // Update active state
       document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('filter-chip--active'));
       chip.classList.add('filter-chip--active');
-
       currentFilter = chip.dataset.filter;
       renderItems(cachedItems);
     });
@@ -109,7 +107,6 @@ function renderItems(items) {
       filtered.sort((a, b) => a.price - b.price);
       break;
     case 'stage':
-      // Sort by current_weight descending (heavier = more advanced stage)
       filtered.sort((a, b) => (b.current_weight || 0) - (a.current_weight || 0));
       break;
     case 'standard':
@@ -119,7 +116,6 @@ function renderItems(items) {
       filtered = filtered.filter(item => item.category === currentFilter);
       break;
     default:
-      // 'all' — no filter
       break;
   }
 
@@ -134,7 +130,7 @@ function renderItems(items) {
   }
 
   container.innerHTML = `
-    <div class="mercado-grid">
+    <div class="mercado-list">
       ${filtered.map(renderProductCard).join('')}
     </div>
   `;
@@ -148,36 +144,45 @@ function renderItems(items) {
 }
 
 /**
- * Render a single product card matching the target design.
+ * Render a single horizontal product card.
  */
 function renderProductCard(item) {
   const categoryLabel = getCategoryLabel(item.category);
-  const categoryClass = `mercado-card__cat--${item.category || 'standard'}`;
   const hasExtraROI = item.extra_roi > 0;
-  const extraROIText = hasExtraROI ? `+${(item.extra_roi * 100).toFixed(0)}% ROI` : '';
+  const extraROIText = hasExtraROI ? `+${(item.extra_roi * 100).toFixed(0)}%` : '';
+  const monthEstimate = Math.max(1, Math.round((item.current_weight || 15) / 10));
 
   return `
-    <div class="mercado-card card animate-scale-in">
-      <!-- Image Section -->
-      <div class="mercado-card__image-section">
-        <img src="pig1.png" alt="${item.item_name}" class="mercado-card__img" />
-        ${hasExtraROI ? `
-          <span class="mercado-card__roi-badge">${extraROIText}</span>
-        ` : ''}
-        <span class="mercado-card__category-tag ${categoryClass}">${categoryLabel}</span>
+    <div class="mcard animate-fade-in-up">
+      ${hasExtraROI ? `<span class="mcard__roi-badge">${extraROIText}</span>` : ''}
+
+      <!-- Left: Image + Category -->
+      <div class="mcard__left">
+        <div class="mcard__img-wrap">
+          <img src="pig1.png" alt="${item.item_name}" class="mcard__img" />
+        </div>
+        <span class="mcard__cat mcard__cat--${item.category || 'standard'}">${categoryLabel}</span>
       </div>
 
-      <!-- Info Section -->
-      <div class="mercado-card__info">
-        <h4 class="mercado-card__name">${item.item_name}</h4>
-        <p class="mercado-card__desc">${item.description}</p>
+      <!-- Right: Details -->
+      <div class="mcard__right">
+        <h4 class="mcard__name">${item.item_name}</h4>
+        <p class="mcard__desc">${item.description}</p>
 
-        <div class="mercado-card__bottom">
-          <div class="mercado-card__pricing">
-            <span class="mercado-card__price">${item.priceFormatted}</span>
-            <span class="mercado-card__stock">${item.stock} disponibles</span>
+        <!-- Tags: Month + Weight -->
+        <div class="mcard__tags">
+          <span class="mcard__tag mcard__tag--purple">Mes ${monthEstimate}</span>
+          <span class="mcard__tag">${item.current_weight || 15} kg</span>
+        </div>
+
+        <!-- Price Row -->
+        <div class="mcard__price-row">
+          <div class="mcard__price-block">
+            <span class="mcard__price">${item.priceFormatted}</span>
+            <span class="mcard__stock">${item.stock} disponibles</span>
           </div>
-          <button class="btn btn--primary btn--sm mercado-card__buy-btn" id="buy-${item.id}">
+          <button class="mcard__buy-btn" id="buy-${item.id}">
+            ${renderIcon('shop', '', '16')}
             Comprar
           </button>
         </div>
@@ -200,9 +205,8 @@ function getCategoryLabel(category) {
 }
 
 /**
- * Handle buy piggy action — redirect to adopcion with pre-selected item.
+ * Handle buy piggy action.
  */
 function handleBuyPiggy(item) {
-  // Navigate to adoption/purchase flow
   navigateTo('adopcion');
 }
