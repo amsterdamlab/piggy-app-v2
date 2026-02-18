@@ -65,7 +65,7 @@ export async function adoptPiggy(piggyName) {
             status: 'engorde',
             purchase_date: new Date().toISOString(),
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
-            investment_amount: 1000000,
+            investment_amount: 250000,
             extra_roi_bonus: 0,
             current_weight: 15.0,
         };
@@ -147,6 +147,65 @@ export async function getDashboardStats(piggies) {
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
     };
+}
+
+/**
+ * Buy a piggy from the marketplace.
+ */
+export async function buyMarketplaceItem(item) {
+    if (isUsingMockData()) {
+        // Mock logic: Create piggy and reduce stock
+        const newPiggy = {
+            id: `mock-${Date.now()}`,
+            user_id: 'mock-user',
+            name: item.item_name,
+            status: 'engorde',
+            purchase_date: new Date().toISOString(),
+            // 4 months duration
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            investment_amount: item.price,
+            extra_roi_bonus: item.extra_roi || 0,
+            category: item.category,
+            current_weight: item.current_weight || 15.0,
+        };
+        MOCK_PIGGIES.unshift(newPiggy);
+        
+        // Find item in mock marketplace and reduce stock
+        // (This assumes we can access MOCK_MARKETPLACE_ITEMS via import if it were exported, 
+        // but since it's in another file, we mock the success response)
+        return enrichPiggyData(newPiggy);
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('User not logged in');
+
+    // 1. Create the Piggy
+    const { data: piggyData, error: piggyError } = await client
+        .from('piggies')
+        .insert({
+            user_id: user.id,
+            name: item.item_name,
+            investment_amount: item.price,
+            status: 'engorde',
+            current_weight: item.current_weight || 15.0,
+            // Store specific attributes if columns exist (we rely on setup_completo.sql)
+        })
+        .select()
+        .single();
+
+    if (piggyError) throw new Error(piggyError.message);
+
+    // 2. Decrease Stock (Simple update, race condition possible but ok for MVP)
+    // We don't block purchase if this fails, just log it.
+    if (item.id) {
+       await client
+        .from('marketplace')
+        .update({ stock: Math.max(0, item.stock - 1) })
+        .eq('id', item.id);
+    }
+
+    return enrichPiggyData(piggyData);
 }
 
 // Re-export utility functions for use in views

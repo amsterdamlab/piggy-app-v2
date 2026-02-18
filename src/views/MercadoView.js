@@ -1,16 +1,15 @@
 /* ============================================
    PIGGY APP — Mercado (Marketplace) View
-   Refined horizontal cards with category select filter
+   Streamlined Direct Purchase Flow
    ============================================ */
 
 import { renderIcon } from '../icons.js';
 import { renderBottomNav } from './GranjaView.js';
 import { navigateTo } from '../router.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
+import { buyMarketplaceItem } from '../services/piggiesService.js';
 
-/** In-memory state for current filters */
-let currentFilterType = 'all'; // 'all' or 'stage'
-let currentCategory = 'all'; // 'all', 'standard', 'premium', 'silver', 'gold'
+/** In-memory cache */
 let cachedItems = [];
 
 /**
@@ -29,24 +28,6 @@ export function renderMercadoView() {
           <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="mercado-filters animate-fade-in-up">
-          <button class="filter-chip filter-chip--active" id="filter-all" data-filter="all">Todos</button>
-          <button class="filter-chip" id="filter-stage" data-filter="stage">Etapa avanzada</button>
-          
-          <!-- Category Select -->
-          <div class="filter-select-wrapper">
-             <select id="category-select" class="filter-chip-select">
-               <option value="all">Categoría</option>
-               <option value="standard">Standard</option>
-               <option value="premium">Premium</option>
-               <option value="silver">Silver</option>
-               <option value="gold">Gold</option>
-             </select>
-             ${renderIcon('chevronDown', 'filter-select-icon', '12')}
-          </div>
-        </div>
-
         <!-- Products List -->
         <div id="mercado-content">
           <div class="loading-container">
@@ -60,54 +41,9 @@ export function renderMercadoView() {
     </div>
   `;
 
-  attachFilterListeners();
   loadMarketplaceData();
 
   return () => { };
-}
-
-/**
- * Attach filter listeners.
- */
-function attachFilterListeners() {
-  const btnAll = document.getElementById('filter-all');
-  const btnStage = document.getElementById('filter-stage');
-  const selectCat = document.getElementById('category-select');
-
-  // "Todos" click
-  btnAll?.addEventListener('click', () => {
-    currentFilterType = 'all';
-    updateFilterUI();
-    renderItems(cachedItems);
-  });
-
-  // "Etapa avanzada" click
-  btnStage?.addEventListener('click', () => {
-    currentFilterType = 'stage';
-    updateFilterUI();
-    renderItems(cachedItems);
-  });
-
-  // Category select change
-  selectCat?.addEventListener('change', (e) => {
-    currentCategory = e.target.value;
-    // When selecting a category, we might want to keep the current sort (all or stage) active
-    // No need to reset filter type unless requested. Let's keep them composable.
-    renderItems(cachedItems);
-  });
-}
-
-function updateFilterUI() {
-  const btnAll = document.getElementById('filter-all');
-  const btnStage = document.getElementById('filter-stage');
-
-  if (currentFilterType === 'all') {
-    btnAll?.classList.add('filter-chip--active');
-    btnStage?.classList.remove('filter-chip--active');
-  } else {
-    btnAll?.classList.remove('filter-chip--active');
-    btnStage?.classList.add('filter-chip--active');
-  }
 }
 
 /**
@@ -132,33 +68,20 @@ async function loadMarketplaceData() {
 }
 
 /**
- * Apply filters and render items.
+ * Render items list.
  */
 function renderItems(items) {
   const container = document.getElementById('mercado-content');
   if (!container) return;
 
-  let filtered = [...items];
+  // Filter out zero stock (service does it, but double check)
+  const availableItems = items.filter(item => item.stock > 0);
 
-  // 1. Filter by Category
-  if (currentCategory !== 'all') {
-    filtered = filtered.filter(item => item.category === currentCategory);
-  }
-
-  // 2. Sort/Filter by Type
-  if (currentFilterType === 'stage') {
-    // Sort by weight descending
-    filtered.sort((a, b) => (b.current_weight || 0) - (a.current_weight || 0));
-  } else {
-    // Default sort (e.g. by price or ID) - keeping stable
-    filtered.sort((a, b) => a.price - b.price);
-  }
-
-  if (filtered.length === 0) {
+  if (availableItems.length === 0) {
     container.innerHTML = `
       <div class="mercado-empty animate-fade-in-up">
         <span style="font-size:48px;">🔍</span>
-        <p>No hay Piggies disponibles con este filtro.</p>
+        <p>No hay Piggies disponibles en este momento.</p>
       </div>
     `;
     return;
@@ -166,23 +89,23 @@ function renderItems(items) {
 
   container.innerHTML = `
     <div class="mercado-list">
-      ${filtered.map(renderProductCard).join('')}
+      ${availableItems.map(renderProductCard).join('')}
     </div>
   `;
 
   // Attach buy button listeners
-  filtered.forEach(item => {
+  availableItems.forEach(item => {
     document.getElementById(`buy-${item.id}`)?.addEventListener('click', () => {
-      handleBuyPiggy(item);
+      showCheckoutModal(item);
     });
   });
 }
 
 /**
  * Render a single horizontal product card.
+ * Layout: Image left, Buy button below image. Details right.
  */
 function renderProductCard(item) {
-  const categoryLabel = getCategoryLabel(item.category);
   const hasExtraROI = item.extra_roi > 0;
   const extraROIText = hasExtraROI ? `+${(item.extra_roi * 100).toFixed(0)}%` : '';
   const monthEstimate = Math.max(1, Math.round((item.current_weight || 15) / 10));
@@ -191,15 +114,19 @@ function renderProductCard(item) {
     <div class="mcard animate-fade-in-up">
       ${hasExtraROI ? `<span class="mcard__roi-badge">${extraROIText}</span>` : ''}
 
-      <!-- Left: Image + Category -->
+      <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
         <div class="mcard__img-wrap">
           <img src="pig1.png" alt="${item.item_name}" class="mcard__img" />
         </div>
-        <span class="mcard__cat mcard__cat--${item.category || 'standard'}">${categoryLabel}</span>
+        
+        <button class="mcard__buy-btn" id="buy-${item.id}">
+          ${renderIcon('shop', '', '16')}
+          Comprar
+        </button>
       </div>
 
-      <!-- Right: Details -->
+      <!-- Right Column: Details -->
       <div class="mcard__right">
         <h4 class="mcard__name">${item.item_name}</h4>
         <p class="mcard__desc">${item.description}</p>
@@ -210,16 +137,10 @@ function renderProductCard(item) {
           <span class="mcard__tag">${item.current_weight || 15} kg</span>
         </div>
 
-        <!-- Price Row -->
+        <!-- Price Info -->
         <div class="mcard__price-row">
-          <div class="mcard__price-block">
             <span class="mcard__price">${item.priceFormatted}</span>
             <span class="mcard__stock">${item.stock} disponibles</span>
-          </div>
-          <button class="mcard__buy-btn" id="buy-${item.id}">
-            ${renderIcon('shop', '', '16')}
-            Comprar
-          </button>
         </div>
       </div>
     </div>
@@ -227,21 +148,101 @@ function renderProductCard(item) {
 }
 
 /**
- * Get human-readable category label.
+ * Show Checkout Modal for Direct Purchase.
  */
-function getCategoryLabel(category) {
-  const labels = {
-    standard: 'Standard',
-    premium: 'Premium',
-    silver: 'Silver',
-    gold: 'Gold',
-  };
-  return labels[category] || 'Standard';
-}
+function showCheckoutModal(item) {
+  // Remove existing if any
+  const existing = document.getElementById('checkout-modal');
+  if (existing) existing.remove();
 
-/**
- * Handle buy piggy action.
- */
-function handleBuyPiggy(item) {
-  navigateTo('adopcion');
+  const modal = document.createElement('div');
+  modal.id = 'checkout-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  modal.innerHTML = `
+    <div class="modal checkout-modal animate-fade-in-up">
+      <div class="modal__header-row">
+        <h3 class="modal-title text-white">Pasarela de Pago</h3>
+        <button class="checkout-close" id="checkout-close-btn">${renderIcon('close', '', '24')}</button>
+      </div>
+      
+      <div class="checkout-body">
+        <div class="checkout-summary mb-md">
+            <p>Estás comprando a <strong>${item.item_name}</strong></p>
+            <p class="text-xl font-bold text-primary">${item.priceFormatted}</p>
+        </div>
+
+        <p class="mb-md text-center text-muted">Selecciona tu método de pago seguro:</p>
+        
+        <div class="payment-methods">
+          <button class="payment-option" data-method="nequi">
+            <div class="payment-icon" style="background:#5500A1; color:white;">📱</div>
+            <span class="payment-name">Nequi</span>
+          </button>
+          
+          <button class="payment-option" data-method="bancolombia">
+            <div class="payment-icon" style="background:#FDDA24; color:black;">🏛️</div>
+            <span class="payment-name">Bancolombia</span>
+          </button>
+          
+          <button class="payment-option" data-method="pse">
+             <div class="payment-icon" style="background:#3366CC; color:white;">🌐</div>
+            <span class="payment-name">PSE</span>
+          </button>
+        </div>
+
+        <div class="checkout-footer mt-lg">
+           <div class="secure-badge">
+              <span>🔒 Pagos seguros</span>
+              <span>🛡️ Cifrado SSL</span>
+           </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close Logic
+  const close = () => modal.remove();
+  document.getElementById('checkout-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  // Payment Logic
+  document.querySelectorAll('.payment-option').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const method = btn.dataset.method;
+      btn.classList.add('payment-option--loading');
+      btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:var(--color-text-primary) transparent transparent transparent;"></span> Procesando...';
+      
+      document.querySelectorAll('.payment-option').forEach(b => b.disabled = true);
+
+      // Simulate network delay
+      await new Promise(r => setTimeout(r, 2000));
+
+      try {
+        // Execute Purchase Logic
+        await buyMarketplaceItem(item);
+        
+        close();
+        // Success
+        // Use a nice native notification or navigate directly
+        // alert(`¡Compra exitosa! ${item.item_name} ahora está en tu granja.`);
+        navigateTo('granja');
+
+      } catch (error) {
+        console.error(error);
+        alert('Error en la transacción: ' + error.message);
+        btn.classList.remove('payment-option--loading');
+        // Reset Text
+        if(method === 'nequi') btn.innerHTML = '<div class="payment-icon" style="background:#5500A1; color:white;">📱</div><span class="payment-name">Nequi</span>';
+        if(method === 'bancolombia') btn.innerHTML = '<div class="payment-icon" style="background:#FDDA24; color:black;">🏛️</div><span class="payment-name">Bancolombia</span>';
+        if(method === 'pse') btn.innerHTML = '<div class="payment-icon" style="background:#3366CC; color:white;">🌐</div><span class="payment-name">PSE</span>';
+        document.querySelectorAll('.payment-option').forEach(b => b.disabled = false);
+      }
+    });
+  });
 }
