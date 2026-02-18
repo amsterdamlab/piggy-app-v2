@@ -162,11 +162,17 @@
 .adopcion-image--clean {
     border: none;
     background: transparent;
-    box-shadow: none;
+    box-shadow: var(--shadow-sm); /* Restore subtle shadow */
+    border-radius: 50% !important;
+    overflow: hidden;
+    /* Ensure sizing is explicit just in case */
+    width: 240px;
+    height: 240px;
 }
 
 .adopcion-image--clean .adopcion-image__img {
-    transform: scale(1.1); /* Slightly larger piggy */
+    transform: scale(1.1);
+    /* Slightly larger piggy */
 }
 
 /* Checkout Modal */
