@@ -9,8 +9,6 @@ import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggie
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 
-// ... imports remain the same
-
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -209,8 +207,9 @@ function buildGranjaFull(firstName, piggies, stats) {
   `;
 }
 
-// ... renderGreeting remains the same ...
-
+/**
+ * Render greeting message
+ */
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -247,8 +246,9 @@ function renderEmptyPiggies() {
   `;
 }
 
-// ... renderPiggiesList and renderPiggyCard remain the same ...
-
+/**
+ * Render Piggies List
+ */
 function renderPiggiesList(piggies, baseROI) {
   return `
     <div class="piggies-list">
@@ -257,6 +257,9 @@ function renderPiggiesList(piggies, baseROI) {
   `;
 }
 
+/**
+ * Render Piggy Card with Extra ROI indication
+ */
 function renderPiggyCard(piggy, baseROI) {
   const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
   const projectedReturn = piggy.investment_amount * (1 + totalROI);
@@ -271,9 +274,9 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-              ? '<span class="badge badge--success">Listo para liquidar</span>'
-              : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
-            }
+      ? '<span class="badge badge--success">Listo para liquidar</span>'
+      : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
+    }
           </div>
         </div>
         ${piggy.extra_roi_bonus > 0 ? `
@@ -299,13 +302,16 @@ function renderPiggyCard(piggy, baseROI) {
         <div>
           <div class="text-xs text-muted">Retorno estimado</div>
           <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
+          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus*100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
   `;
 }
 
-// ... renderBottomNav remains the same ...
+/**
+ * Render Bottom Navigation
+ */
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal">
@@ -354,7 +360,7 @@ function showBonusModal(hasPiggies) {
   modal.id = 'bonus-modal';
   modal.className = 'modal-overlay';
   modal.style.zIndex = '9999';
-  
+
   modal.innerHTML = `
     <div class="modal bonus-modal animate-scale-in">
         <div class="modal__handle"></div>
@@ -416,17 +422,17 @@ function showBonusModal(hasPiggies) {
 
   // Action logic
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
-      close();
-      if (hasPiggies) {
-          navigateTo('mercado');
-      } else {
-          // If no piggies, go to adoption to "Activate" the bonus
-          navigateTo('adopcion');
-      }
+    close();
+    if (hasPiggies) {
+      navigateTo('mercado');
+    } else {
+      // If no piggies, go to adoption to "Activate" the bonus
+      navigateTo('adopcion');
+    }
   });
 }
 
 function removeBonusModal() {
-    const existing = document.getElementById('bonus-modal');
-    if (existing) existing.remove();
+  const existing = document.getElementById('bonus-modal');
+  if (existing) existing.remove();
 }

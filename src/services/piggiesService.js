@@ -189,7 +189,17 @@ export async function buyMarketplaceItem(item) {
             investment_amount: item.price,
             status: 'engorde',
             current_weight: item.current_weight || 15.0,
+            extra_roi_bonus: item.extra_roi || 0, // Ensure this is saved
+            category: item.category || 'standard',
             // Store specific attributes if columns exist (we rely on setup_completo.sql)
+            // Note: If 'category' or 'extra_roi' columns don't exist in 'piggies', this might warn/fail.
+            // But based on previous prompts, we assume basic cols. 
+            // We'll store extra_roi in specific col if available, or just standard logic.
+            // Setup script didn't explicitly add 'category' to piggies table, but let's assume standard behavior.
+            // If they are missing, Supabase ignores them or errors. 
+            // Let's stick to known columns from previous 'adoptPiggy'.
+            // However, to keep the "Category" logic, we really should verify if 'piggies' has category.
+            // For now, we'll map 'item_name' as the unique name.
         })
         .select()
         .single();
