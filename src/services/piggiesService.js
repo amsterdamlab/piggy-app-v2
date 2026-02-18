@@ -65,7 +65,7 @@ export async function adoptPiggy(piggyName) {
             status: 'engorde',
             purchase_date: new Date().toISOString(),
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
-            investment_amount: 250000,
+            investment_amount: 1000000,
             extra_roi_bonus: 0,
             current_weight: 15.0,
         };
@@ -82,7 +82,7 @@ export async function adoptPiggy(piggyName) {
         .insert({
             user_id: user.id,
             name: piggyName,
-            investment_amount: 250000,
+            investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
             // purchase_date and end_date calculate automatically in DB default or trigger, 
