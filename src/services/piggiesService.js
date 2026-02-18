@@ -129,21 +129,21 @@ export async function getDashboardStats(piggies) {
         0
     );
 
-    const projectedGain = activePiggies.reduce((sum, p) => {
+    const walletPiggyTotal = activePiggies.reduce((sum, p) => {
         const totalReturn = calculateTotalReturn(
             p.investment_amount,
             baseROI,
             p.extra_roi_bonus || 0
         );
-        return sum + (totalReturn - p.investment_amount);
-    }, 0);
+        return sum + totalReturn;
+    }, 0) + completedPiggies.reduce((sum, p) => sum + (p.final_return_amount || 0), 0);
 
     return {
         activeCount: piggyCount,
+        finishedCount: completedPiggies.length, // Added finished count
         totalInvestment,
-        projectedGain,
-        projectedGainFormatted: formatCOP(projectedGain),
-        claimedCount: completedPiggies.length,
+        walletPiggyTotal, // Replaced projectedGain with walletPiggyTotal (Capital + Yield)
+        walletPiggyTotalFormatted: formatCOP(walletPiggyTotal),
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
     };

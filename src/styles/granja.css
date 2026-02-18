@@ -1,179 +1,91 @@
-/* ============================================
-   PIGGY APP — Granja View Styles
-   ============================================ */
 
-.granja-page {
-    background: var(--color-bg);
+/* Banner Interactive */
+.banner--interactive {
+    cursor: pointer;
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* Greeting */
-.granja-greeting {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
+.banner--interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
-.granja-greeting__avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.banner--interactive:active {
+    transform: translateY(0);
+}
+
+/* Bonus Modal */
+.bonus-modal {
     position: relative;
-    color: white;
-    font-weight: var(--font-bold);
-    font-size: var(--text-lg);
-}
-
-.granja-greeting__initial {
-    text-transform: uppercase;
-}
-
-.granja-greeting__online {
-    position: absolute;
-    bottom: 2px;
-    left: 2px;
-    width: 12px;
-    height: 12px;
-    background: var(--color-success);
-    border-radius: var(--radius-full);
-    border: 2px solid var(--color-bg);
-}
-
-.granja-greeting__text {
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
 }
 
-.granja-greeting__welcome {
-    font-size: var(--text-sm);
+.bonus-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: var(--color-bg-section);
+    border-radius: var(--radius-full);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-text-secondary);
+    z-index: 10;
 }
 
-.granja-greeting__name {
-    font-size: var(--text-lg);
-    font-weight: var(--font-bold);
-    color: var(--color-text-primary);
+.bonus-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Title */
-.granja-title {
-    font-size: var(--text-3xl);
+.bonus-image-placeholder {
+    width: 100%;
+    height: 160px;
+    background: var(--color-primary-50);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+}
+
+.bonus-title {
+    font-size: var(--text-xl);
     font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
-    margin-bottom: var(--space-lg);
 }
 
-/* ROI Info */
-.roi-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-primary-50);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    margin-bottom: var(--space-lg);
-}
-
-.roi-info__icon {
-    color: var(--color-primary);
-}
-
-/* Piggy Card */
-.piggies-list {
+.bonus-content {
+    flex: 1;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
 }
 
-.piggy-card {
-    padding: var(--space-md) var(--space-lg);
-}
-
-.piggy-card__header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-}
-
-.piggy-card__avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
-    background: var(--color-primary-50);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.piggy-card__info {
+.bonus-text-scroll {
     flex: 1;
-}
-
-.piggy-card__name {
-    font-weight: var(--font-bold);
-    font-size: var(--text-md);
-    margin-bottom: 2px;
-}
-
-.piggy-card__progress {
-    margin-bottom: var(--space-md);
-}
-
-.piggy-card__progress-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--space-xs);
-}
-
-.piggy-card__stats {
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--color-border);
-}
-
-/* Missions Quick View */
-.missions-quick {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
-
-.mission-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-}
-
-.mission-item__icon {
-    font-size: var(--text-xl);
-    flex-shrink: 0;
-}
-
-.mission-item__info {
-    flex: 1;
-}
-
-.mission-item__name {
-    font-weight: var(--font-semibold);
+    overflow-y: auto;
     font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    padding-right: var(--space-xs);
 }
 
-.mission-item__points {
-    font-size: var(--text-xs);
-    color: var(--color-primary);
-    font-weight: var(--font-semibold);
+.bonus-text-scroll p,
+.bonus-text-scroll ul {
+    margin-bottom: var(--space-sm);
 }
 
-.mission-item__action {
-    flex-shrink: 0;
+.bonus-text-scroll ul {
+    padding-left: var(--space-lg);
+    list-style-type: disc;
+}
+
+.bonus-text-scroll li {
+    margin-bottom: 4px;
 }
