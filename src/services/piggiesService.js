@@ -148,7 +148,7 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
- * Uses atomic RPC transaction if available, ensuring real stock management.
+ * STRICT MODE: Only uses RPC 'buy_piggy' to ensure atomic stock deduction.
  */
 export async function buyMarketplaceItem(item) {
     if (isUsingMockData()) {
@@ -172,66 +172,39 @@ export async function buyMarketplaceItem(item) {
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-    if (!user) throw new Error('User not logged in');
+    if (!user) throw new Error('Usuario no autenticado');
 
-    // Attempt to use the Secure RPC Function (Recommended)
-    try {
-        const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
-            p_item_id: item.id,
-            p_user_id: user.id,
-            p_price: item.price,
-            p_item_name: item.item_name,
-            p_extra_roi: item.extra_roi || 0,
-            p_category: item.category || 'standard'
-        });
+    // Call Database Function (RPC)
+    // This ensures that Creating Piggy + Decreasing Stock happens together or not at all.
+    const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
+        p_item_id: item.id,
+        p_user_id: user.id,
+        p_price: item.price,
+        p_item_name: item.item_name,
+        p_extra_roi: item.extra_roi || 0,
+        p_category: item.category || 'standard'
+    });
 
-        if (!rpcError) {
-             if (rpcData && rpcData.piggy_id) {
-                 return getPiggyById(rpcData.piggy_id); 
-             }
-             const { data: latest } = await client
-                .from('piggies')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
-             return enrichPiggyData(latest);
-        } else {
-            console.warn('RPC buy_piggy failed, trying fallback:', rpcError.message);
-        }
-    } catch (e) {
-        console.warn('RPC call exception:', e);
+    if (rpcError) {
+        console.error('Error crítico en compra (RPC):', rpcError);
+        // Throw simple error for UI
+        throw new Error('No se pudo procesar la compra. Verifica el stock o intenta nuevamente.');
     }
 
-    // --- Fallback (Client-side Transaction) ---
-    // 1. Create the Piggy
-    const { data: piggyData, error: piggyError } = await client
+    // Success! Fetch the created piggy to return it
+    if (rpcData && rpcData.piggy_id) {
+        return getPiggyById(rpcData.piggy_id);
+    }
+
+    // Fallback just for fetching data, not for logic
+    const { data: latest } = await client
         .from('piggies')
-        .insert({
-            user_id: user.id,
-            name: item.item_name,
-            investment_amount: item.price,
-            status: 'engorde',
-            current_weight: item.current_weight || 15.0,
-            extra_roi_bonus: item.extra_roi || 0,
-            category: item.category || 'standard',
-        })
-        .select()
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
-
-    if (piggyError) throw new Error(piggyError.message);
-
-    // 2. Decrease Stock
-    if (item.id) {
-       const { error: stockError } = await client
-        .from('marketplace')
-        .update({ stock: Math.max(0, item.stock - 1) })
-        .eq('id', item.id);
-       
-       if (stockError) console.error('Error updating stock (likely permission/RLS issue):', stockError);
-    }
-
-    return enrichPiggyData(piggyData);
+        
+    return enrichPiggyData(latest);
 }
 
 // Re-export utility functions for use in views

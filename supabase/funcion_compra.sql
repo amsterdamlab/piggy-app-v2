@@ -70,3 +70,7 @@ BEGIN
   RETURN json_build_object('success', true, 'piggy_id', v_new_piggy_id);
 END;
 $$;
+
+-- IMPORTANT: Grant permission to authenticated users
+GRANT EXECUTE ON FUNCTION buy_piggy TO authenticated;
+GRANT EXECUTE ON FUNCTION buy_piggy TO service_role;
