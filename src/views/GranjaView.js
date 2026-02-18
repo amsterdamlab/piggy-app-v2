@@ -361,14 +361,12 @@ function showBonusModal(hasPiggies) {
         <button class="bonus-close" id="bonus-close-btn">${renderIcon('close', '', '24')}</button>
         
         <div class="bonus-header">
-            <div class="bonus-image-placeholder">
-                <span style="font-size: 64px;">🏡🐷</span>
-            </div>
-            <h3 class="bonus-title text-center mt-md">BONO DE BIENENIDA</h3>
+            <!-- Image removed for cleaner look -->
+            <h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3>
             <p class="text-center text-primary font-bold text-lg">$50.000 COP</p>
         </div>
 
-        <div class="bonus-content mt-lg">
+        <div class="bonus-content mt-md" style="flex: 2;">
             <h4 class="font-bold mb-sm">Términos y Condiciones: Bono de Bienvenida</h4>
             
             <div class="bonus-text-scroll">
@@ -399,10 +397,10 @@ function showBonusModal(hasPiggies) {
         </div>
 
         <div class="bonus-footer mt-lg">
-            <button class="btn btn--primary btn--block" id="btn-redeem-bonus" ${!hasPiggies ? 'disabled title="Debes comprar tu primer Piggy para activar este bono"' : ''}>
-                ${hasPiggies ? 'Redimir Bono Ahora' : 'Comprar Piggy para Activar'}
+            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">
+                ${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $50.000!'}
             </button>
-            ${!hasPiggies ? '<p class="text-xs text-center mt-sm text-muted">El botón se activará automáticamente tras tu primera compra.</p>' : ''}
+            ${!hasPiggies ? '<p class="text-xs text-center mt-sm text-muted">Debes tener un Piggy activo para redimir.</p>' : ''}
         </div>
     </div>
   `;
@@ -417,12 +415,15 @@ function showBonusModal(hasPiggies) {
   });
 
   // Action logic
-  if (hasPiggies) {
-      document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
-          close();
+  document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
+      close();
+      if (hasPiggies) {
           navigateTo('mercado');
-      });
-  }
+      } else {
+          // If no piggies, go to adoption to "Activate" the bonus
+          navigateTo('adopcion');
+      }
+  });
 }
 
 function removeBonusModal() {
