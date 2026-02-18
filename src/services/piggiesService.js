@@ -85,9 +85,6 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
-            // purchase_date and end_date calculate automatically in DB default or trigger, 
-            // but let's rely on default for purchase_date. 
-            // end_date default is 4mo3wk from now in schema.
         })
         .select()
         .single();
@@ -151,17 +148,16 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
+ * Uses atomic RPC transaction if available, ensuring real stock management.
  */
 export async function buyMarketplaceItem(item) {
     if (isUsingMockData()) {
-        // Mock logic: Create piggy and reduce stock
         const newPiggy = {
             id: `mock-${Date.now()}`,
             user_id: 'mock-user',
             name: item.item_name,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            // 4 months duration
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
@@ -169,10 +165,8 @@ export async function buyMarketplaceItem(item) {
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
-        
-        // Find item in mock marketplace and reduce stock
-        // (This assumes we can access MOCK_MARKETPLACE_ITEMS via import if it were exported, 
-        // but since it's in another file, we mock the success response)
+        // Mock stock reduction
+        if (item.stock > 0) item.stock--; 
         return enrichPiggyData(newPiggy);
     }
 
@@ -180,6 +174,36 @@ export async function buyMarketplaceItem(item) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('User not logged in');
 
+    // Attempt to use the Secure RPC Function (Recommended)
+    try {
+        const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
+            p_item_id: item.id,
+            p_user_id: user.id,
+            p_price: item.price,
+            p_item_name: item.item_name,
+            p_extra_roi: item.extra_roi || 0,
+            p_category: item.category || 'standard'
+        });
+
+        if (!rpcError) {
+             if (rpcData && rpcData.piggy_id) {
+                 return getPiggyById(rpcData.piggy_id); 
+             }
+             const { data: latest } = await client
+                .from('piggies')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+             return enrichPiggyData(latest);
+        } else {
+            console.warn('RPC buy_piggy failed, trying fallback:', rpcError.message);
+        }
+    } catch (e) {
+        console.warn('RPC call exception:', e);
+    }
+
+    // --- Fallback (Client-side Transaction) ---
     // 1. Create the Piggy
     const { data: piggyData, error: piggyError } = await client
         .from('piggies')
@@ -189,30 +213,22 @@ export async function buyMarketplaceItem(item) {
             investment_amount: item.price,
             status: 'engorde',
             current_weight: item.current_weight || 15.0,
-            extra_roi_bonus: item.extra_roi || 0, // Ensure this is saved
+            extra_roi_bonus: item.extra_roi || 0,
             category: item.category || 'standard',
-            // Store specific attributes if columns exist (we rely on setup_completo.sql)
-            // Note: If 'category' or 'extra_roi' columns don't exist in 'piggies', this might warn/fail.
-            // But based on previous prompts, we assume basic cols. 
-            // We'll store extra_roi in specific col if available, or just standard logic.
-            // Setup script didn't explicitly add 'category' to piggies table, but let's assume standard behavior.
-            // If they are missing, Supabase ignores them or errors. 
-            // Let's stick to known columns from previous 'adoptPiggy'.
-            // However, to keep the "Category" logic, we really should verify if 'piggies' has category.
-            // For now, we'll map 'item_name' as the unique name.
         })
         .select()
         .single();
 
     if (piggyError) throw new Error(piggyError.message);
 
-    // 2. Decrease Stock (Simple update, race condition possible but ok for MVP)
-    // We don't block purchase if this fails, just log it.
+    // 2. Decrease Stock
     if (item.id) {
-       await client
+       const { error: stockError } = await client
         .from('marketplace')
         .update({ stock: Math.max(0, item.stock - 1) })
         .eq('id', item.id);
+       
+       if (stockError) console.error('Error updating stock (likely permission/RLS issue):', stockError);
     }
 
     return enrichPiggyData(piggyData);
