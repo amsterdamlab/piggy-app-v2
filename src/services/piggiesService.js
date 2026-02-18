@@ -137,9 +137,9 @@ export async function getDashboardStats(piggies) {
 
     return {
         activeCount: piggyCount,
-        finishedCount: completedPiggies.length, // Added finished count
+        finishedCount: completedPiggies.length,
         totalInvestment,
-        walletPiggyTotal, // Replaced projectedGain with walletPiggyTotal (Capital + Yield)
+        walletPiggyTotal,
         walletPiggyTotalFormatted: formatCOP(walletPiggyTotal),
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
@@ -165,8 +165,7 @@ export async function buyMarketplaceItem(item) {
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
-        // Mock stock reduction
-        if (item.stock > 0) item.stock--; 
+        if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
 
@@ -175,7 +174,6 @@ export async function buyMarketplaceItem(item) {
     if (!user) throw new Error('Usuario no autenticado');
 
     // Call Database Function (RPC)
-    // This ensures that Creating Piggy + Decreasing Stock happens together or not at all.
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -186,9 +184,8 @@ export async function buyMarketplaceItem(item) {
     });
 
     if (rpcError) {
-        console.error('Error crítico en compra (RPC):', rpcError);
-        // Throw simple error for UI
-        throw new Error('No se pudo procesar la compra. Verifica el stock o intenta nuevamente.');
+        console.error('Error crítico en compra (RPC):', JSON.stringify(rpcError));
+        throw new Error(`Error en compra: ${rpcError.message || rpcError.details || rpcError.hint || JSON.stringify(rpcError)}`);
     }
 
     // Success! Fetch the created piggy to return it
@@ -203,7 +200,7 @@ export async function buyMarketplaceItem(item) {
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
-        
+
     return enrichPiggyData(latest);
 }
 
