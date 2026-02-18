@@ -1,88 +1,220 @@
 /* ============================================
    PIGGY APP — Mercado View Styles
+   Product listing with filters
    ============================================ */
 
 .mercado-page {
     background: var(--color-bg);
 }
 
+/* Header */
+.mercado-header {
+    margin-bottom: var(--space-md);
+}
+
 .mercado-title {
     font-size: var(--text-3xl);
     font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-2xs);
 }
 
 .mercado-subtitle {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
-    margin-bottom: var(--space-xl);
     line-height: var(--leading-relaxed);
 }
 
+/* Filter Bar */
+.mercado-filters {
+    display: flex;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.mercado-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-chip {
+    white-space: nowrap;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--color-primary-100);
+    background: var(--color-white);
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.filter-chip:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.filter-chip--active {
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
+}
+
+/* Grid */
 .mercado-grid {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-lg);
 }
 
-/* Marketplace Card */
+/* Product Card */
 .mercado-card {
     padding: 0;
     overflow: hidden;
+    border-radius: var(--radius-xl);
+    background: var(--color-white);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
 }
 
-.mercado-card__image {
-    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-bg) 100%);
-    padding: var(--space-xl) var(--space-lg);
+/* Image Section */
+.mercado-card__image-section {
+    position: relative;
+    background: linear-gradient(145deg, #FFF0F5 0%, #FCE4EC 50%, #F8BBD0 100%);
+    padding: var(--space-lg);
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    min-height: 180px;
 }
 
-.mercado-card__bonus {
+.mercado-card__img {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.8);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+/* ROI Badge (top-right) */
+.mercado-card__roi-badge {
     position: absolute;
     top: var(--space-sm);
     right: var(--space-sm);
     background: var(--gradient-cta);
-    color: var(--color-text-on-primary);
-    font-size: var(--text-xs);
+    color: #fff;
+    font-size: 11px;
     font-weight: var(--font-bold);
-    padding: 4px var(--space-sm);
+    padding: 4px 12px;
     border-radius: var(--radius-full);
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(233, 30, 99, 0.3);
 }
 
-.mercado-card__body {
+/* Category Tag (top-left) */
+.mercado-card__category-tag {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    font-size: 11px;
+    font-weight: var(--font-bold);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.mercado-card__cat--standard {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.mercado-card__cat--premium {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.mercado-card__cat--silver {
+    background: #ECEFF1;
+    color: #546E7A;
+}
+
+.mercado-card__cat--gold {
+    background: #FFF8E1;
+    color: #F57F17;
+}
+
+/* Info Section */
+.mercado-card__info {
     padding: var(--space-md) var(--space-lg) var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
 }
 
 .mercado-card__name {
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
     font-weight: var(--font-bold);
-    margin-bottom: var(--space-2xs);
+    color: var(--color-text-primary);
 }
 
 .mercado-card__desc {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-.mercado-card__footer {
+/* Bottom Row: Price + Buy Button */
+.mercado-card__bottom {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xs);
+    margin-top: auto;
+}
+
+.mercado-card__pricing {
+    display: flex;
+    flex-direction: column;
 }
 
 .mercado-card__price {
     font-size: var(--text-lg);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
 }
 
 .mercado-card__stock {
-    text-align: right;
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+}
+
+/* Buy Button — smaller and pink */
+.mercado-card__buy-btn {
+    padding: 8px 20px !important;
+    font-size: var(--text-sm) !important;
+    border-radius: var(--radius-full) !important;
+    min-width: auto;
+}
+
+/* Empty State */
+.mercado-empty {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
 }
