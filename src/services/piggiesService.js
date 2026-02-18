@@ -184,8 +184,8 @@ export async function buyMarketplaceItem(item) {
     });
 
     if (rpcError) {
-        console.error('Error crítico en compra (RPC):', JSON.stringify(rpcError));
-        throw new Error(`Error en compra: ${rpcError.message || rpcError.details || rpcError.hint || JSON.stringify(rpcError)}`);
+        console.error('Error crítico en compra (RPC):', rpcError);
+        throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
     // Success! Fetch the created piggy to return it
