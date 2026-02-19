@@ -103,8 +103,8 @@ function renderAlliesList(allies) {
         <div class="empty-state__icon">
           ${renderIcon('people', '', '32')}
         </div>
-        <div class="empty-state__title">Sin aliados en esta categor\u00eda</div>
-        <div class="empty-state__description">Pr\u00f3ximamente m\u00e1s aliados se unir\u00e1n a nuestra red.</div>
+        <div class="empty-state__title">Sin aliados en esta categoría</div>
+        <div class="empty-state__description">Próximamente más aliados se unirán a nuestra red.</div>
       </div>
     `;
     return;
@@ -146,8 +146,8 @@ function renderAllyCard(ally) {
         <h3 class="ally-card__name">${ally.name}</h3>
         <span class="ally-card__specialty">${specialty}</span>
 
-        <p class="ally-card__contact-line">\uD83D\uDCDE ${phone}</p>
-        <p class="ally-card__contact-line">\uD83D\uDCCD ${address}</p>
+        <p class="ally-card__contact-line" style="font-size:12px;color:#475569;margin:2px 0;">📞 ${phone}</p>
+        <p class="ally-card__contact-line" style="font-size:12px;color:#475569;margin:2px 0;">📍 ${address}</p>
 
         <p class="ally-card__description">${description}</p>
         
@@ -169,11 +169,11 @@ function renderAllyCard(ally) {
  */
 function getFallbackImage(category) {
   const images = {
-    'Carnicer\u00eda': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'Carnicería': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
     'Restaurante': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
     'Distribuidor': 'https://images.unsplash.com/photo-1558030006-d35974213323?auto=format&fit=crop&w=800&q=80',
     'Petshop': 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
-    'Barber\u00eda': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+    'Barbería': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
   };
   return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
 }
@@ -183,11 +183,11 @@ function getFallbackImage(category) {
  */
 function getCategoryIcon(category) {
   const icons = {
-    'Carnicer\u00eda': '\uD83E\uDD69',
-    'Restaurante': '\uD83C\uDF7D\uFE0F',
-    'Distribuidor': '\uD83D\uDE9B',
-    'Petshop': '\uD83D\uDC3E',
-    'Barber\u00eda': '\uD83D\uDC88',
+    'Carnicería': '🥩',
+    'Restaurante': '🍽️',
+    'Distribuidor': '🚛',
+    'Petshop': '🐾',
+    'Barbería': '💈',
   };
-  return icons[category] || '\uD83C\uDFE2';
+  return icons[category] || '🏢';
 }
