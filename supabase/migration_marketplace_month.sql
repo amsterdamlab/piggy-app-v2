@@ -7,16 +7,22 @@
 
 -- 1. Add current_month column to marketplace
 --    Values: 1-5, representing which month of the fattening cycle the piggy is in.
+--    IMPORTANT: current_month is INDEPENDENT of the piggy category.
+--    It only reflects how long the piggy has been in the fattening cycle.
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_month INTEGER DEFAULT 1;
 
 -- 2. Add current_weight column if not exists (for display purposes)
+--    Weight is directly correlated with the month:
+--    Month 1: 15-35 kg | Month 2: 35-55 kg | Month 3: 55-75 kg | Month 4: 75-95 kg | Month 5: 95-110 kg
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 15.0;
 
--- 3. Update existing marketplace items with correct month values per category
-UPDATE public.marketplace SET current_month = 1, current_weight = 15.0 WHERE category = 'standard';
-UPDATE public.marketplace SET current_month = 2, current_weight = 38.0 WHERE category = 'premium' OR category = 'accelerator';
-UPDATE public.marketplace SET current_month = 3, current_weight = 58.0 WHERE category = 'silver';
-UPDATE public.marketplace SET current_month = 4, current_weight = 82.0 WHERE category = 'gold';
+-- 3. Update each marketplace item individually by name
+--    Month dictates weight, NOT category.
+UPDATE public.marketplace SET current_month = 3, current_weight = 65.0 WHERE item_name = 'Manchas';
+UPDATE public.marketplace SET current_month = 2, current_weight = 45.0 WHERE item_name = 'MC Queen';
+UPDATE public.marketplace SET current_month = 2, current_weight = 45.0 WHERE item_name = 'Rosita';
+UPDATE public.marketplace SET current_month = 1, current_weight = 15.0 WHERE item_name = 'Milu';
+UPDATE public.marketplace SET current_month = 2, current_weight = 45.0 WHERE item_name = 'Lupe';
 
 -- 4. Drop old function signatures and recreate with month-aware logic
 DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
