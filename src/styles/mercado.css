@@ -38,7 +38,8 @@
     align-items: stretch;
     background: var(--color-white);
     border-radius: var(--radius-xl);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08); /* Clean shadow */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    /* Clean shadow */
     overflow: hidden;
     position: relative;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
@@ -54,14 +55,16 @@
     position: absolute;
     top: 10px;
     right: 12px;
-    background: #FCE4EC; /* Pastel Pink */
-    color: #C2185B;       /* Darker Pink Text */
+    background: #FCE4EC;
+    /* Pastel Pink */
+    color: #C2185B;
+    /* Darker Pink Text */
     font-size: 11px;
     font-weight: var(--font-bold);
     padding: 3px 10px;
     border-radius: var(--radius-full);
     z-index: 2;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* ---- Left Column: Image + Buy Button ---- */
@@ -69,11 +72,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Align top */
+    justify-content: flex-start;
+    /* Align top */
     padding: var(--space-md);
     gap: var(--space-sm);
     flex-shrink: 0;
-    width: 140px; /* Slightly wider for button */
+    width: 140px;
+    /* Slightly wider for button */
 }
 
 .mcard__img-wrap {
@@ -82,14 +87,15 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .mcard__img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scale(1.15); /* Zoom in */
+    transform: scale(1.15);
+    /* Zoom in */
 }
 
 /* Buy Button — Full width of image container */
@@ -101,7 +107,8 @@
     justify-content: center;
     gap: 6px;
     padding: 8px 0;
-    border-radius: var(--radius-md); /* Less rounded for button under image */
+    border-radius: var(--radius-md);
+    /* Less rounded for button under image */
     border: none;
     background: var(--color-primary);
     color: #fff;
@@ -133,11 +140,12 @@
     display: flex;
     flex-direction: column;
     padding: var(--space-md) var(--space-md) var(--space-md) 0;
-    min-width: 0; 
+    min-width: 0;
 }
 
 .mcard__name {
-    font-size: var(--text-lg); /* Larger Name */
+    font-size: var(--text-lg);
+    /* Larger Name */
     font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
     margin-bottom: 4px;
@@ -151,8 +159,73 @@
     margin-bottom: var(--space-sm);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* Time Savings Badge — Green, top-left to complement ROI badge on right  */
+.mcard__time-badge {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    color: #2E7D32;
+    font-size: 10px;
+    font-weight: var(--font-bold);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    letter-spacing: 0.02em;
+}
+
+/* Info Row — Structured Month / Days / Weight */
+.mcard__info-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    background: linear-gradient(135deg, #FAFAFA, #F5F5F5);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+    margin-bottom: var(--space-sm);
+}
+
+.mcard__info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    gap: 2px;
+}
+
+.mcard__info-label {
+    font-size: 9px;
+    font-weight: var(--font-medium);
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mcard__info-value {
+    font-size: var(--text-sm);
+    font-weight: var(--font-extrabold);
+    color: var(--color-text-primary);
+}
+
+.mcard__info-value--month {
+    color: #7B1FA2;
+}
+
+.mcard__info-value--days {
+    color: #2E7D32;
+}
+
+.mcard__info-divider {
+    width: 1px;
+    height: 28px;
+    background: #E0E0E0;
+    flex-shrink: 0;
 }
 
 /* Tags row */

@@ -104,15 +104,20 @@ function renderItems(items) {
 /**
  * Render a single horizontal product card.
  * Layout: Image left, Buy button below image. Details right.
+ * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
  */
 function renderProductCard(item) {
   const hasExtraROI = item.extra_roi > 0;
   const extraROIText = hasExtraROI ? `+${(item.extra_roi * 100).toFixed(0)}%` : '';
-  const monthEstimate = Math.max(1, Math.round((item.current_weight || 15) / 10));
+  const currentMonth = item.currentMonth || 1;
+  const daysRemaining = item.daysRemaining;
+  const isAdvanced = currentMonth >= 2;
+  const daysSaved = item.cycleTotalDays - daysRemaining;
 
   return `
     <div class="mcard animate-fade-in-up">
       ${hasExtraROI ? `<span class="mcard__roi-badge">${extraROIText}</span>` : ''}
+      ${isAdvanced ? `<span class="mcard__time-badge">⚡ Ahorra ${daysSaved} días</span>` : ''}
 
       <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
@@ -131,11 +136,24 @@ function renderProductCard(item) {
         <h4 class="mcard__name">${item.item_name}</h4>
         <p class="mcard__desc">${item.description}</p>
 
-        <!-- Tags: Month + Weight -->
-        <div class="mcard__tags">
-          <span class="mcard__tag mcard__tag--purple">Mes ${monthEstimate}</span>
-          <span class="mcard__tag">${item.current_weight || 15} kg</span>
+        <!-- Info Row: Month + Days Remaining + Weight -->
+        <div class="mcard__info-row">
+          <div class="mcard__info-item">
+            <span class="mcard__info-label">Mes</span>
+            <span class="mcard__info-value mcard__info-value--month">${currentMonth}</span>
+          </div>
+          <div class="mcard__info-divider"></div>
+          <div class="mcard__info-item">
+            <span class="mcard__info-label">Días restantes</span>
+            <span class="mcard__info-value mcard__info-value--days">${daysRemaining}</span>
+          </div>
+          <div class="mcard__info-divider"></div>
+          <div class="mcard__info-item">
+            <span class="mcard__info-label">Peso</span>
+            <span class="mcard__info-value">${item.current_weight || 15} kg</span>
+          </div>
         </div>
+
 
         <!-- Price Info -->
         <div class="mcard__price-row">
@@ -161,7 +179,7 @@ function showCheckoutModal(item) {
   const modal = document.createElement('div');
   modal.id = 'checkout-modal';
   modal.className = 'checkout-fullscreen animate-fade-in-up';
-  
+
   // Style for full screen override
   modal.style.position = 'fixed';
   modal.style.top = '0';
@@ -266,22 +284,22 @@ function showCheckoutModal(item) {
 
   // Close Logic
   const close = () => {
-      document.body.style.overflow = ''; // Unlock scroll
-      modal.remove();
+    document.body.style.overflow = ''; // Unlock scroll
+    modal.remove();
   };
-  
+
   document.getElementById('checkout-close-btn').addEventListener('click', close);
-  
+
   // Payment Logic
   document.querySelectorAll('.payment-option').forEach(btn => {
     btn.addEventListener('click', async () => {
       const method = btn.dataset.method;
-      
+
       // Visual feedback on button
       const originalContent = btn.innerHTML;
       btn.style.opacity = '0.7';
       btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border:2px solid #555;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite; margin-right: 10px; display:inline-block;"></span> Procesando...';
-      
+
       // Disable all
       document.querySelectorAll('.payment-option').forEach(b => b.disabled = true);
 
@@ -291,14 +309,14 @@ function showCheckoutModal(item) {
       try {
         // Execute Purchase Logic
         await buyMarketplaceItem(item);
-        
+
         close();
         navigateTo('granja');
 
       } catch (error) {
         console.error(error);
         alert('Error en la transacción: ' + error.message);
-        
+
         // Reset
         btn.style.opacity = '1';
         btn.innerHTML = originalContent;

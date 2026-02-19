@@ -85,6 +85,9 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
+            // purchase_date and end_date calculate automatically in DB default or trigger, 
+            // but let's rely on default for purchase_date. 
+            // end_date default is 4mo3wk from now in schema.
         })
         .select()
         .single();
@@ -137,9 +140,9 @@ export async function getDashboardStats(piggies) {
 
     return {
         activeCount: piggyCount,
-        finishedCount: completedPiggies.length,
+        finishedCount: completedPiggies.length, // Added finished count
         totalInvestment,
-        walletPiggyTotal,
+        walletPiggyTotal, // Replaced projectedGain with walletPiggyTotal (Capital + Yield)
         walletPiggyTotalFormatted: formatCOP(walletPiggyTotal),
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
@@ -148,9 +151,15 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
- * STRICT MODE: Only uses RPC 'buy_piggy' to ensure atomic stock deduction.
+ * The current_month of the item determines how many days remain in the cycle.
  */
 export async function buyMarketplaceItem(item) {
+    // Calculate days remaining based on current_month (matches marketplaceService logic)
+    const CYCLE_TOTAL_DAYS = 143;
+    const currentMonth = item.currentMonth || item.current_month || 1;
+    const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
+    const daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
+
     if (isUsingMockData()) {
         const newPiggy = {
             id: `mock-${Date.now()}`,
@@ -158,13 +167,15 @@ export async function buyMarketplaceItem(item) {
             name: item.item_name,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
             category: item.category,
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
+
+        // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
@@ -174,13 +185,15 @@ export async function buyMarketplaceItem(item) {
     if (!user) throw new Error('Usuario no autenticado');
 
     // Call Database Function (RPC)
+    // Passes current_month so the DB calculates the correct end_date
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
         p_price: item.price,
         p_item_name: item.item_name,
         p_extra_roi: item.extra_roi || 0,
-        p_category: item.category || 'standard'
+        p_category: item.category || 'standard',
+        p_current_month: currentMonth,
     });
 
     if (rpcError) {
