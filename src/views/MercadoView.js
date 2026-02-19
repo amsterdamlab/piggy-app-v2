@@ -142,11 +142,7 @@ function renderProductCard(item) {
             <span class="mcard__info-label">Mes</span>
             <span class="mcard__info-value mcard__info-value--month">${currentMonth}</span>
           </div>
-          <div class="mcard__info-divider"></div>
-          <div class="mcard__info-item">
-            <span class="mcard__info-label">Días restantes</span>
-            <span class="mcard__info-value mcard__info-value--days">${daysRemaining}</span>
-          </div>
+
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
             <span class="mcard__info-label">Peso</span>
