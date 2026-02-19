@@ -68,32 +68,42 @@
 
 /* Ally Card */
 .ally-card {
-    padding: 0; /* Remove padding to let image bleed */
+    padding: 0;
     border-radius: var(--radius-lg);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--color-bg-card);
-    /* Remove height: 100% to allow content to dictate height, unless in a grid where rows stretch */
-    height: auto; 
+    height: auto;
     box-shadow: var(--shadow-md);
 }
 
 .ally-card__image-container {
     position: relative;
     width: 100%;
-    /* Use aspect-ratio for consistent rectangular shape across devices */
     aspect-ratio: 16 / 9;
-    height: auto; 
+    height: auto;
     background-color: var(--color-bg-secondary);
-    min-height: 180px; /* Fallback */
+    min-height: 180px;
 }
 
 .ally-card__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block; /* Removes bottom space */
+    display: block;
+}
+
+.ally-card__image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    font-size: 48px;
+    font-weight: var(--font-extrabold);
 }
 
 .ally-card__category-tag {
@@ -122,7 +132,7 @@
     padding: var(--space-lg);
     display: flex;
     flex-direction: column;
-    flex: 1; /* Allow content to expand */
+    flex: 1;
     gap: var(--space-md);
 }
 
@@ -150,31 +160,23 @@
     color: var(--color-text-secondary);
     line-height: 1.6;
     margin-bottom: 0;
-    /* Ensure no unexpected clipping */
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    /* Limit roughly to 3 lines if needed, or remove for full text */
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .ally-card__benefit {
-    background-color: #FFF8F3; /* Light orange/peach background */
+    background-color: #FFF8F3;
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    border: 1px solid rgba(234, 88, 12, 0.1); /* Subtle orange border */
+    border: 1px solid rgba(234, 88, 12, 0.1);
 }
 
 .ally-card__benefit-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #FFE4D6; /* Darker peach circle */
+    background-color: #FFE4D6;
     color: var(--color-primary-dark);
     display: flex;
     align-items: center;
@@ -190,18 +192,9 @@
     gap: 2px;
 }
 
-.ally-card__benefit-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-primary); /* Use primary color for label text usually */
-    font-weight: var(--font-bold);
-    opacity: 0.8;
-}
-
 .ally-card__benefit-text {
     font-size: var(--text-sm);
     font-weight: var(--font-bold);
-    color: #7c2d12; /* Dark brownish-orange text */
+    color: #7c2d12;
     line-height: 1.3;
 }

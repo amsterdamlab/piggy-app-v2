@@ -119,12 +119,22 @@ function renderAlliesList(allies) {
 
 /**
  * Render a single ally card.
+ * Resilient to missing DB columns — uses fallbacks for image, description, specialty, benefit.
  */
 function renderAllyCard(ally) {
+  const imageUrl = ally.image_url || getFallbackImage(ally.category);
+  const specialty = ally.specialty || ally.category || '';
+  const description = ally.description || ally.discount_info || '';
+  const benefitText = ally.benefit || ally.discount_info || '';
+
+  const imageHtml = imageUrl
+    ? `<img src="${imageUrl}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">`
+    : `<div class="ally-card__image-placeholder">${ally.name.charAt(0).toUpperCase()}</div>`;
+
   return `
     <div class="ally-card card animate-fade-in-up">
       <div class="ally-card__image-container">
-        <img src="${ally.image_url}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer">
+        ${imageHtml}
         <div class="ally-card__category-tag">
            ${renderIcon('tag', 'ally-card__tag-icon', '14')}
            ${ally.category}
@@ -134,22 +144,34 @@ function renderAllyCard(ally) {
       <div class="ally-card__content">
         <div class="ally-card__header">
             <h3 class="ally-card__name">${ally.name}</h3>
-            <span class="ally-card__specialty">${ally.specialty || ''}</span>
+            <span class="ally-card__specialty">${specialty}</span>
         </div>
 
-        <p class="ally-card__description">${ally.description || ''}</p>
+        <p class="ally-card__description">${description}</p>
         
         <div class="ally-card__benefit">
             <div class="ally-card__benefit-icon">
                 %
             </div>
             <div class="ally-card__benefit-info">
-                <span class="ally-card__benefit-text">${ally.benefit || ally.discount_info || ''}</span>
+                <span class="ally-card__benefit-text">${benefitText}</span>
             </div>
         </div>
       </div>
     </div>
   `;
+}
+
+/**
+ * Provide a fallback Unsplash image based on ally category.
+ */
+function getFallbackImage(category) {
+  const images = {
+    'Carnicería': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'Restaurante': 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=800&q=80',
+    'Distribuidor': 'https://images.unsplash.com/photo-1586882829491-b81178aa622e?auto=format&fit=crop&w=800&q=80',
+  };
+  return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
 }
 
 /**
