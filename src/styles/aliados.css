@@ -136,8 +136,44 @@
     gap: var(--space-md);
 }
 
-.ally-card__header {
+/* Header Row Layout */
+.ally-card__header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
     margin-bottom: 0;
+}
+
+.ally-card__title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.ally-card__contact-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+    /* Align right */
+    justify-content: flex-start;
+    padding-top: 4px;
+}
+
+.ally-card__contact-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+}
+
+.ally-card__contact-icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+    opacity: 0.8;
 }
 
 .ally-card__name {
@@ -205,25 +241,4 @@
     line-height: 1.3;
 }
 
-.ally-card__contact {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: var(--space-sm);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border);
-}
-
-.ally-card__contact-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--text-xs);
-    color: var(--color-text-secondary);
-    font-weight: var(--font-medium);
-}
-
-.ally-card__contact-icon {
-    color: var(--color-primary);
-    flex-shrink: 0;
-}
+/* End of aliies section */

@@ -146,9 +146,22 @@ function renderAllyCard(ally) {
       </div>
       
       <div class="ally-card__content">
-        <div class="ally-card__header">
-            <h3 class="ally-card__name">${ally.name}</h3>
-            <span class="ally-card__specialty">${specialty}</span>
+        <div class="ally-card__header-row">
+            <div class="ally-card__title-section">
+                <h3 class="ally-card__name">${ally.name}</h3>
+                <span class="ally-card__specialty">${specialty}</span>
+            </div>
+            
+            <div class="ally-card__contact-section">
+                 <div class="ally-card__contact-item">
+                    ${renderIcon('phone', 'ally-card__contact-icon', '14')}
+                    <span>${phone}</span>
+                </div>
+                <div class="ally-card__contact-item">
+                    ${renderIcon('location', 'ally-card__contact-icon', '14')}
+                    <span>${address}</span>
+                </div>
+            </div>
         </div>
 
         <p class="ally-card__description">${description}</p>
@@ -159,17 +172,6 @@ function renderAllyCard(ally) {
             </div>
             <div class="ally-card__benefit-info">
                 <span class="ally-card__benefit-text">${benefitText}</span>
-            </div>
-        </div>
-
-        <div class="ally-card__contact">
-             <div class="ally-card__contact-item">
-                ${renderIcon('phone', 'ally-card__contact-icon', '16')}
-                <span>${phone}</span>
-            </div>
-            <div class="ally-card__contact-item">
-                ${renderIcon('location', 'ally-card__contact-icon', '16')}
-                <span>${address}</span>
             </div>
         </div>
       </div>
