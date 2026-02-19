@@ -126,8 +126,7 @@ function renderAllyCard(ally) {
   const specialty = ally.specialty || ally.category || '';
   const description = ally.description || ally.discount_info || '';
   const benefitText = ally.benefit || ally.discount_info || '';
-  
-  // Fallback contact info if missing (User asked to invent data, so we can use placeholders or rely on DB/Mock)
+
   const phone = ally.phone || '300 123 4567';
   const address = ally.address || ally.location || 'Calle Principal # 123';
 
@@ -146,18 +145,17 @@ function renderAllyCard(ally) {
       </div>
       
       <div class="ally-card__content">
-        <div class="ally-card__header-row">
-            <div class="ally-card__title-section">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%;">
+            <div style="flex:1;min-width:0;">
                 <h3 class="ally-card__name">${ally.name}</h3>
                 <span class="ally-card__specialty">${specialty}</span>
             </div>
-            
-            <div class="ally-card__contact-section">
-                 <div class="ally-card__contact-item">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
                     ${renderIcon('phone', 'ally-card__contact-icon', '14')}
                     <span>${phone}</span>
                 </div>
-                <div class="ally-card__contact-item">
+                <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
                     ${renderIcon('location', 'ally-card__contact-icon', '14')}
                     <span>${address}</span>
                 </div>
