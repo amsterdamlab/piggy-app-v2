@@ -124,7 +124,7 @@ function renderAllyCard(ally) {
   return `
     <div class="ally-card card animate-fade-in-up">
       <div class="ally-card__image-container">
-        <img src="${ally.image_url}" alt="${ally.name}" class="ally-card__image" loading="lazy">
+        <img src="${ally.image_url}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer">
         <div class="ally-card__category-tag">
            ${renderIcon('tag', 'ally-card__tag-icon', '14')}
            ${ally.category}
@@ -144,7 +144,6 @@ function renderAllyCard(ally) {
                 %
             </div>
             <div class="ally-card__benefit-info">
-                <span class="ally-card__benefit-label">BENEFICIO CICLO ENGORDE</span>
                 <span class="ally-card__benefit-text">${ally.benefit || ally.discount_info || ''}</span>
             </div>
         </div>
