@@ -20,7 +20,7 @@ WHERE name = 'Carnes Don Julio';
 
 UPDATE public.allies
 SET
-  image_url = 'https://images.unsplash.com/photo-1544025162-d76690b6d012?auto=format&fit=crop&w=800&q=80',
+  image_url = 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
   description = 'Sabor tradicional con ingredientes del campo directo a tu mesa.',
   specialty = 'Comida Típica',
   benefit = '10% en platos con cerdo'
@@ -28,7 +28,7 @@ WHERE name = 'Restaurante El Fogón';
 
 UPDATE public.allies
 SET
-  image_url = 'https://images.unsplash.com/photo-1586882829491-b81178aa622e?auto=format&fit=crop&w=800&q=80',
+  image_url = 'https://images.unsplash.com/photo-1558030006-d35974213323?auto=format&fit=crop&w=800&q=80',
   description = 'Abastecemos tu negocio con la mejor carne de cerdo de la región.',
   specialty = 'Venta al Por Mayor',
   benefit = 'Envío gratis en pedidos mayoristas'
