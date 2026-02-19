@@ -160,10 +160,18 @@ export async function getDashboardStats(piggies) {
         return sum + totalReturn;
     }, 0);
 
-    // 4. Ciclo de cierre cercano (Min days left)
-    const nextCloseDays = activePiggies.length > 0 
-        ? Math.min(...activePiggies.map(p => p.daysLeft)) 
-        : null;
+    // 4. Ciclo de cierre cercano (Min days left) & Progress
+    let nextCloseDays = null;
+    let nextCloseProgress = 0;
+
+    if (activePiggies.length > 0) {
+        // Find piggy with minimum days left (closest to completion)
+        const closestPiggy = activePiggies.reduce((prev, curr) => 
+            (prev.daysLeft < curr.daysLeft) ? prev : curr
+        );
+        nextCloseDays = closestPiggy.daysLeft;
+        nextCloseProgress = closestPiggy.progress;
+    }
 
     return {
         activeCount: piggyCount,
@@ -175,6 +183,7 @@ export async function getDashboardStats(piggies) {
         disponible,
         disponibleFormatted: formatCOP(disponible),
         nextCloseDays,
+        nextCloseProgress,
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
     };
