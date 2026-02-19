@@ -164,7 +164,7 @@ function renderProductCard(item) {
 /**
  * Show Full Screen Checkout for Direct Purchase.
  */
-function showCheckoutModal(item) {
+export function showCheckoutModal(item) {
   // Remove existing if any
   const existing = document.getElementById('checkout-modal');
   if (existing) existing.remove();

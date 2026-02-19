@@ -8,6 +8,8 @@ import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
+import { showCheckoutModal } from './MercadoView.js';
+import { getMarketplaceItems } from '../services/marketplaceService.js';
 
 /**
  * Render the Granja (Dashboard) view.
@@ -225,7 +227,7 @@ function buildGranjaFull(firstName, piggies, stats) {
           </div>
 
           <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 12px;">
-            <button onclick="location.hash='#/mercado'" style="
+            <button id="btn-quick-buy" style="
                 background: #ec4899; 
                 color: white; 
                 border: none; 
@@ -450,6 +452,33 @@ function attachGranjaListeners(hasPiggies, stats) {
   document.getElementById('bonus-banner')?.addEventListener('click', () => {
     showBonusModal(hasPiggies);
   });
+  
+  // Quick Buy Action
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+      quickBuyBtn.addEventListener('click', async () => {
+         quickBuyBtn.style.opacity = '0.7';
+         quickBuyBtn.style.pointerEvents = 'none';
+         
+         try {
+             const items = await getMarketplaceItems();
+             // Find Standard Initial Piggy (Month 1, Standard)
+             const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+             
+             if (standardPiggy) {
+                 showCheckoutModal(standardPiggy);
+             } else {
+                 navigateTo('mercado');
+             }
+         } catch (error) {
+             console.error('Quick buy error:', error);
+             navigateTo('mercado');
+         } finally {
+             quickBuyBtn.style.opacity = '1';
+             quickBuyBtn.style.pointerEvents = 'auto';
+         }
+      });
+  }
 
   // Wallet Actions
   document.getElementById('btn-withdraw')?.addEventListener('click', () => {
