@@ -223,6 +223,41 @@ function buildGranjaFull(firstName, piggies, stats) {
             ${renderIcon('trendUp', 'roi-info__icon', '16')}
             <span>Margen Comercial Granja: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
           </div>
+
+          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 12px;">
+            <button onclick="location.hash='#/mercado'" style="
+                background: #ec4899; 
+                color: white; 
+                border: none; 
+                width: 100%; 
+                padding: 14px 20px; 
+                border-radius: 12px; 
+                font-weight: 700; 
+                font-size: 1rem; 
+                cursor: pointer; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 10px;
+                box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+                transition: transform 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="
+                    background: white; 
+                    color: #ec4899;
+                    width: 22px; 
+                    height: 22px; 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    font-size: 18px;
+                    font-weight: 800;
+                    padding-bottom: 2px;
+                ">+</div>
+                Compra un Nuevo Piggy
+            </button>
+          </div>
         ` : ''}
 
         <!-- Mis Cerdos -->
