@@ -12,9 +12,9 @@ let activeCategory = null;
  * Render the Aliados view.
  */
 export function renderAliadosView() {
-    const app = document.getElementById('app');
+  const app = document.getElementById('app');
 
-    app.innerHTML = `
+  app.innerHTML = `
     <div class="page page--with-nav aliados-page">
       <div class="page__content">
         <h2 class="aliados-title animate-fade-in-up">Aliados</h2>
@@ -32,46 +32,46 @@ export function renderAliadosView() {
     </div>
   `;
 
-    loadAliadosData();
+  loadAliadosData();
 
-    return () => {
-        activeCategory = null;
-    };
+  return () => {
+    activeCategory = null;
+  };
 }
 
 /**
  * Load allies data.
  */
 async function loadAliadosData() {
-    try {
-        const [allies, categories] = await Promise.all([
-            getAllies(activeCategory),
-            getAllyCategories(),
-        ]);
+  try {
+    const [allies, categories] = await Promise.all([
+      getAllies(activeCategory),
+      getAllyCategories(),
+    ]);
 
-        renderFilters(categories);
-        renderAlliesList(allies);
-    } catch (error) {
-        console.error('Error loading allies:', error);
-        const container = document.getElementById('aliados-content');
-        if (container) {
-            container.innerHTML = `
+    renderFilters(categories);
+    renderAlliesList(allies);
+  } catch (error) {
+    console.error('Error loading allies:', error);
+    const container = document.getElementById('aliados-content');
+    if (container) {
+      container.innerHTML = `
         <div class="auth-form__error auth-form__error--visible">
           Error al cargar aliados. Intenta de nuevo.
         </div>
       `;
-        }
     }
+  }
 }
 
 /**
  * Render category filter pills.
  */
 function renderFilters(categories) {
-    const container = document.getElementById('aliados-filters');
-    if (!container) return;
+  const container = document.getElementById('aliados-filters');
+  if (!container) return;
 
-    container.innerHTML = `
+  container.innerHTML = `
     <button class="aliados-filter ${!activeCategory ? 'aliados-filter--active' : ''}" data-category="">
       Todos
     </button>
@@ -82,23 +82,23 @@ function renderFilters(categories) {
     `).join('')}
   `;
 
-    container.querySelectorAll('.aliados-filter').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            activeCategory = btn.dataset.category || null;
-            loadAliadosData();
-        });
+  container.querySelectorAll('.aliados-filter').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.category || null;
+      loadAliadosData();
     });
+  });
 }
 
 /**
  * Render allies list.
  */
 function renderAlliesList(allies) {
-    const container = document.getElementById('aliados-content');
-    if (!container) return;
+  const container = document.getElementById('aliados-content');
+  if (!container) return;
 
-    if (allies.length === 0) {
-        container.innerHTML = `
+  if (allies.length === 0) {
+    container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state__icon">
           ${renderIcon('people', '', '32')}
@@ -107,10 +107,10 @@ function renderAlliesList(allies) {
         <div class="empty-state__description">Próximamente más aliados se unirán a nuestra red.</div>
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="aliados-list">
       ${allies.map(renderAllyCard).join('')}
     </div>
@@ -121,24 +121,32 @@ function renderAlliesList(allies) {
  * Render a single ally card.
  */
 function renderAllyCard(ally) {
-    const initial = ally.name.charAt(0).toUpperCase();
-    return `
+  return `
     <div class="ally-card card animate-fade-in-up">
-      <div class="ally-card__header">
-        <div class="ally-card__logo">${initial}</div>
-        <div class="ally-card__info">
-          <h4 class="ally-card__name">${ally.name}</h4>
-          <span class="badge badge--primary">${ally.category}</span>
+      <div class="ally-card__image-container">
+        <img src="${ally.image_url}" alt="${ally.name}" class="ally-card__image" loading="lazy">
+        <div class="ally-card__category-tag">
+           ${renderIcon('tag', 'ally-card__tag-icon', '14')}
+           ${ally.category}
         </div>
       </div>
-      <div class="ally-card__details">
-        <div class="ally-card__location">
-          ${renderIcon('location', '', '14')}
-          <span>${ally.location}</span>
+      
+      <div class="ally-card__content">
+        <div class="ally-card__header">
+            <h3 class="ally-card__name">${ally.name}</h3>
+            <span class="ally-card__specialty">${ally.specialty || ''}</span>
         </div>
-        <div class="ally-card__discount">
-          ${renderIcon('gift', '', '14')}
-          <span>${ally.discount_info}</span>
+
+        <p class="ally-card__description">${ally.description || ''}</p>
+        
+        <div class="ally-card__benefit">
+            <div class="ally-card__benefit-icon">
+                %
+            </div>
+            <div class="ally-card__benefit-info">
+                <span class="ally-card__benefit-label">BENEFICIO CICLO ENGORDE</span>
+                <span class="ally-card__benefit-text">${ally.benefit || ally.discount_info || ''}</span>
+            </div>
         </div>
       </div>
     </div>
@@ -149,10 +157,10 @@ function renderAllyCard(ally) {
  * Get icon for category.
  */
 function getCategoryIcon(category) {
-    const icons = {
-        'Carnicería': '🥩',
-        'Restaurante': '🍽️',
-        'Distribuidor': '🚛',
-    };
-    return icons[category] || '🏢';
+  const icons = {
+    'Carnicería': '🥩',
+    'Restaurante': '🍽️',
+    'Distribuidor': '🚛',
+  };
+  return icons[category] || '🏢';
 }
