@@ -183,7 +183,7 @@ function buildGranjaFull(firstName, piggies, stats) {
         ${stats.activeCount > 0 ? `
           <div class="roi-info animate-fade-in-up" style="animation-delay: 0.15s;">
             ${renderIcon('trendUp', 'roi-info__icon', '16')}
-            <span>Margen Comercial Estimado: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
+            <span>Margen Comercial Granja: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
           </div>
         ` : ''}
 
