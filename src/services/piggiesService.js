@@ -102,10 +102,10 @@ export async function adoptPiggy(piggyName) {
 function enrichPiggyData(piggy) {
     // Fixed cycle duration in days (4 months 3 weeks)
     const CYCLE_TOTAL_DAYS = 143;
-    
+
     // Calculate days remaining
     const daysLeft = getDaysRemaining(piggy.end_date);
-    
+
     // Calculate progress based on REVERSE logic (143 - daysLeft)
     // This allows piggies bought at "Month 3" to show correct 60% progress immediately
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
@@ -113,8 +113,8 @@ function enrichPiggyData(piggy) {
 
     // Use DB weight if it exists and is meaningful (>15), otherwise simulate it from progress
     const dbWeight = parseFloat(piggy.current_weight);
-    const weight = (dbWeight && dbWeight > 15) 
-        ? dbWeight 
+    const weight = (dbWeight && dbWeight > 15)
+        ? dbWeight
         : simulateWeight(progress);
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
@@ -133,31 +133,48 @@ function enrichPiggyData(piggy) {
  * Get summary stats for the dashboard.
  */
 export async function getDashboardStats(piggies) {
-    const activePiggies = piggies.filter((p) => p.status === 'engorde');
-    const completedPiggies = piggies.filter((p) => p.status === 'liquidado');
+    const activePiggies = piggies.filter((p) => !p.isComplete);
+    const availablePiggies = piggies.filter((p) => p.isComplete);
+    
     const piggyCount = activePiggies.length;
+    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
-    const totalInvestment = activePiggies.reduce(
-        (sum, p) => sum + (p.investment_amount || 0),
-        0
+    // 1. Adquisición Bonos de Preventa (Active Investment)
+    const adquisicionBonos = activePiggies.reduce(
+        (sum, p) => sum + (p.investment_amount || 0), 0
     );
 
-    const walletPiggyTotal = activePiggies.reduce((sum, p) => {
-        const totalReturn = calculateTotalReturn(
-            p.investment_amount,
-            baseROI,
-            p.extra_roi_bonus || 0
-        );
+    // 2. Diferencial de Preventa (Projected Gain for Active)
+    const diferencialPreventa = activePiggies.reduce((sum, p) => {
+        const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
+        return sum + (totalReturn - p.investment_amount);
+    }, 0);
+
+    // 3. Disponible (Finished Cycles Total Value)
+    const disponible = availablePiggies.reduce((sum, p) => {
+        // Use stored final amount if exists, else calculate
+        if (p.final_return_amount) return sum + p.final_return_amount;
+        // Re-calculate return based on when it finished (using same logic)
+        const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
         return sum + totalReturn;
-    }, 0) + completedPiggies.reduce((sum, p) => sum + (p.final_return_amount || 0), 0);
+    }, 0);
+
+    // 4. Ciclo de cierre cercano (Min days left)
+    const nextCloseDays = activePiggies.length > 0 
+        ? Math.min(...activePiggies.map(p => p.daysLeft)) 
+        : null;
 
     return {
         activeCount: piggyCount,
-        finishedCount: completedPiggies.length, // Added finished count
-        totalInvestment,
-        walletPiggyTotal, // Replaced projectedGain with walletPiggyTotal (Capital + Yield)
-        walletPiggyTotalFormatted: formatCOP(walletPiggyTotal),
+        finishedCount: availablePiggies.length,
+        adquisicionBonos,
+        adquisicionBonosFormatted: formatCOP(adquisicionBonos),
+        diferencialPreventa,
+        diferencialPreventaFormatted: formatCOP(diferencialPreventa),
+        disponible,
+        disponibleFormatted: formatCOP(disponible),
+        nextCloseDays,
         baseROI,
         baseROIFormatted: formatPercentage(baseROI),
     };

@@ -9,8 +9,6 @@ import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggie
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 
-// ... imports remain the same
-
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -39,32 +37,20 @@ function buildGranjaShell(firstName) {
         ${renderGreeting(firstName)}
         <h2 class="granja-title">Mi Granja</h2>
 
-        <!-- Stats Skeleton -->
+        <!-- Stats Skeleton (New Wallet Look) -->
         <div class="section animate-fade-in-up">
-          <div class="stat-card" style="margin-bottom:var(--space-md);">
-            <div>
-              <div class="stat-card__label">Compra Activa</div>
-              <div class="stat-card__value">
-                <span class="skeleton" style="display:inline-block;width:40px;height:28px;"></span>
+           <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 24px; border-radius: 16px; margin-bottom: 24px; color: white; position:relative; overflow:hidden;">
+              <h3 style="margin:0 0 16px 0; font-size:1.1rem; opacity:0.9;">Wallet de ${firstName}</h3>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                  <div><span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2);"></span><div class="skeleton" style="width:60px; height:20px; background:rgba(255,255,255,0.3); margin-top:4px;"></div></div>
+                  <div><span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2);"></span><div class="skeleton" style="width:60px; height:20px; background:rgba(255,255,255,0.3); margin-top:4px;"></div></div>
+                  <div><span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2);"></span><div class="skeleton" style="width:100px; height:24px; background:rgba(255,255,255,0.3); margin-top:4px;"></div></div>
+                  <div><span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2);"></span><div class="skeleton" style="width:40px; height:20px; background:rgba(255,255,255,0.3); margin-top:4px;"></div></div>
               </div>
-            </div>
-            <div class="stat-card__icon">
-              <!-- <span style="font-size: 28px;">🐷</span> -->
-              <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:contain;" />
-            </div>
-          </div>
-          
-          <div class="stat-card">
-              <div>
-                <div class="stat-card__label">Wallet de ${firstName}</div>
-                <div class="stat-card__value stat-card__value--accent">
-                  <span class="skeleton" style="display:inline-block;width:120px;height:24px;"></span>
-                </div>
+              <div style="position: absolute; bottom: -10px; right: -10px; opacity: 0.15; transform: rotate(-15deg);">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
               </div>
-              <div class="stat-card__icon" style="background:var(--color-success-light);color:var(--color-success);">
-                 ${renderIcon('dollar', '', '24')}
-              </div>
-          </div>
+           </div>
         </div>
 
         <!-- Piggies section skeleton -->
@@ -94,7 +80,7 @@ async function loadGranjaData(firstName) {
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats);
 
-    attachGranjaListeners(piggies.length > 0);
+    attachGranjaListeners(piggies.length > 0, stats);
   } catch (error) {
     console.error('Error loading granja data:', error);
     const section = document.getElementById('piggies-section');
@@ -118,34 +104,79 @@ function buildGranjaFull(firstName, piggies, stats) {
         ${renderGreeting(firstName)}
         <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
 
-        <!-- Stats -->
+        <!-- Wallet Banner (Green) -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.1s;">
-          <!-- Compra Activa -->
-          <div class="stat-card" style="margin-bottom:var(--space-md);">
-            <div>
-              <div class="stat-card__label">Compra Activa</div>
-              <div class="stat-card__value">${stats.activeCount}</div>
-              <div class="stat-card__subtext mt-sm text-xs text-muted">
-                En engorde: <strong>${stats.activeCount}</strong> • Finalizados: <strong>${stats.finishedCount}</strong>
+           <div class="wallet-banner-card" style="
+              background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
+              color: white; 
+              padding: 24px; 
+              border-radius: 16px; 
+              margin-bottom: 24px; 
+              position: relative; 
+              overflow: hidden;
+              box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+           ">
+              <div style="position: absolute; bottom: -15px; right: -15px; opacity: 0.15; transform: rotate(-15deg); color:white;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
               </div>
-            </div>
-            <div class="stat-card__icon">
-              <!-- <span style="font-size: 28px;">🐷</span> -->
-              <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:contain;" />
-            </div>
-          </div>
-          
-          <!-- Wallet Piggy -->
-          <div class="stat-card">
-            <div>
-              <div class="stat-card__label">Wallet de ${firstName}</div>
-              <div class="stat-card__value stat-card__value--accent">${stats.walletPiggyTotalFormatted}</div>
-              <div class="text-xs text-muted mt-sm">Disponible al finalizar ciclo</div>
-            </div>
-            <div class="stat-card__icon" style="background:var(--color-success-light);color:var(--color-success);">
-               ${renderIcon('dollar', '', '24')}
-            </div>
-          </div>
+
+              <div style="position:relative; z-index:2;">
+                 <h3 style="margin:0 0 20px 0; font-size:1.25rem; font-weight:700;">Wallet de ${firstName}</h3>
+                 
+                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                    <!-- Adquisicion -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Adquisición Bonos de Preventa</div>
+                       <div style="font-size:1rem; font-weight:600;">${stats.adquisicionBonosFormatted}</div>
+                    </div>
+                    <!-- Diferencial -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Diferencial de Preventa</div>
+                       <div style="font-size:1rem; font-weight:600; color:#bbf7d0;">+${stats.diferencialPreventaFormatted}</div>
+                    </div>
+                    <!-- Disponible -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Disponible</div>
+                       <div style="font-size:1.5rem; font-weight:800;">${stats.disponibleFormatted}</div>
+                    </div>
+                    <!-- Ciclo cierre -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Ciclo de cierre cercano</div>
+                       <div style="font-size:1rem; font-weight:600;">${stats.nextCloseDays !== null ? stats.nextCloseDays + ' días' : '-'}</div>
+                    </div>
+                 </div>
+
+                 ${stats.disponible > 0 ? `
+                   <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                      <button id="btn-withdraw" style="
+                         background: white; 
+                         color: #059669; 
+                         border: none; 
+                         padding: 8px 16px; 
+                         border-radius: 8px; 
+                         font-weight: 600; 
+                         font-size: 0.85rem; 
+                         cursor: pointer;
+                         flex: 1;
+                         white-space: nowrap;
+                         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                      ">Convertir Bono en Efectivo</button>
+                      <button id="btn-meat" style="
+                         background: rgba(255,255,255,0.2); 
+                         color: white; 
+                         border: 1px solid rgba(255,255,255,0.4); 
+                         padding: 8px 16px; 
+                         border-radius: 8px; 
+                         font-weight: 600; 
+                         font-size: 0.85rem; 
+                         cursor: pointer;
+                         flex: 1;
+                         white-space: nowrap;
+                      ">Solicitar Entrega de Carne</button>
+                   </div>
+                 ` : ''}
+              </div>
+           </div>
         </div>
 
         <!-- ROI Info -->
@@ -333,7 +364,7 @@ export function renderBottomNav(activeTab) {
 /**
  * Attach event listeners.
  */
-function attachGranjaListeners(hasPiggies) {
+function attachGranjaListeners(hasPiggies, stats) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
     card.addEventListener('click', () => {
@@ -345,6 +376,15 @@ function attachGranjaListeners(hasPiggies) {
   // Bonus Banner click
   document.getElementById('bonus-banner')?.addEventListener('click', () => {
     showBonusModal(hasPiggies);
+  });
+
+  // Wallet Actions
+  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
+     showWithdrawModal(stats?.disponible || 0);
+  });
+
+  document.getElementById('btn-meat')?.addEventListener('click', () => {
+     showMeatModal();
   });
 }
 
@@ -434,4 +474,183 @@ function showBonusModal(hasPiggies) {
 function removeBonusModal() {
   const existing = document.getElementById('bonus-modal');
   if (existing) existing.remove();
+}
+
+/* =========================================
+   WALLET MODALS
+   ========================================= */
+
+function showWithdrawModal(availableAmount) {
+  // Remove existing
+  const existing = document.getElementById('withdraw-modal');
+  if (existing) existing.remove();
+
+  const minWithdraw = 10000;
+  
+  const modal = document.createElement('div');
+  modal.id = 'withdraw-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  modal.innerHTML = `
+    <div class="modal animate-scale-in">
+        <div class="modal__handle"></div>
+        <button class="bonus-close" id="withdraw-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+        
+        <h3 class="modal-title mb-md">Retiro de Fondos</h3>
+        
+        <div class="form-group">
+            <label class="form-label">Monto a retirar</label>
+            <div class="input-wrapper" style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#999;">$</span>
+                <input type="number" id="withdraw-amount" class="form-input" style="padding-left:30px; width:100%; box-sizing:border-box;" placeholder="0" min="${minWithdraw}" max="${availableAmount}">
+                <button type="button" id="btn-withdraw-all" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--color-primary); font-weight:600; cursor:pointer;">Todo</button>
+            </div>
+            <div class="text-xs text-muted mt-sm">Disponible: ${formatCOP(availableAmount)} • Mínimo: ${formatCOP(minWithdraw)}</div>
+            <div id="withdraw-error" class="text-xs" style="color:var(--color-danger); margin-top:4px; display:none;"></div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Banco de destino</label>
+            <select id="withdraw-bank" class="form-input" style="width:100%;">
+                <option value="">Selecciona un banco</option>
+                <option value="nequi">Nequi</option>
+                <option value="bancolombia">Bancolombia</option>
+                <option value="pse">PSE / Otros Bancos</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="display:flex; align-items:flex-start; gap:8px;">
+            <input type="checkbox" id="withdraw-terms" style="margin-top:4px;">
+            <label for="withdraw-terms" class="text-sm text-muted">He leído y acepto los términos y condiciones para efectuar retiros, incluyendo el tiempo de procesamiento de 3 días hábiles.</label>
+        </div>
+
+        <button class="btn btn--primary btn--block btn--disabled" id="btn-solicitar-retiro" disabled style="width:100%; margin-top:16px;">Solicitar Retiro</button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Logic
+  const amountInput = document.getElementById('withdraw-amount');
+  const bankInput = document.getElementById('withdraw-bank');
+  const termsInput = document.getElementById('withdraw-terms');
+  const submitBtn = document.getElementById('btn-solicitar-retiro');
+  const errorDiv = document.getElementById('withdraw-error');
+
+  const validate = () => {
+    const amount = parseFloat(amountInput.value) || 0;
+    const bank = bankInput.value;
+    const terms = termsInput.checked;
+    
+    let valid = true;
+    let errorMsg = '';
+
+    if (amount < minWithdraw) {
+        valid = false;
+        if(amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
+    } else if (amount > availableAmount) {
+        valid = false;
+        errorMsg = 'Fondos insuficientes';
+    }
+
+    if(errorMsg) {
+        errorDiv.textContent = errorMsg;
+        errorDiv.style.display = 'block';
+    } else {
+        errorDiv.style.display = 'none';
+    }
+
+    if (valid && bank && terms) {
+        submitBtn.classList.remove('btn--disabled');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    } else {
+        submitBtn.classList.add('btn--disabled');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+    }
+  };
+
+  amountInput.addEventListener('input', validate);
+  bankInput.addEventListener('change', validate);
+  termsInput.addEventListener('change', validate);
+
+  // Todo Button
+  document.getElementById('btn-withdraw-all').addEventListener('click', () => {
+      amountInput.value = availableAmount;
+      validate();
+  });
+
+  // Close
+  const close = () => modal.remove();
+  document.getElementById('withdraw-close-btn').addEventListener('click', close);
+  
+  // Submit
+  submitBtn.addEventListener('click', () => {
+     showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
+     close();
+  });
+}
+
+function showWithdrawSuccess(amount, bank) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+        <div class="modal animate-scale-in text-center">
+             <button class="bonus-close" id="success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+            <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                ${renderIcon('check', '', '32')}
+            </div>
+            <h3 class="modal-title">Solicitud Recibida</h3>
+            <p class="text-muted mb-md">Tu solicitud de retiro por <strong>${formatCOP(parseFloat(amount))}</strong> a <strong>${bank}</strong> ha sido generada.</p>
+            
+            <div class="card bg-gray-50 mb-md text-left p-sm text-sm" style="background:#f9fafb; padding:12px; border-radius:8px; margin-bottom:16px;">
+                <div><strong>Comprobante:</strong> #RET-${Date.now().toString().slice(-6)}</div>
+                <div><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</div>
+                <div><strong>Estado:</strong> En Proceso</div>
+            </div>
+
+            <p class="text-xs text-muted mb-lg" style="margin-bottom:24px;">
+                Recuerda que a partir de este momento comienzan a correr los 3 días hábiles.
+                Para agilizar, escríbenos al WhatsApp y envía este comprobante.
+            </p>
+
+            <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20retiro%20%23RET-${Date.now().toString().slice(-6)}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-decoration:none;">
+                ${renderIcon('whatsapp', '', '20')} Contactar soporte personalizado
+            </a>
+            <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('success-close').addEventListener('click', () => modal.remove());
+    document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
+}
+
+function showMeatModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
+        <div class="modal animate-scale-in text-center">
+            <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+            
+            <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
+            <p class="text-muted mb-lg" style="margin-bottom:24px;">
+                Escríbenos para brindarte una atención personalizada y coordinar tu pedido de carne fresca de Granja Villa Morales.
+            </p>
+
+            <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
+                <a href="https://wa.me/573154870448?text=Hola,%20quiero%20redimir%20mis%20ganancias%20en%20carne" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+                    ${renderIcon('whatsapp', '', '20')} WhatsApp
+                </a>
+                <a href="#" class="btn btn--secondary btn--block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                   Ver Catálogo
+                </a>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
 }
