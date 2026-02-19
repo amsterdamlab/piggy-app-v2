@@ -12,12 +12,11 @@ ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_month INTEGER DE
 -- 2. Add current_weight column if not exists (for display purposes)
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 15.0;
 
--- 3. Update existing marketplace items with realistic month values
--- (Run only if you want to modify existing data — adjust IDs as needed)
--- UPDATE public.marketplace SET current_month = 1 WHERE category = 'standard';
--- UPDATE public.marketplace SET current_month = 2 WHERE category = 'premium';
--- UPDATE public.marketplace SET current_month = 3 WHERE category = 'silver';
--- UPDATE public.marketplace SET current_month = 4 WHERE category = 'gold';
+-- 3. Update existing marketplace items with correct month values per category
+UPDATE public.marketplace SET current_month = 1, current_weight = 15.0 WHERE category = 'standard';
+UPDATE public.marketplace SET current_month = 2, current_weight = 38.0 WHERE category = 'premium' OR category = 'accelerator';
+UPDATE public.marketplace SET current_month = 3, current_weight = 58.0 WHERE category = 'silver';
+UPDATE public.marketplace SET current_month = 4, current_weight = 82.0 WHERE category = 'gold';
 
 -- 4. Drop old function signatures and recreate with month-aware logic
 DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
