@@ -100,10 +100,24 @@ export async function adoptPiggy(piggyName) {
  * Enrich a piggy record with computed fields for display.
  */
 function enrichPiggyData(piggy) {
-    const progress = getProgressPercentage(piggy.purchase_date, piggy.end_date);
+    // Fixed cycle duration in days (4 months 3 weeks)
+    const CYCLE_TOTAL_DAYS = 143;
+    
+    // Calculate days remaining
     const daysLeft = getDaysRemaining(piggy.end_date);
-    const weight = simulateWeight(progress);
-    const isComplete = progress >= 100 || piggy.status === 'completado';
+    
+    // Calculate progress based on REVERSE logic (143 - daysLeft)
+    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
+    const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
+    const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100)));
+
+    // Use DB weight if it exists and is meaningful (>15), otherwise simulate it from progress
+    const dbWeight = parseFloat(piggy.current_weight);
+    const weight = (dbWeight && dbWeight > 15) 
+        ? dbWeight 
+        : simulateWeight(progress);
+
+    const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
     return {
         ...piggy,

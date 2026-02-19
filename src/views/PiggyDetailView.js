@@ -12,10 +12,10 @@ import { getRouteParam, navigateTo } from '../router.js';
  * Render the Piggy Detail view.
  */
 export function renderPiggyDetailView() {
-    const piggyId = getRouteParam();
-    const app = document.getElementById('app');
+  const piggyId = getRouteParam();
+  const app = document.getElementById('app');
 
-    app.innerHTML = `
+  app.innerHTML = `
     <div class="page piggy-detail-page">
       <div class="page__content">
         <div class="loading-container">
@@ -26,37 +26,37 @@ export function renderPiggyDetailView() {
     </div>
   `;
 
-    if (piggyId) {
-        loadPiggyDetail(piggyId);
-    } else {
-        navigateTo('granja');
-    }
+  if (piggyId) {
+    loadPiggyDetail(piggyId);
+  } else {
+    navigateTo('granja');
+  }
 
-    return () => { };
+  return () => { };
 }
 
 /**
  * Load and render piggy details.
  */
 async function loadPiggyDetail(piggyId) {
-    try {
-        const [piggy, allPiggies] = await Promise.all([
-            getPiggyById(piggyId),
-            getUserPiggies(),
-        ]);
+  try {
+    const [piggy, allPiggies] = await Promise.all([
+      getPiggyById(piggyId),
+      getUserPiggies(),
+    ]);
 
-        if (!piggy) {
-            navigateTo('granja');
-            return;
-        }
+    if (!piggy) {
+      navigateTo('granja');
+      return;
+    }
 
-        const baseROI = calculateBaseROI(allPiggies.length);
-        const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
-        const projectedReturn = piggy.investment_amount * (1 + totalROI);
-        const gain = projectedReturn - piggy.investment_amount;
+    const baseROI = calculateBaseROI(allPiggies.length);
+    const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
+    const projectedReturn = piggy.investment_amount * (1 + totalROI);
+    const gain = projectedReturn - piggy.investment_amount;
 
-        const app = document.getElementById('app');
-        app.innerHTML = `
+    const app = document.getElementById('app');
+    app.innerHTML = `
       <div class="page piggy-detail-page">
         <div class="page__content">
 
@@ -68,7 +68,8 @@ async function loadPiggyDetail(piggyId) {
           <!-- Piggy hero -->
           <div class="piggy-detail__hero animate-scale-in">
             <div class="piggy-detail__avatar">
-              <span style="font-size: 80px; line-height: 1;">🐷</span>
+              <!-- <span style="font-size: 80px; line-height: 1;">🐷</span> -->
+              <img src="pig1.png" alt="Piggy" style="width:120px; height:120px; object-fit:contain;" />
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
             <span class="badge ${piggy.isComplete ? 'badge--success' : 'badge--primary'}">
@@ -157,12 +158,12 @@ async function loadPiggyDetail(piggyId) {
       </div>
     `;
 
-        // Back button
-        document.getElementById('btn-back')?.addEventListener('click', () => {
-            navigateTo('granja');
-        });
-    } catch (error) {
-        console.error('Error loading piggy detail:', error);
-        navigateTo('granja');
-    }
+    // Back button
+    document.getElementById('btn-back')?.addEventListener('click', () => {
+      navigateTo('granja');
+    });
+  } catch (error) {
+    console.error('Error loading piggy detail:', error);
+    navigateTo('granja');
+  }
 }

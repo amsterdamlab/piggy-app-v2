@@ -9,6 +9,8 @@ import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggie
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 
+// ... imports remain the same
+
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -47,7 +49,8 @@ function buildGranjaShell(firstName) {
               </div>
             </div>
             <div class="stat-card__icon">
-              <span style="font-size: 28px;">🐷</span>
+              <!-- <span style="font-size: 28px;">🐷</span> -->
+              <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:contain;" />
             </div>
           </div>
           
@@ -127,7 +130,8 @@ function buildGranjaFull(firstName, piggies, stats) {
               </div>
             </div>
             <div class="stat-card__icon">
-              <span style="font-size: 28px;">🐷</span>
+              <!-- <span style="font-size: 28px;">🐷</span> -->
+              <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:contain;" />
             </div>
           </div>
           
@@ -156,8 +160,8 @@ function buildGranjaFull(firstName, piggies, stats) {
         <div class="section animate-fade-in-up" style="animation-delay: 0.2s;">
           <div class="section__header">
             <h3 class="section__title">Mis Cerdos</h3>
-            <a href="#" class="section__link">
-              Ver historial ${renderIcon('arrowRight', '', '14')}
+            <a href="#/mercado" class="section__link">
+              Ver ofertas ${renderIcon('arrowRight', '', '14')}
             </a>
           </div>
 
@@ -207,9 +211,8 @@ function buildGranjaFull(firstName, piggies, stats) {
   `;
 }
 
-/**
- * Render greeting message
- */
+// ... renderGreeting remains the same ...
+
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -233,7 +236,8 @@ function renderEmptyPiggies() {
   return `
     <div class="empty-state">
       <div class="empty-state__icon">
-        <span style="font-size: 32px;">🐷</span>
+        <!-- <span style="font-size: 32px;">🐷</span> -->
+        <img src="pig1.png" alt="Piggy" style="width:64px; height:64px; object-fit:contain;" />
       </div>
       <div class="empty-state__title">No tienes piggys aún</div>
       <div class="empty-state__description">
@@ -246,9 +250,8 @@ function renderEmptyPiggies() {
   `;
 }
 
-/**
- * Render Piggies List
- */
+// ... renderPiggiesList and renderPiggyCard remain the same ...
+
 function renderPiggiesList(piggies, baseROI) {
   return `
     <div class="piggies-list">
@@ -257,9 +260,6 @@ function renderPiggiesList(piggies, baseROI) {
   `;
 }
 
-/**
- * Render Piggy Card with Extra ROI indication
- */
 function renderPiggyCard(piggy, baseROI) {
   const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
   const projectedReturn = piggy.investment_amount * (1 + totalROI);
@@ -268,7 +268,8 @@ function renderPiggyCard(piggy, baseROI) {
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
-          <span style="font-size: 36px;">🐷</span>
+          <!-- <span style="font-size: 36px;">🐷</span> -->
+          <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
         </div>
         <div class="piggy-card__info">
           <div class="piggy-card__name">${piggy.name}</div>
@@ -302,16 +303,14 @@ function renderPiggyCard(piggy, baseROI) {
         <div>
           <div class="text-xs text-muted">Retorno estimado</div>
           <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
-          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus*100).toFixed(0)}%</div>` : ''}
+          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
   `;
 }
 
-/**
- * Render Bottom Navigation
- */
+// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal">
