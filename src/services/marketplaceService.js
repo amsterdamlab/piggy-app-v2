@@ -111,7 +111,8 @@ export async function getMarketplaceItems() {
  * Enrich a marketplace item with display fields.
  */
 function enrichItem(item) {
-    const currentMonth = item.current_month || 1;
+    // Clamp to 1-5: the fattening cycle is ~143 days (~5 months max)
+    const currentMonth = Math.min(5, Math.max(1, item.current_month || 1));
     const daysElapsed = DAYS_PER_MONTH_ELAPSED[currentMonth] || 0;
     const daysRemaining = Math.max(0, FATTENING_CYCLE_TOTAL_DAYS - daysElapsed);
 
