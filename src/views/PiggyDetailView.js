@@ -111,11 +111,11 @@ async function loadPiggyDetail(piggyId) {
             <h3 class="section__title">Información Financiera</h3>
             <div class="card">
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Inversión</span>
+                <span class="text-sm text-muted">Bono de Preventa</span>
                 <span class="font-semibold">${formatCOP(piggy.investment_amount)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">ROI Base</span>
+                <span class="text-sm text-muted">Margen Comercial Estimado</span>
                 <span class="font-semibold">${formatPercentage(baseROI)}</span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
@@ -126,11 +126,11 @@ async function loadPiggyDetail(piggyId) {
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Ganancia Proyectada</span>
+                <span class="font-semibold">Diferencial de Preventa</span>
                 <span class="font-bold text-primary" style="font-size:var(--text-lg);">${formatCOP(gain)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Retorno Total</span>
+                <span class="font-semibold">Disponibilidad al Cierre Comercial</span>
                 <span class="font-bold" style="font-size:var(--text-lg);">${formatCOP(projectedReturn)}</span>
               </div>
             </div>

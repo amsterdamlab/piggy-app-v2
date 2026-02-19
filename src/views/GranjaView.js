@@ -37,7 +37,7 @@ function buildGranjaShell(firstName) {
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
-        <h2 class="granja-title">Granja Piggy</h2>
+        <h2 class="granja-title">Mi Granja</h2>
 
         <!-- Stats Skeleton -->
         <div class="section animate-fade-in-up">
@@ -56,7 +56,7 @@ function buildGranjaShell(firstName) {
           
           <div class="stat-card">
               <div>
-                <div class="stat-card__label">Wallet Piggy</div>
+                <div class="stat-card__label">Wallet de ${firstName}</div>
                 <div class="stat-card__value stat-card__value--accent">
                   <span class="skeleton" style="display:inline-block;width:120px;height:24px;"></span>
                 </div>
@@ -116,7 +116,7 @@ function buildGranjaFull(firstName, piggies, stats) {
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
-        <h2 class="granja-title animate-fade-in-up">Granja Piggy</h2>
+        <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
 
         <!-- Stats -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.1s;">
@@ -138,7 +138,7 @@ function buildGranjaFull(firstName, piggies, stats) {
           <!-- Wallet Piggy -->
           <div class="stat-card">
             <div>
-              <div class="stat-card__label">Wallet Piggy</div>
+              <div class="stat-card__label">Wallet de ${firstName}</div>
               <div class="stat-card__value stat-card__value--accent">${stats.walletPiggyTotalFormatted}</div>
               <div class="text-xs text-muted mt-sm">Disponible al finalizar ciclo</div>
             </div>
@@ -152,14 +152,14 @@ function buildGranjaFull(firstName, piggies, stats) {
         ${stats.activeCount > 0 ? `
           <div class="roi-info animate-fade-in-up" style="animation-delay: 0.15s;">
             ${renderIcon('trendUp', 'roi-info__icon', '16')}
-            <span>Tu ROI base actual: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
+            <span>Margen Comercial Estimado: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
           </div>
         ` : ''}
 
         <!-- Mis Cerdos -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.2s;">
           <div class="section__header">
-            <h3 class="section__title">Mis Cerdos</h3>
+            <h3 class="section__title">Mis Piggys</h3>
             <a href="#/mercado" class="section__link">
               Ver ofertas ${renderIcon('arrowRight', '', '14')}
             </a>
@@ -239,7 +239,7 @@ function renderEmptyPiggies() {
         <!-- <span style="font-size: 32px;">🐷</span> -->
         <img src="pig1.png" alt="Piggy" style="width:64px; height:64px; object-fit:contain;" />
       </div>
-      <div class="empty-state__title">No tienes piggys aún</div>
+      <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
@@ -301,7 +301,7 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold">${piggy.currentWeight} kg</div>
         </div>
         <div>
-          <div class="text-xs text-muted">Retorno estimado</div>
+          <div class="text-xs text-muted">Margen Comercial Estimado</div>
           <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
           ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
         </div>
@@ -368,7 +368,7 @@ function showBonusModal(hasPiggies) {
         <div class="bonus-header">
             <!-- Image removed for cleaner look -->
             <h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3>
-            <p class="text-center text-primary font-bold text-lg">$50.000 COP</p>
+            <p class="text-center text-primary font-bold text-lg">$50.000 PESOS EN CONSUMO DE CARNE</p>
         </div>
 
         <div class="bonus-content mt-md" style="flex: 2;">
