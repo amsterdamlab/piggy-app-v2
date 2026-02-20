@@ -188,6 +188,11 @@ export function showCheckoutModal(item) {
   modal.style.flexDirection = 'column';
   modal.style.overflowY = 'auto'; // Internal scroll if needed
 
+  // Random names for suggestions
+  const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
+  // Shuffle and pick 4
+  const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 4);
+
   modal.innerHTML = `
     <!-- Checkout Header -->
     <div class="checkout-header" style="
@@ -223,10 +228,11 @@ export function showCheckoutModal(item) {
           max-width: 400px; 
           text-align: center; 
           background: #FFF0F5; 
-          padding: 20px; 
+          padding: 24px; 
           border-radius: 16px; 
           margin-bottom: 32px;
-          box-shadow: 0 4px 12px rgba(233, 30, 99, 0.05);">
+          border: 1px solid rgba(236, 72, 153, 0.1);
+          box-shadow: 0 8px 20px rgba(236, 72, 153, 0.05);">
           
           <div style="
               width: 80px; 
@@ -239,40 +245,70 @@ export function showCheckoutModal(item) {
               <img src="pig1.png" style="width:100%; height:100%; object-fit:cover;">
           </div>
           
-          <p style="color: var(--color-text-secondary); font-size: 0.9rem; margin-bottom: 4px;">Estás comprando a</p>
-          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">${item.item_name}</h2>
+          <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 8px;">Estás adoptando un Piggy</h2>
           <p style="font-size: 1.75rem; font-weight: 900; color: var(--color-primary);">${item.priceFormatted}</p>
       </div>
 
-      <!-- Custom Name Input -->
-      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 32px; text-align: left;">
-           <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--color-text-secondary);">¿Cómo quieres llamar a tu Piggy?</label>
-           <div style="position:relative;">
+      <!-- Custom Name Input Section -->
+      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 40px; text-align: center;">
+           
+           <div style="margin-bottom: 20px;">
                 <input type="text" id="piggy-custom-name" 
-                       value="${item.item_name}" 
-                       placeholder="Ej. Bacon, Peggy, ..."
+                       placeholder="Ponle un nombre a tu Piggy"
+                       autocomplete="off"
                        style="
                            width: 100%;
-                           padding: 14px 16px;
-                           border: 2px solid #e0e0e0;
-                           border-radius: 12px;
-                           font-size: 1rem;
+                           padding: 16px;
+                           border: 2px solid #fce7f3; /* Pink-100 */
+                           border-radius: 16px;
+                           font-size: 1.1rem;
                            font-weight: 600;
                            color: var(--color-text-primary);
                            outline: none;
-                           transition: border-color 0.2s;
+                           text-align: center;
+                           transition: all 0.2s;
                            box-sizing: border-box;
+                           background: #fff;
                        "
-                       onfocus="this.style.borderColor='var(--color-primary)'"
-                       onblur="this.style.borderColor='#e0e0e0'"
+                       onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
+                       onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
                 />
-                <span style="font-size: 0.75rem; color: #999; margin-top: 6px; display: block;">Dale una identidad única a tu nueva inversión.</span>
+           </div>
+
+           <!-- Name Suggestions (Pills) -->
+           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+               ${shuffled.map(name => `
+                  <button class="name-pill" style="
+                      background: #fdf2f8; 
+                      color: #db2777; 
+                      border: 1px solid #fce7f3; 
+                      padding: 8px 16px; 
+                      border-radius: 20px; 
+                      font-size: 0.9rem; 
+                      font-weight: 600; 
+                      cursor: pointer;
+                      transition: transform 0.1s;
+                  " onclick="selectPiggyName('${name}')">${name}</button>
+               `).join('')}
+           </div>
+           
+           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:12px;">
+                * Debes darle un nombre para continuar
            </div>
       </div>
 
       <p class="mb-md text-center text-muted" style="margin-bottom: 24px;">Selecciona tu método de pago:</p>
       
-      <div class="payment-methods" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
+      <div class="payment-methods" id="payment-methods-container" style="
+           width: 100%; 
+           max-width: 400px; 
+           display: flex; 
+           flex-direction: column; 
+           gap: 12px; 
+           opacity: 0.5; 
+           pointer-events: none; 
+           transition: opacity 0.3s;
+      ">
         
         <button class="payment-option" data-method="nequi" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
           <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#5500A1; color:white; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">📱</div>
@@ -304,9 +340,49 @@ export function showCheckoutModal(item) {
 
   document.body.appendChild(modal);
 
+  // --- Logic ---
+
+  const input = document.getElementById('piggy-custom-name');
+  const paymentContainer = document.getElementById('payment-methods-container');
+  const errorMsg = document.getElementById('name-error');
+
+  // Helper to Validate
+  const validateName = () => {
+      const val = input.value.trim();
+      const isValid = val.length >= 3; // Min 3 chars
+
+      if (isValid) {
+          paymentContainer.style.opacity = '1';
+          paymentContainer.style.pointerEvents = 'auto';
+          errorMsg.style.opacity = '0';
+          input.style.borderColor = '#10B981'; // Green border for success
+      } else {
+          paymentContainer.style.opacity = '0.5';
+          paymentContainer.style.pointerEvents = 'none';
+          errorMsg.style.opacity = '1';
+          if (val.length > 0) {
+             input.style.borderColor = '#e0e0e0'; // Neutral if typing but short
+          } else {
+             input.style.borderColor = '#fce7f3'; // Reset to pink if empty
+          }
+      }
+      return isValid;
+  };
+
+  // Input listener
+  input.addEventListener('input', validateName);
+
+  // Suggestion Pills Logic (Global helper or attached to window as inline onclick needs it)
+  window.selectPiggyName = (name) => {
+      input.value = name;
+      validateName();
+      input.focus(); // Keep focus for UX
+  };
+
   // Close Logic
   const close = () => {
     document.body.style.overflow = ''; // Unlock scroll
+    delete window.selectPiggyName; // Cleanup global
     modal.remove();
   };
 
@@ -316,6 +392,9 @@ export function showCheckoutModal(item) {
   document.querySelectorAll('.payment-option').forEach(btn => {
     btn.addEventListener('click', async () => {
       const method = btn.dataset.method;
+      const customName = input.value.trim();
+
+      if (customName.length < 3) return; // Basic Guard
 
       // Visual feedback on button
       const originalContent = btn.innerHTML;
@@ -324,15 +403,13 @@ export function showCheckoutModal(item) {
 
       // Disable all
       document.querySelectorAll('.payment-option').forEach(b => b.disabled = true);
+      input.disabled = true;
 
       // Simulate network delay
       await new Promise(r => setTimeout(r, 2000));
 
       try {
         // Execute Purchase Logic
-        const customNameInput = document.getElementById('piggy-custom-name');
-        const customName = customNameInput ? customNameInput.value.trim() : null;
-        
         await buyMarketplaceItem(item, customName);
 
         close();
@@ -346,6 +423,7 @@ export function showCheckoutModal(item) {
         btn.style.opacity = '1';
         btn.innerHTML = originalContent;
         document.querySelectorAll('.payment-option').forEach(b => b.disabled = false);
+        input.disabled = false;
       }
     });
   });
