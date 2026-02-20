@@ -245,8 +245,11 @@ export function showCheckoutModal(item) {
               <img src="pig1.png" style="width:100%; height:100%; object-fit:cover;">
           </div>
           
-          <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 8px;">Estás adoptando un Piggy</h2>
-          <p style="font-size: 1.75rem; font-weight: 900; color: var(--color-primary);">${item.priceFormatted}</p>
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">¡Compra tu Piggy!</h2>
+          <p style="font-size: 1rem; color: var(--color-text-secondary); line-height: 1.4;">
+            Un nuevo integrante para que tu granja siga creciendo desde <br>
+            <span style="font-size: 1.5rem; font-weight: 900; color: var(--color-primary); display:block; margin-top:4px;">${item.priceFormatted}</span>
+          </p>
       </div>
 
       <!-- Custom Name Input Section -->
