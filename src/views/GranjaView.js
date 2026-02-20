@@ -58,48 +58,11 @@ function attachGranjaListeners(hasPiggies, stats) {
   });
 
   // Bonus Banner click
-  const banner = document.getElementById('bonus-banner');
-  if (banner) {
-    banner.addEventListener('click', () => {
-      handleRewardClick(banner, hasPiggies);
-    });
-  }
-
-  // Quick Buy Action
-  const quickBuyBtn = document.getElementById('btn-quick-buy');
-  if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', async () => {
-      quickBuyBtn.style.opacity = '0.7';
-      quickBuyBtn.style.pointerEvents = 'none';
-
-      try {
-        const items = await getMarketplaceItems();
-        // Find Standard Initial Piggy (Month 1, Standard)
-        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-
-        if (standardPiggy) {
-          showCheckoutModal(standardPiggy);
-        } else {
-          navigateTo('mercado');
-        }
-      } catch (error) {
-        console.error('Quick buy error:', error);
-        navigateTo('mercado');
-      } finally {
-        quickBuyBtn.style.opacity = '1';
-        quickBuyBtn.style.pointerEvents = 'auto';
-      }
-    });
-  }
-
-  // Wallet Actions
-  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWithdrawModal(stats?.disponible || 0);
+  document.getElementById('bonus-banner')?.addEventListener('click', () => {
+    showBonusModal(hasPiggies);
   });
 
-  document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showMeatModal();
-  });
+  // ... (rest of listeners)
 }
 
 // ...
@@ -252,8 +215,6 @@ export function renderGranjaView() {
   const app = document.getElementById('app');
   const profile = AppState.get('profile');
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  const piggies = AppState.get('piggies') || [];
-
 
   app.innerHTML = buildGranjaShell(firstName);
 
@@ -655,6 +616,60 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
+function attachGranjaListeners(hasPiggies, stats) {
+  // Piggy card click
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
+    });
+  });
+
+  // Bonus Banner click
+  const banner = document.getElementById('bonus-banner');
+  if (banner) {
+    banner.addEventListener('click', () => {
+      handleRewardClick(banner, hasPiggies);
+    });
+  }
+
+  // Quick Buy Action
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+    quickBuyBtn.addEventListener('click', async () => {
+      quickBuyBtn.style.opacity = '0.7';
+      quickBuyBtn.style.pointerEvents = 'none';
+
+      try {
+        const items = await getMarketplaceItems();
+        // Find Standard Initial Piggy (Month 1, Standard)
+        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+
+        if (standardPiggy) {
+          showCheckoutModal(standardPiggy);
+        } else {
+          navigateTo('mercado');
+        }
+      } catch (error) {
+        console.error('Quick buy error:', error);
+        navigateTo('mercado');
+      } finally {
+        quickBuyBtn.style.opacity = '1';
+        quickBuyBtn.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
+  // Wallet Actions
+  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
+    showWithdrawModal(stats?.disponible || 0);
+  });
+
+  document.getElementById('btn-meat')?.addEventListener('click', () => {
+    showMeatModal();
+  });
+}
+
 function showBonusModal(hasPiggies) {
   removeBonusModal();
 
@@ -754,141 +769,158 @@ function showBonusModal(hasPiggies) {
 
 
 
+
 /* =========================================
    REWARDS SYSTEM LOGIC (STRICT MAPPING)
    ========================================= */
 
 const REWARD_TYPES = {
-  BONUS_50K: 'bonus_50k',        // 1. Registro -> $50k
-  PIGGY_3M: 'unlock_piggy_3m',   // 2. 1er Piggy -> Piggy 3 Meses
-  REFERRAL: 'unlock_referral',   // 3. Invita -> Codigo
-  MARGIN_1: 'margin_plus_1',     // 4. 2do Piggy -> +1% Margen
-  SILVER_24H: 'piggy_silver',    // 5 & 6. Aliados/Cierre -> Silver
-  MARGIN_KEEP: 'margin_keep_10', // 7. 3er Piggy -> 10% Fijo
-  GOLD_24H: 'piggy_gold',        // 8. Oferta -> Gold
-  WALLET_30K: 'wallet_30k'       // 9. Referido Compra -> $30k
+  BONUS_50K: 'bonus_50k',        // Premio M1
+  PIGGY_3M: 'unlock_piggy_3m',   // Premio M2
+  REFERRAL: 'unlock_referral',   // Premio M3
+  MARGIN_1: 'margin_plus_1',     // Premio M4
+  SILVER_24H: 'piggy_silver',    // Premio M5
+  MARGIN_KEEP: 'margin_keep_10', // Premio M7
+  GOLD_24H: 'piggy_gold',        // Premio M8
+  WALLET_30K: 'wallet_30k'       // Premio M9
 };
 
 /**
- * Determine which reward should be shown in the banner slot based on User Progress.
+ * Calculates the completion status of all missions based on current app state.
+ * This is the SOURCE OF TRUTH for both the Missions List and the Rewards Banner.
+ */
+function calculateMissionStates(piggies, profile) {
+  const hasFirstPiggy = piggies && piggies.length >= 1;
+  const hasSecondPiggy = piggies && piggies.length >= 2;
+
+  return {
+    m1: !!profile, // Registro
+    m2: hasFirstPiggy, // 1er Piggy
+    m3: isMissionCompletedManual('m3'), // Invitar (Manual check via localStorage)
+    m4: hasSecondPiggy, // 2do Piggy
+    m5: isMissionCompletedManual('m5'), // Aliados (Manual)
+    m6: false, // Cerrar ciclo (To implement)
+    m7: piggies && piggies.length >= 3, // 3er Piggy
+    m8: isMissionCompletedManual('m8'), // Oferta semana
+    m9: isMissionCompletedManual('m9') // Referido compra
+  };
+}
+
+/**
+ * Determine which reward should be shown in the banner slot.
+ * RULES:
+ * 1. Mission MUST be completed.
+ * 2. Reward MUST NOT be redeemed yet.
  */
 function getActiveReward(piggies) {
-  const pigCount = piggies ? piggies.length : 0;
-  
-  // 1. BONO DE BIENVENIDA ($50.000)
-  // Condición: Registro completo (siempre true si está aquí) y NO redimido.
+  const profile = AppState.get('profile');
+  const status = calculateMissionStates(piggies, profile);
+
+  // 1. BONO DE BIENVENIDA ($50.000) (M1)
   const bonus50kRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K) === 'true';
-  // Check legacy migration
+  // Legacy fix
   if (localStorage.getItem('bonus_redeemed') === 'true' && !bonus50kRedeemed) {
-     localStorage.setItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K, 'true');
+    localStorage.setItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K, 'true');
   }
 
-  if (!bonus50kRedeemed) {
+  if (status.m1 && !bonus50kRedeemed) {
     return {
       id: REWARD_TYPES.BONUS_50K,
       type: 'modal_50k',
-      badge: 'Misión #1 Completada',
-      title: 'Reclama tu Bono de $50.000',
-      subtitle: 'Por crear tu cuenta en Piggy.',
+      badge: '¡Misión #1 Cumplida!',
+      title: 'Bono de $50.000 Disponible',
+      subtitle: 'Toca aquí para redimir tu regalo de bienvenida.',
       icon: '🎁',
       bgClass: 'banner--interactive',
-      ctaLabel: ' Redimir Ahora'
+      ctaLabel: 'COBRAR PREMIO'
     };
   }
 
-  // 2. DESBLOQUEO PIGGY 3 MESES
-  // Condición: Tener al menos 1 Piggy.
+  // 2. PIGGY 3 MESES (M2)
   const piggy3mRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.PIGGY_3M) === 'true';
-  if (pigCount >= 1 && !piggy3mRedeemed) {
+  if (status.m2 && !piggy3mRedeemed) {
     return {
       id: REWARD_TYPES.PIGGY_3M,
       type: 'navigate',
       target: '#/mercado',
-      badge: 'Misión #2 Completada',
-      title: '¡Desbloqueaste Piggies de 3 Meses!',
-      subtitle: 'Ciclos cortos disponibles en el mercado.',
+      badge: '¡Misión #2 Cumplida!',
+      title: 'Has desbloqueado Ciclos Cortos',
+      subtitle: 'Acceso exclusivo a Piggies de 3 Meses.',
       icon: '🔓',
       style: 'background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color:white;',
-      ctaLabel: 'Ir al Mercado'
+      ctaLabel: 'VER MERCADO'
     };
   }
 
-  // 3. CODIGO DE REFERIDO
-  // Condición: Se muestra después de desbloquear lo anterior. Incentivo a invitar.
+  // 3. CODIGO REFERIDO (M3)
   const referralRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.REFERRAL) === 'true';
-  if (pigCount >= 1 && !referralRedeemed) {
+  if (status.m3 && !referralRedeemed) {
     return {
       id: REWARD_TYPES.REFERRAL,
-      type: 'avg_action', // Action based
-      badge: 'Misión #3: Invita y Gana',
-      title: 'Desbloquea tu Código de Referido',
-      subtitle: 'Invita amigos y gana comisiones.',
-      icon: '📲',
+      type: 'show_code', // New action type
+      badge: '¡Misión #3 Cumplida!',
+      title: 'Tu Código de Referido está listo',
+      subtitle: 'Empieza a ganar comisiones por invitar.',
+      icon: '🎫',
       style: 'background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white;',
-      whatsapp_msg: '¡Hola! Te invito a ser parte de Piggy. 🐷 Únete aquí: https://piggy.app',
-      ctaLabel: 'Invitar Amigo'
+      ctaLabel: 'VER CÓDIGO'
     };
   }
 
-  // 4. MARGEN +1%
-  // Condición: Tener 2 Piggies.
+  // 4. MARGEN +1% (M4)
   const marginRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.MARGIN_1) === 'true';
-  if (pigCount >= 2 && !marginRedeemed) {
+  if (status.m4 && !marginRedeemed) {
     return {
       id: REWARD_TYPES.MARGIN_1,
       type: 'info_claim',
-      badge: 'Misión #4 Completada',
-      title: '¡Margen Comercial +1%!',
-      subtitle: 'Tu rentabilidad ha aumentado.',
-      icon: '📈',
+      badge: '¡Misión #4 Cumplida!',
+      title: 'Mejora de Margen Activada',
+      subtitle: 'Tu rentabilidad base ha subido un +1%.',
+      icon: '',
       style: 'background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white;',
-      ctaLabel: '¡Genial!'
+      ctaLabel: 'ENTENDIDO'
     };
   }
-  
-  // ... Otros niveles se agregarían aquí con la misma lógica
 
-  // Default: Mensaje genérico de progreso
+  // Si no hay premios pendientes (Misiones no cumplidas O premios ya reclamados)
   return null;
 }
 
 
 /**
- * Render logic for the bonus banner based on redemption state.
+ * Render logic for the bonus banner.
+ * If null, returns empty string (Banner disappears).
  */
 function renderBonusBanner(piggies) {
   const activeReward = getActiveReward(piggies);
 
-  // Case A: All rewards redeemed / caught up
   if (!activeReward) {
-    return `
-      <div class="banner" id="bonus-banner" style="filter: grayscale(1); opacity: 0.7; cursor: default; pointer-events: none;">
-        <div class="banner__badge" style="background:#f3f4f6; color:#9ca3af;">SIN RECOMPENSAS PENDIENTES</div>
-        <div class="banner__title">Estás al día con tus premios</div>
-        <div class="banner__subtitle">Completa más misiones para desbloquear nuevos bonos.</div>
-        <div class="banner__decoration">✅</div>
-      </div>
-    `;
+    // Si no hay premio activo, NO MOSTRAR NADA.
+    // Dejar que el usuario se enfoque en las misiones de abajo.
+    return '';
   }
 
-  // Case B: Active Reward (Dynamic)
   const customStyle = activeReward.style || '';
 
   return `
-    <div class="banner banner--interactive animate-fade-in-up" id="bonus-banner" 
+    <div class="banner banner--interactive animate-bounce-in" id="bonus-banner" 
          data-reward-id="${activeReward.id}"
          data-reward-type="${activeReward.type}"
          data-reward-target="${activeReward.target || ''}"
-         data-whatsapp-msg="${activeReward.whatsapp_msg || ''}"
          style="${customStyle}">
-      <div class="banner__badge" style="opacity:0.9;">${activeReward.badge}</div>
-      <div class="banner__title">${activeReward.title}</div>
-      <div class="banner__subtitle">${activeReward.subtitle}</div>
+      <div class="banner__badge" style="opacity:0.9; background:white; color:#333; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.1);">${activeReward.badge}</div>
+      <div class="banner__title" style="margin-top:8px;">${activeReward.title}</div>
+      <div class="banner__subtitle" style="opacity:0.9;">${activeReward.subtitle}</div>
       <div class="banner__decoration">${activeReward.icon}</div>
-      ${activeReward.ctaLabel ? `<div class="btn-xs mt-sm" style="display:inline-block; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;">${activeReward.ctaLabel} →</div>` : ''}
+      <div class="mt-sm">
+        <span style="background:rgba(255,255,255,0.25); padding:6px 16px; border-radius:30px; font-weight:bold; font-size:12px; letter-spacing:0.5px; border:1px solid rgba(255,255,255,0.4);">
+           ${activeReward.ctaLabel}
+        </span>
+      </div>
     </div>
   `;
 }
+
 
 
 /**
@@ -901,48 +933,49 @@ function handleRewardClick(element, hasPiggies) {
 
   if (!rewardId) return;
 
-  // Mark as redeemed immediately for interactions (except persistent ones if needed)
-  // For now, we assume click = claim for most notifications
+  // Mark as redeemed immediately
   if (rewardType !== 'modal_50k') {
-      localStorage.setItem('reward_redeemed_' + rewardId, 'true');
+    localStorage.setItem('reward_redeemed_' + rewardId, 'true');
   }
 
   // --- ACTIONS DISPATCHER ---
 
   // 1. Modal 50k
   if (rewardType === 'modal_50k') {
-    showBonusModal(hasPiggies); 
+    showBonusModal(hasPiggies);
     return;
   }
 
-  // 2. Navigation (Market, etc)
+  // 2. Navigation (Market)
   if (rewardType === 'navigate') {
     location.hash = target;
     return;
   }
 
-  // 3. WhatsApp Share (Referral)
-  if (rewardType === 'avg_action') {
-     const msg = element.dataset.whatsappMsg;
-     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-     // Force reload to update banner to next state
-     setTimeout(() => location.reload(), 500);
-     return;
+  // 3. Show Referral Code
+  if (rewardType === 'show_code') {
+    alert('¡Felicidades! Tu código de referido es: PIGGY2026\nCompártelo con tus amigos.');
+    // Force reload to update banner
+    setTimeout(() => location.reload(), 500);
+    return;
   }
 
-  // 4. Info Claim (Just Close/Refresh)
+  // 4. Info Claim (Simple confirmation)
   if (rewardType === 'info_claim') {
-     // Visual feedback
-     element.style.opacity = '0.5';
-     setTimeout(() => location.reload(), 500);
-     return;
+    // Visual feedback
+    element.style.transform = 'scale(0.95)';
+    element.style.opacity = '0.5';
+    setTimeout(() => location.reload(), 500);
+    return;
   }
 }
+
 
 function removeBonusModal() {
   const existing = document.getElementById('bonus-modal');
   if (existing) existing.remove();
 }
+
 
 function showWithdrawModal(availableAmount) {
   const existing = document.getElementById('withdraw-modal');
@@ -1075,19 +1108,41 @@ function showWithdrawSuccess(amount, bank) {
                 Recuerda que a partir de este momento comienzan a correr los 3 días hábiles.
                 Para agilizar, escríbenos al WhatsApp y envía este comprobante.
             </p>
-            
-            <button class="btn btn--primary btn--block" id="btn-finish-withdraw">
-                Volver al Inicio
-            </button>
+
+            <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20retiro%20%23RET-${Date.now().toString().slice(-6)}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-decoration:none;">
+                ${renderIcon('whatsapp', '', '20')} Contactar soporte personalizado
+            </a>
+            <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
         </div>
-      `;
-
+    `;
   document.body.appendChild(modal);
+  document.getElementById('success-close').addEventListener('click', () => modal.remove());
+  document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
+}
 
-  const close = () => modal.remove();
-  document.getElementById('success-close-x').addEventListener('click', close);
+function showMeatModal() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+  modal.innerHTML = `
+        <div class="modal animate-scale-in text-center">
+             <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+            
+            <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
+            <p class="text-muted mb-lg" style="margin-bottom:24px;">
+                Escríbenos para brindarte una atención personalizada y coordinar tu pedido de carne fresca de Granja Villa Morales.
+            </p>
 
-  document.getElementById('btn-finish-withdraw').addEventListener('click', () => {
-    close();
-  });
+            <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
+                <a href="https://wa.me/573154870448?text=Hola,%20quiero%20redimir%20mis%20ganancias%20en%20carne" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+                    ${renderIcon('whatsapp', '', '20')} WhatsApp
+                </a>
+                <a href="#" class="btn btn--secondary btn--block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
+                   Ver Catálogo
+                </a>
+            </div>
+        </div>
+    `;
+  document.body.appendChild(modal);
+  document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
 }
