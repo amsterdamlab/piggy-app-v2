@@ -9,7 +9,231 @@ import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggie
 import { navigateTo } from '../router.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { getActiveMissions, getMissionsProgress } from '../services/missionsService.js';
+import { MOCK_MISSIONS } from '../services/mockData.js';
+import { completeMissionManual } from '../services/missionsService.js';
+
+
+// ... (existing imports)
+
+// ...
+
+function attachGranjaListeners(hasPiggies, stats) {
+  // Piggy card click
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
+    });
+  });
+
+  // Missions click
+  document.querySelectorAll('.mission-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.id;
+      const cta = card.dataset.cta;
+
+      if (!cta) return;
+
+      // Si es un link externo (WhatsApp, etc), lo marcamos como completado
+      if (cta.startsWith('http')) {
+        completeMissionManual(id);
+        window.open(cta, '_blank');
+
+        // Recargamos la vista para actualizar la lista de misiones
+        const profile = AppState.get('profile');
+        if (profile) {
+          loadGranjaData(profile.full_name?.split(' ')[0] || 'Usuario');
+        }
+      } else {
+        // Navegación interna (ir al mercado, etc)
+        // No completamos la misión automáticamente aquí porque esas dependen de lógica (ej: comprar)
+        if (cta.startsWith('#')) {
+          location.hash = cta;
+        } else {
+          window.location.hash = cta;
+        }
+      }
+    });
+  });
+
+  // Bonus Banner click
+  document.getElementById('bonus-banner')?.addEventListener('click', () => {
+    showBonusModal(hasPiggies);
+  });
+
+  // Quick Buy Action
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+    quickBuyBtn.addEventListener('click', async () => {
+      quickBuyBtn.style.opacity = '0.7';
+      quickBuyBtn.style.pointerEvents = 'none';
+
+      try {
+        const items = await getMarketplaceItems();
+        // Find Standard Initial Piggy (Month 1, Standard)
+        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+
+        if (standardPiggy) {
+          showCheckoutModal(standardPiggy);
+        } else {
+          navigateTo('mercado');
+        }
+      } catch (error) {
+        console.error('Quick buy error:', error);
+        navigateTo('mercado');
+      } finally {
+        quickBuyBtn.style.opacity = '1';
+        quickBuyBtn.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
+  // Wallet Actions
+  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
+    showWithdrawModal(stats?.disponible || 0);
+  });
+
+  document.getElementById('btn-meat')?.addEventListener('click', () => {
+    showMeatModal();
+  });
+}
+
+// ...
+
+
+
+/* =========================================
+   MISSIONS MODULE
+   ========================================= */
+
+function renderMissionsModule() {
+  const piggies = AppState.get('piggies') || [];
+  const profile = AppState.get('profile');
+
+  // Lógica de Estado Local para Misiones
+  // Esto asegura que la vista siempre tenga la lógica más fresca sin depender de caché de módulos externos si hay problemas.
+  const hasFirstPiggy = piggies.length >= 1;
+  const hasSecondPiggy = piggies.length >= 2;
+
+  // Procesar misiones
+  const processedMissions = MOCK_MISSIONS.map(m => {
+    let mission = { ...m, is_locked: false };
+
+    // 1. Estados de Completado
+    if (mission.id === 'm1') mission.is_completed = !!profile;
+    if (mission.id === 'm2') mission.is_completed = hasFirstPiggy;
+    if (mission.id === 'm4') mission.is_completed = hasSecondPiggy;
+    if (mission.id === 'm7') mission.is_completed = piggies.length >= 3;
+
+    // 2. Bloqueos (Game Leveling)
+    // Si no tienes el primer piggy, el segundo se bloquea
+    if (mission.id === 'm4' && !hasFirstPiggy) mission.is_locked = true;
+    // Si no tienes el segundo, el tercero se bloquea
+    if (mission.id === 'm7' && !hasSecondPiggy) mission.is_locked = true;
+
+    // Otros bloqueos lógicos opcionales
+    if (mission.id === 'm6' && !hasFirstPiggy) mission.is_locked = true; // Cerrar ciclo requiere abrirlo
+
+    return mission;
+  });
+
+  const activeMissions = processedMissions.filter(m => !m.is_completed && !m.is_locked);
+  const total = processedMissions.length;
+  const completed = processedMissions.filter(m => m.is_completed).length;
+  const percent = Math.round((completed / total) * 100);
+
+  // DEBUG: Mostrar conteo de piggies si hay dudas (visible solo si inspeccionan elemento)
+  // console.log('Piggies detected for missions:', piggies.length);
+
+  if (activeMissions.length === 0) {
+    return `
+        <div class="missions-complete animate-fade-in-up" style="text-align:center; padding:32px; background:white; border-radius:16px; border:1px dashed #e0e0e0;">
+            <div style="font-size:48px; margin-bottom:16px;">🏆</div>
+            <h3 class="text-primary font-bold" style="font-size:1.2rem; margin-bottom:8px;">¡Eres un Granjero Maestro!</h3>
+            <p class="text-muted text-sm">Has desbloqueado todos los bonos disponibles.</p>
+        </div>
+      `;
+  }
+
+  // Show only first 3 active missions
+  const missionsToShow = activeMissions.slice(0, 3);
+
+  return `
+    <div class="section__header" style="margin-bottom:12px;">
+        <h3 class="section__title">Misiones</h3>
+        <span class="text-sm font-semibold" style="color:#d97706;">${completed}/${total} Completadas</span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="background:#fef3c7; height:8px; border-radius:10px; overflow:hidden; margin-bottom:20px;">
+        <div style="width:${percent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
+    </div>
+
+    <!-- Missions List -->
+    <div class="missions-list">
+        ${missionsToShow.map(renderMissionItem).join('')}
+    </div>
+  `;
+}
+
+function renderMissionItem(mission) {
+  // Usamos data-attributes para ser capturados por attachGranjaListeners
+  // y evitar onclicks inline que rompen CSP o complican la logica
+  return `
+        <div class="mission-card animate-fade-in-up" 
+            data-id="${mission.id}" 
+            data-cta="${mission.cta || ''}"
+            style="
+            background:white; 
+            border:1px solid #fce7f3; 
+            border-bottom: 3px solid #fce7f3;
+            border-radius:16px; 
+            padding:16px; 
+            margin-bottom:12px; 
+            display:flex; 
+            align-items:center; 
+            gap:16px;
+            cursor:pointer;
+            transition:all 0.2s;
+            position:relative;
+            overflow:hidden;
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+            
+            <div style="
+                width:48px; 
+                height:48px; 
+                background:#fffbeb; 
+                border-radius:12px; 
+                display:flex; 
+                align-items:center; 
+                justify-content:center; 
+                font-size:24px;
+                flex-shrink:0;
+                border: 1px solid #fef3c7;
+            ">${mission.icon}</div>
+
+            <div style="flex:1;">
+                <div style="font-weight:700; color:#1f2937; font-size:0.95rem; margin-bottom:4px; line-height:1.2;">${mission.title}</div>
+                <div style="font-size:0.85rem; color:#d97706; font-weight:700;">🎁 ${mission.reward}</div>
+            </div>
+
+            <div style="
+                width:36px; 
+                height:36px; 
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                border-radius:50%; 
+                display:flex; 
+                align-items:center; 
+                justify-content:center;
+                color:white;
+                box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+            ">
+                ${renderIcon('arrowRight', '', '18')}
+            </div>
+        </div>
+    `;
+}
+
 
 
 /**
@@ -426,57 +650,6 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
-function attachGranjaListeners(hasPiggies, stats) {
-  // Piggy card click
-  document.querySelectorAll('.piggy-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const piggyId = card.dataset.piggyId;
-      navigateTo(`piggy/${piggyId}`);
-    });
-  });
-
-  // Bonus Banner click
-  document.getElementById('bonus-banner')?.addEventListener('click', () => {
-    showBonusModal(hasPiggies);
-  });
-
-  // Quick Buy Action
-  const quickBuyBtn = document.getElementById('btn-quick-buy');
-  if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', async () => {
-      quickBuyBtn.style.opacity = '0.7';
-      quickBuyBtn.style.pointerEvents = 'none';
-
-      try {
-        const items = await getMarketplaceItems();
-        // Find Standard Initial Piggy (Month 1, Standard)
-        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-
-        if (standardPiggy) {
-          showCheckoutModal(standardPiggy);
-        } else {
-          navigateTo('mercado');
-        }
-      } catch (error) {
-        console.error('Quick buy error:', error);
-        navigateTo('mercado');
-      } finally {
-        quickBuyBtn.style.opacity = '1';
-        quickBuyBtn.style.pointerEvents = 'auto';
-      }
-    });
-  }
-
-  // Wallet Actions
-  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWithdrawModal(stats?.disponible || 0);
-  });
-
-  document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showMeatModal();
-  });
-}
-
 function showBonusModal(hasPiggies) {
   removeBonusModal();
 
@@ -688,143 +861,19 @@ function showWithdrawSuccess(amount, bank) {
                 Recuerda que a partir de este momento comienzan a correr los 3 días hábiles.
                 Para agilizar, escríbenos al WhatsApp y envía este comprobante.
             </p>
-
-            <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20retiro%20%23RET-${Date.now().toString().slice(-6)}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-decoration:none;">
-                ${renderIcon('whatsapp', '', '20')} Contactar soporte personalizado
-            </a>
-            <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
-        </div>
-    `;
-  document.body.appendChild(modal);
-  document.getElementById('success-close').addEventListener('click', () => modal.remove());
-  document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
-}
-
-function showMeatModal() {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
-  modal.innerHTML = `
-        <div class="modal animate-scale-in text-center">
-            <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
             
-            <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
-            <p class="text-muted mb-lg" style="margin-bottom:24px;">
-                Escríbenos para brindarte una atención personalizada y coordinar tu pedido de carne fresca de Granja Villa Morales.
-            </p>
-
-            <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
-                <a href="https://wa.me/573154870448?text=Hola,%20quiero%20redimir%20mis%20ganancias%20en%20carne" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
-                    ${renderIcon('whatsapp', '', '20')} WhatsApp
-                </a>
-                <a href="#" class="btn btn--secondary btn--block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
-                   Ver Catálogo
-                </a>
-            </div>
-        </div>
-    `;
-  document.body.appendChild(modal);
-  document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
-}
-
-/* =========================================
-   MISSIONS MODULE
-   ========================================= */
-
-function renderMissionsModule() {
-  const { total, completed, percent } = getMissionsProgress();
-  const activeMissions = getActiveMissions();
-
-  if (activeMissions.length === 0) {
-      return `
-        <div class="missions-complete animate-fade-in-up" style="text-align:center; padding:32px; background:white; border-radius:16px; border:1px dashed #e0e0e0;">
-            <div style="font-size:48px; margin-bottom:16px;">🏆</div>
-            <h3 class="text-primary font-bold" style="font-size:1.2rem; margin-bottom:8px;">¡Eres un Granjero Maestro!</h3>
-            <p class="text-muted text-sm">Has desbloqueado todos los bonos disponibles.</p>
+            <button class="btn btn--primary btn--block" id="btn-finish-withdraw">
+                Volver al Inicio
+            </button>
         </div>
       `;
-  }
 
-  // Show only first 3 active missions
-  const missionsToShow = activeMissions.slice(0, 3);
+  document.body.appendChild(modal);
 
-  return `
-    <div class="section__header" style="margin-bottom:12px;">
-        <h3 class="section__title">Misiones</h3>
-        <span class="text-sm font-semibold" style="color:#d97706;">${completed}/${total} Completadas</span>
-    </div>
+  const close = () => modal.remove();
+  document.getElementById('success-close-x').addEventListener('click', close);
 
-    <!-- Progress Bar -->
-    <div style="background:#fef3c7; height:8px; border-radius:10px; overflow:hidden; margin-bottom:20px;">
-        <div style="width:${percent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
-    </div>
-
-    <!-- Missions List -->
-    <div class="missions-list">
-        ${missionsToShow.map(renderMissionItem).join('')}
-    </div>
-  `;
-}
-
-function renderMissionItem(mission) {
-    // Determine action behavior
-    let clickAction = '';
-    if (mission.cta) {
-        if (mission.cta.startsWith('http')) {
-            clickAction = `window.open('${mission.cta}', '_blank')`;
-        } else {
-            clickAction = `location.hash='${mission.cta}'`;
-        }
-    }
-
-    return `
-        <div class="mission-card animate-fade-in-up" ${clickAction ? `onclick="${clickAction}"` : ''} style="
-            background:white; 
-            border:1px solid #fce7f3; 
-            border-bottom: 3px solid #fce7f3;
-            border-radius:16px; 
-            padding:16px; 
-            margin-bottom:12px; 
-            display:flex; 
-            align-items:center; 
-            gap:16px;
-            cursor:pointer;
-            transition:all 0.2s;
-            position:relative;
-            overflow:hidden;
-        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            
-            <div style="
-                width:48px; 
-                height:48px; 
-                background:#fffbeb; 
-                border-radius:12px; 
-                display:flex; 
-                align-items:center; 
-                justify-content:center; 
-                font-size:24px;
-                flex-shrink:0;
-                border: 1px solid #fef3c7;
-            ">${mission.icon}</div>
-
-            <div style="flex:1;">
-                <div style="font-weight:700; color:#1f2937; font-size:0.95rem; margin-bottom:4px; line-height:1.2;">${mission.title}</div>
-                <div style="font-size:0.85rem; color:#d97706; font-weight:700;">🎁 ${mission.reward}</div>
-            </div>
-
-            <div style="
-                width:36px; 
-                height:36px; 
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                border-radius:50%; 
-                display:flex; 
-                align-items:center; 
-                justify-content:center;
-                color:white;
-                box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
-            ">
-                ${renderIcon('arrowRight', '', '18')}
-            </div>
-        </div>
-    `;
+  document.getElementById('btn-finish-withdraw').addEventListener('click', () => {
+    close();
+  });
 }
