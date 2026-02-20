@@ -486,7 +486,7 @@ function attachGranjaListeners(hasPiggies, stats) {
   });
 
   document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showMeatModal();
+    navigateTo('gourmet');
   });
 }
 
@@ -564,12 +564,8 @@ function showBonusModal(hasPiggies) {
   // Action logic
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
     close();
-    if (hasPiggies) {
-      navigateTo('mercado');
-    } else {
-      // If no piggies, go to adoption to "Activate" the bonus
-      navigateTo('adopcion');
-    }
+    // Always navigate to Piggy Gourmet for bonus redemption
+    navigateTo('gourmet');
   });
 }
 
