@@ -10,7 +10,7 @@ import { navigateTo } from '../router.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { MOCK_MISSIONS } from '../services/mockData.js';
-import { completeMissionManual } from '../services/missionsService.js';
+import { completeMissionManual, isMissionCompletedManual } from '../services/missionsService.js';
 
 
 // ... (existing imports)
@@ -120,10 +120,15 @@ function renderMissionsModule() {
     let mission = { ...m, is_locked: false };
 
     // 1. Estados de Completado
-    if (mission.id === 'm1') mission.is_completed = !!profile;
-    if (mission.id === 'm2') mission.is_completed = hasFirstPiggy;
-    if (mission.id === 'm4') mission.is_completed = hasSecondPiggy;
-    if (mission.id === 'm7') mission.is_completed = piggies.length >= 3;
+    if (isMissionCompletedManual(mission.id)) {
+      mission.is_completed = true;
+    } else {
+      if (mission.id === 'm1') mission.is_completed = !!profile;
+      if (mission.id === 'm2') mission.is_completed = hasFirstPiggy;
+      if (mission.id === 'm4') mission.is_completed = hasSecondPiggy;
+      if (mission.id === 'm7') mission.is_completed = piggies.length >= 3;
+    }
+
 
     // 2. Bloqueos (Game Leveling)
     // Si no tienes el primer piggy, el segundo se bloquea
