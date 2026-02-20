@@ -13,6 +13,7 @@ import { MOCK_MISSIONS } from '../services/mockData.js';
 import { completeMissionManual, isMissionCompletedManual } from '../services/missionsService.js';
 
 
+
 // ... (existing imports)
 
 // ...
@@ -506,13 +507,7 @@ function buildGranjaFull(firstName, piggies, stats) {
 
         <!-- Bonus Banner -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-          <div class="banner banner--interactive" id="bonus-banner">
-            <div class="banner__badge">BONO PLUS DE BIENVENIDA</div>
-            <div class="banner__title">Consigue bono de consumo por $50.000</div>
-            <div class="banner__subtitle">Comprando tu primer piggy.</div>
-            <div class="banner__decoration">🎁</div>
-            <div class="text-xs mt-sm" style="opacity:0.7;">*Aplican términos y condiciones.</div>
-          </div>
+          ${renderBonusBanner()}
         </div>
 
         <!-- Missions Module -->
@@ -721,13 +716,61 @@ function showBonusModal(hasPiggies) {
   });
 
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
-    close();
-    if (hasPiggies) {
-      navigateTo('mercado');
-    } else {
-      navigateTo('adopcion');
+    // 1. WhatsApp Logic
+    const phone = "573154870448";
+    const profile = AppState.get('profile');
+    const name = profile?.full_name || 'Usuario';
+    const text = encodeURIComponent(`Hola equipo Piggy! Soy ${name}. 🐷 Quiero redimir mi bono de bienvenida de $50.000.`);
+
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+
+    // 2. Set "Redeemed" State
+    localStorage.setItem('bonus_redeemed', 'true');
+
+    // 3. Update UI (Visual Feedback - Ticket Mode)
+    const banner = document.getElementById('bonus-banner');
+    if (banner) {
+      banner.style.transition = "all 0.5s ease";
+      banner.style.filter = "grayscale(1)";
+      banner.style.opacity = "0.7";
+      banner.innerHTML = `
+          <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
+          <div class="banner__title">Bono en proceso de validación</div>
+          <div class="banner__subtitle">Revisa tu WhatsApp para continuar.</div>
+          <div class="banner__decoration">✅</div>
+        `;
     }
+
+    close();
   });
+}
+
+/**
+ * Render logic for the bonus banner based on redemption state.
+ */
+function renderBonusBanner() {
+  const isRedeemed = localStorage.getItem('bonus_redeemed') === 'true';
+
+  if (isRedeemed) {
+    return `
+      <div class="banner" id="bonus-banner" style="filter: grayscale(1); opacity: 0.7; cursor: default;">
+        <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
+        <div class="banner__title">Bono en proceso de validación</div>
+        <div class="banner__subtitle">Revisa tu WhatsApp para continuar.</div>
+        <div class="banner__decoration">✅</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="banner banner--interactive" id="bonus-banner">
+      <div class="banner__badge">BONO PLUS DE BIENVENIDA</div>
+      <div class="banner__title">Consigue bono de consumo por $50.000</div>
+      <div class="banner__subtitle">Comprando tu primer piggy.</div>
+      <div class="banner__decoration">🎁</div>
+      <div class="text-xs mt-sm" style="opacity:0.7;">*Aplican términos y condiciones.</div>
+    </div>
+  `;
 }
 
 function removeBonusModal() {
