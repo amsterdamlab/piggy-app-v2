@@ -7,148 +7,9 @@ import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
+import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { MOCK_MISSIONS } from '../services/mockData.js';
-import { completeMissionManual, isMissionCompletedManual } from '../services/missionsService.js';
-
-
-
-
-function renderMissionsModule() {
-  const piggies = AppState.get('piggies') || [];
-  const profile = AppState.get('profile');
-
-  // Lógica de Estado Local para Misiones
-  // Esto asegura que la vista siempre tenga la lógica más fresca sin depender de caché de módulos externos si hay problemas.
-  const hasFirstPiggy = piggies.length >= 1;
-  const hasSecondPiggy = piggies.length >= 2;
-
-  // Procesar misiones
-  const processedMissions = MOCK_MISSIONS.map(m => {
-    let mission = { ...m, is_locked: false };
-
-    // 1. Estados de Completado
-    if (isMissionCompletedManual(mission.id)) {
-      mission.is_completed = true;
-    } else {
-      if (mission.id === 'm1') mission.is_completed = !!profile;
-      if (mission.id === 'm2') mission.is_completed = hasFirstPiggy;
-      if (mission.id === 'm4') mission.is_completed = hasSecondPiggy;
-      if (mission.id === 'm7') mission.is_completed = piggies.length >= 3;
-    }
-
-
-    // 2. Bloqueos (Game Leveling)
-    // Si no tienes el primer piggy, el segundo se bloquea
-    if (mission.id === 'm4' && !hasFirstPiggy) mission.is_locked = true;
-    // Si no tienes el segundo, el tercero se bloquea
-    if (mission.id === 'm7' && !hasSecondPiggy) mission.is_locked = true;
-
-    // Otros bloqueos lógicos opcionales
-    if (mission.id === 'm6' && !hasFirstPiggy) mission.is_locked = true; // Cerrar ciclo requiere abrirlo
-
-    return mission;
-  });
-
-  const activeMissions = processedMissions.filter(m => !m.is_completed && !m.is_locked);
-  const total = processedMissions.length;
-  const completed = processedMissions.filter(m => m.is_completed).length;
-  const percent = Math.round((completed / total) * 100);
-
-  // DEBUG: Mostrar conteo de piggies si hay dudas (visible solo si inspeccionan elemento)
-  // console.log('Piggies detected for missions:', piggies.length);
-
-  if (activeMissions.length === 0) {
-    return `
-        <div class="missions-complete animate-fade-in-up" style="text-align:center; padding:32px; background:white; border-radius:16px; border:1px dashed #e0e0e0;">
-            <div style="font-size:48px; margin-bottom:16px;">🏆</div>
-            <h3 class="text-primary font-bold" style="font-size:1.2rem; margin-bottom:8px;">¡Eres un Granjero Maestro!</h3>
-            <p class="text-muted text-sm">Has desbloqueado todos los bonos disponibles.</p>
-        </div>
-      `;
-  }
-
-  // Show only first 3 active missions
-  const missionsToShow = activeMissions.slice(0, 3);
-
-  return `
-    <div class="section__header" style="margin-bottom:12px;">
-        <h3 class="section__title">Misiones</h3>
-        <span class="text-sm font-semibold" style="color:#d97706;">${completed}/${total} Completadas</span>
-    </div>
-
-    <!-- Progress Bar -->
-    <div style="background:#fef3c7; height:8px; border-radius:10px; overflow:hidden; margin-bottom:20px;">
-        <div style="width:${percent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
-    </div>
-
-    <!-- Missions List -->
-    <div class="missions-list">
-        ${missionsToShow.map(renderMissionItem).join('')}
-    </div>
-  `;
-}
-
-function renderMissionItem(mission) {
-  // Usamos data-attributes para ser capturados por attachGranjaListeners
-  // y evitar onclicks inline que rompen CSP o complican la logica
-  return `
-        <div class="mission-card animate-fade-in-up" 
-            data-id="${mission.id}" 
-            data-cta="${mission.cta || ''}"
-            style="
-            background:white; 
-            border:1px solid #fce7f3; 
-            border-bottom: 3px solid #fce7f3;
-            border-radius:16px; 
-            padding:16px; 
-            margin-bottom:12px; 
-            display:flex; 
-            align-items:center; 
-            gap:16px;
-            cursor:pointer;
-            transition:all 0.2s;
-            position:relative;
-            overflow:hidden;
-        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            
-            <div style="
-                width:48px; 
-                height:48px; 
-                background:#fffbeb; 
-                border-radius:12px; 
-                display:flex; 
-                align-items:center; 
-                justify-content:center; 
-                font-size:24px;
-                flex-shrink:0;
-                border: 1px solid #fef3c7;
-            ">${mission.icon}</div>
-
-            <div style="flex:1;">
-                <div style="font-weight:700; color:#1f2937; font-size:0.95rem; margin-bottom:4px; line-height:1.2;">${mission.title}</div>
-                <div style="font-size:0.85rem; color:#d97706; font-weight:700;">🎁 ${mission.reward}</div>
-            </div>
-
-            <div style="
-                width:36px; 
-                height:36px; 
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
-                border-radius:50%; 
-                display:flex; 
-                align-items:center; 
-                justify-content:center;
-                color:white;
-                box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
-            ">
-                ${renderIcon('arrowRight', '', '18')}
-            </div>
-        </div>
-    `;
-}
-
-
 
 /**
  * Render the Granja (Dashboard) view.
@@ -415,12 +276,38 @@ function buildGranjaFull(firstName, piggies, stats) {
 
         <!-- Bonus Banner -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-          ${renderBonusBanner(piggies)}
+          <div class="banner banner--interactive" id="bonus-banner">
+            <div class="banner__badge">BONO PLUS DE BIENVENIDA</div>
+            <div class="banner__title">Consigue bono de consumo por $50.000</div>
+            <div class="banner__subtitle">Comprando tu primer piggy.</div>
+            <div class="banner__decoration">🎁</div>
+            <div class="text-xs mt-sm" style="opacity:0.7;">*Aplican términos y condiciones.</div>
+          </div>
         </div>
 
-        <!-- Missions Module -->
+        <!-- Missions Quick View -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.35s;">
-          ${renderMissionsModule()}
+          <div class="section__header">
+            <h3 class="section__title">Misiones</h3>
+          </div>
+          <div class="missions-quick">
+            <div class="mission-item" id="mission-feed">
+              <span class="mission-item__icon">🍎</span>
+              <div class="mission-item__info">
+                <div class="mission-item__name">Alimenta a tu Piggy</div>
+                <div class="mission-item__points">+10 pts</div>
+              </div>
+              <button class="btn btn--sm btn--primary mission-item__action">¡Listo!</button>
+            </div>
+            <div class="mission-item" id="mission-share">
+              <span class="mission-item__icon">📱</span>
+              <div class="mission-item__info">
+                <div class="mission-item__name">Comparte tu progreso</div>
+                <div class="mission-item__points">+25 pts</div>
+              </div>
+              <button class="btn btn--sm btn--secondary mission-item__action">Compartir</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -429,6 +316,8 @@ function buildGranjaFull(firstName, piggies, stats) {
     </div>
   `;
 }
+
+// ... renderGreeting remains the same ...
 
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
@@ -452,24 +341,9 @@ function renderGreeting(firstName) {
 function renderEmptyPiggies() {
   return `
     <div class="empty-state">
-      <div class="empty-state__icon" style="
-        width: 150px; 
-        height: 150px; 
-        margin: 0 auto 20px; 
-        border-radius: 50%;
-        border: 4px solid #fff; 
-        box-shadow: 0 10px 30px rgba(236, 72, 153, 0.2);
-        overflow: hidden;
-        background: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">
-        <img src="pig1.png" alt="Piggy" style="
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        " />
+      <div class="empty-state__icon">
+        <!-- <span style="font-size: 32px;">🐷</span> -->
+        <img src="pig1.png" alt="Piggy" style="width:64px; height:64px; object-fit:contain;" />
       </div>
       <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
@@ -481,6 +355,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 function renderPiggiesList(piggies, baseROI) {
   return `
@@ -498,6 +374,7 @@ function renderPiggyCard(piggy, baseROI) {
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
+          <!-- <span style="font-size: 36px;">🐷</span> -->
           <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
         </div>
         <div class="piggy-card__info">
@@ -539,6 +416,7 @@ function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
+// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal">
@@ -558,6 +436,9 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
+/**
+ * Attach event listeners.
+ */
 function attachGranjaListeners(hasPiggies, stats) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
@@ -568,51 +449,52 @@ function attachGranjaListeners(hasPiggies, stats) {
   });
 
   // Bonus Banner click
-  const banner = document.getElementById('bonus-banner');
-  if (banner) {
-    banner.addEventListener('click', () => {
-      handleRewardClick(banner, hasPiggies);
-    });
-  }
-
+  document.getElementById('bonus-banner')?.addEventListener('click', () => {
+    showBonusModal(hasPiggies);
+  });
+  
   // Quick Buy Action
   const quickBuyBtn = document.getElementById('btn-quick-buy');
   if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', async () => {
-      quickBuyBtn.style.opacity = '0.7';
-      quickBuyBtn.style.pointerEvents = 'none';
-
-      try {
-        const items = await getMarketplaceItems();
-        // Find Standard Initial Piggy (Month 1, Standard)
-        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-
-        if (standardPiggy) {
-          showCheckoutModal(standardPiggy);
-        } else {
-          navigateTo('mercado');
-        }
-      } catch (error) {
-        console.error('Quick buy error:', error);
-        navigateTo('mercado');
-      } finally {
-        quickBuyBtn.style.opacity = '1';
-        quickBuyBtn.style.pointerEvents = 'auto';
-      }
-    });
+      quickBuyBtn.addEventListener('click', async () => {
+         quickBuyBtn.style.opacity = '0.7';
+         quickBuyBtn.style.pointerEvents = 'none';
+         
+         try {
+             const items = await getMarketplaceItems();
+             // Find Standard Initial Piggy (Month 1, Standard)
+             const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+             
+             if (standardPiggy) {
+                 showCheckoutModal(standardPiggy);
+             } else {
+                 navigateTo('mercado');
+             }
+         } catch (error) {
+             console.error('Quick buy error:', error);
+             navigateTo('mercado');
+         } finally {
+             quickBuyBtn.style.opacity = '1';
+             quickBuyBtn.style.pointerEvents = 'auto';
+         }
+      });
   }
 
   // Wallet Actions
   document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWithdrawModal(stats?.disponible || 0);
+     showWithdrawModal(stats?.disponible || 0);
   });
 
   document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showMeatModal();
+     showMeatModal();
   });
 }
 
+/**
+ * Show Bonus Modal
+ */
 function showBonusModal(hasPiggies) {
+  // Remove existing
   removeBonusModal();
 
   const modal = document.createElement('div');
@@ -626,6 +508,7 @@ function showBonusModal(hasPiggies) {
         <button class="bonus-close" id="bonus-close-btn">${renderIcon('close', '', '24')}</button>
         
         <div class="bonus-header">
+            <!-- Image removed for cleaner look -->
             <h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3>
             <p class="text-center text-primary font-bold text-lg">$50.000 PESOS EN CONSUMO DE CARNE</p>
         </div>
@@ -671,260 +554,41 @@ function showBonusModal(hasPiggies) {
 
   document.body.appendChild(modal);
 
+  // Close logic
   const close = () => modal.remove();
   document.getElementById('bonus-close-btn').addEventListener('click', close);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) close();
   });
 
+  // Action logic
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
-    // 1. WhatsApp Logic
-    const phone = "573154870448";
-    const profile = AppState.get('profile');
-    const name = profile?.full_name || 'Usuario';
-    const text = encodeURIComponent(`Hola equipo Piggy! Soy ${name}. 🐷 Quiero redimir mi bono de bienvenida de $50.000.`);
-
-    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-
-    // 2. Set "Redeemed" State
-    localStorage.setItem('bonus_redeemed', 'true');
-
-    // 3. Update UI (Visual Feedback - Ticket Mode)
-    const banner = document.getElementById('bonus-banner');
-    if (banner) {
-      banner.style.transition = "all 0.5s ease";
-      banner.style.filter = "grayscale(1)";
-      banner.style.opacity = "0.7";
-      banner.style.cursor = "default";
-      banner.style.pointerEvents = "none";
-      banner.innerHTML = `
-          <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
-          <div class="banner__title">Bono en proceso de validación</div>
-          <div class="banner__subtitle">Revisa tu WhatsApp para continuar.</div>
-          <div class="banner__decoration">✅</div>
-        `;
-    }
-
     close();
+    if (hasPiggies) {
+      navigateTo('mercado');
+    } else {
+      // If no piggies, go to adoption to "Activate" the bonus
+      navigateTo('adopcion');
+    }
   });
 }
-
-
-
-
-/* =========================================
-   ========================================= */
-   REWARDS SYSTEM LOGIC (STRICT MAPPING)
-
-const REWARD_TYPES = {
-  BONUS_50K: 'bonus_50k',        // Premio M1
-  PIGGY_3M: 'unlock_piggy_3m',   // Premio M2
-  REFERRAL: 'unlock_referral',   // Premio M3
-  MARGIN_1: 'margin_plus_1',     // Premio M4
-  SILVER_24H: 'piggy_silver',    // Premio M5
-  MARGIN_KEEP: 'margin_keep_10', // Premio M7
-  GOLD_24H: 'piggy_gold',        // Premio M8
-  WALLET_30K: 'wallet_30k'       // Premio M9
-};
-
-/**
- * Calculates the completion status of all missions based on current app state.
- * This is the SOURCE OF TRUTH for both the Missions List and the Rewards Banner.
- */
-function calculateMissionStates(piggies, profile) {
-  const hasFirstPiggy = piggies && piggies.length >= 1;
-  const hasSecondPiggy = piggies && piggies.length >= 2;
-
-  return {
-    m1: !!profile, // Registro
-    m2: hasFirstPiggy, // 1er Piggy
-    m3: isMissionCompletedManual('m3'), // Invitar (Manual check via localStorage)
-    m4: hasSecondPiggy, // 2do Piggy
-    m5: isMissionCompletedManual('m5'), // Aliados (Manual)
-    m6: false, // Cerrar ciclo (To implement)
-    m7: piggies && piggies.length >= 3, // 3er Piggy
-    m8: isMissionCompletedManual('m8'), // Oferta semana
-    m9: isMissionCompletedManual('m9') // Referido compra
-  };
-}
-
-/**
- * Determine which reward should be shown in the banner slot.
- * RULES:
- * 1. Mission MUST be completed.
- * 2. Reward MUST NOT be redeemed yet.
- */
-function getActiveReward(piggies) {
-  const profile = AppState.get('profile');
-  const status = calculateMissionStates(piggies, profile);
-
-  // 1. BONO DE BIENVENIDA ($50.000) (M1)
-  const bonus50kRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K) === 'true';
-  // Legacy fix
-  if (localStorage.getItem('bonus_redeemed') === 'true' && !bonus50kRedeemed) {
-    localStorage.setItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K, 'true');
-  }
-
-  if (status.m1 && !bonus50kRedeemed) {
-    return {
-      id: REWARD_TYPES.BONUS_50K,
-      type: 'modal_50k',
-      badge: '¡Misión #1 Cumplida!',
-      title: 'Bono de $50.000 Disponible',
-      subtitle: 'Toca aquí para redimir tu regalo de bienvenida.',
-      icon: '🎁',
-      bgClass: 'banner--interactive',
-      ctaLabel: 'COBRAR PREMIO'
-    };
-  }
-
-  // 2. PIGGY 3 MESES (M2)
-  const piggy3mRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.PIGGY_3M) === 'true';
-  if (status.m2 && !piggy3mRedeemed) {
-    return {
-      id: REWARD_TYPES.PIGGY_3M,
-      type: 'navigate',
-      target: '#/mercado',
-      badge: '¡Misión #2 Cumplida!',
-      title: 'Has desbloqueado Ciclos Cortos',
-      subtitle: 'Acceso exclusivo a Piggies de 3 Meses.',
-      icon: '🔓',
-      style: 'background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color:white;',
-      ctaLabel: 'VER MERCADO'
-    };
-  }
-
-  // 3. CODIGO REFERIDO (M3)
-  const referralRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.REFERRAL) === 'true';
-  if (status.m3 && !referralRedeemed) {
-    return {
-      id: REWARD_TYPES.REFERRAL,
-      type: 'show_code', // New action type
-      badge: '¡Misión #3 Cumplida!',
-      title: 'Tu Código de Referido está listo',
-      subtitle: 'Empieza a ganar comisiones por invitar.',
-      icon: '🎫',
-      style: 'background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white;',
-      ctaLabel: 'VER CÓDIGO'
-    };
-  }
-
-  // 4. MARGEN +1% (M4)
-  const marginRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.MARGIN_1) === 'true';
-  if (status.m4 && !marginRedeemed) {
-    return {
-      id: REWARD_TYPES.MARGIN_1,
-      type: 'info_claim',
-      badge: '¡Misión #4 Cumplida!',
-      title: 'Mejora de Margen Activada',
-      subtitle: 'Tu rentabilidad base ha subido un +1%.',
-      icon: '',
-      style: 'background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white;',
-      ctaLabel: 'ENTENDIDO'
-    };
-  }
-
-  // Si no hay premios pendientes (Misiones no cumplidas O premios ya reclamados)
-  return null;
-}
-
-
-/**
- * Render logic for the bonus banner.
- * If null, returns empty string (Banner disappears).
- */
-function renderBonusBanner(piggies) {
-  const activeReward = getActiveReward(piggies);
-
-  if (!activeReward) {
-    // Si no hay premio activo, NO MOSTRAR NADA.
-    // Dejar que el usuario se enfoque en las misiones de abajo.
-    return '';
-  }
-
-  const customStyle = activeReward.style || '';
-
-  return `
-    <div class="banner banner--interactive animate-bounce-in" id="bonus-banner" 
-         data-reward-id="${activeReward.id}"
-         data-reward-type="${activeReward.type}"
-         data-reward-target="${activeReward.target || ''}"
-         style="${customStyle}">
-      <div class="banner__badge" style="opacity:0.9; background:white; color:#333; font-weight:800; box-shadow:0 2px 4px rgba(0,0,0,0.1);">${activeReward.badge}</div>
-      <div class="banner__title" style="margin-top:8px;">${activeReward.title}</div>
-      <div class="banner__subtitle" style="opacity:0.9;">${activeReward.subtitle}</div>
-      <div class="banner__decoration">${activeReward.icon}</div>
-      <div class="mt-sm">
-        <span style="background:rgba(255,255,255,0.25); padding:6px 16px; border-radius:30px; font-weight:bold; font-size:12px; letter-spacing:0.5px; border:1px solid rgba(255,255,255,0.4);">
-           ${activeReward.ctaLabel}
-        </span>
-      </div>
-    </div>
-  `;
-}
-
-
-
-/**
- * Global Handler for Reward Clicks
- */
-function handleRewardClick(element, hasPiggies) {
-  const rewardId = element.dataset.rewardId;
-  const rewardType = element.dataset.rewardType;
-  const target = element.dataset.rewardTarget;
-
-  if (!rewardId) return;
-
-  // Mark as redeemed immediately
-  if (rewardType !== 'modal_50k') {
-    localStorage.setItem('reward_redeemed_' + rewardId, 'true');
-  }
-
-  // --- ACTIONS DISPATCHER ---
-
-  // 1. Modal 50k
-  if (rewardType === 'modal_50k') {
-    showBonusModal(hasPiggies);
-    return;
-  }
-
-  // 2. Navigation (Market)
-  if (rewardType === 'navigate') {
-    location.hash = target;
-    return;
-  }
-
-  // 3. Show Referral Code
-  if (rewardType === 'show_code') {
-    alert('¡Felicidades! Tu código de referido es: PIGGY2026\nCompártelo con tus amigos.');
-    // Force reload to update banner
-    setTimeout(() => location.reload(), 500);
-    return;
-  }
-
-  // 4. Info Claim (Simple confirmation)
-  if (rewardType === 'info_claim') {
-    // Visual feedback
-    element.style.transform = 'scale(0.95)';
-    element.style.opacity = '0.5';
-    setTimeout(() => location.reload(), 500);
-    return;
-  }
-}
-
 
 function removeBonusModal() {
   const existing = document.getElementById('bonus-modal');
   if (existing) existing.remove();
 }
 
+/* =========================================
+   WALLET MODALS
+   ========================================= */
 
 function showWithdrawModal(availableAmount) {
+  // Remove existing
   const existing = document.getElementById('withdraw-modal');
   if (existing) existing.remove();
 
   const minWithdraw = 10000;
-
+  
   const modal = document.createElement('div');
   modal.id = 'withdraw-modal';
   modal.className = 'modal-overlay';
@@ -969,6 +633,7 @@ function showWithdrawModal(availableAmount) {
 
   document.body.appendChild(modal);
 
+  // Logic
   const amountInput = document.getElementById('withdraw-amount');
   const bankInput = document.getElementById('withdraw-bank');
   const termsInput = document.getElementById('withdraw-terms');
@@ -979,33 +644,33 @@ function showWithdrawModal(availableAmount) {
     const amount = parseFloat(amountInput.value) || 0;
     const bank = bankInput.value;
     const terms = termsInput.checked;
-
+    
     let valid = true;
     let errorMsg = '';
 
     if (amount < minWithdraw) {
-      valid = false;
-      if (amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
+        valid = false;
+        if(amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
     } else if (amount > availableAmount) {
-      valid = false;
-      errorMsg = 'Fondos insuficientes';
+        valid = false;
+        errorMsg = 'Fondos insuficientes';
     }
 
-    if (errorMsg) {
-      errorDiv.textContent = errorMsg;
-      errorDiv.style.display = 'block';
+    if(errorMsg) {
+        errorDiv.textContent = errorMsg;
+        errorDiv.style.display = 'block';
     } else {
-      errorDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
     }
 
     if (valid && bank && terms) {
-      submitBtn.classList.remove('btn--disabled');
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
+        submitBtn.classList.remove('btn--disabled');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
     } else {
-      submitBtn.classList.add('btn--disabled');
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.5';
+        submitBtn.classList.add('btn--disabled');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
     }
   };
 
@@ -1013,25 +678,28 @@ function showWithdrawModal(availableAmount) {
   bankInput.addEventListener('change', validate);
   termsInput.addEventListener('change', validate);
 
+  // Todo Button
   document.getElementById('btn-withdraw-all').addEventListener('click', () => {
-    amountInput.value = availableAmount;
-    validate();
+      amountInput.value = availableAmount;
+      validate();
   });
 
+  // Close
   const close = () => modal.remove();
   document.getElementById('withdraw-close-btn').addEventListener('click', close);
-
+  
+  // Submit
   submitBtn.addEventListener('click', () => {
-    showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
-    close();
+     showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
+     close();
   });
 }
 
 function showWithdrawSuccess(amount, bank) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
              <button class="bonus-close" id="success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
             <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
@@ -1057,18 +725,18 @@ function showWithdrawSuccess(amount, bank) {
             <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
         </div>
     `;
-  document.body.appendChild(modal);
-  document.getElementById('success-close').addEventListener('click', () => modal.remove());
-  document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
+    document.body.appendChild(modal);
+    document.getElementById('success-close').addEventListener('click', () => modal.remove());
+    document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
 }
 
 function showMeatModal() {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
-  modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
-             <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+            <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
             
             <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
             <p class="text-muted mb-lg" style="margin-bottom:24px;">
@@ -1085,6 +753,6 @@ function showMeatModal() {
             </div>
         </div>
     `;
-  document.body.appendChild(modal);
-  document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
+    document.body.appendChild(modal);
+    document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
 }
