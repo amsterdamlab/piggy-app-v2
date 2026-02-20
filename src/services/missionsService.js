@@ -13,6 +13,14 @@ export function completeMissionManual(missionId) {
 }
 
 /**
+ * Verifica si una misión fue completada manualmente en la sesión actual.
+ */
+export function isMissionCompletedManual(missionId) {
+    return manualCompletions.has(missionId);
+}
+
+
+/**
  * Checks and updates mission statuses based on the current application state.
  * This is a client-side simulation. In production, this would be a DB query.
  */
