@@ -780,7 +780,6 @@ const REWARD_TYPES = {
   REFERRAL: 'unlock_referral',   // Premio M3
   MARGIN_1: 'margin_plus_1',     // Premio M4
   SILVER_24H: 'piggy_silver',    // Premio M5
-  CYCLE_FINISH: 'piggy_silver_cycle', // Premio M6
   MARGIN_KEEP: 'margin_keep_10', // Premio M7
   GOLD_24H: 'piggy_gold',        // Premio M8
   WALLET_30K: 'wallet_30k'       // Premio M9
@@ -793,7 +792,6 @@ const REWARD_TYPES = {
 function calculateMissionStates(piggies, profile) {
   const hasFirstPiggy = piggies && piggies.length >= 1;
   const hasSecondPiggy = piggies && piggies.length >= 2;
-  const hasFinishedCycle = piggies && piggies.some(p => p.isComplete);
 
   return {
     m1: !!profile, // Registro
@@ -801,7 +799,7 @@ function calculateMissionStates(piggies, profile) {
     m3: isMissionCompletedManual('m3'), // Invitar (Manual check via localStorage)
     m4: hasSecondPiggy, // 2do Piggy
     m5: isMissionCompletedManual('m5'), // Aliados (Manual)
-    m6: hasFinishedCycle, // Cerrar ciclo
+    m6: false, // Cerrar ciclo (To implement)
     m7: piggies && piggies.length >= 3, // 3er Piggy
     m8: isMissionCompletedManual('m8'), // Oferta semana
     m9: isMissionCompletedManual('m9') // Referido compra
@@ -881,84 +879,6 @@ function getActiveReward(piggies) {
       icon: '',
       style: 'background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white;',
       ctaLabel: 'ENTENDIDO'
-    };
-  }
-
-  // 5. PIGGY SILVER (24H) (M5)
-  const silverRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.SILVER_24H) === 'true';
-  if (status.m5 && !silverRedeemed) {
-    return {
-      id: REWARD_TYPES.SILVER_24H,
-      type: 'navigate',
-      target: '#/mercado',
-      badge: '¡Misión #5 Cumplida!',
-      title: 'Has desbloqueado el Piggy Silver',
-      subtitle: 'Disponible solo por 24 horas en el mercado.',
-      icon: '🥈',
-      style: 'background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); color:white;',
-      ctaLabel: 'IR AL MERCADO'
-    };
-  }
-
-  // 6. PIGGY SILVER (24H) (M6)
-  const silverCycleRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.CYCLE_FINISH) === 'true';
-  if (status.m6 && !silverCycleRedeemed) {
-    return {
-      id: REWARD_TYPES.CYCLE_FINISH,
-      type: 'navigate',
-      target: '#/mercado',
-      badge: '¡Misión #6 Cumplida!',
-      title: 'Premio por completar ciclo',
-      subtitle: 'Nuevo Piggy Silver desbloqueado.',
-      icon: '🏁',
-      style: 'background: linear-gradient(135deg, #64748b 0%, #334155 100%); color:white;',
-      ctaLabel: 'VER PREMIO'
-    };
-  }
-
-  // 7. MARGEN FIJO 10% (M7)
-  const margin10Redeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.MARGIN_KEEP) === 'true';
-  if (status.m7 && !margin10Redeemed) {
-    return {
-      id: REWARD_TYPES.MARGIN_KEEP,
-      type: 'info_claim',
-      badge: '¡Misión #7 Cumplida!',
-      title: 'Margen Maestro Activado',
-      subtitle: 'Tu margen ahora es del 10% para toda tu granja.',
-      icon: '💎',
-      style: 'background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); color:white;',
-      ctaLabel: 'ENTENDIDO'
-    };
-  }
-
-  // 8. PIGGY GOLD (24H) (M8)
-  const goldRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.GOLD_24H) === 'true';
-  if (status.m8 && !goldRedeemed) {
-    return {
-      id: REWARD_TYPES.GOLD_24H,
-      type: 'navigate',
-      target: '#/mercado',
-      badge: '¡Misión #8 Cumplida!',
-      title: '¡DESBLOQUEASTE EL PIGGY GOLD!',
-      subtitle: 'Máxima rentabilidad disponible por 24 horas.',
-      icon: '🥇',
-      style: 'background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%); color:white;',
-      ctaLabel: 'COBRAR PREMIO'
-    };
-  }
-
-  // 9. WALLET $30.000 (M9)
-  const wallet30Redeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.WALLET_30K) === 'true';
-  if (status.m9 && !wallet30Redeemed) {
-    return {
-      id: REWARD_TYPES.WALLET_30K,
-      type: 'whatsapp_claim',
-      badge: '¡Misión #9 Cumplida!',
-      title: '¡Tienes $30.000 de Regalo!',
-      subtitle: 'Abonaremos este dinero a tu wallet de inmediato.',
-      icon: '💵',
-      style: 'background: linear-gradient(135deg, #22c55e 0%, #15803d 100%); color:white;',
-      ctaLabel: 'RECLAMAR AL WHATSAPP'
     };
   }
 
@@ -1046,31 +966,6 @@ function handleRewardClick(element, hasPiggies) {
     element.style.transform = 'scale(0.95)';
     element.style.opacity = '0.5';
     setTimeout(() => location.reload(), 500);
-    return;
-  }
-
-  // 5. WhatsApp Claim (Misiones con dinero real como M9)
-  if (rewardType === 'whatsapp_claim') {
-    const phone = "573154870448";
-    const profile = AppState.get('profile');
-    const name = profile?.full_name || 'Usuario';
-    const text = encodeURIComponent(`¡Hola equipo Piggy! Soy ${name}. 🐷 He completado la Misión Especial y vengo a reclamar mi premio de $30.000 en la wallet.`);
-
-    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
-    localStorage.setItem('reward_redeemed_' + rewardId, 'true');
-
-    // Visual feedback
-    element.style.transition = "all 0.5s ease";
-    element.style.filter = "grayscale(1)";
-    element.style.opacity = "0.7";
-    element.style.cursor = "default";
-    element.style.pointerEvents = "none";
-    element.innerHTML = `
-        <div class="banner__badge" style="background:#6b7280;">RECLAMADO</div>
-        <div class="banner__title">Solicitud enviada al WhatsApp</div>
-        <div class="banner__subtitle">Tu premio será cargado pronto.</div>
-        <div class="banner__decoration">✅</div>
-      `;
     return;
   }
 }
