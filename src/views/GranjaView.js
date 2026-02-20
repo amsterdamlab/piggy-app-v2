@@ -343,7 +343,7 @@ function renderEmptyPiggies() {
     <div class="empty-state">
       <div class="empty-state__icon">
         <!-- <span style="font-size: 32px;">🐷</span> -->
-        <img src="pig1.png" alt="Piggy" style="width:64px; height:64px; object-fit:contain;" />
+        <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" />
       </div>
       <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
@@ -452,41 +452,41 @@ function attachGranjaListeners(hasPiggies, stats) {
   document.getElementById('bonus-banner')?.addEventListener('click', () => {
     showBonusModal(hasPiggies);
   });
-  
+
   // Quick Buy Action
   const quickBuyBtn = document.getElementById('btn-quick-buy');
   if (quickBuyBtn) {
-      quickBuyBtn.addEventListener('click', async () => {
-         quickBuyBtn.style.opacity = '0.7';
-         quickBuyBtn.style.pointerEvents = 'none';
-         
-         try {
-             const items = await getMarketplaceItems();
-             // Find Standard Initial Piggy (Month 1, Standard)
-             const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-             
-             if (standardPiggy) {
-                 showCheckoutModal(standardPiggy);
-             } else {
-                 navigateTo('mercado');
-             }
-         } catch (error) {
-             console.error('Quick buy error:', error);
-             navigateTo('mercado');
-         } finally {
-             quickBuyBtn.style.opacity = '1';
-             quickBuyBtn.style.pointerEvents = 'auto';
-         }
-      });
+    quickBuyBtn.addEventListener('click', async () => {
+      quickBuyBtn.style.opacity = '0.7';
+      quickBuyBtn.style.pointerEvents = 'none';
+
+      try {
+        const items = await getMarketplaceItems();
+        // Find Standard Initial Piggy (Month 1, Standard)
+        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+
+        if (standardPiggy) {
+          showCheckoutModal(standardPiggy);
+        } else {
+          navigateTo('mercado');
+        }
+      } catch (error) {
+        console.error('Quick buy error:', error);
+        navigateTo('mercado');
+      } finally {
+        quickBuyBtn.style.opacity = '1';
+        quickBuyBtn.style.pointerEvents = 'auto';
+      }
+    });
   }
 
   // Wallet Actions
   document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-     showWithdrawModal(stats?.disponible || 0);
+    showWithdrawModal(stats?.disponible || 0);
   });
 
   document.getElementById('btn-meat')?.addEventListener('click', () => {
-     showMeatModal();
+    showMeatModal();
   });
 }
 
@@ -588,7 +588,7 @@ function showWithdrawModal(availableAmount) {
   if (existing) existing.remove();
 
   const minWithdraw = 10000;
-  
+
   const modal = document.createElement('div');
   modal.id = 'withdraw-modal';
   modal.className = 'modal-overlay';
@@ -644,33 +644,33 @@ function showWithdrawModal(availableAmount) {
     const amount = parseFloat(amountInput.value) || 0;
     const bank = bankInput.value;
     const terms = termsInput.checked;
-    
+
     let valid = true;
     let errorMsg = '';
 
     if (amount < minWithdraw) {
-        valid = false;
-        if(amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
+      valid = false;
+      if (amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
     } else if (amount > availableAmount) {
-        valid = false;
-        errorMsg = 'Fondos insuficientes';
+      valid = false;
+      errorMsg = 'Fondos insuficientes';
     }
 
-    if(errorMsg) {
-        errorDiv.textContent = errorMsg;
-        errorDiv.style.display = 'block';
+    if (errorMsg) {
+      errorDiv.textContent = errorMsg;
+      errorDiv.style.display = 'block';
     } else {
-        errorDiv.style.display = 'none';
+      errorDiv.style.display = 'none';
     }
 
     if (valid && bank && terms) {
-        submitBtn.classList.remove('btn--disabled');
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
+      submitBtn.classList.remove('btn--disabled');
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
     } else {
-        submitBtn.classList.add('btn--disabled');
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
+      submitBtn.classList.add('btn--disabled');
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
     }
   };
 
@@ -680,26 +680,26 @@ function showWithdrawModal(availableAmount) {
 
   // Todo Button
   document.getElementById('btn-withdraw-all').addEventListener('click', () => {
-      amountInput.value = availableAmount;
-      validate();
+    amountInput.value = availableAmount;
+    validate();
   });
 
   // Close
   const close = () => modal.remove();
   document.getElementById('withdraw-close-btn').addEventListener('click', close);
-  
+
   // Submit
   submitBtn.addEventListener('click', () => {
-     showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
-     close();
+    showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
+    close();
   });
 }
 
 function showWithdrawSuccess(amount, bank) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.style.zIndex = '10000';
-    modal.innerHTML = `
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
+  modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
              <button class="bonus-close" id="success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
             <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
@@ -725,16 +725,16 @@ function showWithdrawSuccess(amount, bank) {
             <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
         </div>
     `;
-    document.body.appendChild(modal);
-    document.getElementById('success-close').addEventListener('click', () => modal.remove());
-    document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+  document.getElementById('success-close').addEventListener('click', () => modal.remove());
+  document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
 }
 
 function showMeatModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.style.zIndex = '9999';
-    modal.innerHTML = `
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+  modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
             <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
             
@@ -753,6 +753,6 @@ function showMeatModal() {
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
-    document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
+  document.body.appendChild(modal);
+  document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
 }
