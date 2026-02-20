@@ -1,6 +1,7 @@
 /* ============================================
    PIGGY APP — Granja (Dashboard) View
    Matches screen2.png design
+   ============================================ */
 
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
@@ -712,6 +713,7 @@ function showBonusModal(hasPiggies) {
 
 
 /* =========================================
+   ========================================= */
    REWARDS SYSTEM LOGIC (STRICT MAPPING)
 
 const REWARD_TYPES = {
