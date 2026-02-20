@@ -28,6 +28,70 @@ export function renderMercadoView() {
           <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
         </div>
 
+        <!-- Piggy Gourmet Banner -->
+        <div class="section animate-fade-in-up" id="mercado-gourmet-banner" style="cursor:pointer; margin-bottom:24px; animation-delay: 0.1s;">
+            <div style="
+                background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+                border-radius: 16px;
+                padding: 22px 24px;
+                color: white;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 8px 25px -5px rgba(220, 38, 38, 0.4);
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 30px -5px rgba(220, 38, 38, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px -5px rgba(220, 38, 38, 0.4)'">
+                <!-- Decorative pattern -->
+                <div style="
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    opacity: 0.06;
+                    background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🥩%3C/text%3E%3C/svg%3E');
+                    pointer-events: none;
+                "></div>
+
+                <div style="position:relative; z-index:2; display:flex; align-items:center; gap:16px;">
+                    <div style="flex:1;">
+                        <div style="
+                            background: rgba(255,255,255,0.2);
+                            display: inline-block;
+                            padding: 3px 12px;
+                            border-radius: 20px;
+                            font-size: 0.65rem;
+                            font-weight: 700;
+                            letter-spacing: 1px;
+                            text-transform: uppercase;
+                            margin-bottom: 8px;
+                            backdrop-filter: blur(4px);
+                        ">🔥 PIGGY GOURMET</div>
+
+                        <div style="font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; line-height: 1.2;">
+                            Combos de Carne Fresca
+                        </div>
+                        <div style="font-size: 0.82rem; opacity: 0.9; line-height: 1.4;">
+                            Proteína de Granja Villa Morales directo a tu mesa. ¡Ofertas exclusivas!
+                        </div>
+
+                        <div style="margin-top: 14px;">
+                            <span style="
+                                background: white;
+                                color: #dc2626;
+                                padding: 8px 20px;
+                                border-radius: 10px;
+                                font-weight: 700;
+                                font-size: 0.85rem;
+                                display: inline-block;
+                            ">Ver Ofertas →</span>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 56px; flex-shrink: 0; opacity: 0.9;">🐷</div>
+                </div>
+
+                <!-- Big decoration -->
+                <div style="position:absolute; bottom:-20px; right:-10px; font-size:80px; opacity:0.1; transform:rotate(-15deg);">🥩</div>
+            </div>
+        </div>
+
         <!-- Products List -->
         <div id="mercado-content">
           <div class="loading-container">
@@ -42,6 +106,11 @@ export function renderMercadoView() {
   `;
 
   loadMarketplaceData();
+
+  // Gourmet Banner click → Navigate to Piggy Gourmet
+  document.getElementById('mercado-gourmet-banner')?.addEventListener('click', () => {
+    navigateTo('gourmet');
+  });
 
   return () => { };
 }
@@ -351,25 +420,25 @@ export function showCheckoutModal(item) {
 
   // Helper to Validate
   const validateName = () => {
-      const val = input.value.trim();
-      const isValid = val.length >= 3; // Min 3 chars
+    const val = input.value.trim();
+    const isValid = val.length >= 3; // Min 3 chars
 
-      if (isValid) {
-          paymentContainer.style.opacity = '1';
-          paymentContainer.style.pointerEvents = 'auto';
-          errorMsg.style.opacity = '0';
-          input.style.borderColor = '#10B981'; // Green border for success
+    if (isValid) {
+      paymentContainer.style.opacity = '1';
+      paymentContainer.style.pointerEvents = 'auto';
+      errorMsg.style.opacity = '0';
+      input.style.borderColor = '#10B981'; // Green border for success
+    } else {
+      paymentContainer.style.opacity = '0.5';
+      paymentContainer.style.pointerEvents = 'none';
+      errorMsg.style.opacity = '1';
+      if (val.length > 0) {
+        input.style.borderColor = '#e0e0e0'; // Neutral if typing but short
       } else {
-          paymentContainer.style.opacity = '0.5';
-          paymentContainer.style.pointerEvents = 'none';
-          errorMsg.style.opacity = '1';
-          if (val.length > 0) {
-             input.style.borderColor = '#e0e0e0'; // Neutral if typing but short
-          } else {
-             input.style.borderColor = '#fce7f3'; // Reset to pink if empty
-          }
+        input.style.borderColor = '#fce7f3'; // Reset to pink if empty
       }
-      return isValid;
+    }
+    return isValid;
   };
 
   // Input listener
@@ -377,9 +446,9 @@ export function showCheckoutModal(item) {
 
   // Suggestion Pills Logic (Global helper or attached to window as inline onclick needs it)
   window.selectPiggyName = (name) => {
-      input.value = name;
-      validateName();
-      input.focus(); // Keep focus for UX
+    input.value = name;
+    validateName();
+    input.focus(); // Keep focus for UX
   };
 
   // Close Logic
