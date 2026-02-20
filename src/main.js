@@ -27,6 +27,7 @@ import { renderMercadoView } from './views/MercadoView.js';
 import { renderAliadosView } from './views/AliadosView.js';
 import { renderPiggyDetailView } from './views/PiggyDetailView.js';
 import { renderAdopcionView } from './views/AdopcionView.js';
+import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
 
 // Components
 import { renderTopNav, removeTopNav } from './components/TopNav.js';
@@ -51,6 +52,7 @@ async function boot() {
   registerRoute('aliados', renderAliadosView);
   registerRoute('piggy', renderPiggyDetailView);
   registerRoute('adopcion', renderAdopcionView);
+  registerRoute('gourmet', renderPiggyGourmetView);
 
   // Subscribe to state changes
   AppState.subscribe((state, previous) => {
