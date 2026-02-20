@@ -1,49 +1,56 @@
-/* ============================================
-   PIGGY APP — Missions Service
-   ============================================ */
-
-import { getClient, isUsingMockData } from './supabase.js';
 import { MOCK_MISSIONS } from './mockData.js';
+import { AppState } from '../state.js';
 
 /**
- * Fetch user missions.
+ * Checks and updates mission statuses based on the current application state.
+ * This is a client-side simulation. In production, this would be a DB query.
  */
-export async function getUserMissions() {
-    if (isUsingMockData()) {
-        return [...MOCK_MISSIONS];
+export function syncMissionsStatus() {
+  const piggies = AppState.get('piggies') || [];
+  const profile = AppState.get('profile');
+  
+  // Create a copy or update the mock directly for simulation
+  const missions = MOCK_MISSIONS.map(mission => {
+    switch (mission.id) {
+      case 'm1': // Cuenta creada
+        mission.is_completed = !!profile;
+        break;
+      case 'm2': // Primer Piggy
+        if (piggies.length >= 1) mission.is_completed = true;
+        break;
+      case 'm4': // Segundo Piggy
+        if (piggies.length >= 2) mission.is_completed = true;
+        break;
+      case 'm7': // Tercer Piggy
+        if (piggies.length >= 3) mission.is_completed = true;
+        break;
+      // Las misiones m3, m5, m6, m8, m9 requieren tracking de eventos 
+      // que implementaremos a medida que avancemos.
+      default:
+        break;
     }
+    return mission;
+  });
 
-    const client = getClient();
-    const { data, error } = await client
-        .from('missions')
-        .select('*')
-        .order('is_completed', { ascending: true });
-
-    if (error) throw new Error(error.message);
-    return data || [];
+  return missions;
 }
 
 /**
- * Mark a mission as completed (mock mode simulates it).
+ * Get active (not completed) missions, limited to the top 3.
  */
-export async function completeMission(missionId) {
-    if (isUsingMockData()) {
-        const mission = MOCK_MISSIONS.find((m) => m.id === missionId);
-        if (mission) {
-            mission.is_completed = true;
-            mission.completed_at = new Date().toISOString();
-        }
-        return { error: null };
-    }
+export function getActiveMissions() {
+  const missions = syncMissionsStatus();
+  return missions.filter(m => !m.is_completed);
+}
 
-    const client = getClient();
-    const { error } = await client
-        .from('missions')
-        .update({
-            is_completed: true,
-            completed_at: new Date().toISOString(),
-        })
-        .eq('id', missionId);
-
-    return { error: error?.message || null };
+/**
+ * Get mission progress stats.
+ */
+export function getMissionsProgress() {
+  const missions = syncMissionsStatus();
+  const total = missions.length;
+  const completed = missions.filter(m => m.is_completed).length;
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  
+  return { total, completed, percent };
 }

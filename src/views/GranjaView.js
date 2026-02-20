@@ -7,10 +7,10 @@ import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
-import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { MOCK_MISSIONS } from '../services/mockData.js';
+import { getActiveMissions, getMissionsProgress } from '../services/missionsService.js';
+
 
 /**
  * Render the Granja (Dashboard) view.
@@ -716,18 +716,8 @@ function showMeatModal() {
    ========================================= */
 
 function renderMissionsModule() {
-  const totalMissions = MOCK_MISSIONS.length;
-  // Count missions that are explicitly completed
-  const completedMissions = MOCK_MISSIONS.filter(m => m.is_completed).length;
-  
-  // Calculate percentage
-  let progressPercent = 0;
-  if (totalMissions > 0) {
-      progressPercent = Math.round((completedMissions / totalMissions) * 100);
-  }
-
-  // Filter active missions (not completed)
-  const activeMissions = MOCK_MISSIONS.filter(m => !m.is_completed);
+  const { total, completed, percent } = getMissionsProgress();
+  const activeMissions = getActiveMissions();
 
   if (activeMissions.length === 0) {
       return `
@@ -745,12 +735,12 @@ function renderMissionsModule() {
   return `
     <div class="section__header" style="margin-bottom:12px;">
         <h3 class="section__title">Misiones</h3>
-        <span class="text-sm font-semibold" style="color:#d97706;">${completedMissions}/${totalMissions} Completadas</span>
+        <span class="text-sm font-semibold" style="color:#d97706;">${completed}/${total} Completadas</span>
     </div>
 
     <!-- Progress Bar -->
     <div style="background:#fef3c7; height:8px; border-radius:10px; overflow:hidden; margin-bottom:20px;">
-        <div style="width:${progressPercent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
+        <div style="width:${percent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
     </div>
 
     <!-- Missions List -->
