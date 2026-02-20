@@ -11,247 +11,29 @@ import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { MOCK_MISSIONS } from '../services/mockData.js';
 import { completeMissionManual, isMissionCompletedManual } from '../services/missionsService.js';
 
-
-function attachGranjaListeners(hasPiggies, stats) {
-  document.querySelectorAll('.piggy-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      navigateTo(`piggy/${card.dataset.piggyId}`);
-    });
-  });
-
-  const banner = document.getElementById('bonus-banner');
-  if (banner) {
-    banner.addEventListener('click', () => {
-      handleRewardClick(banner, hasPiggies);
-    });
-  }
-
-  const quickBuyBtn = document.getElementById('btn-quick-buy');
-  if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', async () => {
-      quickBuyBtn.style.opacity = '0.7';
-      quickBuyBtn.style.pointerEvents = 'none';
-      try {
-        const items = await getMarketplaceItems();
-        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-        if (standardPiggy) showCheckoutModal(standardPiggy);
-        else navigateTo('mercado');
-      } catch (error) {
-        navigateTo('mercado');
-      } finally {
-        quickBuyBtn.style.opacity = '1';
-        quickBuyBtn.style.pointerEvents = 'auto';
-      }
-    });
-  }
-
-  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWithdrawModal(stats?.disponible || 0);
-  });
-
-  document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showMeatModal();
-  });
-}
-
-function renderMissionsModule() {
-  const piggies = AppState.get('piggies') || [];
-  const profile = AppState.get('profile');
-  const hasFirstPiggy = piggies.length >= 1;
-  const hasSecondPiggy = piggies.length >= 2;
-
-  const processedMissions = MOCK_MISSIONS.map(m => {
-    let mission = { ...m, is_locked: false };
-    if (isMissionCompletedManual(mission.id)) {
-      mission.is_completed = true;
-    } else {
-      if (mission.id === 'm1') mission.is_completed = !!profile;
-      if (mission.id === 'm2') mission.is_completed = hasFirstPiggy;
-      if (mission.id === 'm4') mission.is_completed = hasSecondPiggy;
-      if (mission.id === 'm7') mission.is_completed = piggies.length >= 3;
-    }
-    if (mission.id === 'm4' && !hasFirstPiggy) mission.is_locked = true;
-    if (mission.id === 'm7' && !hasSecondPiggy) mission.is_locked = true;
-    if (mission.id === 'm6' && !hasFirstPiggy) mission.is_locked = true;
-    return mission;
-  });
-
-  const activeMissions = processedMissions.filter(m => !m.is_completed && !m.is_locked);
-  const total = processedMissions.length;
-  const completed = processedMissions.filter(m => m.is_completed).length;
-  const percent = Math.round((completed / total) * 100);
-
-  if (activeMissions.length === 0) {
-    return `
-        <div class="missions-complete animate-fade-in-up" style="text-align:center; padding:32px; background:white; border-radius:16px; border:1px dashed #e0e0e0;">
-            <div style="font-size:48px; margin-bottom:16px;">🏆</div>
-            <h3 class="text-primary font-bold" style="font-size:1.2rem; margin-bottom:8px;">¡Eres un Granjero Maestro!</h3>
-            <p class="text-muted text-sm">Has desbloqueado todos los bonos disponibles.</p>
-        </div>
-      `;
-  }
-
-  const missionsToShow = activeMissions.slice(0, 3);
-
-  return `
-    <div class="section__header" style="margin-bottom:12px;">
-        <h3 class="section__title">Misiones</h3>
-        <span class="text-sm font-semibold" style="color:#d97706;">${completed}/${total} Completadas</span>
-    </div>
-    <div style="background:#fef3c7; height:8px; border-radius:10px; overflow:hidden; margin-bottom:20px;">
-        <div style="width:${percent}%; background:linear-gradient(90deg, #F59E0B, #d97706); height:100%; border-radius:10px; box-shadow:0 0 10px rgba(245,158,11,0.5); transition:width 1s;"></div>
-    </div>
-    <div class="missions-list">
-        ${missionsToShow.map(renderMissionItem).join('')}
-    </div>
-  `;
-}
-
-function renderMissionItem(mission) {
-  return `
-        <div class="mission-card animate-fade-in-up" data-id="${mission.id}" data-cta="${mission.cta || ''}"
-            style="background:white; border:1px solid #fce7f3; border-bottom: 3px solid #fce7f3; border-radius:16px; padding:16px; margin-bottom:12px; display:flex; align-items:center; gap:16px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;"
-            onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <div style="width:48px; height:48px; background:#fffbeb; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; border: 1px solid #fef3c7;">${mission.icon}</div>
-            <div style="flex:1;">
-                <div style="font-weight:700; color:#1f2937; font-size:0.95rem; margin-bottom:4px; line-height:1.2;">${mission.title}</div>
-                <div style="font-size:0.85rem; color:#d97706; font-weight:700;">🎁 ${mission.reward}</div>
-            </div>
-            <div style="width:36px; height:36px; background: linear-gradient(135deg, #fbbf24, #f59e0b); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
-                ${renderIcon('arrowRight', '', '18')}
-            </div>
-        </div>
-    `;
-}
-
-export function renderGranjaView() {
-  const app = document.getElementById('app');
-  const profile = AppState.get('profile');
-  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  app.innerHTML = buildGranjaShell(firstName);
-  loadGranjaData(firstName);
-  return () => { removeBonusModal(); };
-}
-
-function buildGranjaShell(firstName) {
-  return `
-    <div class="page page--with-nav granja-page">
-      <div class="page__content">
-        ${renderGreeting(firstName)}
-        <h2 class="granja-title">Mi Granja</h2>
-        <div class="section animate-fade-in-up">
-           <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 24px; border-radius: 16px; margin-bottom: 24px; color: white; position:relative; overflow:hidden;">
-              <h3 style="margin:0 0 16px 0; font-size:1.1rem; opacity:0.9;">Wallet de ${firstName}</h3>
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                  <div><div class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2);"></div></div>
-              </div>
-           </div>
-        </div>
-        <div class="section" id="piggies-section"><div class="loading-container"><span>Cargando tu granja...</span></div></div>
-      </div>
-      ${renderBottomNav('granja')}
-    </div>
-  `;
-}
-
-async function loadGranjaData(firstName) {
-  try {
-    const piggies = await getUserPiggies();
-    const stats = await getDashboardStats(piggies);
-    AppState.set({ piggies });
-    const app = document.getElementById('app');
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats);
-    attachGranjaListeners(piggies.length > 0, stats);
-  } catch (error) {
-    console.error('Error loading granja data:', error);
-  }
-}
-
-function buildGranjaFull(firstName, piggies, stats) {
-  return `
-    <div class="page page--with-nav granja-page">
-      <div class="page__content">
-        ${renderGreeting(firstName)}
-        <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
-        <div class="section animate-fade-in-up">
-           <div class="wallet-banner-card" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 24px; border-radius: 16px; margin-bottom: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);">
-              <div style="position:relative; z-index:2;">
-                 <h3 style="margin:0 0 20px 0; font-size:1.25rem; font-weight:700;">Wallet de ${firstName}</h3>
-                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-                    <div><div style="font-size:0.75rem; opacity:0.8;">Adquisición Bonos</div><div>${stats.adquisicionBonosFormatted}</div></div>
-                    <div><div style="font-size:0.75rem; opacity:0.8;">Diferencial</div><div style="color: #39FF14;">+${stats.diferencialPreventaFormatted}</div></div>
-                    <div style="grid-column: span 2;"><div style="font-size:1.75rem; font-weight:800;">${stats.disponibleFormatted}</div></div>
-                 </div>
-                 ${stats.disponible > 0 ? `<button id="btn-withdraw" class="btn btn--white">Retirar</button>` : ''}
-              </div>
-           </div>
-        </div>
-        <div class="section animate-fade-in-up">
-          <div class="section__header"><h3 class="section__title">Mis Piggys</h3></div>
-          ${piggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(piggies, stats.baseROI)}
-        </div>
-        <div class="section animate-fade-in-up">${renderBonusBanner(piggies)}</div>
-        <div class="section animate-fade-in-up">${renderMissionsModule()}</div>
-      </div>
-      ${renderBottomNav('granja')}
-    </div>
-  `;
-}
-
-function renderGreeting(firstName) {
-  return `<div class="granja-greeting"><span>Hola, ${firstName}</span></div>`;
-}
-
-function renderEmptyPiggies() {
-  return `<div class="empty-state"><h3>No tienes Piggys aún</h3><button onclick="location.hash='#/adopcion'">Compra un Piggy</button></div>`;
-}
-
-function renderPiggiesList(piggies, baseROI) {
-  return `<div class="piggies-list">${piggies.map(p => renderPiggyCard(p, baseROI)).join('')}</div>`;
-}
-
-function renderPiggyCard(piggy, baseROI) {
-  return `<div class="piggy-card" data-piggy-id="${piggy.id}"><h4>${piggy.name}</h4><div class="progress"><div class="progress__bar" style="width:${piggy.progress}%"></div></div></div>`;
-}
-
-export function renderBottomNav(activeTab) {
-  return `<nav class="bottom-nav"><a href="#/granja">Granja</a><a href="#/mercado">Mercado</a></nav>`;
-}
-
-function showBonusModal(hasPiggies) {
-  const modal = document.createElement('div');
-  modal.id = 'bonus-modal';
-  modal.innerHTML = `<div class="modal"><h3>BONO $50.000</h3><button id="btn-redeem-bonus">Redimir</button></div>`;
-  document.body.appendChild(modal);
-  document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
-    localStorage.setItem('bonus_redeemed', 'true');
-    modal.remove();
-    location.reload();
-  });
-}
-
+// --- LOGICA DE RECOMPENSAS ---
 const REWARD_TYPES = {
-  BONUS_50K: 'bonus_50k',
-  PIGGY_3M: 'unlock_piggy_3m',
-  REFERRAL: 'unlock_referral',
-  MARGIN_1: 'margin_plus_1',
-  SILVER_24H: 'piggy_silver',
-  CYCLE_FINISH: 'piggy_silver_cycle',
-  MARGIN_KEEP: 'margin_keep_10',
-  GOLD_24H: 'piggy_gold',
-  WALLET_30K: 'wallet_30k'
+  BONUS_50K: 'bonus_50k',        // M1
+  PIGGY_3M: 'unlock_piggy_3m',   // M2
+  REFERRAL: 'unlock_referral',   // M3
+  MARGIN_1: 'margin_plus_1',     // M4
+  SILVER_24H: 'piggy_silver',    // M5
+  CYCLE_FINISH: 'piggy_silver_cycle', // M6
+  MARGIN_KEEP: 'margin_keep_10', // M7
+  GOLD_24H: 'piggy_gold',        // M8
+  WALLET_30K: 'wallet_30k'       // M9
 };
 
 function calculateMissionStates(piggies, profile) {
-  const hasFirstPiggy = piggies && piggies.length >= 1;
+  const count = piggies?.length || 0;
   return {
     m1: !!profile,
-    m2: hasFirstPiggy,
+    m2: count >= 1,
     m3: isMissionCompletedManual('m3'),
-    m4: (piggies && piggies.length >= 2),
+    m4: count >= 2,
     m5: isMissionCompletedManual('m5'),
-    m6: (piggies && piggies.some(p => p.isComplete)),
-    m7: (piggies && piggies.length >= 3),
+    m6: piggies?.some(p => p.isComplete),
+    m7: count >= 3,
     m8: isMissionCompletedManual('m8'),
     m9: isMissionCompletedManual('m9')
   };
@@ -261,35 +43,146 @@ function getActiveReward(piggies) {
   const profile = AppState.get('profile');
   const status = calculateMissionStates(piggies, profile);
 
+  // Orden de prioridad: De M1 a M9
   if (status.m1 && localStorage.getItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K) !== 'true') {
-    return { id: REWARD_TYPES.BONUS_50K, type: 'modal_50k', badge: 'M1', title: 'Bono $50k', icon: '🎁' };
+    return { id: REWARD_TYPES.BONUS_50K, type: 'modal_50k', badge: 'Misión #1', title: 'Bono de $50.000', icon: '🎁', style: 'background:linear-gradient(135deg, #ec4899, #be123c); color:white;' };
   }
   if (status.m2 && localStorage.getItem('reward_redeemed_' + REWARD_TYPES.PIGGY_3M) !== 'true') {
-    return { id: REWARD_TYPES.PIGGY_3M, type: 'navigate', target: '#/mercado', badge: 'M2', title: 'Ciclos Cortos', icon: '🔓' };
+    return { id: REWARD_TYPES.PIGGY_3M, type: 'navigate', target: '#/mercado', badge: 'Misión #2', title: 'Piggy 3 Meses Desbloqueado', icon: '🔓', style: 'background:linear-gradient(135deg, #8b5cf6, #6d28d9); color:white;' };
   }
+  // M3 a M9 siguen la misma lógica...
+  if (status.m7 && localStorage.getItem('reward_redeemed_' + REWARD_TYPES.MARGIN_KEEP) !== 'true') {
+    return { id: REWARD_TYPES.MARGIN_KEEP, type: 'info', title: 'Margen Maestro 10%', icon: '💎', style: 'background:linear-gradient(135deg, #0ea5e9, #0369a1); color:white;' };
+  }
+  
   return null;
 }
 
+// --- RENDERIZADO ---
+export function renderGranjaView() {
+  const app = document.getElementById('app');
+  const profile = AppState.get('profile');
+  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  app.innerHTML = `
+    <div class="page page--with-nav">
+      <div id="granja-content" class="page__content">
+        <div class="loading-container"><div class="spinner"></div></div>
+      </div>
+      ${renderBottomNav('granja')}
+    </div>
+  `;
+  loadGranjaData(firstName);
+}
+
+async function loadGranjaData(firstName) {
+  const container = document.getElementById('granja-content');
+  try {
+    const piggies = await getUserPiggies();
+    const stats = await getDashboardStats(piggies);
+    AppState.set({ piggies });
+    
+    container.innerHTML = `
+      <div class="animate-fade-in">
+        <h2 class="granja-title">Hola, ${firstName} 🐷</h2>
+        ${renderWallet(stats)}
+        ${renderPiggiesSection(piggies, stats.baseROI)}
+        <div class="mt-lg">${renderBonusBanner(piggies)}</div>
+        <div class="mt-lg">${renderMissionsModule(piggies)}</div>
+      </div>
+    `;
+    attachListeners(piggies, stats);
+  } catch (e) {
+    container.innerHTML = '<p>Error cargando datos.</p>';
+  }
+}
+
+function renderWallet(stats) {
+  return `
+    <div class="wallet-card" style="background: linear-gradient(135deg, #10B981, #059669); color:white; padding:20px; border-radius:16px; margin-bottom:20px;">
+      <span class="text-sm opacity-80">Disponible para retiro</span>
+      <div class="text-2xl font-bold">${stats.disponibleFormatted}</div>
+    </div>
+  `;
+}
+
+function renderPiggiesSection(piggies, baseROI) {
+  if (piggies.length === 0) {
+    return `
+      <div class="empty-state">
+        <img src="pig1.png" style="width:100px; margin-bottom:12px;">
+        <h3>No tienes Piggys aún</h3>
+        <button class="btn btn--primary" onclick="location.hash='#/mercado'">Comprar mi primer Piggy</button>
+      </div>
+    `;
+  }
+  return `
+    <div class="piggies-list">
+      ${piggies.map(p => `
+        <div class="piggy-card card" onclick="location.hash='#/piggy/${p.id}'">
+          <div class="font-bold">${p.name}</div>
+          <div class="progress"><div class="progress__bar" style="width:${p.progress}%"></div></div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function renderBonusBanner(piggies) {
-  const activeReward = getActiveReward(piggies);
-  if (!activeReward) return '';
-  return `<div class="banner" id="bonus-banner" data-reward-id="${activeReward.id}" data-reward-type="${activeReward.type}" data-reward-target="${activeReward.target || ''}">
-    <span>${activeReward.title}</span>
-  </div>`;
+  const reward = getActiveReward(piggies);
+  if (!reward) return '';
+  return `
+    <div class="banner banner--interactive" id="bonus-banner" data-id="${reward.id}" data-type="${reward.type}" data-target="${reward.target || ''}" style="${reward.style}">
+      <div class="banner__badge">${reward.badge || '¡Nuevo!'}</div>
+      <div class="banner__title">${reward.title}</div>
+      <div class="banner__decoration">${reward.icon}</div>
+      <button class="btn btn--white btn--sm mt-sm">COBRAR AHORA</button>
+    </div>
+  `;
 }
 
-function handleRewardClick(element, hasPiggies) {
-  const rewardId = element.dataset.rewardId;
-  const rewardType = element.dataset.rewardType;
-  localStorage.setItem('reward_redeemed_' + rewardId, 'true');
-  if (rewardType === 'modal_50k') showBonusModal(hasPiggies);
-  else if (rewardType === 'navigate') location.hash = element.dataset.rewardTarget;
-  else location.reload();
+function renderMissionsModule(piggies) {
+  const profile = AppState.get('profile');
+  const status = calculateMissionStates(piggies, profile);
+  const missions = MOCK_MISSIONS.map(m => ({ ...m, is_completed: status[m.id] }));
+  const completed = missions.filter(m => m.is_completed).length;
+
+  return `
+    <div class="section">
+      <div class="flex-between mb-sm">
+        <h3 class="section__title">Misiones</h3>
+        <span class="text-primary font-bold">${completed}/9</span>
+      </div>
+      <div class="missions-list">
+        ${missions.filter(m => !m.is_completed).slice(0, 3).map(m => `
+          <div class="mission-item card" onclick="location.hash='${m.cta || '#/mercado'}'">
+            <span class="mr-md">${m.icon}</span>
+            <div>
+              <div class="font-bold">${m.title}</div>
+              <div class="text-xs text-muted">Premio: ${m.reward}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
-function removeBonusModal() {
-  document.getElementById('bonus-modal')?.remove();
+function attachListeners(piggies, stats) {
+  document.getElementById('bonus-banner')?.addEventListener('click', function() {
+    const id = this.dataset.id;
+    const type = this.dataset.type;
+    localStorage.setItem('reward_redeemed_' + id, 'true');
+    if (type === 'modal_50k') alert('¡Bono de $50k activado! Revisa tu WhatsApp.');
+    if (type === 'navigate') location.hash = this.dataset.target;
+    location.reload();
+  });
 }
 
-function showWithdrawModal(amount) { alert('Retiro de ' + amount); }
-function showMeatModal() { alert('Pedido de carne'); }
+export function renderBottomNav(active) {
+  return `
+    <nav class="bottom-nav">
+      <a href="#/granja" class="${active==='granja'?'active':''}">${renderIcon('farm','','20')}</a>
+      <a href="#/mercado" class="${active==='mercado'?'active':''}">${renderIcon('shop','','20')}</a>
+    </nav>
+  `;
+}
