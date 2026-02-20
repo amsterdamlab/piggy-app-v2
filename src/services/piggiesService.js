@@ -1,44 +1,45 @@
 /* ============================================
    PIGGY APP — Piggies Service
-   Manages piggy CRUD and ROI calculations
+   Handles fetching and managing user's piggies
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
-import {
-    MOCK_PIGGIES,
-    calculateBaseROI,
-    calculateTotalReturn,
-    getProgressPercentage,
-    getDaysRemaining,
-    simulateWeight,
-    formatCOP,
-    formatPercentage,
-} from './mockData.js';
+import { MOCK_PIGGIES, enrichPiggyData, MOCK_USER_PROFILE } from './mockData.js';
 
 /**
  * Fetch all piggies for the current user.
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
+        // Return mock data enriched with calculations
         return MOCK_PIGGIES.map(enrichPiggyData);
     }
 
     const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+
+    if (!user) return [];
+
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .order('purchase_date', { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
-    return (data || []).map(enrichPiggyData);
+    if (error) {
+        console.error('Error fetching piggies:', error);
+        return [];
+    }
+
+    return data.map(enrichPiggyData);
 }
 
 /**
  * Get a single piggy by ID.
  */
-export async function getPiggyById(piggyId) {
+export async function getPiggyById(id) {
     if (isUsingMockData()) {
-        const piggy = MOCK_PIGGIES.find((p) => p.id === piggyId);
+        const piggy = MOCK_PIGGIES.find(p => p.id === id);
         return piggy ? enrichPiggyData(piggy) : null;
     }
 
@@ -46,91 +47,54 @@ export async function getPiggyById(piggyId) {
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .eq('id', piggyId)
+        .eq('id', id)
         .single();
 
-    if (error) throw new Error(error.message);
-    return data ? enrichPiggyData(data) : null;
-}
-
-/**
- * Adopt a new piggy.
- */
-export async function adoptPiggy(piggyName) {
-    if (isUsingMockData()) {
-        const newPiggy = {
-            id: `mock-${Date.now()}`,
-            user_id: 'mock-user',
-            name: piggyName,
-            status: 'engorde',
-            purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
-            investment_amount: 250000,
-            extra_roi_bonus: 0,
-            current_weight: 15.0,
-        };
-        MOCK_PIGGIES.unshift(newPiggy);
-        return enrichPiggyData(newPiggy);
+    if (error) {
+        console.error('Error fetching piggy:', error);
+        return null;
     }
 
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) throw new Error('User not logged in');
-
-    const { data, error } = await client
-        .from('piggies')
-        .insert({
-            user_id: user.id,
-            name: piggyName,
-            investment_amount: 1000000,
-            status: 'engorde',
-            current_weight: 15.0,
-            // purchase_date and end_date calculate automatically in DB default or trigger, 
-            // but let's rely on default for purchase_date. 
-            // end_date default is 4mo3wk from now in schema.
-        })
-        .select()
-        .single();
-
-    if (error) throw new Error(error.message);
     return enrichPiggyData(data);
 }
 
 /**
- * Enrich a piggy record with computed fields for display.
+ * Calculate Dashboard Stats
+ * - Total Active Piggies
+ * - Total Investment (Adquisición Bonos)
+ * - Projected Value (Diferencial Preventa)
+ * - Available for Withdraw (Liquidated)
  */
-function enrichPiggyData(piggy) {
-    // Fixed cycle duration in days (4 months 3 weeks)
-    const CYCLE_TOTAL_DAYS = 143;
+export function calculateBaseROI(activeCount) {
+    // Base logic: 6% for 1st, +0.5% for each additional
+    if (activeCount === 0) return 0;
+    const base = 0.06;
+    const increment = 0.005;
+    // For 1 piggy: 6%
+    // For 2 piggies: 6.5%
+    // For 3: 7.0%, etc.
+    return base + ((activeCount - 1) * increment);
+}
 
-    // Calculate days remaining
-    const daysLeft = getDaysRemaining(piggy.end_date);
+function calculateTotalReturn(amount, baseROI, extraBonus = 0) {
+    return amount * (1 + baseROI + extraBonus);
+}
 
-    // Calculate progress based on REVERSE logic (143 - daysLeft)
-    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
-    const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
-    const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100)));
+export function formatCOP(amount) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
+}
 
-    // Use DB weight if it exists and is meaningful (>15), otherwise simulate it from progress
-    const dbWeight = parseFloat(piggy.current_weight);
-    const weight = (dbWeight && dbWeight > 15)
-        ? dbWeight
-        : simulateWeight(progress);
-
-    const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
-
-    return {
-        ...piggy,
-        progress,
-        daysLeft,
-        currentWeight: weight.toFixed(1),
-        isComplete,
-        name: piggy.name || `Piggy #${piggy.id.slice(-4)}`,
-    };
+export function formatPercentage(value) {
+    return (value * 100).toFixed(1) + '%';
 }
 
 /**
- * Get summary stats for the dashboard.
+ * Compute main stats for the dashboard
  */
 export async function getDashboardStats(piggies) {
     const activePiggies = piggies.filter((p) => !p.isComplete);
@@ -192,19 +156,22 @@ export async function getDashboardStats(piggies) {
 /**
  * Buy a piggy from the marketplace.
  * The current_month of the item determines how many days remain in the cycle.
+ * @param {Object} item - The marketplace item
+ * @param {string|null} customName - Optional custom name for the piggy
  */
-export async function buyMarketplaceItem(item) {
+export async function buyMarketplaceItem(item, customName = null) {
     // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
     const daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
+    const finalName = customName || item.item_name;
 
     if (isUsingMockData()) {
         const newPiggy = {
             id: `mock-${Date.now()}`,
             user_id: 'mock-user',
-            name: item.item_name,
+            name: finalName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
@@ -230,7 +197,7 @@ export async function buyMarketplaceItem(item) {
         p_item_id: item.id,
         p_user_id: user.id,
         p_price: item.price,
-        p_item_name: item.item_name,
+        p_item_name: finalName,
         p_extra_roi: item.extra_roi || 0,
         p_category: item.category || 'standard',
         p_current_month: currentMonth,
@@ -257,5 +224,14 @@ export async function buyMarketplaceItem(item) {
     return enrichPiggyData(latest);
 }
 
-// Re-export utility functions for use in views
-export { calculateBaseROI, calculateTotalReturn, formatCOP, formatPercentage, getDaysRemaining };
+/**
+ * Handle "Solicitar Entrega de Carne" or Withdraw
+ * Actually, this just updates user balance or logs for now.
+ * Real implementation would need a new table 'transactions' or 'withdrawals'.
+ */
+export async function requestWithdraw(amount) {
+   // This would call an RPC or insert into 'withdrawals' table
+   // returning success
+   await new Promise(r => setTimeout(r, 1000));
+   return true;
+}

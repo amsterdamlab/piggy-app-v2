@@ -244,6 +244,32 @@ export function showCheckoutModal(item) {
           <p style="font-size: 1.75rem; font-weight: 900; color: var(--color-primary);">${item.priceFormatted}</p>
       </div>
 
+      <!-- Custom Name Input -->
+      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 32px; text-align: left;">
+           <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--color-text-secondary);">¿Cómo quieres llamar a tu Piggy?</label>
+           <div style="position:relative;">
+                <input type="text" id="piggy-custom-name" 
+                       value="${item.item_name}" 
+                       placeholder="Ej. Bacon, Peggy, ..."
+                       style="
+                           width: 100%;
+                           padding: 14px 16px;
+                           border: 2px solid #e0e0e0;
+                           border-radius: 12px;
+                           font-size: 1rem;
+                           font-weight: 600;
+                           color: var(--color-text-primary);
+                           outline: none;
+                           transition: border-color 0.2s;
+                           box-sizing: border-box;
+                       "
+                       onfocus="this.style.borderColor='var(--color-primary)'"
+                       onblur="this.style.borderColor='#e0e0e0'"
+                />
+                <span style="font-size: 0.75rem; color: #999; margin-top: 6px; display: block;">Dale una identidad única a tu nueva inversión.</span>
+           </div>
+      </div>
+
       <p class="mb-md text-center text-muted" style="margin-bottom: 24px;">Selecciona tu método de pago:</p>
       
       <div class="payment-methods" style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
@@ -304,7 +330,10 @@ export function showCheckoutModal(item) {
 
       try {
         // Execute Purchase Logic
-        await buyMarketplaceItem(item);
+        const customNameInput = document.getElementById('piggy-custom-name');
+        const customName = customNameInput ? customNameInput.value.trim() : null;
+        
+        await buyMarketplaceItem(item, customName);
 
         close();
         navigateTo('granja');
