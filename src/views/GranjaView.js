@@ -11,6 +11,236 @@ import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 
+/* =========================================
+   DYNAMIC NOTIFICATIONS
+   Rotate randomly on each page load
+   ========================================= */
+
+const NOTIFICATIONS = [
+  {
+    icon: '🏪',
+    title: 'Compra en locales aliados',
+    reward: 'Desbloquea un Piggy Silver (24h)',
+    color: '#8b5cf6',
+    bgColor: '#f5f3ff',
+    borderColor: '#ddd6fe',
+    cta: '#/aliados',
+  },
+  {
+    icon: '🏁',
+    title: 'Al cerrar un ciclo',
+    reward: 'Desbloquea Piggy Silver (24h)',
+    color: '#0891b2',
+    bgColor: '#ecfeff',
+    borderColor: '#a5f3fc',
+    cta: null,
+  },
+  {
+    icon: '🥩',
+    title: 'Compra la oferta de la semana',
+    reward: 'Desbloquea un Piggy Gold (24h)',
+    color: '#dc2626',
+    bgColor: '#fef2f2',
+    borderColor: '#fecaca',
+    cta: '#/gourmet',
+  },
+  {
+    icon: '🤝',
+    title: 'Refiere a un amigo y si compra su 1er Piggy',
+    reward: 'Obtén $30.000 en tu Wallet',
+    color: '#059669',
+    bgColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+    cta: null,
+  },
+];
+
+/**
+ * Pick a random notification from the pool.
+ */
+function getRandomNotification() {
+  const index = Math.floor(Math.random() * NOTIFICATIONS.length);
+  return NOTIFICATIONS[index];
+}
+
+/* =========================================
+   DYNAMIC MISSION BANNERS
+   M1 → M2 → M3 based on piggy count
+   ========================================= */
+
+/**
+ * Determine which mission banner to show based on user's piggy count.
+ * M1: 0 piggies → Welcome Bonus ($50,000 consumption bonus)
+ * M2: 1 piggy  → Buy 2nd Piggy → +1% Commercial Margin
+ * M3: 2 piggies → Activate 3rd Piggy → Maintain 10%
+ * 3+ piggies: All missions complete, no banner
+ */
+function renderMissionBanner(piggyCount) {
+  if (piggyCount === 0) {
+    // M1: No piggies yet → Show welcome bonus banner
+    return `
+      <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m1" style="
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          border-radius: 16px;
+          padding: 20px 24px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
+          cursor: pointer;
+        ">
+          <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🎁%3C/text%3E%3C/svg%3E'); pointer-events:none;"></div>
+          <div style="position:relative; z-index:2;">
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 1</div>
+            <div style="font-size:1.2rem; font-weight:800; margin-bottom:4px;">Crea una cuenta y compra tu primer Piggy</div>
+            <div style="font-size:0.85rem; opacity:0.9;">🎁 Bono de Bienvenida: <strong>$50.000 en consumo de carne</strong></div>
+            <div style="margin-top:14px;">
+              <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Compra tu Piggy →</span>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">🎁</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (piggyCount === 1) {
+    // M1 completed (has 1st piggy). Show redeem bonus CTA → Gourmet
+    // Then show M2 below it
+    return `
+      <!-- M1 Completed: Redeem Bonus -->
+      <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m1-redeem" style="
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          border-radius: 16px;
+          padding: 18px 22px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
+          cursor: pointer;
+        ">
+          <div style="position:relative; z-index:2; display:flex; align-items:center; gap:14px;">
+            <div style="font-size:36px; flex-shrink:0;">🎁</div>
+            <div style="flex:1;">
+              <div style="font-size:0.95rem; font-weight:800;">¡Tienes un Bono de $50.000!</div>
+              <div style="font-size:0.78rem; opacity:0.9;">Bono de consumo en carne. ¡Redímelo ahora!</div>
+            </div>
+            <span style="background:white; color:#d97706; padding:8px 16px; border-radius:10px; font-weight:700; font-size:0.8rem; white-space:nowrap;">Redimir Bono Ahora</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- M2: Buy 2nd Piggy -->
+      <div class="section animate-fade-in-up" style="animation-delay: 0.35s;">
+        <div class="banner banner--interactive" id="mission-banner-m2" data-mission="m2" style="
+          background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+          border-radius: 16px;
+          padding: 20px 24px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.4);
+          cursor: pointer;
+        ">
+          <div style="position:relative; z-index:2;">
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 2</div>
+            <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy</div>
+            <div style="font-size:0.85rem; opacity:0.9;">📈 Desbloquea un piggy de 3 meses y <strong>+1% en Margen Comercial</strong></div>
+            <div style="margin-top:14px;">
+              <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado →</span>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">📈</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (piggyCount === 2) {
+    // M2 completed, show M3
+    return `
+      <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m3" style="
+          background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+          border-radius: 16px;
+          padding: 20px 24px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 8px 25px -5px rgba(8, 145, 178, 0.4);
+          cursor: pointer;
+        ">
+          <div style="position:relative; z-index:2;">
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 3</div>
+            <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Activa tu 3er Piggy</div>
+            <div style="font-size:0.85rem; opacity:0.9;">💎 Mantén el <strong>10% en Margen Comercial</strong> de la Granja</div>
+            <div style="margin-top:14px;">
+              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado →</span>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">💎</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 3+ piggies: All missions complete! Show celebration
+  return `
+    <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+      <div style="
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        border: 1px solid #a7f3d0;
+        border-radius: 16px;
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      ">
+        <div style="font-size:32px;">🏆</div>
+        <div>
+          <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Misiones completadas!</div>
+          <div style="font-size:0.78rem; color:#047857;">Tu granja está al máximo. Margen Comercial: 10%</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render the random notification strip.
+ */
+function renderRandomNotification() {
+  const notif = getRandomNotification();
+  return `
+    <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
+      <div id="dynamic-notification" style="
+        background: ${notif.bgColor};
+        border: 1px solid ${notif.borderColor};
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: ${notif.cta ? 'pointer' : 'default'};
+        transition: transform 0.2s, box-shadow 0.2s;
+      " ${notif.cta ? `data-cta="${notif.cta}"` : ''}
+         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+        <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; color:${notif.color}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
+          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">→ ${notif.reward}</div>
+        </div>
+        <div style="font-size:14px; color:${notif.color}; opacity:0.5; flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -82,7 +312,7 @@ async function loadGranjaData(firstName) {
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats);
 
-    attachGranjaListeners(piggies.length > 0, stats);
+    attachGranjaListeners(piggies.length > 0, stats, piggies.length);
   } catch (error) {
     console.error('Error loading granja data:', error);
     const section = document.getElementById('piggies-section');
@@ -100,11 +330,18 @@ async function loadGranjaData(firstName) {
  * Build the full dashboard with data.
  */
 function buildGranjaFull(firstName, piggies, stats) {
+  const piggyCount = piggies.length;
+  const missionBanner = renderMissionBanner(piggyCount);
+  const notification = renderRandomNotification();
+
   return `
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
         <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
+
+        <!-- Dynamic Notification (rotates on refresh) -->
+        ${notification}
 
         <!-- Wallet Banner (Green) -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.1s;">
@@ -185,36 +422,36 @@ function buildGranjaFull(firstName, piggies, stats) {
                  </div>
 
                  ${stats.disponible > 0 ? `
-                   <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                      <button id="btn-withdraw" style="
-                         background: white; 
-                         color: #059669; 
-                         border: none; 
-                         padding: 10px 20px; 
-                         border-radius: 12px; 
-                         font-weight: 700; 
-                         font-size: 0.9rem; 
-                         cursor: pointer;
-                         flex: 1;
-                         white-space: nowrap;
-                         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                         transition: transform 0.2s;
-                      ">Convertir Bono en Efectivo</button>
-                      <button id="btn-meat" style="
-                         background: rgba(255,255,255,0.15); 
-                         color: white; 
-                         border: 1px solid rgba(255,255,255,0.3); 
-                         padding: 10px 20px; 
-                         border-radius: 12px; 
-                         font-weight: 600; 
-                         font-size: 0.9rem; 
-                         cursor: pointer;
-                         flex: 1;
-                         white-space: nowrap;
-                         backdrop-filter: blur(5px);
-                      ">Solicitar Entrega de Carne</button>
-                   </div>
-                 ` : ''}
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                       <button id="btn-withdraw" style="
+                          background: white; 
+                          color: #059669; 
+                          border: none; 
+                          padding: 10px 20px; 
+                          border-radius: 12px; 
+                          font-weight: 700; 
+                          font-size: 0.9rem; 
+                          cursor: pointer;
+                          flex: 1;
+                          white-space: nowrap;
+                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                          transition: transform 0.2s;
+                       ">Convertir Bono en Efectivo</button>
+                       <button id="btn-meat" style="
+                          background: rgba(255,255,255,0.15); 
+                          color: white; 
+                          border: 1px solid rgba(255,255,255,0.3); 
+                          padding: 10px 20px; 
+                          border-radius: 12px; 
+                          font-weight: 600; 
+                          font-size: 0.9rem; 
+                          cursor: pointer;
+                          flex: 1;
+                          white-space: nowrap;
+                          backdrop-filter: blur(5px);
+                       ">Solicitar Entrega de Carne</button>
+                    </div>
+                  ` : ''}
               </div>
            </div>
         </div>
@@ -274,41 +511,8 @@ function buildGranjaFull(firstName, piggies, stats) {
           ${piggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(piggies, stats.baseROI)}
         </div>
 
-        <!-- Bonus Banner -->
-        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-          <div class="banner banner--interactive" id="bonus-banner">
-            <div class="banner__badge">BONO PLUS DE BIENVENIDA</div>
-            <div class="banner__title">Consigue bono de consumo por $50.000</div>
-            <div class="banner__subtitle">Comprando tu primer piggy.</div>
-            <div class="banner__decoration">🎁</div>
-            <div class="text-xs mt-sm" style="opacity:0.7;">*Aplican términos y condiciones.</div>
-          </div>
-        </div>
-
-        <!-- Missions Quick View -->
-        <div class="section animate-fade-in-up" style="animation-delay: 0.35s;">
-          <div class="section__header">
-            <h3 class="section__title">Misiones</h3>
-          </div>
-          <div class="missions-quick">
-            <div class="mission-item" id="mission-feed">
-              <span class="mission-item__icon">🍎</span>
-              <div class="mission-item__info">
-                <div class="mission-item__name">Alimenta a tu Piggy</div>
-                <div class="mission-item__points">+10 pts</div>
-              </div>
-              <button class="btn btn--sm btn--primary mission-item__action">¡Listo!</button>
-            </div>
-            <div class="mission-item" id="mission-share">
-              <span class="mission-item__icon">📱</span>
-              <div class="mission-item__info">
-                <div class="mission-item__name">Comparte tu progreso</div>
-                <div class="mission-item__points">+25 pts</div>
-              </div>
-              <button class="btn btn--sm btn--secondary mission-item__action">Compartir</button>
-            </div>
-          </div>
-        </div>
+        <!-- Dynamic Mission Banner -->
+        ${missionBanner}
 
       </div>
 
@@ -342,7 +546,6 @@ function renderEmptyPiggies() {
   return `
     <div class="empty-state">
       <div class="empty-state__icon">
-        <!-- <span style="font-size: 32px;">🐷</span> -->
         <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" />
       </div>
       <div class="empty-state__title">No tienes Piggys aún</div>
@@ -374,7 +577,6 @@ function renderPiggyCard(piggy, baseROI) {
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
-          <!-- <span style="font-size: 36px;">🐷</span> -->
           <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
         </div>
         <div class="piggy-card__info">
@@ -439,7 +641,7 @@ export function renderBottomNav(activeTab) {
 /**
  * Attach event listeners.
  */
-function attachGranjaListeners(hasPiggies, stats) {
+function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
     card.addEventListener('click', () => {
@@ -448,10 +650,50 @@ function attachGranjaListeners(hasPiggies, stats) {
     });
   });
 
-  // Bonus Banner click
-  document.getElementById('bonus-banner')?.addEventListener('click', () => {
-    showBonusModal(hasPiggies);
-  });
+  // Mission Banner click (dynamic based on mission)
+  const missionBanner = document.getElementById('mission-banner');
+  if (missionBanner) {
+    missionBanner.addEventListener('click', () => {
+      const mission = missionBanner.dataset.mission;
+      switch (mission) {
+        case 'm1':
+          // No piggies → go to mercado to buy first piggy
+          navigateTo('mercado');
+          break;
+        case 'm1-redeem':
+          // Has 1 piggy → redeem bonus → go to gourmet
+          navigateTo('gourmet');
+          break;
+        case 'm3':
+          // Buy 3rd piggy → go to mercado
+          navigateTo('mercado');
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
+  // M2 Banner click (when piggyCount === 1, both banners visible)
+  const m2Banner = document.getElementById('mission-banner-m2');
+  if (m2Banner) {
+    m2Banner.addEventListener('click', () => {
+      navigateTo('mercado');
+    });
+  }
+
+  // Dynamic Notification click
+  const notifEl = document.getElementById('dynamic-notification');
+  if (notifEl && notifEl.dataset.cta) {
+    notifEl.addEventListener('click', () => {
+      const cta = notifEl.dataset.cta;
+      if (cta.startsWith('#/')) {
+        navigateTo(cta.replace('#/', ''));
+      } else {
+        window.open(cta, '_blank');
+      }
+    });
+  }
 
   // Quick Buy Action
   const quickBuyBtn = document.getElementById('btn-quick-buy');
