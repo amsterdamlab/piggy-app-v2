@@ -320,8 +320,24 @@ function renderGreeting(firstName) {
 function renderEmptyPiggies() {
   return `
     <div class="empty-state">
-      <div class="empty-state__icon">
-        <img src="pig1.png" alt="Piggy" style="width:64px; height:64px; object-fit:contain;" />
+      <div class="empty-state__icon" style="
+        width: 150px; 
+        height: 150px; 
+        margin: 0 auto 20px; 
+        border-radius: 50%;
+        border: 4px solid #fff; 
+        box-shadow: 0 10px 30px rgba(236, 72, 153, 0.2);
+        overflow: hidden;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <img src="pig1.png" alt="Piggy" style="
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        " />
       </div>
       <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
