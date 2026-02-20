@@ -290,12 +290,12 @@
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    /* backdrop-filter: blur(4px); Temporarily removed to prevent rendering issues */
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    z-index: 9999;
+    z-index: 1000;
     animation: fadeIn var(--transition-fast) ease-out;
 }
 
@@ -308,8 +308,6 @@
     animation: slideUp var(--transition-base) ease-out;
     max-height: 90vh;
     overflow-y: auto;
-    position: relative;
-    z-index: 10000;
 }
 
 .modal__handle {
@@ -458,14 +456,17 @@
 }
 
 .empty-state__icon {
-    width: 64px;
-    height: 64px;
+    width: 84px;
+    height: 84px;
     border-radius: var(--radius-full);
     background: var(--color-primary-50);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--color-primary);
+    overflow: hidden;
+    border: 3px solid var(--color-white);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .empty-state__title {
