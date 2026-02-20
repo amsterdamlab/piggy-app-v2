@@ -1,8 +1,3 @@
-/* ============================================
-   PIGGY APP — Mock Data for Development
-   Used when Supabase is not configured
-   ============================================ */
-
 export const MOCK_USER = {
     id: 'user-001',
     email: 'ale@correo.com',
@@ -171,38 +166,77 @@ export const MOCK_ALLIES = [
 
 export const MOCK_MISSIONS = [
     {
-        id: 'mission-001',
-        user_id: 'user-001',
-        mission_name: 'Alimenta a tu Piggy',
-        description: 'Visita la app diariamente para alimentar tu cerdo',
-        is_completed: false,
-        points_earned: 10,
-        completed_at: null,
-        type: 'daily',
-        icon: '🍎',
+        id: 'm1',
+        title: 'Crea una cuenta nueva',
+        reward: 'Bono consumo x $50.000',
+        is_completed: true,
+        icon: '🎉',
+        cta: null
     },
     {
-        id: 'mission-002',
-        user_id: 'user-001',
-        mission_name: 'Comparte tu progreso',
-        description: 'Comparte tu granja en redes sociales',
-        is_completed: false,
-        points_earned: 25,
-        completed_at: null,
-        type: 'social',
-        icon: '📱',
+        id: 'm2',
+        title: 'Compra tu primer Piggy',
+        reward: 'Desbloquea Piggy de 3 meses',
+        is_completed: true, // Simulado completado para ver progreso
+        icon: '🐷',
+        cta: '#/mercado'
     },
     {
-        id: 'mission-003',
-        user_id: 'user-001',
-        mission_name: 'Invita a un amigo',
-        description: 'Refiere a un amigo que adopte un Piggy',
+        id: 'm3',
+        title: 'Invita a un amigo a Piggy',
+        reward: 'Desbloquea tu código referido',
         is_completed: false,
-        points_earned: 50,
-        completed_at: null,
-        type: 'referral',
+        icon: '📲',
+        cta: 'https://wa.me/?text=Hola!%20Te%20invito%20a%20ser%20parte%20de%20Piggy%20y%20ganar%20con%20cerdos%20digitales.%20Unete%20aqui:%20piggy.app'
+    },
+    {
+        id: 'm4',
+        title: 'Compra tu 2do Piggy',
+        reward: '+1% en Margen Comercial',
+        is_completed: false,
+        icon: '📈',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm5',
+        title: 'Compra en locales aliados',
+        reward: 'Desbloquea Piggy Silver (24h)',
+        is_completed: false,
+        icon: '🏪',
+        cta: '#/aliados'
+    },
+    {
+        id: 'm6',
+        title: 'Cierra tu primer ciclo',
+        reward: 'Desbloquea Piggy Silver (24h)',
+        is_completed: false,
+        icon: '🏁',
+        cta: null
+    },
+    {
+        id: 'm7',
+        title: 'Activa tu 3er Piggy',
+        reward: 'Mantén 10% Margen Comercial',
+        is_completed: false,
+        icon: '💎',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm8',
+        title: 'Compra la oferta de la semana',
+        reward: 'Desbloquea Piggy Gold (24h)',
+        is_completed: false,
+        icon: '🥩',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm9',
+        title: 'Refiere y logra una compra',
+        reward: 'Obtén $30.000 en tu Wallet',
+        is_completed: false,
         icon: '🤝',
-    },
+        cta: null
+    }
 ];
 
 /** Investment amount formatted as COP */
