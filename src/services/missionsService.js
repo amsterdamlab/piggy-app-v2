@@ -32,6 +32,7 @@ export function syncMissionsStatus() {
     const hasFirstPiggy = piggies.length >= 1;
     const hasSecondPiggy = piggies.length >= 2;
     const hasThirdPiggy = piggies.length >= 3;
+    const hasFinishedCycle = piggies.some(p => p.isComplete);
 
     const missions = MOCK_MISSIONS.map(mission => {
         // Copiamos la misión para no mutar la constante global directamente
@@ -51,6 +52,9 @@ export function syncMissionsStatus() {
                     break;
                 case 'm4': // Segundo Piggy
                     m.is_completed = hasSecondPiggy;
+                    break;
+                case 'm6': // Cierre de Ciclo
+                    m.is_completed = hasFinishedCycle;
                     break;
                 case 'm7': // Tercer Piggy
                     m.is_completed = hasThirdPiggy;
