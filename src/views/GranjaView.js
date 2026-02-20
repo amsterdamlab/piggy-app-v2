@@ -14,63 +14,6 @@ import { completeMissionManual, isMissionCompletedManual } from '../services/mis
 
 
 
-// ... (existing imports)
-
-// ...
-
-function attachGranjaListeners(hasPiggies, stats) {
-  // Piggy card click
-  document.querySelectorAll('.piggy-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const piggyId = card.dataset.piggyId;
-      navigateTo(`piggy/${piggyId}`);
-    });
-  });
-
-  // Missions click
-  document.querySelectorAll('.mission-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const id = card.dataset.id;
-      const cta = card.dataset.cta;
-
-      if (!cta) return;
-
-      // Si es un link externo (WhatsApp, etc), lo marcamos como completado
-      if (cta.startsWith('http')) {
-        completeMissionManual(id);
-        window.open(cta, '_blank');
-
-        // Recargamos la vista para actualizar la lista de misiones
-        const profile = AppState.get('profile');
-        if (profile) {
-          loadGranjaData(profile.full_name?.split(' ')[0] || 'Usuario');
-        }
-      } else {
-        // Navegación interna (ir al mercado, etc)
-        // No completamos la misión automáticamente aquí porque esas dependen de lógica (ej: comprar)
-        if (cta.startsWith('#')) {
-          location.hash = cta;
-        } else {
-          window.location.hash = cta;
-        }
-      }
-    });
-  });
-
-  // Bonus Banner click
-  document.getElementById('bonus-banner')?.addEventListener('click', () => {
-    showBonusModal(hasPiggies);
-  });
-
-  // ... (rest of listeners)
-}
-
-// ...
-
-
-
-/* =========================================
-   MISSIONS MODULE
    ========================================= */
 
 function renderMissionsModule() {
