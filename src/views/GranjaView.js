@@ -58,9 +58,12 @@ function attachGranjaListeners(hasPiggies, stats) {
   });
 
   // Bonus Banner click
-  document.getElementById('bonus-banner')?.addEventListener('click', () => {
-    showBonusModal(hasPiggies);
-  });
+  const banner = document.getElementById('bonus-banner');
+  if (banner) {
+    banner.addEventListener('click', () => {
+      handleRewardClick(banner, hasPiggies);
+    });
+  }
 
   // Quick Buy Action
   const quickBuyBtn = document.getElementById('btn-quick-buy');
@@ -249,6 +252,8 @@ export function renderGranjaView() {
   const app = document.getElementById('app');
   const profile = AppState.get('profile');
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const piggies = AppState.get('piggies') || [];
+
 
   app.innerHTML = buildGranjaShell(firstName);
 
@@ -507,7 +512,7 @@ function buildGranjaFull(firstName, piggies, stats) {
 
         <!-- Bonus Banner -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-          ${renderBonusBanner()}
+          ${renderBonusBanner(piggies)}
         </div>
 
         <!-- Missions Module -->
@@ -747,32 +752,191 @@ function showBonusModal(hasPiggies) {
   });
 }
 
+
+
+/* =========================================
+   REWARDS SYSTEM LOGIC (STRICT MAPPING)
+   ========================================= */
+
+const REWARD_TYPES = {
+  BONUS_50K: 'bonus_50k',        // 1. Registro -> $50k
+  PIGGY_3M: 'unlock_piggy_3m',   // 2. 1er Piggy -> Piggy 3 Meses
+  REFERRAL: 'unlock_referral',   // 3. Invita -> Codigo
+  MARGIN_1: 'margin_plus_1',     // 4. 2do Piggy -> +1% Margen
+  SILVER_24H: 'piggy_silver',    // 5 & 6. Aliados/Cierre -> Silver
+  MARGIN_KEEP: 'margin_keep_10', // 7. 3er Piggy -> 10% Fijo
+  GOLD_24H: 'piggy_gold',        // 8. Oferta -> Gold
+  WALLET_30K: 'wallet_30k'       // 9. Referido Compra -> $30k
+};
+
+/**
+ * Determine which reward should be shown in the banner slot based on User Progress.
+ */
+function getActiveReward(piggies) {
+  const pigCount = piggies ? piggies.length : 0;
+  
+  // 1. BONO DE BIENVENIDA ($50.000)
+  // Condición: Registro completo (siempre true si está aquí) y NO redimido.
+  const bonus50kRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K) === 'true';
+  // Check legacy migration
+  if (localStorage.getItem('bonus_redeemed') === 'true' && !bonus50kRedeemed) {
+     localStorage.setItem('reward_redeemed_' + REWARD_TYPES.BONUS_50K, 'true');
+  }
+
+  if (!bonus50kRedeemed) {
+    return {
+      id: REWARD_TYPES.BONUS_50K,
+      type: 'modal_50k',
+      badge: 'Misión #1 Completada',
+      title: 'Reclama tu Bono de $50.000',
+      subtitle: 'Por crear tu cuenta en Piggy.',
+      icon: '🎁',
+      bgClass: 'banner--interactive',
+      ctaLabel: ' Redimir Ahora'
+    };
+  }
+
+  // 2. DESBLOQUEO PIGGY 3 MESES
+  // Condición: Tener al menos 1 Piggy.
+  const piggy3mRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.PIGGY_3M) === 'true';
+  if (pigCount >= 1 && !piggy3mRedeemed) {
+    return {
+      id: REWARD_TYPES.PIGGY_3M,
+      type: 'navigate',
+      target: '#/mercado',
+      badge: 'Misión #2 Completada',
+      title: '¡Desbloqueaste Piggies de 3 Meses!',
+      subtitle: 'Ciclos cortos disponibles en el mercado.',
+      icon: '🔓',
+      style: 'background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color:white;',
+      ctaLabel: 'Ir al Mercado'
+    };
+  }
+
+  // 3. CODIGO DE REFERIDO
+  // Condición: Se muestra después de desbloquear lo anterior. Incentivo a invitar.
+  const referralRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.REFERRAL) === 'true';
+  if (pigCount >= 1 && !referralRedeemed) {
+    return {
+      id: REWARD_TYPES.REFERRAL,
+      type: 'avg_action', // Action based
+      badge: 'Misión #3: Invita y Gana',
+      title: 'Desbloquea tu Código de Referido',
+      subtitle: 'Invita amigos y gana comisiones.',
+      icon: '📲',
+      style: 'background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white;',
+      whatsapp_msg: '¡Hola! Te invito a ser parte de Piggy. 🐷 Únete aquí: https://piggy.app',
+      ctaLabel: 'Invitar Amigo'
+    };
+  }
+
+  // 4. MARGEN +1%
+  // Condición: Tener 2 Piggies.
+  const marginRedeemed = localStorage.getItem('reward_redeemed_' + REWARD_TYPES.MARGIN_1) === 'true';
+  if (pigCount >= 2 && !marginRedeemed) {
+    return {
+      id: REWARD_TYPES.MARGIN_1,
+      type: 'info_claim',
+      badge: 'Misión #4 Completada',
+      title: '¡Margen Comercial +1%!',
+      subtitle: 'Tu rentabilidad ha aumentado.',
+      icon: '📈',
+      style: 'background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white;',
+      ctaLabel: '¡Genial!'
+    };
+  }
+  
+  // ... Otros niveles se agregarían aquí con la misma lógica
+
+  // Default: Mensaje genérico de progreso
+  return null;
+}
+
+
 /**
  * Render logic for the bonus banner based on redemption state.
  */
-function renderBonusBanner() {
-  const isRedeemed = localStorage.getItem('bonus_redeemed') === 'true';
+function renderBonusBanner(piggies) {
+  const activeReward = getActiveReward(piggies);
 
-  if (isRedeemed) {
+  // Case A: All rewards redeemed / caught up
+  if (!activeReward) {
     return `
       <div class="banner" id="bonus-banner" style="filter: grayscale(1); opacity: 0.7; cursor: default; pointer-events: none;">
-        <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
-        <div class="banner__title">Bono en proceso de validación</div>
-        <div class="banner__subtitle">Revisa tu WhatsApp para continuar.</div>
+        <div class="banner__badge" style="background:#f3f4f6; color:#9ca3af;">SIN RECOMPENSAS PENDIENTES</div>
+        <div class="banner__title">Estás al día con tus premios</div>
+        <div class="banner__subtitle">Completa más misiones para desbloquear nuevos bonos.</div>
         <div class="banner__decoration">✅</div>
       </div>
     `;
   }
 
+  // Case B: Active Reward (Dynamic)
+  const customStyle = activeReward.style || '';
+
   return `
-    <div class="banner banner--interactive" id="bonus-banner">
-      <div class="banner__badge">BONO PLUS DE BIENVENIDA</div>
-      <div class="banner__title">Consigue bono de consumo por $50.000</div>
-      <div class="banner__subtitle">Comprando tu primer piggy.</div>
-      <div class="banner__decoration">🎁</div>
-      <div class="text-xs mt-sm" style="opacity:0.7;">*Aplican términos y condiciones.</div>
+    <div class="banner banner--interactive animate-fade-in-up" id="bonus-banner" 
+         data-reward-id="${activeReward.id}"
+         data-reward-type="${activeReward.type}"
+         data-reward-target="${activeReward.target || ''}"
+         data-whatsapp-msg="${activeReward.whatsapp_msg || ''}"
+         style="${customStyle}">
+      <div class="banner__badge" style="opacity:0.9;">${activeReward.badge}</div>
+      <div class="banner__title">${activeReward.title}</div>
+      <div class="banner__subtitle">${activeReward.subtitle}</div>
+      <div class="banner__decoration">${activeReward.icon}</div>
+      ${activeReward.ctaLabel ? `<div class="btn-xs mt-sm" style="display:inline-block; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold;">${activeReward.ctaLabel} →</div>` : ''}
     </div>
   `;
+}
+
+
+/**
+ * Global Handler for Reward Clicks
+ */
+function handleRewardClick(element, hasPiggies) {
+  const rewardId = element.dataset.rewardId;
+  const rewardType = element.dataset.rewardType;
+  const target = element.dataset.rewardTarget;
+
+  if (!rewardId) return;
+
+  // Mark as redeemed immediately for interactions (except persistent ones if needed)
+  // For now, we assume click = claim for most notifications
+  if (rewardType !== 'modal_50k') {
+      localStorage.setItem('reward_redeemed_' + rewardId, 'true');
+  }
+
+  // --- ACTIONS DISPATCHER ---
+
+  // 1. Modal 50k
+  if (rewardType === 'modal_50k') {
+    showBonusModal(hasPiggies); 
+    return;
+  }
+
+  // 2. Navigation (Market, etc)
+  if (rewardType === 'navigate') {
+    location.hash = target;
+    return;
+  }
+
+  // 3. WhatsApp Share (Referral)
+  if (rewardType === 'avg_action') {
+     const msg = element.dataset.whatsappMsg;
+     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+     // Force reload to update banner to next state
+     setTimeout(() => location.reload(), 500);
+     return;
+  }
+
+  // 4. Info Claim (Just Close/Refresh)
+  if (rewardType === 'info_claim') {
+     // Visual feedback
+     element.style.opacity = '0.5';
+     setTimeout(() => location.reload(), 500);
+     return;
+  }
 }
 
 function removeBonusModal() {
