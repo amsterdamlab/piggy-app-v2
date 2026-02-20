@@ -733,6 +733,8 @@ function showBonusModal(hasPiggies) {
       banner.style.transition = "all 0.5s ease";
       banner.style.filter = "grayscale(1)";
       banner.style.opacity = "0.7";
+      banner.style.cursor = "default";
+      banner.style.pointerEvents = "none";
       banner.innerHTML = `
           <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
           <div class="banner__title">Bono en proceso de validación</div>
@@ -753,7 +755,7 @@ function renderBonusBanner() {
 
   if (isRedeemed) {
     return `
-      <div class="banner" id="bonus-banner" style="filter: grayscale(1); opacity: 0.7; cursor: default;">
+      <div class="banner" id="bonus-banner" style="filter: grayscale(1); opacity: 0.7; cursor: default; pointer-events: none;">
         <div class="banner__badge" style="background:#6b7280;">SOLICITUD ENVIADA</div>
         <div class="banner__title">Bono en proceso de validación</div>
         <div class="banner__subtitle">Revisa tu WhatsApp para continuar.</div>
