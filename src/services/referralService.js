@@ -148,7 +148,7 @@ export async function getMyReferralStats() {
         .eq('id', user.id)
         .single();
 
-    // Fetch referrals where I'm the referrer
+    // Fetch referrals where I'm the referrer, join with profiles for referred name
     const { data: referrals } = await client
         .from('referrals')
         .select(`
@@ -158,12 +158,16 @@ export async function getMyReferralStats() {
       commission_tier,
       created_at,
       completed_at,
-      referred_id
+      referred_id,
+      profiles!referred_id(full_name)
     `)
         .eq('referrer_id', user.id)
         .order('created_at', { ascending: false });
 
-    const allReferrals = referrals || [];
+    const allReferrals = (referrals || []).map(r => ({
+        ...r,
+        referredName: r.profiles?.full_name || 'Usuario',
+    }));
     const completedCount = allReferrals.filter(r => r.status === 'completed').length;
     const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
 
