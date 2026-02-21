@@ -190,7 +190,7 @@ export async function getMyReferralStats() {
  */
 export function buildReferralShareLink(referralCode) {
     const appUrl = 'https://piggy-app-v2.vercel.app';
-    const message = `🐷 ¡Únete a Piggy App! Invierte en cerdos reales y gana retornos.\n\n` +
+    const message = `🐷 ¡Únete a Piggy App! Inicia tu granja con Piggy y gana retornos.\n\n` +
         `Usa mi código de referido: *${referralCode}*\n` +
         `👉 ${appUrl}\n\n` +
         `¡Ambos ganamos cuando compres tu primer Piggy! 🎁`;
@@ -205,7 +205,7 @@ export function buildReferralShareLink(referralCode) {
 export async function shareReferralCode(referralCode) {
     const appUrl = 'https://piggy-app-v2.vercel.app';
     const shareData = {
-        title: '🐷 Piggy App — Invierte en cerdos reales',
+        title: '🐷 Piggy App — Inicia tu granja con Piggy',
         text: `Usa mi código de referido: ${referralCode} y gana bonos al comprar tu primer Piggy.`,
         url: appUrl,
     };
