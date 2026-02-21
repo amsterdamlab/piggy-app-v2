@@ -63,7 +63,8 @@ function renderMissionBanner(piggyCount) {
    MAIN VIEW RENDERING
    ========================================= */
 export function renderGranjaView() {
-  const { user } = AppState.get();
+  const state = AppState.getState();
+  const user = state.currentUser;
   if (!user) return navigateTo('auth');
 
   const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'Granjero';
