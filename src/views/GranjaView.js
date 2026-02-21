@@ -5,7 +5,7 @@
 
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
-import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
+import { getUserPiggies, getDashboardStats, formatCOP, formatPercentage, calculateTotalReturn } from '../services/piggiesService.js';
 import { navigateTo } from '../router.js';
 
 // Components
@@ -29,13 +29,26 @@ function getRandomNotification() {
 function renderRandomNotification() {
   const notif = getRandomNotification();
   return `
-    <div id="dynamic-notification" class="notif-bar animate-fade-in-up" data-cta="${notif.cta}" style="background-color: ${notif.bgColor}; border: 1px solid rgba(0,0,0,0.05); cursor:pointer;">
-      <div class="notif-bar__icon" style="background:${notif.color}">${notif.icon}</div>
-      <div class="notif-bar__content">
-        <div class="notif-bar__title">${notif.title}</div>
-        <div class="notif-bar__reward" style="color:${notif.color}">${notif.reward}</div>
+    <div id="dynamic-notification" class="animate-fade-in-up" data-cta="${notif.cta}" style="
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 14px;
+      background-color: ${notif.bgColor};
+      border: 1px solid ${notif.borderColor || 'rgba(0,0,0,0.05)'};
+      color: ${notif.color};
+      cursor: pointer; margin-bottom: 16px;
+      transition: transform 0.2s;
+    ">
+      <div style="
+        width: 40px; height: 40px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+        background: ${notif.color}15;
+      ">${notif.icon}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:0.82rem; font-weight:600; color:#1f2937;">${notif.title}</div>
+        <div style="font-size:0.75rem; font-weight:700; color:${notif.color}; margin-top:2px;">${notif.reward}</div>
       </div>
-      <div class="notif-bar__arrow">${renderIcon('arrowRight', '', '12')}</div>
+      <div style="color:#9ca3af; flex-shrink:0;">${renderIcon('arrowRight', '', '14')}</div>
     </div>
   `;
 }
@@ -46,17 +59,32 @@ function renderRandomNotification() {
 function renderMissionBanner(piggyCount) {
   if (piggyCount === 0) {
     return `
-      <div class="mission-banner mission-banner--m1 animate-fade-in-up" id="mission-banner" data-mission="m1" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
-        <div class="mission-banner__content">
-          <div class="mission-banner__badge">MISIÓN 01</div>
-          <h3 class="mission-banner__title">¡Gana tus primeros $50.000!</h3>
-          <p class="mission-banner__text">Tu granja está vacía. Adopta tu primer piggy y reclama tu bono de consumo.</p>
+      <div class="mission-banner animate-fade-in-up" id="mission-banner" data-mission="m1" style="
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 24px;
+        border-radius: 20px;
+        color: white;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+      ">
+        <div style="position: absolute; right: -20px; top: -20px; opacity: 0.1; transform: rotate(15deg);">
+          <svg width="120" height="120" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
         </div>
-        <button class="mission-banner__btn">Ver Bono</button>
+        <div style="position: relative; z-index: 1; flex: 1;">
+          <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #ec4899; margin-bottom: 8px;">Misión 01</div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">¡Gana tus primeros $50.000!</h3>
+          <p style="font-size: 0.8rem; opacity: 0.8; margin: 0;">Adopta tu primer piggy y reclama tu bono.</p>
+        </div>
+        <button class="btn" style="background: white; color: #0f172a; padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; border: none; flex-shrink: 0; margin-left: 16px;">Ver Bono</button>
       </div>
     `;
   }
-  return '';
+  return ''; 
 }
 
 /* =========================================
@@ -92,6 +120,7 @@ async function loadGranjaData(firstName) {
     const stats = await getDashboardStats(piggies);
     const app = document.getElementById('app');
 
+    // Sync state
     AppState.set({ piggies });
 
     const piggyCount = piggies.length;
@@ -153,10 +182,20 @@ function renderGreeting(firstName) {
 
 function renderEmptyPiggies() {
   return `
-    <div class="empty-state">
-      <div class="empty-state__icon"><img src="pig1.png" style="width:100%;" /></div>
-      <div class="empty-state__title">Tu granja está vacía</div>
-      <button class="btn btn--primary" onclick="location.hash='#/adopcion'">Compra tu primer Piggy</button>
+    <div class="empty-state animate-fade-in" style="
+        padding: 40px 20px;
+        text-align: center;
+        background: white;
+        border-radius: 20px;
+        border: 2px dashed #e5e7eb;
+        margin: 20px 0;
+    ">
+      <div style="width: 80px; height: 80px; margin: 0 auto 20px; opacity: 0.6;">
+        <img src="pig1.png" style="width: 100%; height: 100%; object-fit: contain; filter: grayscale(1);" />
+      </div>
+      <div style="font-weight: 700; color: #374151; margin-bottom: 8px; font-size: 1.1rem;">Tu granja está vacía</div>
+      <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 24px;">Adopta tu primer piggy para empezar a ganar beneficios reales.</p>
+      <button class="btn btn--primary" style="background:#ec4899; border:none; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="location.hash='#/mercado'">Adoptar mi primer Piggy</button>
     </div>
   `;
 }
@@ -167,22 +206,42 @@ function renderPiggiesList(piggies, baseROI) {
 
 function renderPiggyCard(piggy, baseROI) {
   const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
-  const projectedReturn = piggy.investment_amount * (1 + totalROI);
+  const projectedReturn = calculateTotalReturn(piggy.investment_amount, baseROI, piggy.extra_roi_bonus || 0);
+  const gain = projectedReturn - piggy.investment_amount;
   return `
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
-        <div class="piggy-card__avatar"><img src="pig1.png" style="width:100%; border-radius:50%;" /></div>
-        <div class="piggy-card__info">
-          <div class="piggy-card__name">${piggy.name}</div>
-          <div class="piggy-card__status">
+        <div class="piggy-card__avatar" style="width:52px; height:52px; border-radius:50%; overflow:hidden; border: 3px solid #ec4899; flex-shrink:0; background:#FCE4EC;">
+          <img src="pig1.png" style="width:130%; height:130%; object-fit:cover; margin-top:-8%; margin-left:-15%;" />
+        </div>
+        <div class="piggy-card__info" style="flex:1;">
+          <div class="piggy-card__name" style="font-weight:700; font-size:1rem; margin-bottom:2px;">${piggy.name}</div>
+          <div class="piggy-card__status" style="display:flex; align-items:center; gap:6px;">
             <span class="badge ${piggy.isComplete ? 'badge--success' : 'badge--primary'}">
-              ${piggy.isComplete ? 'Listo' : piggy.daysLeft + ' días'}
+              ${piggy.isComplete ? '✅ Listo para cosecha' : piggy.daysLeft + ' días'}
             </span>
+            ${piggy.currentWeight ? `<span style="font-size:0.7rem; color:#6b7280;">🐷 ${piggy.currentWeight}kg</span>` : ''}
           </div>
         </div>
       </div>
+
       <div class="piggy-card__progress">
+        <div class="piggy-card__progress-header" style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="font-size:0.7rem; color:#6b7280;">Progreso del ciclo</span>
+          <span style="font-size:0.7rem; font-weight:700; color:#ec4899;">${piggy.progress}%</span>
+        </div>
         <div class="progress"><div class="progress__bar" style="width: ${piggy.progress}%;"></div></div>
+      </div>
+
+      <div class="piggy-card__stats" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:10px; border-top:1px solid #f3f4f6; margin-top:10px;">
+        <div>
+          <div style="font-size:0.65rem; color:#9ca3af; text-transform:uppercase;">Inversión</div>
+          <div style="font-size:0.85rem; font-weight:700; color:#374151;">${formatCOP(piggy.investment_amount)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.65rem; color:#9ca3af; text-transform:uppercase;">Retorno Proyectado</div>
+          <div style="font-size:0.85rem; font-weight:700; color:#059669;">${formatCOP(projectedReturn)}</div>
+        </div>
       </div>
     </div>
   `;
