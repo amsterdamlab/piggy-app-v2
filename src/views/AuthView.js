@@ -26,41 +26,76 @@ export function renderAuthView() {
     <div class="auth-page page">
       <div class="auth-page__content">
 
-        <!-- Logo -->
-        <div class="auth-logo animate-fade-in">
-          <div class="auth-logo__image">
-            <img src="pig1.png" alt="Piggy Logo" />
+        <!-- New Hero Mascot and Title -->
+        <div class="auth-hero animate-fade-in" style="display: flex; align-items: center; justify-content: center; gap: 16px; margin: 32px 0 40px 0;">
+          <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 2px solid white; flex-shrink: 0;">
+            <img src="pig1.png" alt="Piggy mascot" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/src/assets/piggy-mascot.svg';" />
           </div>
-          <h1 class="auth-logo__title">PIGGY</h1>
-          <p class="auth-logo__tagline">Tu granja digital de cerdos</p>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <h1 style="font-size: 2.2rem; font-weight: 900; color: #fb2c74; margin: 0; letter-spacing: -1px; text-transform: uppercase;">PIGGY</h1>
+            <div style="font-size: 0.9rem; font-weight: 500; color: #fb2c74; line-height: 1.25; text-align: left;">
+              Tu<br/>granja<br/>digital<br/>de<br/>cerdos
+            </div>
+          </div>
         </div>
 
-        <!-- Form Card -->
-        <div class="auth-card animate-scale-in">
-          <div class="auth-tabs" id="auth-tabs">
-            <button class="auth-tabs__item ${activeAuthTab === 'register' ? 'auth-tabs__item--active' : ''}" data-tab="register">
-              Registro
-            </button>
-            <button class="auth-tabs__item ${activeAuthTab === 'login' ? 'auth-tabs__item--active' : ''}" data-tab="login">
-              Ingresar
-            </button>
+        <!-- Auth Tabs -->
+        <div class="tabs auth-tabs animate-fade-in-up" id="auth-tabs">
+          <button
+            class="tabs__tab ${activeAuthTab === 'register' ? 'tabs__tab--active' : ''}"
+            data-tab="register"
+            id="tab-register"
+          >
+            Crear Cuenta
+          </button>
+          <button
+            class="tabs__tab ${activeAuthTab === 'login' ? 'tabs__tab--active' : ''}"
+            data-tab="login"
+            id="tab-login"
+          >
+            Iniciar Sesión
+          </button>
+        </div>
+
+        <!-- Form -->
+        <form class="auth-form animate-fade-in-up" id="auth-form" novalidate>
+          ${renderFormFields()}
+
+          <!-- Error message -->
+          <div class="auth-form__error ${formError ? 'auth-form__error--visible' : ''}" id="form-error">
+            ${formError || ''}
           </div>
 
-          <form id="auth-form" class="auth-form">
-            ${formError ? `<div class="auth-form__error animate-shake">${formError}</div>` : ''}
-            
-            ${activeAuthTab === 'register' ? renderRegisterFields() : renderLoginFields()}
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="btn btn--block btn--lg auth-submit"
+            id="auth-submit"
+            style="background: #fb2c74; color: white; border-radius: 30px; box-shadow: 0 8px 25px -5px rgba(251, 44, 116, 0.5); font-weight: 700; border: none; font-size: 1.1rem; padding: 14px 20px; transition: transform 0.2s, box-shadow 0.2s;"
+            ${isSubmitting ? 'disabled' : ''}
+          >
+            ${isSubmitting ? '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;"></span>' : ''}
+            ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+          </button>
+        </form>
 
-            <button type="submit" class="btn btn--primary btn--block btn--large mt-lg" id="btn-auth-submit" ${isSubmitting ? 'disabled' : ''}>
-              ${isSubmitting ? '<span class="spinner spinner--white"></span> Procesando...' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Entrar a mi granja')}
-            </button>
-          </form>
+        <!-- Legal Footer -->
+        <div class="auth-legal animate-fade-in-up" style="margin-top: 24px; text-align: left; padding-left: 10px;">
+          <p class="auth-legal__text" style="font-size: 0.9rem; color: #003366; line-height: 1.5; margin: 0; font-weight: 400;">
+            Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
+            Términos y Condiciones
+          </p>
+        </div>
 
-          ${activeAuthTab === 'register' ? `
-            <p class="auth-card__footer">
-              Al registrarte, aceptas nuestros <button type="button" class="btn-link" id="btn-terms">Términos y Condiciones</button>
-            </p>
-          ` : ''}
+        <!-- Trust Badges -->
+        <div class="auth-trust animate-fade-in">
+          <p class="auth-trust__label">RESPALDADO POR TECNOLOGÍA DE PUNTA</p>
+          <div class="auth-trust__icons">
+            ${renderIcon('heart', 'auth-trust__icon', '20')}
+            ${renderIcon('shield', 'auth-trust__icon', '20')}
+            ${renderIcon('verified', 'auth-trust__icon', '20')}
+            ${renderIcon('bolt', 'auth-trust__icon', '20')}
+          </div>
         </div>
 
       </div>
@@ -68,16 +103,17 @@ export function renderAuthView() {
   `;
 
   attachAuthListeners();
+  return cleanupAuthView;
 }
 
 /**
- * Render registration specific fields.
+ * Render form fields based on active tab.
  */
-function renderRegisterFields() {
-  return `
-    <div class="auth-form__fields animate-fade-in">
+function renderFormFields() {
+  if (activeAuthTab === 'register') {
+    return `
       <div class="input-group">
-        <label class="input-group__label" for="field-name">Nombre Completo</label>
+        <label class="input-group__label" for="field-name">Tu Nombre Completo</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('user', '', '18')}</span>
           <input
@@ -85,7 +121,7 @@ function renderRegisterFields() {
             class="input-wrapper__field"
             id="field-name"
             name="fullName"
-            placeholder="Juan Pérez"
+            placeholder="Ej: Juan Pérez"
             autocomplete="name"
             required
           />
@@ -93,7 +129,7 @@ function renderRegisterFields() {
       </div>
 
       <div class="input-group">
-        <label class="input-group__label" for="field-email">Correo electrónico</label>
+        <label class="input-group__label" for="field-email">Correo Electrónico</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
           <input
@@ -101,7 +137,7 @@ function renderRegisterFields() {
             class="input-wrapper__field"
             id="field-email"
             name="email"
-            placeholder="tu@ejemplo.com"
+            placeholder="tu@correo.com"
             autocomplete="email"
             required
           />
@@ -161,56 +197,52 @@ function renderRegisterFields() {
         </div>
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:4px; min-height:18px;"></div>
       </div>
-    </div>
-  `;
-}
+    `;
+  }
 
-/**
- * Render login specific fields.
- */
-function renderLoginFields() {
   return `
-    <div class="auth-form__fields animate-fade-in">
-      <div class="input-group">
-        <label class="input-group__label" for="field-email">Correo electrónico</label>
-        <div class="input-wrapper">
-          <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
-          <input
-            type="email"
-            class="input-wrapper__field"
-            id="field-email"
-            name="email"
-            placeholder="tu@ejemplo.com"
-            autocomplete="email"
-            required
-          />
-        </div>
+    <div class="input-group">
+      <label class="input-group__label" for="field-email">Correo Electrónico</label>
+      <div class="input-wrapper">
+        <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
+        <input
+          type="email"
+          class="input-wrapper__field"
+          id="field-email"
+          name="email"
+          placeholder="tu@correo.com"
+          autocomplete="email"
+          required
+        />
       </div>
+    </div>
 
-      <div class="input-group">
+    <div class="input-group">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <label class="input-group__label" for="field-password">Contraseña</label>
-        <div class="input-wrapper">
-          <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
-          <input
-            type="${passwordVisible ? 'text' : 'password'}"
-            class="input-wrapper__field"
-            id="field-password"
-            name="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
-          <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
-            ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
-          </button>
-        </div>
+        <a href="#" class="text-primary font-semibold" style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.3px;">Olvidé mi contraseña</a>
+      </div>
+      <div class="input-wrapper">
+        <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
+        <input
+          type="${passwordVisible ? 'text' : 'password'}"
+          class="input-wrapper__field"
+          id="field-password"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          required
+        />
+        <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
+          ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+        </button>
       </div>
     </div>
   `;
 }
 
 /**
- * Attach event listeners to auth view elements.
+ * Attach event listeners for the auth view.
  */
 function attachAuthListeners() {
   // Tab switching
@@ -234,7 +266,7 @@ function attachAuthListeners() {
       if (toggleBtn) {
         toggleBtn.innerHTML = passwordVisible
           ? renderIcon('eyeOff', '', '18')
-          : renderIcon(' eye', '', '18');
+          : renderIcon('eye', '', '18');
       }
     }
   });
@@ -260,7 +292,7 @@ function attachAuthListeners() {
     const statusEl = document.getElementById('referral-status');
     const feedbackEl = document.getElementById('referral-feedback');
 
-    if (!code) {
+    if (!code || code.length < 4) {
       if (statusEl) statusEl.textContent = '';
       if (feedbackEl) { feedbackEl.textContent = ''; feedbackEl.style.color = ''; }
       return;
@@ -286,11 +318,6 @@ function attachAuthListeners() {
 
   // Form submission
   document.getElementById('auth-form')?.addEventListener('submit', handleSubmit);
-
-  // Terms modal
-  document.getElementById('btn-terms')?.addEventListener('click', () => {
-    renderLegalModal();
-  });
 }
 
 /**
@@ -311,68 +338,146 @@ async function handleSubmit(e) {
     return;
   }
 
-  setSubmitting(true);
-  formError = null;
+  if (activeAuthTab === 'register') {
+    const fullName = formData.get('fullName')?.trim();
+    const whatsapp = formData.get('whatsapp')?.trim();
+    const referralCode = formData.get('referralCode')?.trim().toUpperCase() || null;
 
-  try {
-    if (activeAuthTab === 'register') {
-      const fullName = formData.get('fullName')?.trim();
-      const whatsapp = formData.get('whatsapp')?.trim();
-      const refCodeInput = formData.get('referralCode')?.trim();
-
-      if (!fullName || !whatsapp) {
-        throw new Error('Por favor completa todos los campos.');
-      }
-
-      const { data, error } = await signUp(email, password, { fullName, whatsapp });
-      if (error) throw error;
-
-      // If registered successfully, try to link referral
-      if (data?.user && refCodeInput) {
-        try {
-          // Verify if code is valid first (extra safety)
-          const val = await validateReferralCode(refCodeInput);
-          if (val.valid) {
-            await linkReferral(data.user.id, refCodeInput);
-            console.log('Referral linked successfully');
-          }
-        } catch (refErr) {
-          console.error('Non-critical: Referral linking failed:', refErr);
-        }
-      }
-
-      // Proceed to app
-      navigateTo('granja');
-    } else {
-      const { error } = await signIn(email, password);
-      if (error) throw error;
-      navigateTo('granja');
+    if (!fullName) {
+      showFormError('Por favor ingresa tu nombre completo.');
+      return;
     }
-  } catch (err) {
-    console.error('Auth error:', err);
-    showFormError(err.message || 'Ocurrió un error inesperado.');
-    setSubmitting(false);
+
+    // Show terms modal BEFORE creating account
+    renderLegalModal({
+      onAccept: async () => {
+        await performSignUp({ email, password, fullName, whatsapp, referralCode });
+      },
+      onReject: () => {
+        // User cancelled — do nothing, stay on auth
+        console.log('🐷 User declined terms, signup cancelled.');
+      },
+    });
+  } else {
+    // Login flow — direct
+    await performSignIn({ email, password });
   }
 }
 
 /**
- * Update submitting state and re-render.
+ * Execute the signup after terms are accepted.
  */
-function setSubmitting(value) {
-  isSubmitting = value;
-  const btn = document.getElementById('btn-auth-submit');
-  if (btn) {
-    btn.disabled = value;
-    btn.innerHTML = value 
-      ? '<span class="spinner spinner--white"></span> Procesando...' 
-      : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Entrar a mi granja');
+async function performSignUp({ email, password, fullName, whatsapp, referralCode }) {
+  isSubmitting = true;
+  updateSubmitButton();
+
+  try {
+    const result = await signUp({ email, password, fullName, whatsapp });
+
+    if (result.error) {
+      showFormError(translateSupabaseError(result.error));
+      return;
+    }
+
+    // Link referral if code was provided
+    if (referralCode && result.user?.id) {
+      try {
+        const linkResult = await linkReferral(result.user.id, referralCode);
+        if (linkResult.linked) {
+          console.log('🐷 Referral linked successfully');
+        } else {
+          console.warn('🐷 Referral link skipped:', linkResult.reason);
+        }
+      } catch (refErr) {
+        // Don't block signup if referral linking fails
+        console.warn('🐷 Referral linking error (non-blocking):', refErr);
+      }
+    }
+
+    navigateTo('granja');
+  } catch (error) {
+    console.error('🐷 SignUp error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
+  } finally {
+    isSubmitting = false;
+    updateSubmitButton();
   }
+}
+
+/**
+ * Execute the sign in.
+ */
+async function performSignIn({ email, password }) {
+  isSubmitting = true;
+  updateSubmitButton();
+
+  try {
+    const result = await signIn({ email, password });
+
+    if (result.error) {
+      showFormError(translateSupabaseError(result.error));
+    } else {
+      navigateTo('granja');
+    }
+  } catch (error) {
+    console.error('🐷 SignIn error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
+  } finally {
+    isSubmitting = false;
+    updateSubmitButton();
+  }
+}
+
+/**
+ * Translate common Supabase error messages to Spanish.
+ */
+function translateSupabaseError(errorMessage) {
+  const translations = {
+    'Invalid login credentials': 'Correo o contraseña incorrectos.',
+    'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
+    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+    'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
+    'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
+  };
+
+  return translations[errorMessage] || errorMessage;
 }
 
 /**
  * Show form error.
  */
-function showFormError(msg) {
-  formError = msg;
-  renderAuthView();
+function showFormError(message) {
+  formError = message;
+  const errorEl = document.getElementById('form-error');
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.classList.add('auth-form__error--visible');
+  }
+}
+
+/**
+ * Update submit button loading state without full re-render.
+ */
+function updateSubmitButton() {
+  const btn = document.getElementById('auth-submit');
+  if (!btn) return;
+
+  btn.disabled = isSubmitting;
+  if (isSubmitting) {
+    btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
+  } else {
+    btn.innerHTML = `
+      ${activeAuthTab === 'register' ? 'Comenzar Adopción' : 'Iniciar Sesión'}
+      ${renderIcon('arrowRight', '', '20')}
+    `;
+  }
+}
+
+/**
+ * Cleanup when leaving the auth view.
+ */
+function cleanupAuthView() {
+  passwordVisible = false;
+  isSubmitting = false;
+  formError = null;
 }
