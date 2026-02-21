@@ -416,9 +416,14 @@ function buildGranjaFull(firstName, piggies, stats) {
                     </div>
 
                     <!-- Disponible -->
-                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px;">
-                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Disponible para Retiro</div>
-                       <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px;">${stats.disponibleFormatted}</div>
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px; position:relative;">
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Saldo Disponible</div>
+                       <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px;">${stats.disponibleFormatted}</div>
+                           <div style="font-size:0.75rem; opacity:0.9; text-align:right;">
+                               Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
+                           </div>
+                       </div>
                     </div>
                  </div>
 
@@ -461,11 +466,6 @@ function buildGranjaFull(firstName, piggies, stats) {
 
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
-          <div class="roi-info animate-fade-in-up" style="animation-delay: 0.15s;">
-            ${renderIcon('trendUp', 'roi-info__icon', '16')}
-            <span>Margen Comercial Granja: <strong class="text-primary">${stats.baseROIFormatted}</strong></span>
-          </div>
-
           <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 12px;">
             <button id="btn-quick-buy" style="
                 background: #ec4899; 
@@ -543,20 +543,19 @@ function renderGreeting(firstName) {
       <div id="greeting-referral-code" style="
         display: flex;
         align-items: center;
-        gap: 6px;
         background: linear-gradient(135deg, #7c3aed, #5b21b6);
         color: white;
         padding: 6px 14px;
         border-radius: 12px;
         cursor: pointer;
-        font-size: 0.72rem;
-        font-weight: 600;
+        font-size: 0.8rem;
+        font-weight: 700;
         box-shadow: 0 4px 12px rgba(124,58,237,0.3);
         transition: transform 0.2s, box-shadow 0.2s;
         white-space: nowrap;
+        letter-spacing: 1.5px;
       " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(124,58,237,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124,58,237,0.3)'">
-        <span>🤝</span>
-        <span>Tu Código: <strong id="greeting-code-value" style="letter-spacing:1.5px; font-family:monospace;">···</strong></span>
+        <span id="greeting-code-value">···</span>
       </div>
     </div>
   `;
