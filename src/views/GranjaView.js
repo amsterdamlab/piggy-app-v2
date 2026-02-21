@@ -5,7 +5,8 @@
 
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
-import { getUserPiggies, getDashboardStats, getMarketplaceItems } from '../services/api.js';
+import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
+import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
 import { showCheckoutModal } from './MercadoView.js';
@@ -58,7 +59,7 @@ function renderMissionBanner(piggyCount) {
       </div>
     `;
   }
-  return ''; // Simplificado para este paso
+  return '';
 }
 
 /* =========================================
