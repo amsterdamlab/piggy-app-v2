@@ -419,8 +419,8 @@ function buildGranjaFull(firstName, piggies, stats) {
                     <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px; position:relative;">
                        <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Saldo Disponible</div>
                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px;">${stats.disponibleFormatted}</div>
-                           <div style="font-size:0.75rem; opacity:0.9; text-align:right;">
+                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px; line-height: 1;">${stats.disponibleFormatted}</div>
+                           <div style="font-size:0.75rem; opacity:0.9; text-align:right; padding-bottom: 2px;">
                                Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
                            </div>
                        </div>
