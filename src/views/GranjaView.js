@@ -6,10 +6,7 @@
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
-import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
-import { showCheckoutModal } from './MercadoView.js';
 
 // Components
 import { renderWalletCard } from '../components/WalletCard.js';
@@ -93,6 +90,8 @@ async function loadGranjaData(firstName) {
     const piggies = await getUserPiggies();
     const stats = await getDashboardStats(piggies);
     const app = document.getElementById('app');
+
+    AppState.set({ piggies });
 
     const piggyCount = piggies.length;
     const missionBanner = renderMissionBanner(piggyCount);
@@ -206,10 +205,9 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
     else if (cta.startsWith('#/')) navigateTo(cta.replace('#/', ''));
   });
 
-  // Quick Buy
-  document.getElementById('btn-quick-buy')?.addEventListener('click', async () => {
-    const items = await getMarketplaceItems();
-    showCheckoutModal(items[0]);
+  // Quick Buy — navigate to marketplace instead of importing (avoids circular dep)
+  document.getElementById('btn-quick-buy')?.addEventListener('click', () => {
+    navigateTo('mercado');
   });
 
   loadGreetingReferralCode();
