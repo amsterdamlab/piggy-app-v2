@@ -86,7 +86,6 @@ const LEGAL_TEXT = `
  * @param {Function} [options.onReject] - Called when user cancels (callback mode only).
  */
 export function renderLegalModal(options = {}) {
-  console.log('🐷 Render Legal Modal triggered');
   pendingOnAccept = options.onAccept || null;
   pendingOnReject = options.onReject || null;
 
@@ -99,19 +98,15 @@ export function renderLegalModal(options = {}) {
   const modal = document.createElement('div');
   modal.id = 'legal-modal';
   modal.className = 'modal-overlay';
-  
-  // Force high z-index and styles inline to ensure visibility
-  modal.style.zIndex = '10000';
-  modal.style.display = 'flex';
-  
   modal.innerHTML = `
     <div class="modal legal-modal">
       <div class="modal__handle"></div>
 
       <!-- Header -->
-      <div class="legal-modal__header">
+      <div class="legal-modal__header" style="position: relative;">
         <span style="font-size: 28px;">🐷</span>
         <span class="legal-modal__title">Términos y Condiciones</span>
+        <button id="btn-close-legal" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; padding: 4px;">✕</button>
       </div>
 
       <!-- Scrollable Legal Text -->
@@ -154,8 +149,12 @@ export function renderLegalModal(options = {}) {
     </div>
   `;
 
-  // Always append to body to avoid stacking context issues
-  document.body.appendChild(modal);
+  const modalRoot = document.getElementById('modal-root');
+  if (modalRoot) {
+    modalRoot.appendChild(modal);
+  } else {
+    document.body.appendChild(modal);
+  }
 
   // Checkbox logic
   const checkTerms = document.getElementById('check-terms');
@@ -198,6 +197,19 @@ export function renderLegalModal(options = {}) {
   const btnReject = document.getElementById('btn-reject-terms');
   if (btnReject) {
     btnReject.addEventListener('click', () => {
+      modal.remove();
+      if (pendingOnReject) {
+        pendingOnReject();
+        pendingOnReject = null;
+        pendingOnAccept = null;
+      }
+    });
+  }
+
+  // Close Icon
+  const btnClose = document.getElementById('btn-close-legal');
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
       modal.remove();
       if (pendingOnReject) {
         pendingOnReject();
