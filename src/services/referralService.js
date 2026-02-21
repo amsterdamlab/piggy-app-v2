@@ -189,7 +189,7 @@ export async function getMyReferralStats() {
  * @returns {string} WhatsApp deep link URL
  */
 export function buildReferralShareLink(referralCode) {
-    const appUrl = 'https://piggy-app-v2.vercel.app';
+    const appUrl = `https://piggy-app-v2-gvm.vercel.app/?ref=${referralCode}`;
     const message = `🐷 ¡Únete a Piggy App! Inicia tu granja con Piggy y gana retornos.\n\n` +
         `Usa mi código de referido: *${referralCode}*\n` +
         `👉 ${appUrl}\n\n` +
@@ -203,7 +203,7 @@ export function buildReferralShareLink(referralCode) {
  * @param {string} referralCode - User's referral code
  */
 export async function shareReferralCode(referralCode) {
-    const appUrl = 'https://piggy-app-v2.vercel.app';
+    const appUrl = `https://piggy-app-v2-gvm.vercel.app/?ref=${referralCode}`;
     const shareData = {
         title: '🐷 Piggy App — Inicia tu granja con Piggy',
         text: `Usa mi código de referido: ${referralCode} y gana bonos al comprar tu primer Piggy.`,
