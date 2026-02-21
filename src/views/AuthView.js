@@ -26,17 +26,9 @@ export function renderAuthView() {
     <div class="auth-page page">
       <div class="auth-page__content">
 
-        <!-- New Hero Mascot and Title -->
-        <div class="auth-hero animate-fade-in" style="display: flex; align-items: center; justify-content: center; gap: 16px; margin: 32px 0 40px 0;">
-          <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 2px solid white; flex-shrink: 0;">
-            <img src="pig1.png" alt="Piggy mascot" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/src/assets/piggy-mascot.svg';" />
-          </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <h1 style="font-size: 2.2rem; font-weight: 900; color: #fb2c74; margin: 0; letter-spacing: -1px; text-transform: uppercase;">PIGGY</h1>
-            <div style="font-size: 0.9rem; font-weight: 500; color: #fb2c74; line-height: 1.25; text-align: left;">
-              Tu<br/>granja<br/>digital<br/>de<br/>cerdos
-            </div>
-          </div>
+        <!-- New Hero Mascot and Title (From Image) -->
+        <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="max-width: 100%; height: auto; display: block;" />
         </div>
 
         <!-- Auth Tabs -->
@@ -305,7 +297,7 @@ function attachAuthListeners() {
         if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
         if (feedbackEl) {
           feedbackEl.textContent = result.valid
-            ? `Invitado por: ${result.referrerName}`
+            ? \`Invitado por: \${result.referrerName}\`
             : 'Código no encontrado';
           feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
         }
@@ -466,10 +458,10 @@ function updateSubmitButton() {
   if (isSubmitting) {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
-    btn.innerHTML = `
-      ${activeAuthTab === 'register' ? 'Comenzar Adopción' : 'Iniciar Sesión'}
-      ${renderIcon('arrowRight', '', '20')}
-    `;
+    btn.innerHTML = \`
+      \${activeAuthTab === 'register' ? 'Comenzar Adopción' : 'Iniciar Sesión'}
+      \${renderIcon('arrowRight', '', '20')}
+    \`;
   }
 }
 
