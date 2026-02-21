@@ -1,6 +1,7 @@
 -- =============================================
 -- TRANSACTIONAL PURCHASE FUNCTION
 -- Run this in Supabase SQL Editor
+-- Now includes referral commission processing
 -- =============================================
 
 -- Drop old version
@@ -22,7 +23,9 @@ AS $$
 DECLARE
   v_new_piggy_id uuid;
   v_current_stock int;
+  v_referral_result jsonb;
 BEGIN
+  -- 1. Lock and check stock
   SELECT stock INTO v_current_stock
   FROM marketplace
   WHERE id = p_item_id
@@ -36,10 +39,12 @@ BEGIN
     RAISE EXCEPTION 'Out of stock';
   END IF;
 
+  -- 2. Deduct stock
   UPDATE marketplace
   SET stock = stock - 1
   WHERE id = p_item_id;
 
+  -- 3. Create the piggy
   INSERT INTO piggies (
     user_id, name, investment_amount, status,
     extra_roi_bonus, category, current_weight
@@ -50,7 +55,22 @@ BEGIN
   )
   RETURNING id INTO v_new_piggy_id;
 
-  RETURN json_build_object('success', true, 'piggy_id', v_new_piggy_id);
+  -- 4. Process referral commission (only triggers on first purchase)
+  --    This function checks internally if it's the user's first piggy
+  --    and if they have a pending referral. If both conditions are met,
+  --    it credits the referrer's wallet automatically.
+  BEGIN
+    v_referral_result := process_referral_on_purchase(p_user_id);
+  EXCEPTION WHEN OTHERS THEN
+    -- Non-blocking: if referral processing fails, the purchase still succeeds
+    v_referral_result := jsonb_build_object('triggered', false, 'reason', 'error');
+  END;
+
+  RETURN json_build_object(
+    'success', true,
+    'piggy_id', v_new_piggy_id,
+    'referral', v_referral_result
+  );
 END;
 $$;
 
