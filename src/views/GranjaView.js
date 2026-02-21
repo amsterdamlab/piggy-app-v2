@@ -10,6 +10,7 @@ import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
+import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../services/referralService.js';
 
 /* =========================================
    DYNAMIC NOTIFICATIONS
@@ -70,14 +71,9 @@ function getRandomNotification() {
 
 /**
  * Determine which mission banner to show based on user's piggy count.
- * M1: 0 piggies → Welcome Bonus ($50,000 consumption bonus)
- * M2: 1 piggy  → Buy 2nd Piggy → +1% Commercial Margin
- * M3: 2 piggies → Activate 3rd Piggy → Maintain 10%
- * 3+ piggies: All missions complete, no banner
  */
 function renderMissionBanner(piggyCount) {
   if (piggyCount === 0) {
-    // M1: No piggies yet → Show welcome bonus banner
     return `
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
         <div class="banner banner--interactive" id="mission-banner" data-mission="m1" style="
@@ -106,8 +102,6 @@ function renderMissionBanner(piggyCount) {
   }
 
   if (piggyCount === 1) {
-    // M1 completed (has 1st piggy). Show redeem bonus CTA → Gourmet
-    // Then show M2 below it
     return `
       <!-- M1 Completed: Redeem Bonus -->
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
@@ -159,7 +153,6 @@ function renderMissionBanner(piggyCount) {
   }
 
   if (piggyCount === 2) {
-    // M2 completed, show M3
     return `
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
         <div class="banner banner--interactive" id="mission-banner" data-mission="m3" style="
@@ -186,7 +179,7 @@ function renderMissionBanner(piggyCount) {
     `;
   }
 
-  // 3+ piggies: All missions complete! Show celebration
+  // 3+ piggies: All missions complete!
   return `
     <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
       <div style="
@@ -456,6 +449,90 @@ function buildGranjaFull(firstName, piggies, stats) {
            </div>
         </div>
 
+        <!-- Referral Banner -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.12s;">
+          <div id="referral-banner" style="
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            color: white;
+            padding: 20px 24px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 25px -5px rgba(124, 58, 237, 0.4);
+          ">
+            <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🎁%3C/text%3E%3C/svg%3E'); pointer-events: none;"></div>
+            <div style="position:relative; z-index:2;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:28px;">🤝</span>
+                  <h3 style="margin:0; font-size:1.05rem; font-weight:700;">Programa de Referidos</h3>
+                </div>
+                <div id="referral-tier-badge" style="
+                  background: rgba(255,255,255,0.2);
+                  padding: 3px 10px;
+                  border-radius: 20px;
+                  font-size: 0.65rem;
+                  font-weight: 700;
+                  letter-spacing: 0.5px;
+                  backdrop-filter: blur(4px);
+                ">Cargando...</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px;">
+                <div>
+                  <div style="font-size:0.7rem; opacity:0.8; margin-bottom:2px;">Balance Referidos</div>
+                  <div id="referral-balance-display" style="font-size:1.3rem; font-weight:800;">$0</div>
+                </div>
+                <div>
+                  <div style="font-size:0.7rem; opacity:0.8; margin-bottom:2px;">Tu Código</div>
+                  <div id="referral-code-display" style="
+                    font-size:1.1rem;
+                    font-weight:800;
+                    letter-spacing:2px;
+                    font-family: monospace;
+                  ">---</div>
+                </div>
+              </div>
+
+              <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <div id="referral-completed-count" style="flex:1; background:rgba(255,255,255,0.12); border-radius:10px; padding:8px 12px; text-align:center;">
+                  <div style="font-size:1.1rem; font-weight:800;">0</div>
+                  <div style="font-size:0.65rem; opacity:0.8;">Completados</div>
+                </div>
+                <div id="referral-pending-count" style="flex:1; background:rgba(255,255,255,0.12); border-radius:10px; padding:8px 12px; text-align:center;">
+                  <div style="font-size:1.1rem; font-weight:800;">0</div>
+                  <div style="font-size:0.65rem; opacity:0.8;">Pendientes</div>
+                </div>
+                <div id="referral-commission-display" style="flex:1; background:rgba(255,255,255,0.12); border-radius:10px; padding:8px 12px; text-align:center;">
+                  <div style="font-size:1.1rem; font-weight:800;">$30k</div>
+                  <div style="font-size:0.65rem; opacity:0.8;">Comisión Actual</div>
+                </div>
+              </div>
+
+              <button id="btn-share-referral" style="
+                width: 100%;
+                background: white;
+                color: #7c3aed;
+                border: none;
+                padding: 12px;
+                border-radius: 12px;
+                font-weight: 700;
+                font-size: 0.9rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                transition: transform 0.2s;
+              " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                📤 Invitar Amigos por WhatsApp
+              </button>
+            </div>
+            <div style="position:absolute; bottom:-20px; right:-10px; font-size:80px; opacity:0.1; transform:rotate(-15deg);">🎁</div>
+          </div>
+        </div>
+
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
           <div class="roi-info animate-fade-in-up" style="animation-delay: 0.15s;">
@@ -657,15 +734,12 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
       const mission = missionBanner.dataset.mission;
       switch (mission) {
         case 'm1':
-          // No piggies → go to mercado to buy first piggy
           navigateTo('mercado');
           break;
         case 'm1-redeem':
-          // Has 1 piggy → redeem bonus → go to gourmet
           navigateTo('gourmet');
           break;
         case 'm3':
-          // Buy 3rd piggy → go to mercado
           navigateTo('mercado');
           break;
         default:
@@ -674,7 +748,7 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
     });
   }
 
-  // M2 Banner click (when piggyCount === 1, both banners visible)
+  // M2 Banner click
   const m2Banner = document.getElementById('mission-banner-m2');
   if (m2Banner) {
     m2Banner.addEventListener('click', () => {
@@ -704,7 +778,6 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
 
       try {
         const items = await getMarketplaceItems();
-        // Find Standard Initial Piggy (Month 1, Standard)
         const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
 
         if (standardPiggy) {
@@ -730,6 +803,67 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   document.getElementById('btn-meat')?.addEventListener('click', () => {
     navigateTo('gourmet');
   });
+
+  // Referral banner: load data and attach share button
+  loadReferralBannerData();
+
+  document.getElementById('btn-share-referral')?.addEventListener('click', async () => {
+    const code = document.getElementById('referral-code-display')?.textContent;
+    if (code && code !== '---') {
+      await shareReferralCode(code);
+    }
+  });
+}
+
+/**
+ * Load referral data and update the referral banner.
+ */
+async function loadReferralBannerData() {
+  try {
+    const [code, stats] = await Promise.all([
+      getMyReferralCode(),
+      getMyReferralStats(),
+    ]);
+
+    // Update code display
+    const codeEl = document.getElementById('referral-code-display');
+    if (codeEl) codeEl.textContent = code || '---';
+
+    if (stats) {
+      // Balance
+      const balanceEl = document.getElementById('referral-balance-display');
+      if (balanceEl) balanceEl.textContent = formatReferralBalance(stats.balance);
+
+      // Completed
+      const completedEl = document.getElementById('referral-completed-count');
+      if (completedEl) completedEl.querySelector('div').textContent = stats.completedReferrals;
+
+      // Pending
+      const pendingEl = document.getElementById('referral-pending-count');
+      if (pendingEl) pendingEl.querySelector('div').textContent = stats.pendingReferrals;
+
+      // Tier badge
+      const tierEl = document.getElementById('referral-tier-badge');
+      if (tierEl) {
+        const tierLabel = stats.currentTier.amount === 30000 ? 'Tier 1'
+          : stats.currentTier.amount === 50000 ? 'Tier 2'
+            : 'Tier 3';
+        tierEl.textContent = `${tierLabel} · ${stats.currentTier.label}/ref`;
+      }
+
+      // Commission display
+      const commEl = document.getElementById('referral-commission-display');
+      if (commEl) {
+        const amountStr = stats.currentTier.amount >= 1000
+          ? `$${stats.currentTier.amount / 1000}k`
+          : `$${stats.currentTier.amount}`;
+        commEl.querySelector('div').textContent = amountStr;
+      }
+    }
+  } catch (err) {
+    console.warn('Error loading referral banner data:', err);
+    // Non-blocking: banner stays with default values
+  }
 }
 
 /**
@@ -806,7 +940,6 @@ function showBonusModal(hasPiggies) {
   // Action logic
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
     close();
-    // Always navigate to Piggy Gourmet for bonus redemption
     navigateTo('gourmet');
   });
 }
@@ -821,7 +954,6 @@ function removeBonusModal() {
    ========================================= */
 
 function showWithdrawModal(availableAmount) {
-  // Remove existing
   const existing = document.getElementById('withdraw-modal');
   if (existing) existing.remove();
 
@@ -871,7 +1003,6 @@ function showWithdrawModal(availableAmount) {
 
   document.body.appendChild(modal);
 
-  // Logic
   const amountInput = document.getElementById('withdraw-amount');
   const bankInput = document.getElementById('withdraw-bank');
   const termsInput = document.getElementById('withdraw-terms');
@@ -916,17 +1047,14 @@ function showWithdrawModal(availableAmount) {
   bankInput.addEventListener('change', validate);
   termsInput.addEventListener('change', validate);
 
-  // Todo Button
   document.getElementById('btn-withdraw-all').addEventListener('click', () => {
     amountInput.value = availableAmount;
     validate();
   });
 
-  // Close
   const close = () => modal.remove();
   document.getElementById('withdraw-close-btn').addEventListener('click', close);
 
-  // Submit
   submitBtn.addEventListener('click', () => {
     showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
     close();
