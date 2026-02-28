@@ -126,7 +126,7 @@ export function renderPiggyGourmetView() {
         </div>
 
       </div>
-      ${renderBottomNav('granja')}
+      ${renderBottomNav('gourmet')}
     </div>
   `;
 
