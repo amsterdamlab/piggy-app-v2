@@ -28,7 +28,7 @@ export function renderMercadoView() {
           <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
         </div>
 
-        <!-- Piggy Gourmet Banner -->
+        <!-- Tienda Piggy Banner -->
         <div class="section animate-fade-in-up" id="mercado-gourmet-banner" style="cursor:pointer; margin-bottom:24px; animation-delay: 0.1s;">
             <div style="
                 background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
@@ -62,7 +62,7 @@ export function renderMercadoView() {
                             text-transform: uppercase;
                             margin-bottom: 8px;
                             backdrop-filter: blur(4px);
-                        ">🔥 PIGGY GOURMET</div>
+                        ">🔥 TIENDA PIGGY</div>
 
                         <div style="font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; line-height: 1.2;">
                             Combos de Carne Fresca
@@ -107,7 +107,7 @@ export function renderMercadoView() {
 
   loadMarketplaceData();
 
-  // Gourmet Banner click → Navigate to Piggy Gourmet
+  // Gourmet Banner click → Navigate to Tienda Piggy
   document.getElementById('mercado-gourmet-banner')?.addEventListener('click', () => {
     navigateTo('gourmet');
   });
