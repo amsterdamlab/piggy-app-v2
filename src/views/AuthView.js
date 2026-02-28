@@ -458,9 +458,9 @@ function updateSubmitButton() {
   if (isSubmitting) {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
-    btn.innerHTML = \`
-      \${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
-    \`;
+    btn.innerHTML = `
+      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+    `;
   }
 }
 
