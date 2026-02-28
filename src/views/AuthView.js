@@ -28,7 +28,7 @@ export function renderAuthView() {
 
         <!-- New Hero Mascot and Title (From Image) -->
         <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
-          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block;" />
+          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
         </div>
 
         <!-- Auth Tabs -->
@@ -297,7 +297,7 @@ function attachAuthListeners() {
         if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
         if (feedbackEl) {
           feedbackEl.textContent = result.valid
-            ? `Invitado por: ${result.referrerName}`
+            ? \`Invitado por: \${result.referrerName}\`
             : 'Código no encontrado';
           feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
         }
@@ -458,9 +458,9 @@ function updateSubmitButton() {
   if (isSubmitting) {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
-    btn.innerHTML = `
-      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
-    `;
+    btn.innerHTML = \`
+      \${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+    \`;
   }
 }
 
