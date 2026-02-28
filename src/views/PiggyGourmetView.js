@@ -25,7 +25,7 @@ export function renderPiggyGourmetView() {
 
         <!-- Title -->
         <div class="animate-fade-in" style="margin-bottom:24px;">
-          <h2 style="margin:0 0 4px 0; font-size:1.6rem; font-weight:800; color:#1f2937;">Piggy Gourmet</h2>
+          <h2 style="margin:0 0 4px 0; font-size:1.6rem; font-weight:800; color:#1f2937;">Tienda Piggy</h2>
           <p style="margin:0; font-size:0.85rem; color:#6b7280;">Proteína fresca directo de la granja 🐷</p>
         </div>
 
