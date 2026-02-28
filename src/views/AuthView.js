@@ -28,7 +28,7 @@ export function renderAuthView() {
 
         <!-- New Hero Mascot and Title (From Image) -->
         <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
-          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="max-width: 100%; height: auto; display: block;" />
+          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block;" />
         </div>
 
         <!-- Auth Tabs -->
@@ -72,8 +72,8 @@ export function renderAuthView() {
         </form>
 
         <!-- Legal Footer -->
-        <div class="auth-legal animate-fade-in-up" style="margin-top: 24px; text-align: left; padding-left: 10px;">
-          <p class="auth-legal__text" style="font-size: 0.9rem; color: #003366; line-height: 1.5; margin: 0; font-weight: 400;">
+        <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
+          <p class="auth-legal__text" style="font-size: 0.75rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400;">
             Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
             Términos y Condiciones
           </p>
@@ -81,7 +81,7 @@ export function renderAuthView() {
 
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in">
-          <p class="auth-trust__label">RESPALDADO POR TECNOLOGÍA DE PUNTA</p>
+          <p class="auth-trust__label">RESPALDADO POR GRANJA VILLA MORALES</p>
           <div class="auth-trust__icons">
             ${renderIcon('heart', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
@@ -157,7 +157,7 @@ function renderFormFields() {
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
           <input
-            type="${passwordVisible ? 'text' : 'password'}"
+            type="\${passwordVisible ? 'text' : 'password'}"
             class="input-wrapper__field"
             id="field-password"
             name="password"
@@ -167,7 +167,7 @@ function renderFormFields() {
             minlength="6"
           />
           <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
-            ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+            \${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
           </button>
         </div>
       </div>
@@ -217,7 +217,7 @@ function renderFormFields() {
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
         <input
-          type="${passwordVisible ? 'text' : 'password'}"
+          type="\${passwordVisible ? 'text' : 'password'}"
           class="input-wrapper__field"
           id="field-password"
           name="password"
@@ -226,7 +226,7 @@ function renderFormFields() {
           required
         />
         <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
-          ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+          \${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
         </button>
       </div>
     </div>
@@ -459,8 +459,7 @@ function updateSubmitButton() {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
     btn.innerHTML = \`
-      \${activeAuthTab === 'register' ? 'Comenzar Adopción' : 'Iniciar Sesión'}
-      \${renderIcon('arrowRight', '', '20')}
+      \${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
     \`;
   }
 }
