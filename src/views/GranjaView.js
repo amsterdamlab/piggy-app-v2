@@ -650,14 +650,18 @@ function renderPiggyCard(piggy, baseROI) {
 // ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
-    <nav class="bottom-nav" aria-label="Navegación principal">
+    <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
       <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
       </a>
       <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
-        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('piggy', '', '24')}</span>
         <span>Mercado</span>
+      </a>
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
+        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
+        <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
         <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
