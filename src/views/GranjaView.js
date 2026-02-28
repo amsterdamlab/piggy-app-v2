@@ -11,6 +11,7 @@ import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../services/referralService.js';
+import { getWalletBalance, createWalletRequest, notifyAdminViaWhatsApp } from '../services/walletService.js';
 
 /* =========================================
    DYNAMIC NOTIFICATIONS
@@ -19,7 +20,7 @@ import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferra
 
 const NOTIFICATIONS = [
   {
-    icon: '🏪',
+    icon: '??',
     title: 'Compra en locales aliados',
     reward: 'Desbloquea un Piggy Silver (24h)',
     color: '#8b5cf6',
@@ -28,7 +29,7 @@ const NOTIFICATIONS = [
     cta: '#/aliados',
   },
   {
-    icon: '🏁',
+    icon: '??',
     title: 'Al cerrar un ciclo',
     reward: 'Desbloquea Piggy Silver (24h)',
     color: '#0891b2',
@@ -37,7 +38,7 @@ const NOTIFICATIONS = [
     cta: null,
   },
   {
-    icon: '🥩',
+    icon: '??',
     title: 'Compra la oferta de la semana',
     reward: 'Desbloquea un Piggy Gold (24h)',
     color: '#dc2626',
@@ -46,7 +47,7 @@ const NOTIFICATIONS = [
     cta: '#/gourmet',
   },
   {
-    icon: '🤝',
+    icon: '??',
     title: 'Refiere a un amigo y si compra su 1er Piggy',
     reward: 'Obtén $30.000 en tu Wallet',
     color: '#059669',
@@ -66,19 +67,19 @@ function getRandomNotification() {
 
 /* =========================================
    DYNAMIC MISSION BANNERS
-   M1 → M2 → M3 based on piggy count
+   M1 ? M2 ? M3 based on piggy count
    ========================================= */
 
 /**
  * Determine which mission banner to show based on user's piggy count.
- * M1: 0 piggies → Welcome Bonus ($50,000 consumption bonus)
- * M2: 1 piggy  → Buy 2nd Piggy → +1% Commercial Margin
- * M3: 2 piggies → Activate 3rd Piggy → Maintain 10%
+ * M1: 0 piggies ? Welcome Bonus ($50,000 consumption bonus)
+ * M2: 1 piggy  ? Buy 2nd Piggy ? +1% Commercial Margin
+ * M3: 2 piggies ? Activate 3rd Piggy ? Maintain 10%
  * 3+ piggies: All missions complete, no banner
  */
 function renderMissionBanner(piggyCount) {
   if (piggyCount === 0) {
-    // M1: No piggies yet → Show welcome bonus banner
+    // M1: No piggies yet ? Show welcome bonus banner
     return `
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
         <div class="banner banner--interactive" id="mission-banner" data-mission="m1" style="
@@ -91,23 +92,23 @@ function renderMissionBanner(piggyCount) {
           box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
           cursor: pointer;
         ">
-          <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🎁%3C/text%3E%3C/svg%3E'); pointer-events:none;"></div>
+          <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E??%3C/text%3E%3C/svg%3E'); pointer-events:none;"></div>
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 1</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">?? MISIÓN 1</div>
             <div style="font-size:1.2rem; font-weight:800; margin-bottom:4px;">Crea una cuenta y compra tu primer Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">🎁 Bono de Bienvenida: <strong>$50.000 en consumo de carne</strong></div>
+            <div style="font-size:0.85rem; opacity:0.9;">?? Bono de Bienvenida: <strong>$50.000 en consumo de carne</strong></div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Compra tu Piggy →</span>
+              <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Compra tu Piggy ?</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">🎁</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">??</div>
         </div>
       </div>
     `;
   }
 
   if (piggyCount === 1) {
-    // M1 completed (has 1st piggy). Show redeem bonus CTA → Gourmet
+    // M1 completed (has 1st piggy). Show redeem bonus CTA ? Gourmet
     // Then show M2 below it
     return `
       <!-- M1 Completed: Redeem Bonus -->
@@ -123,7 +124,7 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2; display:flex; align-items:center; gap:14px;">
-            <div style="font-size:36px; flex-shrink:0;">🎁</div>
+            <div style="font-size:36px; flex-shrink:0;">??</div>
             <div style="flex:1;">
               <div style="font-size:0.95rem; font-weight:800;">¡Tienes un Bono de $50.000!</div>
               <div style="font-size:0.78rem; opacity:0.9;">Bono de consumo en carne. ¡Redímelo ahora!</div>
@@ -146,14 +147,14 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 2</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">?? MISIÓN 2</div>
             <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">📈 Desbloquea un piggy de 3 meses y <strong>+1% en Margen Comercial</strong></div>
+            <div style="font-size:0.85rem; opacity:0.9;">?? Desbloquea un piggy de 3 meses y <strong>+1% en Margen Comercial</strong></div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado →</span>
+              <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado ?</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">📈</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">??</div>
         </div>
       </div>
     `;
@@ -174,14 +175,14 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 3</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">?? MISIÓN 3</div>
             <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Activa tu 3er Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">💎 Mantén el <strong>10% en Margen Comercial</strong> de la Granja</div>
+            <div style="font-size:0.85rem; opacity:0.9;">?? Mantén el <strong>10% en Margen Comercial</strong> de la Granja</div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado →</span>
+              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado ?</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">💎</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">??</div>
         </div>
       </div>
     `;
@@ -199,7 +200,7 @@ function renderMissionBanner(piggyCount) {
         align-items: center;
         gap: 14px;
       ">
-        <div style="font-size:32px;">🏆</div>
+        <div style="font-size:32px;">??</div>
         <div>
           <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Misiones completadas!</div>
           <div style="font-size:0.78rem; color:#047857;">Tu granja está al máximo. Margen Comercial: 10%</div>
@@ -232,7 +233,7 @@ function renderRandomNotification() {
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
         <div style="flex:1; min-width:0;">
           <div style="font-weight:700; color:${notif.color}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
-          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">→ ${notif.reward}</div>
+          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">? ${notif.reward}</div>
         </div>
         <div style="font-size:14px; color:${notif.color}; opacity:0.5; flex-shrink:0;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
@@ -308,6 +309,12 @@ async function loadGranjaData(firstName) {
     const piggies = await getUserPiggies();
     const stats = await getDashboardStats(piggies);
 
+    // Fetch wallet balance (referral commissions)
+    const walletBalance = await getWalletBalance();
+    stats.walletBalance = walletBalance;
+    stats.saldoDisponible = (stats.disponible || 0) + walletBalance;
+    stats.saldoDisponibleFormatted = formatCOP(stats.saldoDisponible);
+
     AppState.set({ piggies });
 
     const app = document.getElementById('app');
@@ -361,7 +368,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                   position: absolute; 
                   top: 0; left: 0; right: 0; bottom: 0; 
                   opacity: 0.05; 
-                  background-image: url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Ctext x=\\'0\\' y=\\'40\\' font-size=\\'30\\'%3E🐷%3C/text%3E%3C/svg%3E');
+                  background-image: url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Ctext x=\\'0\\' y=\\'40\\' font-size=\\'30\\'%3E??%3C/text%3E%3C/svg%3E');
                   pointer-events: none;
               "></div>
 
@@ -419,7 +426,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                     <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px; position:relative;">
                        <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Saldo Disponible</div>
                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px; line-height: 1;">${stats.disponibleFormatted}</div>
+                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
                            <div style="font-size:0.75rem; opacity:0.9; text-align:right; padding-bottom: 2px;">
                                Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
                            </div>
@@ -427,7 +434,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                     </div>
                  </div>
 
-                 ${stats.disponible > 0 ? `
+                 ${stats.saldoDisponible > 0 ? `
                     <div style="display:flex; gap:10px; flex-wrap:wrap;">
                        <button id="btn-withdraw" style="
                           background: white; 
@@ -442,7 +449,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                           white-space: nowrap;
                           box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                           transition: transform 0.2s;
-                       ">Convertir Bono en Efectivo</button>
+                       ">Retiro</button>
                        <button id="btn-meat" style="
                           background: rgba(255,255,255,0.15); 
                           color: white; 
@@ -455,7 +462,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                           flex: 1;
                           white-space: nowrap;
                           backdrop-filter: blur(5px);
-                       ">Solicitar Entrega de Carne</button>
+                       ">Consumo</button>
                     </div>
                   ` : ''}
               </div>
@@ -679,15 +686,15 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
       const mission = missionBanner.dataset.mission;
       switch (mission) {
         case 'm1':
-          // No piggies → go to mercado to buy first piggy
+          // No piggies ? go to mercado to buy first piggy
           navigateTo('mercado');
           break;
         case 'm1-redeem':
-          // Has 1 piggy → redeem bonus → go to gourmet
+          // Has 1 piggy ? redeem bonus ? go to gourmet
           navigateTo('gourmet');
           break;
         case 'm3':
-          // Buy 3rd piggy → go to mercado
+          // Buy 3rd piggy ? go to mercado
           navigateTo('mercado');
           break;
         default:
@@ -746,17 +753,17 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
 
   // Wallet Actions
   document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWithdrawModal(stats?.disponible || 0);
+    showWalletRequestModal('withdrawal', stats?.saldoDisponible || 0);
   });
 
   document.getElementById('btn-meat')?.addEventListener('click', () => {
-    navigateTo('gourmet');
+    showWalletRequestModal('consumption', stats?.saldoDisponible || 0);
   });
 
   // Load referral code into greeting badge
   loadGreetingReferralCode();
 
-  // Greeting referral code click → open referral modal
+  // Greeting referral code click ? open referral modal
   document.getElementById('greeting-referral-code')?.addEventListener('click', () => {
     showReferralModal();
   });
@@ -831,7 +838,7 @@ async function showReferralModal() {
       `;
     } else {
       referralsListHTML = referrals.map(r => {
-        const statusIcon = r.status === 'completed' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
+        const statusIcon = r.status === 'completed' ? '?' : r.status === 'pending' ? '?' : '?';
         const statusLabel = r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
         const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
@@ -862,7 +869,7 @@ async function showReferralModal() {
 
       <!-- Header -->
       <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px; margin-bottom:8px;">🤝</div>
+        <div style="font-size:48px; margin-bottom:8px;">??</div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
           Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
@@ -911,17 +918,17 @@ async function showReferralModal() {
             <span style="text-align:right;">Comisión</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}">
-            <span style="font-weight:600;">🥉 Bronce</span>
+            <span style="font-weight:600;">?? Bronce</span>
             <span style="text-align:center; color:#6b7280;">0 - 5</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}">
-            <span style="font-weight:600;">🥈 Plata</span>
+            <span style="font-weight:600;">?? Plata</span>
             <span style="text-align:center; color:#6b7280;">6 - 15</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}">
-            <span style="font-weight:600;">🥇 Oro</span>
+            <span style="font-weight:600;">?? Oro</span>
             <span style="text-align:center; color:#6b7280;">16+</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$80.000</span>
           </div>
@@ -949,7 +956,7 @@ async function showReferralModal() {
         box-shadow: 0 6px 16px rgba(37,211,102,0.35);
         transition: transform 0.2s;
       " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        📤 Invitar Amigos por WhatsApp
+        ?? Invitar Amigos por WhatsApp
       </button>
     `;
 
@@ -1064,86 +1071,98 @@ function showBonusModal(hasPiggies) {
 }
 
 function removeBonusModal() {
-  const existing = document.getElementById('bonus-modal');
-  if (existing) existing.remove();
-}
-
-/* =========================================
-   WALLET MODALS
-   ========================================= */
-
-function showWithdrawModal(availableAmount) {
+/**
+ * Show Wallet Request Modal (unified for Retiro and Consumo).
+ * @param {'withdrawal' | 'consumption'} requestType
+ * @param {number} availableAmount - Total saldo disponible
+ */
+function showWalletRequestModal(requestType, availableAmount) {
   // Remove existing
-  const existing = document.getElementById('withdraw-modal');
+  const existing = document.getElementById('wallet-request-modal');
   if (existing) existing.remove();
 
-  const minWithdraw = 10000;
+  const isWithdrawal = requestType === 'withdrawal';
+  const title = isWithdrawal ? 'ðŸ’° Retiro de Fondos' : 'ðŸ¥© Consumo de Carne';
+  const subtitle = isWithdrawal
+    ? 'Â¿CuÃ¡nto dinero deseas retirar a tu cuenta bancaria?'
+    : 'Â¿CuÃ¡nto de tu saldo deseas usar para consumo de carne?';
+  const buttonLabel = isWithdrawal ? 'Solicitar Retiro' : 'Solicitar Consumo';
+  const gradientFrom = isWithdrawal ? '#10B981' : '#f59e0b';
+  const gradientTo = isWithdrawal ? '#059669' : '#d97706';
+  const minAmount = 10000;
 
   const modal = document.createElement('div');
-  modal.id = 'withdraw-modal';
+  modal.id = 'wallet-request-modal';
   modal.className = 'modal-overlay';
   modal.style.zIndex = '9999';
 
   modal.innerHTML = `
-    <div class="modal animate-scale-in">
+    <div class="modal animate-scale-in" style="max-width:400px;">
         <div class="modal__handle"></div>
-        <button class="bonus-close" id="withdraw-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
-        
-        <h3 class="modal-title mb-md">Retiro de Fondos</h3>
-        
-        <div class="form-group">
-            <label class="form-label">Monto a retirar</label>
-            <div class="input-wrapper" style="position:relative;">
-                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#999;">$</span>
-                <input type="number" id="withdraw-amount" class="form-input" style="padding-left:30px; width:100%; box-sizing:border-box;" placeholder="0" min="${minWithdraw}" max="${availableAmount}">
-                <button type="button" id="btn-withdraw-all" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--color-primary); font-weight:600; cursor:pointer;">Todo</button>
-            </div>
-            <div class="text-xs text-muted mt-sm">Disponible: ${formatCOP(availableAmount)} • Mínimo: ${formatCOP(minWithdraw)}</div>
-            <div id="withdraw-error" class="text-xs" style="color:var(--color-danger); margin-top:4px; display:none;"></div>
+        <button class="bonus-close" id="wallet-req-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="font-size:40px; margin-bottom:8px;">${isWithdrawal ? 'ðŸ’°' : 'ðŸ¥©'}</div>
+            <h3 style="margin:0 0 6px; font-size:1.15rem; font-weight:800; color:#1f2937;">${title}</h3>
+            <p style="margin:0; font-size:0.85rem; color:#6b7280;">${subtitle}</p>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Banco de destino</label>
-            <select id="withdraw-bank" class="form-input" style="width:100%;">
+        <div style="background:linear-gradient(135deg, ${gradientFrom}, ${gradientTo}); color:white; padding:16px; border-radius:12px; text-align:center; margin-bottom:20px;">
+            <div style="font-size:0.75rem; opacity:0.85; margin-bottom:4px;">Tu Saldo Disponible</div>
+            <div style="font-size:1.5rem; font-weight:800;">${formatCOP(availableAmount)}</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label" style="font-weight:600; color:#374151; margin-bottom:6px; display:block;">Monto a ${isWithdrawal ? 'retirar' : 'consumir'}</label>
+            <div style="position:relative;">
+                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#999; font-weight:600;">$</span>
+                <input type="number" id="wallet-req-amount" class="form-input" style="padding-left:30px; width:100%; box-sizing:border-box; font-size:1.1rem; font-weight:600;" placeholder="0" min="${minAmount}" max="${availableAmount}">
+                <button type="button" id="wallet-req-all" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#e0f2fe; border:none; color:#0284c7; font-weight:700; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:0.8rem;">Todo</button>
+            </div>
+            <div class="text-xs text-muted" style="margin-top:6px;">Disponible: ${formatCOP(availableAmount)} â€¢ MÃ­nimo: ${formatCOP(minAmount)}</div>
+            <div id="wallet-req-error" class="text-xs" style="color:var(--color-danger); margin-top:4px; display:none;"></div>
+        </div>
+
+        ${isWithdrawal ? `
+        <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label" style="font-weight:600; color:#374151; margin-bottom:6px; display:block;">Banco de destino</label>
+            <select id="wallet-req-bank" class="form-input" style="width:100%;">
                 <option value="">Selecciona un banco</option>
-                <option value="nequi">Nequi</option>
-                <option value="bancolombia">Bancolombia</option>
-                <option value="pse">PSE / Otros Bancos</option>
+                <option value="Nequi">Nequi</option>
+                <option value="Bancolombia">Bancolombia</option>
+                <option value="Daviplata">Daviplata</option>
+                <option value="PSE / Otro">PSE / Otros Bancos</option>
             </select>
         </div>
+        ` : ''}
 
-        <div class="form-group" style="display:flex; align-items:flex-start; gap:8px;">
-            <input type="checkbox" id="withdraw-terms" style="margin-top:4px;">
-            <label for="withdraw-terms" class="text-sm text-muted">He leído y acepto los términos y condiciones para efectuar retiros, incluyendo el tiempo de procesamiento de 3 días hábiles.</label>
-        </div>
-
-        <button class="btn btn--primary btn--block btn--disabled" id="btn-solicitar-retiro" disabled style="width:100%; margin-top:16px;">Solicitar Retiro</button>
+        <button class="btn btn--primary btn--block" id="wallet-req-submit" disabled style="width:100%; margin-top:8px; opacity:0.5; background:linear-gradient(135deg, ${gradientFrom}, ${gradientTo}); border:none; color:white; padding:14px; border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer;">${buttonLabel}</button>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // Logic
-  const amountInput = document.getElementById('withdraw-amount');
-  const bankInput = document.getElementById('withdraw-bank');
-  const termsInput = document.getElementById('withdraw-terms');
-  const submitBtn = document.getElementById('btn-solicitar-retiro');
-  const errorDiv = document.getElementById('withdraw-error');
+  // Elements
+  const amountInput = document.getElementById('wallet-req-amount');
+  const submitBtn = document.getElementById('wallet-req-submit');
+  const errorDiv = document.getElementById('wallet-req-error');
+  const bankInput = isWithdrawal ? document.getElementById('wallet-req-bank') : null;
 
   const validate = () => {
     const amount = parseFloat(amountInput.value) || 0;
-    const bank = bankInput.value;
-    const terms = termsInput.checked;
-
     let valid = true;
     let errorMsg = '';
 
-    if (amount < minWithdraw) {
+    if (amount < minAmount) {
       valid = false;
-      if (amount > 0) errorMsg = `El monto mínimo es ${formatCOP(minWithdraw)}`;
+      if (amount > 0) errorMsg = `El monto mÃ­nimo es ${formatCOP(minAmount)}`;
     } else if (amount > availableAmount) {
       valid = false;
       errorMsg = 'Fondos insuficientes';
+    }
+
+    if (isWithdrawal && bankInput && !bankInput.value) {
+      valid = false;
     }
 
     if (errorMsg) {
@@ -1153,97 +1172,109 @@ function showWithdrawModal(availableAmount) {
       errorDiv.style.display = 'none';
     }
 
-    if (valid && bank && terms) {
-      submitBtn.classList.remove('btn--disabled');
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-    } else {
-      submitBtn.classList.add('btn--disabled');
-      submitBtn.disabled = true;
-      submitBtn.style.opacity = '0.5';
-    }
+    submitBtn.disabled = !valid;
+    submitBtn.style.opacity = valid ? '1' : '0.5';
   };
 
   amountInput.addEventListener('input', validate);
-  bankInput.addEventListener('change', validate);
-  termsInput.addEventListener('change', validate);
+  if (bankInput) bankInput.addEventListener('change', validate);
 
-  // Todo Button
-  document.getElementById('btn-withdraw-all').addEventListener('click', () => {
+  // "Todo" button
+  document.getElementById('wallet-req-all').addEventListener('click', () => {
     amountInput.value = availableAmount;
     validate();
   });
 
   // Close
   const close = () => modal.remove();
-  document.getElementById('withdraw-close-btn').addEventListener('click', close);
+  document.getElementById('wallet-req-close').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
   // Submit
-  submitBtn.addEventListener('click', () => {
-    showWithdrawSuccess(amountInput.value, bankInput.options[bankInput.selectedIndex].text);
-    close();
+  submitBtn.addEventListener('click', async () => {
+    const amount = parseFloat(amountInput.value);
+    const bank = bankInput ? bankInput.options[bankInput.selectedIndex].text : null;
+    const bankValue = bankInput ? bankInput.value : null;
+
+    // Disable button to prevent double-click
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Procesando...';
+
+    try {
+      // 1. Register in DB
+      const result = await createWalletRequest(requestType, amount, bankValue);
+
+      if (!result.success) {
+        errorDiv.textContent = result.reason === 'insufficient_balance'
+          ? 'Saldo insuficiente'
+          : 'Error al procesar solicitud. Intenta de nuevo.';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = buttonLabel;
+        return;
+      }
+
+      close();
+
+      // 2. Show success modal
+      const profile = AppState.get('profile');
+      const userName = profile?.full_name || 'Usuario';
+      const userWhatsApp = profile?.whatsapp || '';
+
+      showWalletRequestSuccess(requestType, amount, bank, result.requestId);
+
+      // 3. Notify admin via WhatsApp
+      notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bank, result.requestId);
+    } catch (err) {
+      console.error('Wallet request error:', err);
+      errorDiv.textContent = 'Error inesperado. Intenta de nuevo.';
+      errorDiv.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = buttonLabel;
+    }
   });
 }
 
-function showWithdrawSuccess(amount, bank) {
+/**
+ * Show success confirmation after wallet request.
+ */
+function showWalletRequestSuccess(requestType, amount, bank, requestId) {
+  const isWithdrawal = requestType === 'withdrawal';
+  const shortId = requestId ? requestId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
+  const typeLabel = isWithdrawal ? 'Retiro' : 'Consumo';
+
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
   modal.style.zIndex = '10000';
   modal.innerHTML = `
-        <div class="modal animate-scale-in text-center">
-             <button class="bonus-close" id="success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
-            <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
-                ${renderIcon('check', '', '32')}
-            </div>
-            <h3 class="modal-title">Solicitud Recibida</h3>
-            <p class="text-muted mb-md">Tu solicitud de retiro por <strong>${formatCOP(parseFloat(amount))}</strong> a <strong>${bank}</strong> ha sido generada.</p>
-            
-            <div class="card bg-gray-50 mb-md text-left p-sm text-sm" style="background:#f9fafb; padding:12px; border-radius:8px; margin-bottom:16px;">
-                <div><strong>Comprobante:</strong> #RET-${Date.now().toString().slice(-6)}</div>
-                <div><strong>Fecha:</strong> ${new Date().toLocaleDateString()}</div>
-                <div><strong>Estado:</strong> En Proceso</div>
-            </div>
+    <div class="modal animate-scale-in text-center" style="max-width:400px;">
+      <button class="bonus-close" id="wallet-success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+      <div style="width:60px; height:60px; background:${isWithdrawal ? '#d1fae5' : '#fef3c7'}; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+          <span style="font-size:28px;">${isWithdrawal ? 'âœ…' : 'ðŸ¥©'}</span>
+      </div>
+      <h3 style="margin:0 0 8px; font-size:1.15rem; font-weight:800; color:#1f2937;">Solicitud de ${typeLabel} Recibida</h3>
+      <p style="color:#6b7280; font-size:0.9rem; margin:0 0 16px;">
+        Tu solicitud de <strong>${typeLabel.toLowerCase()}</strong> por <strong>${formatCOP(amount)}</strong>${isWithdrawal && bank ? ` a <strong>${bank}</strong>` : ''} ha sido registrada.
+      </p>
 
-            <p class="text-xs text-muted mb-lg" style="margin-bottom:24px;">
-                Recuerda que a partir de este momento comienzan a correr los 3 días hábiles.
-                Para agilizar, escríbenos al WhatsApp y envía este comprobante.
-            </p>
+      <div style="background:#f9fafb; padding:14px; border-radius:10px; margin-bottom:16px; text-align:left; font-size:0.85rem;">
+          <div style="margin-bottom:4px;"><strong>Comprobante:</strong> #${typeLabel.toUpperCase().slice(0,3)}-${shortId}</div>
+          <div style="margin-bottom:4px;"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CO')}</div>
+          <div><strong>Estado:</strong> <span style="color:#f59e0b; font-weight:600;">Pendiente</span></div>
+      </div>
 
-            <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20retiro%20%23RET-${Date.now().toString().slice(-6)}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-decoration:none;">
-                ${renderIcon('whatsapp', '', '20')} Contactar soporte personalizado
-            </a>
-            <button class="btn btn--text btn--block mt-sm" id="success-close" style="width:100%; margin-top:8px;">Cerrar</button>
-        </div>
-    `;
+      <p style="color:#9ca3af; font-size:0.78rem; margin:0 0 20px;">
+        ${isWithdrawal
+          ? 'Nuestro equipo procesarÃ¡ tu retiro en un plazo mÃ¡ximo de 3 dÃ­as hÃ¡biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
+          : 'Nuestro equipo se comunicarÃ¡ contigo por WhatsApp para coordinar la entrega de tu pedido.'}
+      </p>
+
+      <button class="btn btn--primary btn--block" id="wallet-success-close" style="width:100%; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">Entendido</button>
+    </div>
+  `;
   document.body.appendChild(modal);
-  document.getElementById('success-close').addEventListener('click', () => modal.remove());
-  document.getElementById('success-close-x').addEventListener('click', () => modal.remove());
+
+  const closeModal = () => modal.remove();
+  document.getElementById('wallet-success-close').addEventListener('click', closeModal);
+  document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
 }
-
-function showMeatModal() {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
-  modal.innerHTML = `
-        <div class="modal animate-scale-in text-center">
-            <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
-            
-            <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
-            <p class="text-muted mb-lg" style="margin-bottom:24px;">
-                Escríbenos para brindarte una atención personalizada y coordinar tu pedido de carne fresca de Granja Villa Morales.
-            </p>
-
-            <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
-                <a href="https://wa.me/573154870448?text=Hola,%20quiero%20redimir%20mis%20ganancias%20en%20carne" target="_blank" class="btn btn--success btn--block" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
-                    ${renderIcon('whatsapp', '', '20')} WhatsApp
-                </a>
-                <a href="#" class="btn btn--secondary btn--block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">
-                   Ver Catálogo
-                </a>
-            </div>
-        </div>
-    `;
-  document.body.appendChild(modal);
-  document.getElementById('meat-close-btn').addEventListener('click', () => modal.remove());
-}
-
