@@ -656,7 +656,7 @@ export function renderBottomNav(activeTab) {
         <span>Granja</span>
       </a>
       <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
-        <span class="bottom-nav__icon"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; font-size:22px;">🐖</span></span>
+        <span class="bottom-nav__icon"><span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; font-size:22px; filter: ${activeTab === 'mercado' ? 'none' : 'grayscale(100%) opacity(60%)'}; transition: filter 0.2s;">🐖</span></span>
         <span>Mercado</span>
       </a>
       <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
