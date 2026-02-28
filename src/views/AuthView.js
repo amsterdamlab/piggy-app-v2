@@ -157,7 +157,7 @@ function renderFormFields() {
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
           <input
-            type="\${passwordVisible ? 'text' : 'password'}"
+            type="${passwordVisible ? 'text' : 'password'}"
             class="input-wrapper__field"
             id="field-password"
             name="password"
@@ -167,7 +167,7 @@ function renderFormFields() {
             minlength="6"
           />
           <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
-            \${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+            ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
           </button>
         </div>
       </div>
@@ -217,7 +217,7 @@ function renderFormFields() {
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
         <input
-          type="\${passwordVisible ? 'text' : 'password'}"
+          type="${passwordVisible ? 'text' : 'password'}"
           class="input-wrapper__field"
           id="field-password"
           name="password"
@@ -226,7 +226,7 @@ function renderFormFields() {
           required
         />
         <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
-          \${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+          ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
         </button>
       </div>
     </div>
@@ -297,7 +297,7 @@ function attachAuthListeners() {
         if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
         if (feedbackEl) {
           feedbackEl.textContent = result.valid
-            ? \`Invitado por: \${result.referrerName}\`
+            ? `Invitado por: ${result.referrerName}`
             : 'Código no encontrado';
           feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
         }
@@ -458,9 +458,9 @@ function updateSubmitButton() {
   if (isSubmitting) {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
-    btn.innerHTML = \`
-      \${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
-    \`;
+    btn.innerHTML = `
+      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+    `;
   }
 }
 
