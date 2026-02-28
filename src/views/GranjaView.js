@@ -1071,38 +1071,42 @@ function showBonusModal(hasPiggies) {
 }
 
 function removeBonusModal() {
+    const existing = document.getElementById('bonus-modal');
+    if (existing) existing.remove();
+}
+
 /**
  * Show Wallet Request Modal (unified for Retiro and Consumo).
  * @param {'withdrawal' | 'consumption'} requestType
  * @param {number} availableAmount - Total saldo disponible
  */
 function showWalletRequestModal(requestType, availableAmount) {
-  // Remove existing
-  const existing = document.getElementById('wallet-request-modal');
-  if (existing) existing.remove();
+    // Remove existing
+    const existing = document.getElementById('wallet-request-modal');
+    if (existing) existing.remove();
 
-  const isWithdrawal = requestType === 'withdrawal';
-  const title = isWithdrawal ? 'ðŸ’° Retiro de Fondos' : 'ðŸ¥© Consumo de Carne';
-  const subtitle = isWithdrawal
-    ? 'Â¿CuÃ¡nto dinero deseas retirar a tu cuenta bancaria?'
-    : 'Â¿CuÃ¡nto de tu saldo deseas usar para consumo de carne?';
-  const buttonLabel = isWithdrawal ? 'Solicitar Retiro' : 'Solicitar Consumo';
-  const gradientFrom = isWithdrawal ? '#10B981' : '#f59e0b';
-  const gradientTo = isWithdrawal ? '#059669' : '#d97706';
-  const minAmount = 10000;
+    const isWithdrawal = requestType === 'withdrawal';
+    const title = isWithdrawal ? '\u{1F4B0} Retiro de Fondos' : '\u{1F969} Consumo de Carne';
+    const subtitle = isWithdrawal
+        ? '\u00BFCu\u00E1nto dinero deseas retirar a tu cuenta bancaria?'
+        : '\u00BFCu\u00E1nto de tu saldo deseas usar para consumo de carne?';
+    const buttonLabel = isWithdrawal ? 'Solicitar Retiro' : 'Solicitar Consumo';
+    const gradientFrom = isWithdrawal ? '#10B981' : '#f59e0b';
+    const gradientTo = isWithdrawal ? '#059669' : '#d97706';
+    const minAmount = 10000;
 
-  const modal = document.createElement('div');
-  modal.id = 'wallet-request-modal';
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
+    const modal = document.createElement('div');
+    modal.id = 'wallet-request-modal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '9999';
 
-  modal.innerHTML = `
+    modal.innerHTML = `
     <div class="modal animate-scale-in" style="max-width:400px;">
         <div class="modal__handle"></div>
         <button class="bonus-close" id="wallet-req-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
 
         <div style="text-align:center; margin-bottom:20px;">
-            <div style="font-size:40px; margin-bottom:8px;">${isWithdrawal ? 'ðŸ’°' : 'ðŸ¥©'}</div>
+            <div style="font-size:40px; margin-bottom:8px;">${isWithdrawal ? '\u{1F4B0}' : '\u{1F969}'}</div>
             <h3 style="margin:0 0 6px; font-size:1.15rem; font-weight:800; color:#1f2937;">${title}</h3>
             <p style="margin:0; font-size:0.85rem; color:#6b7280;">${subtitle}</p>
         </div>
@@ -1119,7 +1123,7 @@ function showWalletRequestModal(requestType, availableAmount) {
                 <input type="number" id="wallet-req-amount" class="form-input" style="padding-left:30px; width:100%; box-sizing:border-box; font-size:1.1rem; font-weight:600;" placeholder="0" min="${minAmount}" max="${availableAmount}">
                 <button type="button" id="wallet-req-all" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#e0f2fe; border:none; color:#0284c7; font-weight:700; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:0.8rem;">Todo</button>
             </div>
-            <div class="text-xs text-muted" style="margin-top:6px;">Disponible: ${formatCOP(availableAmount)} â€¢ MÃ­nimo: ${formatCOP(minAmount)}</div>
+            <div class="text-xs text-muted" style="margin-top:6px;">Disponible: ${formatCOP(availableAmount)} \u2022 M\u00EDnimo: ${formatCOP(minAmount)}</div>
             <div id="wallet-req-error" class="text-xs" style="color:var(--color-danger); margin-top:4px; display:none;"></div>
         </div>
 
@@ -1140,117 +1144,117 @@ function showWalletRequestModal(requestType, availableAmount) {
     </div>
   `;
 
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-  // Elements
-  const amountInput = document.getElementById('wallet-req-amount');
-  const submitBtn = document.getElementById('wallet-req-submit');
-  const errorDiv = document.getElementById('wallet-req-error');
-  const bankInput = isWithdrawal ? document.getElementById('wallet-req-bank') : null;
+    // Elements
+    const amountInput = document.getElementById('wallet-req-amount');
+    const submitBtn = document.getElementById('wallet-req-submit');
+    const errorDiv = document.getElementById('wallet-req-error');
+    const bankInput = isWithdrawal ? document.getElementById('wallet-req-bank') : null;
 
-  const validate = () => {
-    const amount = parseFloat(amountInput.value) || 0;
-    let valid = true;
-    let errorMsg = '';
+    const validate = () => {
+        const amount = parseFloat(amountInput.value) || 0;
+        let valid = true;
+        let errorMsg = '';
 
-    if (amount < minAmount) {
-      valid = false;
-      if (amount > 0) errorMsg = `El monto mÃ­nimo es ${formatCOP(minAmount)}`;
-    } else if (amount > availableAmount) {
-      valid = false;
-      errorMsg = 'Fondos insuficientes';
-    }
+        if (amount < minAmount) {
+            valid = false;
+            if (amount > 0) errorMsg = `El monto m\u00EDnimo es ${formatCOP(minAmount)}`;
+        } else if (amount > availableAmount) {
+            valid = false;
+            errorMsg = 'Fondos insuficientes';
+        }
 
-    if (isWithdrawal && bankInput && !bankInput.value) {
-      valid = false;
-    }
+        if (isWithdrawal && bankInput && !bankInput.value) {
+            valid = false;
+        }
 
-    if (errorMsg) {
-      errorDiv.textContent = errorMsg;
-      errorDiv.style.display = 'block';
-    } else {
-      errorDiv.style.display = 'none';
-    }
+        if (errorMsg) {
+            errorDiv.textContent = errorMsg;
+            errorDiv.style.display = 'block';
+        } else {
+            errorDiv.style.display = 'none';
+        }
 
-    submitBtn.disabled = !valid;
-    submitBtn.style.opacity = valid ? '1' : '0.5';
-  };
+        submitBtn.disabled = !valid;
+        submitBtn.style.opacity = valid ? '1' : '0.5';
+    };
 
-  amountInput.addEventListener('input', validate);
-  if (bankInput) bankInput.addEventListener('change', validate);
+    amountInput.addEventListener('input', validate);
+    if (bankInput) bankInput.addEventListener('change', validate);
 
-  // "Todo" button
-  document.getElementById('wallet-req-all').addEventListener('click', () => {
-    amountInput.value = availableAmount;
-    validate();
-  });
+    // "Todo" button
+    document.getElementById('wallet-req-all').addEventListener('click', () => {
+        amountInput.value = availableAmount;
+        validate();
+    });
 
-  // Close
-  const close = () => modal.remove();
-  document.getElementById('wallet-req-close').addEventListener('click', close);
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    // Close
+    const close = () => modal.remove();
+    document.getElementById('wallet-req-close').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  // Submit
-  submitBtn.addEventListener('click', async () => {
-    const amount = parseFloat(amountInput.value);
-    const bank = bankInput ? bankInput.options[bankInput.selectedIndex].text : null;
-    const bankValue = bankInput ? bankInput.value : null;
+    // Submit
+    submitBtn.addEventListener('click', async () => {
+        const amount = parseFloat(amountInput.value);
+        const bank = bankInput ? bankInput.options[bankInput.selectedIndex].text : null;
+        const bankValue = bankInput ? bankInput.value : null;
 
-    // Disable button to prevent double-click
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Procesando...';
+        // Disable button to prevent double-click
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Procesando...';
 
-    try {
-      // 1. Register in DB
-      const result = await createWalletRequest(requestType, amount, bankValue);
+        try {
+            // 1. Register in DB
+            const result = await createWalletRequest(requestType, amount, bankValue);
 
-      if (!result.success) {
-        errorDiv.textContent = result.reason === 'insufficient_balance'
-          ? 'Saldo insuficiente'
-          : 'Error al procesar solicitud. Intenta de nuevo.';
-        errorDiv.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = buttonLabel;
-        return;
-      }
+            if (!result.success) {
+                errorDiv.textContent = result.reason === 'insufficient_balance'
+                    ? 'Saldo insuficiente'
+                    : 'Error al procesar solicitud. Intenta de nuevo.';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = buttonLabel;
+                return;
+            }
 
-      close();
+            close();
 
-      // 2. Show success modal
-      const profile = AppState.get('profile');
-      const userName = profile?.full_name || 'Usuario';
-      const userWhatsApp = profile?.whatsapp || '';
+            // 2. Show success modal
+            const profile = AppState.get('profile');
+            const userName = profile?.full_name || 'Usuario';
+            const userWhatsApp = profile?.whatsapp || '';
 
-      showWalletRequestSuccess(requestType, amount, bank, result.requestId);
+            showWalletRequestSuccess(requestType, amount, bank, result.requestId);
 
-      // 3. Notify admin via WhatsApp
-      notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bank, result.requestId);
-    } catch (err) {
-      console.error('Wallet request error:', err);
-      errorDiv.textContent = 'Error inesperado. Intenta de nuevo.';
-      errorDiv.style.display = 'block';
-      submitBtn.disabled = false;
-      submitBtn.textContent = buttonLabel;
-    }
-  });
+            // 3. Notify admin via WhatsApp
+            notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bank, result.requestId);
+        } catch (err) {
+            console.error('Wallet request error:', err);
+            errorDiv.textContent = 'Error inesperado. Intenta de nuevo.';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = buttonLabel;
+        }
+    });
 }
 
 /**
  * Show success confirmation after wallet request.
  */
 function showWalletRequestSuccess(requestType, amount, bank, requestId) {
-  const isWithdrawal = requestType === 'withdrawal';
-  const shortId = requestId ? requestId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
-  const typeLabel = isWithdrawal ? 'Retiro' : 'Consumo';
+    const isWithdrawal = requestType === 'withdrawal';
+    const shortId = requestId ? requestId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
+    const typeLabel = isWithdrawal ? 'Retiro' : 'Consumo';
 
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '10000';
-  modal.innerHTML = `
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
     <div class="modal animate-scale-in text-center" style="max-width:400px;">
       <button class="bonus-close" id="wallet-success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
       <div style="width:60px; height:60px; background:${isWithdrawal ? '#d1fae5' : '#fef3c7'}; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
-          <span style="font-size:28px;">${isWithdrawal ? 'âœ…' : 'ðŸ¥©'}</span>
+          <span style="font-size:28px;">${isWithdrawal ? '\u2705' : '\u{1F969}'}</span>
       </div>
       <h3 style="margin:0 0 8px; font-size:1.15rem; font-weight:800; color:#1f2937;">Solicitud de ${typeLabel} Recibida</h3>
       <p style="color:#6b7280; font-size:0.9rem; margin:0 0 16px;">
@@ -1258,23 +1262,24 @@ function showWalletRequestSuccess(requestType, amount, bank, requestId) {
       </p>
 
       <div style="background:#f9fafb; padding:14px; border-radius:10px; margin-bottom:16px; text-align:left; font-size:0.85rem;">
-          <div style="margin-bottom:4px;"><strong>Comprobante:</strong> #${typeLabel.toUpperCase().slice(0,3)}-${shortId}</div>
+          <div style="margin-bottom:4px;"><strong>Comprobante:</strong> #${typeLabel.toUpperCase().slice(0, 3)}-${shortId}</div>
           <div style="margin-bottom:4px;"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CO')}</div>
           <div><strong>Estado:</strong> <span style="color:#f59e0b; font-weight:600;">Pendiente</span></div>
       </div>
 
       <p style="color:#9ca3af; font-size:0.78rem; margin:0 0 20px;">
         ${isWithdrawal
-          ? 'Nuestro equipo procesarÃ¡ tu retiro en un plazo mÃ¡ximo de 3 dÃ­as hÃ¡biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
-          : 'Nuestro equipo se comunicarÃ¡ contigo por WhatsApp para coordinar la entrega de tu pedido.'}
+            ? 'Nuestro equipo procesar\u00E1 tu retiro en un plazo m\u00E1ximo de 3 d\u00EDas h\u00E1biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
+            : 'Nuestro equipo se comunicar\u00E1 contigo por WhatsApp para coordinar la entrega de tu pedido.'}
       </p>
 
       <button class="btn btn--primary btn--block" id="wallet-success-close" style="width:100%; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">Entendido</button>
     </div>
   `;
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-  const closeModal = () => modal.remove();
-  document.getElementById('wallet-success-close').addEventListener('click', closeModal);
-  document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
+    const closeModal = () => modal.remove();
+    document.getElementById('wallet-success-close').addEventListener('click', closeModal);
+    document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
 }
+
