@@ -1,3 +1,8 @@
+/* ============================================
+   PIGGY APP — Mock Data for Development
+   Used when Supabase is not configured
+   ============================================ */
+
 export const MOCK_USER = {
     id: 'user-001',
     email: 'ale@correo.com',
@@ -161,7 +166,7 @@ export const MOCK_ALLIES = [
         phone: '315 789 1234',
         address: 'Calle 10 # 20-30',
         discount_info: '2x1 en corte de cabello y barba',
-    },
+    }
 ];
 
 export const MOCK_MISSIONS = [
@@ -202,7 +207,7 @@ export const MOCK_MISSIONS = [
         title: 'Compra en locales aliados',
         reward: 'Desbloquea Piggy Silver (24h)',
         is_completed: false,
-        icon: '🏪',
+        icon: '&#127980;',
         cta: '#/aliados'
     },
     {
@@ -210,15 +215,15 @@ export const MOCK_MISSIONS = [
         title: 'Cierra tu primer ciclo',
         reward: 'Desbloquea Piggy Silver (24h)',
         is_completed: false,
-        icon: '🏁',
+        icon: '&#128260;',
         cta: null
     },
     {
         id: 'm7',
         title: 'Activa tu 3er Piggy',
-        reward: 'Mantén 10% Margen Comercial',
+        reward: 'Mant&eacute;n 10% Margen Comercial',
         is_completed: false,
-        icon: '💎',
+        icon: '&#128048;',
         cta: '#/mercado'
     },
     {
@@ -226,15 +231,15 @@ export const MOCK_MISSIONS = [
         title: 'Compra la oferta de la semana',
         reward: 'Desbloquea Piggy Gold (24h)',
         is_completed: false,
-        icon: '🥩',
+        icon: '&#128293;',
         cta: '#/mercado'
     },
     {
         id: 'm9',
         title: 'Refiere y logra una compra',
-        reward: 'Obtén $30.000 en tu Wallet',
+        reward: 'Obt&eacute;n $30.000 en tu Wallet',
         is_completed: false,
-        icon: '🤝',
+        icon: '&#129309;',
         cta: null
     }
 ];
