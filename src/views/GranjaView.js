@@ -29,7 +29,7 @@ const NOTIFICATIONS = [
     cta: '#/aliados',
   },
   {
-    icon: '⏳',
+    icon: '&#129352;',
     title: 'Al cerrar un ciclo',
     reward: 'Desbloquea Piggy Silver (24h)',
     color: '#0891b2',
@@ -38,7 +38,7 @@ const NOTIFICATIONS = [
     cta: null,
   },
   {
-    icon: '🔥',
+    icon: '&#128293;',
     title: 'Compra la oferta de la semana',
     reward: 'Desbloquea un Piggy Gold (24h)',
     color: '#dc2626',
@@ -47,9 +47,9 @@ const NOTIFICATIONS = [
     cta: '#/gourmet',
   },
   {
-    icon: '🤝',
+    icon: '&#129309;',
     title: 'Refiere a un amigo y si compra su 1er Piggy',
-    reward: 'Obtén $30.000 en tu Wallet',
+    reward: 'Obt&eacute;n $30.000 en tu Wallet',
     color: '#059669',
     bgColor: '#ecfdf5',
     borderColor: '#a7f3d0',
@@ -233,7 +233,7 @@ function renderRandomNotification() {
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
         <div style="flex:1; min-width:0;">
           <div style="font-weight:700; color:${notif.color}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
-          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">? ${notif.reward}</div>
+          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">&#10024; ${notif.reward}</div>
         </div>
         <div style="font-size:14px; color:${notif.color}; opacity:0.5; flex-shrink:0;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
