@@ -435,33 +435,23 @@ function buildGranjaFull(firstName, piggies, stats) {
                   </button>
 
                   ${stats.saldoDisponible > 0 ? `
-                  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
-                     <button id="btn-withdraw" style="
-                        background: rgba(255,255,255,0.15);
+                  <div style="margin-top: 10px;">
+                     <button id="btn-retirar-saldo" style="
+                        background: rgba(255,255,255,0.18);
                         color: white;
-                        border: 1px solid rgba(255,255,255,0.3);
-                        padding: 10px 20px;
+                        border: 1px solid rgba(255,255,255,0.35);
+                        padding: 11px 20px;
                         border-radius: 12px;
-                        font-weight: 600;
-                        font-size: 0.85rem;
+                        font-weight: 700;
+                        font-size: 0.88rem;
                         cursor: pointer;
-                        flex: 1;
-                        white-space: nowrap;
+                        width: 100%;
                         backdrop-filter: blur(5px);
-                     ">&#128176; Retiro</button>
-                     <button id="btn-meat" style="
-                        background: rgba(255,255,255,0.15);
-                        color: white;
-                        border: 1px solid rgba(255,255,255,0.3);
-                        padding: 10px 20px;
-                        border-radius: 12px;
-                        font-weight: 600;
-                        font-size: 0.85rem;
-                        cursor: pointer;
-                        flex: 1;
-                        white-space: nowrap;
-                        backdrop-filter: blur(5px);
-                     ">&#127969; Consumo</button>
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                     ">&#128176; Retirar mi Saldo</button>
                   </div>
                   ` : ""}
               </div>
@@ -763,13 +753,9 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
     openWalletRechargeInfo();
   });
 
-  // Wallet Actions (Retiro y Consumo) — only active when saldo > 0
-  document.getElementById('btn-withdraw')?.addEventListener('click', () => {
-    showWalletRequestModal('withdrawal', stats?.saldoDisponible || 0);
-  });
-
-  document.getElementById('btn-meat')?.addEventListener('click', () => {
-    showWalletRequestModal('consumption', stats?.saldoDisponible || 0);
+  // Unified Retirar mi Saldo button
+  document.getElementById('btn-retirar-saldo')?.addEventListener('click', () => {
+    showRetiroSaldoModal(stats?.saldoDisponible || 0);
   });
   // Load referral code into greeting badge
   loadGreetingReferralCode();
@@ -865,7 +851,7 @@ async function showReferralModal() {
                 ${(r.referredName || 'U').charAt(0).toUpperCase()}
               </div>
               <div>
-                 <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName && r.referredName !== 'Usuario' ? r.referredName : 'Referido #' + (r.referred_id || '').slice(-6).toUpperCase()}</div>
+                 <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName || 'Sin nombre'}</div>
                 <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
               </div>
             </div>
@@ -1168,167 +1154,163 @@ async function openWalletRechargeInfo() {
 
 
 /**
- * Show Wallet Request Modal (unified for Retiro and Consumo).
- * @param {'withdrawal' | 'consumption'} requestType
- * @param {number} availableAmount - Total saldo disponible
+ * Unified "Retirar mi Saldo" modal — multi-step flow.
+ * Step 1: Choose type (Dinero o Consumo)
+ * Step 2a (Dinero): Enter amount + choose bank -> WhatsApp
+ * Step 2b (Consumo): Enter amount -> "Solicitar Bonos de Consumo" -> WhatsApp
  */
-function showWalletRequestModal(requestType, availableAmount) {
-  // Remove existing
-  const existing = document.getElementById('wallet-request-modal');
+function showRetiroSaldoModal(availableAmount) {
+  const existing = document.getElementById('retiro-modal');
   if (existing) existing.remove();
 
-  const isWithdrawal = requestType === 'withdrawal';
-  const title = isWithdrawal ? '\u{1F4B0} Retiro de Fondos' : '\u{1F969} Consumo de Carne';
-  const subtitle = isWithdrawal
-    ? '\u00BFCu\u00E1nto dinero deseas retirar a tu cuenta bancaria?'
-    : '\u00BFCu\u00E1nto de tu saldo deseas usar para consumo de carne?';
-  const buttonLabel = isWithdrawal ? 'Solicitar Retiro' : 'Solicitar Consumo';
-  const gradientFrom = isWithdrawal ? '#10B981' : '#f59e0b';
-  const gradientTo = isWithdrawal ? '#059669' : '#d97706';
+  const ADMIN_WHATSAPP = '573154870448';
+  const profile = AppState.get('profile');
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const userPhone = profile?.phone_number || '';
   const minAmount = 10000;
+  const BANKS = ['Bancolombia', 'Davivienda', 'BBVA', 'Nequi', 'Daviplata', 'Banco de Bogota', 'Scotiabank Colpatria', 'Otro'];
 
   const modal = document.createElement('div');
-  modal.id = 'wallet-request-modal';
+  modal.id = 'retiro-modal';
   modal.className = 'modal-overlay';
   modal.style.zIndex = '9999';
 
-  modal.innerHTML = `
-    <div class="modal animate-scale-in" style="max-width:400px;">
-        <div class="modal__handle"></div>
-        <button class="bonus-close" id="wallet-req-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
-
-        <div style="text-align:center; margin-bottom:20px;">
-            <div style="font-size:40px; margin-bottom:8px;">${isWithdrawal ? '\u{1F4B0}' : '\u{1F969}'}</div>
-            <h3 style="margin:0 0 6px; font-size:1.15rem; font-weight:800; color:#1f2937;">${title}</h3>
-            <p style="margin:0; font-size:0.85rem; color:#6b7280;">${subtitle}</p>
-        </div>
-
-        <div style="background:linear-gradient(135deg, ${gradientFrom}, ${gradientTo}); color:white; padding:16px; border-radius:12px; text-align:center; margin-bottom:20px;">
-            <div style="font-size:0.75rem; opacity:0.85; margin-bottom:4px;">Tu Saldo Disponible</div>
-            <div style="font-size:1.5rem; font-weight:800;">${formatCOP(availableAmount)}</div>
-        </div>
-
-        <div class="form-group" style="margin-bottom:16px;">
-            <label class="form-label" style="font-weight:600; color:#374151; margin-bottom:6px; display:block;">Monto a ${isWithdrawal ? 'retirar' : 'consumir'}</label>
-            <div style="position:relative;">
-                <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#999; font-weight:600;">$</span>
-                <input type="number" id="wallet-req-amount" class="form-input" style="padding-left:30px; width:100%; box-sizing:border-box; font-size:1.1rem; font-weight:600;" placeholder="0" min="${minAmount}" max="${availableAmount}">
-                <button type="button" id="wallet-req-all" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:#e0f2fe; border:none; color:#0284c7; font-weight:700; cursor:pointer; padding:4px 12px; border-radius:6px; font-size:0.8rem;">Todo</button>
-            </div>
-            <div class="text-xs text-muted" style="margin-top:6px;">Disponible: ${formatCOP(availableAmount)} \u2022 M\u00EDnimo: ${formatCOP(minAmount)}</div>
-            <div id="wallet-req-error" class="text-xs" style="color:var(--color-danger); margin-top:4px; display:none;"></div>
-        </div>
-
-        ${isWithdrawal ? `
-        <div class="form-group" style="margin-bottom:16px;">
-            <label class="form-label" style="font-weight:600; color:#374151; margin-bottom:6px; display:block;">Banco de destino</label>
-            <select id="wallet-req-bank" class="form-input" style="width:100%;">
-                <option value="">Selecciona un banco</option>
-                <option value="Nequi">Nequi</option>
-                <option value="Bancolombia">Bancolombia</option>
-                <option value="Daviplata">Daviplata</option>
-                <option value="PSE / Otro">PSE / Otros Bancos</option>
-            </select>
-        </div>
-        ` : ''}
-
-        <button class="btn btn--primary btn--block" id="wallet-req-submit" disabled style="width:100%; margin-top:8px; opacity:0.5; background:linear-gradient(135deg, ${gradientFrom}, ${gradientTo}); border:none; color:white; padding:14px; border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer;">${buttonLabel}</button>
+  const renderStep1 = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:44px; margin-bottom:10px;">&#128176;</div>
+        <h3 style="margin:0 0 6px; font-size:1.2rem; font-weight:800; color:#111827;">Retirar mi Saldo</h3>
+        <p style="margin:0 0 16px; font-size:0.82rem; color:#6b7280;">Saldo disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+        <p style="text-align:center; font-size:0.85rem; font-weight:600; color:#374151; margin:0 0 4px;">Como deseas tu saldo?</p>
+        <button id="retiro-tipo-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+          <span style="font-size:26px;">&#127968;</span>
+          <div style="text-align:left;">
+            <div>Dinero en cuenta</div>
+            <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Transferencia bancaria a tu cuenta</div>
+          </div>
+        </button>
+        <button id="retiro-tipo-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+          <span style="font-size:26px;">&#129385;</span>
+          <div style="text-align:left;">
+            <div>Bonos de Consumo</div>
+            <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Canjear por productos de carne</div>
+          </div>
+        </button>
+      </div>
     </div>
   `;
 
-  document.body.appendChild(modal);
+  const renderStep2Dinero = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:36px; margin-bottom:8px;">&#127968;</div>
+        <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Retiro de Dinero</h3>
+        <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Monto a retirar</label>
+          <input type="number" id="retiro-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+            style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+            onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';" />
+          <div id="retiro-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
+        </div>
+        <div>
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Banco destino</label>
+          <select id="retiro-bank" style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:0.95rem; color:#111827; outline:none; background:white; box-sizing:border-box; cursor:pointer; transition:border 0.2s;"
+            onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';">
+            <option value="">Selecciona tu banco</option>
+            ${BANKS.map(b => '<option value="' + b + '">' + b + '</option>').join('')}
+          </select>
+        </div>
+        <button id="retiro-confirm-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+          Solicitar Retiro via WhatsApp
+        </button>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Tu equipo procesara el retiro en maximo 3 dias habiles.</p>
+      </div>
+    </div>
+  `;
 
-  // Elements
-  const amountInput = document.getElementById('wallet-req-amount');
-  const submitBtn = document.getElementById('wallet-req-submit');
-  const errorDiv = document.getElementById('wallet-req-error');
-  const bankInput = isWithdrawal ? document.getElementById('wallet-req-bank') : null;
+  const renderStep2Consumo = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:36px; margin-bottom:8px;">&#129385;</div>
+        <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Bonos de Consumo</h3>
+        <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#d97706;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Cuanto saldo deseas en bonos?</label>
+          <input type="number" id="consumo-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+            style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+            onfocus="this.style.borderColor='#f59e0b';" onblur="this.style.borderColor='#e5e7eb';" />
+          <div id="consumo-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
+        </div>
+        <button id="retiro-confirm-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+          Solicitar Bonos de Consumo via WhatsApp
+        </button>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">El equipo Piggy coordinara la entrega de tus bonos.</p>
+      </div>
+    </div>
+  `;
 
-  const validate = () => {
-    const amount = parseFloat(amountInput.value) || 0;
-    let valid = true;
-    let errorMsg = '';
-
-    if (amount < minAmount) {
-      valid = false;
-      if (amount > 0) errorMsg = `El monto m\u00EDnimo es ${formatCOP(minAmount)}`;
-    } else if (amount > availableAmount) {
-      valid = false;
-      errorMsg = 'Fondos insuficientes';
-    }
-
-    if (isWithdrawal && bankInput && !bankInput.value) {
-      valid = false;
-    }
-
-    if (errorMsg) {
-      errorDiv.textContent = errorMsg;
-      errorDiv.style.display = 'block';
-    } else {
-      errorDiv.style.display = 'none';
-    }
-
-    submitBtn.disabled = !valid;
-    submitBtn.style.opacity = valid ? '1' : '0.5';
+  const attachClose = (onBack) => {
+    document.getElementById('retiro-close')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
   };
 
-  amountInput.addEventListener('input', validate);
-  if (bankInput) bankInput.addEventListener('change', validate);
+  const goToStep1 = () => {
+    modal.innerHTML = renderStep1();
+    attachClose(null);
+    document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
+    document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
+  };
 
-  // "Todo" button
-  document.getElementById('wallet-req-all').addEventListener('click', () => {
-    amountInput.value = availableAmount;
-    validate();
-  });
+  const goToStep2Dinero = () => {
+    modal.innerHTML = renderStep2Dinero();
+    attachClose(goToStep1);
+    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', () => {
+      const errDiv = document.getElementById('retiro-amount-error');
+      const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
+      const bank = document.getElementById('retiro-bank')?.value;
+      if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
+      if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
+      if (!bank) { errDiv.textContent = 'Selecciona un banco'; errDiv.style.display = 'block'; return; }
+      errDiv.style.display = 'none';
+      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de RETIRO DE DINERO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83D\uDCB5 *Monto a retirar:* ' + formatCOP(amount) + '\n\uD83C\uDFE6 *Banco destino:* ' + bank + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor procesar la transferencia y confirmar por este medio.';
+      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      modal.remove();
+    });
+  };
 
-  // Close
-  const close = () => modal.remove();
-  document.getElementById('wallet-req-close').addEventListener('click', close);
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  const goToStep2Consumo = () => {
+    modal.innerHTML = renderStep2Consumo();
+    attachClose(goToStep1);
+    document.getElementById('retiro-confirm-consumo')?.addEventListener('click', () => {
+      const errDiv = document.getElementById('consumo-amount-error');
+      const amount = parseFloat(document.getElementById('consumo-amount')?.value || 0);
+      if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
+      if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
+      errDiv.style.display = 'none';
+      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de BONOS DE CONSUMO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83E\uDD69 *Monto en bonos:* ' + formatCOP(amount) + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor coordinar la entrega de bonos de carne y confirmar por este medio.';
+      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      modal.remove();
+    });
+  };
 
-  // Submit
-  submitBtn.addEventListener('click', async () => {
-    const amount = parseFloat(amountInput.value);
-    const bank = bankInput ? bankInput.options[bankInput.selectedIndex].text : null;
-    const bankValue = bankInput ? bankInput.value : null;
-
-    // Disable button to prevent double-click
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Procesando...';
-
-    try {
-      // 1. Register in DB
-      const result = await createWalletRequest(requestType, amount, bankValue);
-
-      if (!result.success) {
-        errorDiv.textContent = result.reason === 'insufficient_balance'
-          ? 'Saldo insuficiente'
-          : 'Error al procesar solicitud. Intenta de nuevo.';
-        errorDiv.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = buttonLabel;
-        return;
-      }
-
-      close();
-
-      // 2. Show success modal
-      const profile = AppState.get('profile');
-      const userName = profile?.full_name || 'Usuario';
-      const userWhatsApp = profile?.whatsapp || '';
-
-      showWalletRequestSuccess(requestType, amount, bank, result.requestId);
-
-      // 3. Notify admin via WhatsApp
-      notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bank, result.requestId);
-    } catch (err) {
-      console.error('Wallet request error:', err);
-      errorDiv.textContent = 'Error inesperado. Intenta de nuevo.';
-      errorDiv.style.display = 'block';
-      submitBtn.disabled = false;
-      submitBtn.textContent = buttonLabel;
-    }
-  });
+  document.body.appendChild(modal);
+  goToStep1();
 }
 
 /**
