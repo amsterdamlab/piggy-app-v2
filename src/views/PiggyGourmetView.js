@@ -80,7 +80,7 @@ export function renderPiggyGourmetView() {
                 text-transform: uppercase;
                 margin-bottom: 12px;
                 backdrop-filter: blur(4px);
-              ">🔥 OFERTA DE LA SEMANA</div>
+              ">&#128293; OFERTA DE LA SEMANA</div>
 
               <h3 style="margin:0 0 6px 0; font-size:1.4rem; font-weight:800;">
                 Combos de Carne Fresca
