@@ -94,14 +94,14 @@ function renderMissionBanner(piggyCount) {
         ">
           <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🐷%3C/text%3E%3C/svg%3E'); pointer-events:none;"></div>
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 1</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">&#127831; MISI&Oacute;N 1</div>
             <div style="font-size:1.2rem; font-weight:800; margin-bottom:4px;">Crea una cuenta y compra tu primer Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">🎁 Bono de Bienvenida: <strong>$50.000 en consumo de carne</strong></div>
+            <div style="font-size:0.85rem; opacity:0.9;">&#127873; Bono de Bienvenida: <strong>$50.000 en consumo de carne</strong></div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Compra tu Piggy 🛒</span>
+              <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Compra tu Piggy &#128048;</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">🐷</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">&#128048;</div>
         </div>
       </div>
     `;
@@ -124,10 +124,10 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2; display:flex; align-items:center; gap:14px;">
-            <div style="font-size:36px; flex-shrink:0;">🎁</div>
+            <div style="font-size:36px; flex-shrink:0;">&#127873;</div>
             <div style="flex:1;">
-              <div style="font-size:0.95rem; font-weight:800;">¡Tienes un Bono de $50.000!</div>
-              <div style="font-size:0.78rem; opacity:0.9;">Bono de consumo en carne. ¡Redímelo ahora!</div>
+              <div style="font-size:0.95rem; font-weight:800;">&#161;Tienes un Bono de $50.000!</div>
+              <div style="font-size:0.78rem; opacity:0.9;">Bono de consumo en carne. &#161;Red&eacute;malo ahora!</div>
             </div>
             <span style="background:white; color:#d97706; padding:8px 16px; border-radius:10px; font-weight:700; font-size:0.8rem; white-space:nowrap;">Redimir Bono Ahora</span>
           </div>
@@ -147,14 +147,14 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 2</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">&#127850; MISI&Oacute;N 2</div>
             <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">🚀 Desbloquea un piggy de 3 meses y <strong>+1% en Margen Comercial</strong></div>
+            <div style="font-size:0.85rem; opacity:0.9;">&#9889; Desbloquea un piggy de 3 meses y <strong>+1% en Margen Comercial</strong></div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado 🛒</span>
+              <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado &#127048;</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">🥈</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">&#128048;</div>
         </div>
       </div>
     `;
@@ -175,14 +175,14 @@ function renderMissionBanner(piggyCount) {
           cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
-            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">🎯 MISIÓN 3</div>
+            <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">&#127775; MISI&Oacute;N 3</div>
             <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Activa tu 3er Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">⭐ Mantén el <strong>10% en Margen Comercial</strong> de la Granja</div>
+            <div style="font-size:0.85rem; opacity:0.9;">&#10004; Mant&eacute;n el <strong>10% en Margen Comercial</strong> de la Granja</div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado 🛒</span>
+              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado &#128048;</span>
             </div>
           </div>
-          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">🥇</div>
+          <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">&#128048;</div>
         </div>
       </div>
     `;
@@ -200,10 +200,10 @@ function renderMissionBanner(piggyCount) {
         align-items: center;
         gap: 14px;
       ">
-        <div style="font-size:32px;">🎉</div>
+        <div style="font-size:32px;">&#127881;</div>
         <div>
-          <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Misiones completadas!</div>
-          <div style="font-size:0.78rem; color:#047857;">Tu granja está al máximo. Margen Comercial: 10%</div>
+          <div style="font-weight:800; color:#065f46; font-size:0.95rem;">&#161;Misiones completadas!</div>
+          <div style="font-size:0.78rem; color:#047857;">Tu granja est&aacute; al m&aacute;ximo. Margen Comercial: 10%</div>
         </div>
       </div>
     </div>
@@ -451,7 +451,7 @@ function buildGranjaFull(firstName, piggies, stats) {
                         align-items: center;
                         justify-content: center;
                         gap: 8px;
-                     ">&#128176; Retirar mi Saldo</button>
+                      "><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Retirar mi Saldo</button>
                   </div>
                   ` : ""}
               </div>
@@ -1215,11 +1215,13 @@ function showRetiroSaldoModal(availableAmount) {
         <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
       </div>
       <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
-        <div>
           <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Monto a retirar</label>
-          <input type="number" id="retiro-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
-            style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
-            onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';" />
+          <div style="position:relative;">
+            <input type="number" id="retiro-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+              style="width:100%; padding:12px 50px 12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+              onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';" />
+            <button type="button" id="btn-todo-retiro" onclick="document.getElementById('retiro-amount').value='${availableAmount}'; document.getElementById('retiro-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-weight:700; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:0.78rem;">Todo</button>
+          </div>
           <div id="retiro-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
         </div>
         <div>
@@ -1233,7 +1235,7 @@ function showRetiroSaldoModal(availableAmount) {
         <button id="retiro-confirm-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
           Solicitar Retiro via WhatsApp
         </button>
-        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Tu equipo procesara el retiro en maximo 3 dias habiles.</p>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Nuestro equipo procesara el retiro de tu dinero en maximo 48 horas.</p>
       </div>
     </div>
   `;
@@ -1249,17 +1251,19 @@ function showRetiroSaldoModal(availableAmount) {
         <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#d97706;">${formatCOP(availableAmount)}</strong></p>
       </div>
       <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
-        <div>
           <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Cuanto saldo deseas en bonos?</label>
-          <input type="number" id="consumo-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
-            style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
-            onfocus="this.style.borderColor='#f59e0b';" onblur="this.style.borderColor='#e5e7eb';" />
+          <div style="position:relative;">
+            <input type="number" id="consumo-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+              style="width:100%; padding:12px 50px 12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+              onfocus="this.style.borderColor='#f59e0b';" onblur="this.style.borderColor='#e5e7eb';" />
+            <button type="button" id="btn-todo-consumo" onclick="document.getElementById('consumo-amount').value='${availableAmount}'; document.getElementById('consumo-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#fffbeb; border:1px solid #fcd34d; color:#d97706; font-weight:700; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:0.78rem;">Todo</button>
+          </div>
           <div id="consumo-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
         </div>
         <button id="retiro-confirm-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
           Solicitar Bonos de Consumo via WhatsApp
         </button>
-        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">El equipo Piggy coordinara la entrega de tus bonos.</p>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Nuestro equipo procesara el canje de tus bonos una vez realices tu compra de carne.</p>
       </div>
     </div>
   `;
