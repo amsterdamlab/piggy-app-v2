@@ -601,7 +601,7 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-      ? '<span class="badge badge--success">Listo para liquidar</span>'
+      ? '<span class="badge badge--success">✓ Ciclo completado</span>'
       : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
     }
           </div>
@@ -617,7 +617,7 @@ function renderPiggyCard(piggy, baseROI) {
           <span class="text-sm font-semibold">${piggy.progress}%</span>
         </div>
         <div class="progress">
-          <div class="progress__bar" style="width: ${piggy.progress}%;"></div>
+          <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
         </div>
       </div>
 
