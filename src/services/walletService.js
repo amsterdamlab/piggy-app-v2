@@ -17,21 +17,77 @@ const ADMIN_WHATSAPP = '573154870448';
  * @returns {number} The balance in COP
  */
 export async function getWalletBalance() {
-  if (isUsingMockData()) {
-    return 0;
-  }
+    if (isUsingMockData()) {
+        return 0;
+    }
 
-  const client = getClient();
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) return 0;
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return 0;
 
-  const { data } = await client
-    .from('profiles')
-    .select('referral_balance')
-    .eq('id', user.id)
-    .single();
+    const { data } = await client
+        .from('profiles')
+        .select('referral_balance')
+        .eq('id', user.id)
+        .single();
 
-  return data?.referral_balance || 0;
+    return data?.referral_balance || 0;
+}
+
+/* ─── Deduct Wallet Balance (Post-Purchase) ─── */
+
+/**
+ * Deduct an amount from the user's wallet balance after a successful purchase.
+ * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should
+ * handle this atomically. Until then, we call this immediately after a confirmed purchase.
+ *
+ * IMPORTANT: This function includes a balance guard to prevent negative balances.
+ * If the Supabase RPC is updated to handle deduction atomically, this function
+ * should be removed to avoid double-deduction.
+ *
+ * @param {number} amount - Amount in COP to deduct
+ * @returns {{ success: boolean, newBalance?: number, reason?: string }}
+ */
+export async function deductWalletBalance(amount) {
+    if (isUsingMockData()) {
+        return { success: true, newBalance: 0 };
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    // Read current balance first
+    const { data: profile, error: readError } = await client
+        .from('profiles')
+        .select('referral_balance')
+        .eq('id', user.id)
+        .single();
+
+    if (readError || !profile) {
+        return { success: false, reason: 'could_not_read_balance' };
+    }
+
+    const currentBalance = profile.referral_balance || 0;
+
+    // Guard: never allow negative balance
+    if (currentBalance < amount) {
+        return { success: false, reason: 'insufficient_balance' };
+    }
+
+    const newBalance = currentBalance - amount;
+
+    const { error: updateError } = await client
+        .from('profiles')
+        .update({ referral_balance: newBalance })
+        .eq('id', user.id);
+
+    if (updateError) {
+        console.error('Error deducting wallet balance:', updateError);
+        return { success: false, reason: updateError.message };
+    }
+
+    return { success: true, newBalance };
 }
 
 /* ─── Create Wallet Request ─── */
@@ -45,31 +101,31 @@ export async function getWalletBalance() {
  * @returns {{ success: boolean, requestId?: string, reason?: string }}
  */
 export async function createWalletRequest(requestType, amount, bankName = null) {
-  if (isUsingMockData()) {
-    return { success: true, requestId: 'mock-req-id' };
-  }
+    if (isUsingMockData()) {
+        return { success: true, requestId: 'mock-req-id' };
+    }
 
-  const client = getClient();
-  const { data: { user } } = await client.auth.getUser();
-  if (!user) return { success: false, reason: 'not_authenticated' };
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
 
-  const { data, error } = await client.rpc('create_wallet_request', {
-    p_user_id: user.id,
-    p_type: requestType,
-    p_amount: amount,
-    p_bank: bankName,
-  });
+    const { data, error } = await client.rpc('create_wallet_request', {
+        p_user_id: user.id,
+        p_type: requestType,
+        p_amount: amount,
+        p_bank: bankName,
+    });
 
-  if (error) {
-    console.error('Error creating wallet request:', error);
-    return { success: false, reason: error.message };
-  }
+    if (error) {
+        console.error('Error creating wallet request:', error);
+        return { success: false, reason: error.message };
+    }
 
-  return {
-    success: data?.success === true,
-    requestId: data?.request_id || null,
-    reason: data?.reason || null,
-  };
+    return {
+        success: data?.success === true,
+        requestId: data?.request_id || null,
+        reason: data?.reason || null,
+    };
 }
 
 /* ─── WhatsApp Notification ─── */
@@ -84,29 +140,29 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
  * @param {string} requestId
  */
 export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId) {
-  const typeLabel = requestType === 'withdrawal' ? 'RETIRO' : 'CONSUMO';
-  const shortId = requestId ? requestId.slice(-8).toUpperCase() : 'N/A';
+    const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';
+    const shortId = requestId ? requestId.slice(-8).toUpperCase() : 'N/A';
 
-  let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n`;
-  message += `👤 *Usuario:* ${userName}\n`;
-  message += `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n`;
-  message += `💵 *Monto:* ${formatCOP(amount)}\n`;
+    let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n`;
+    message += `👤 *Usuario:* ${userName}\n`;
+    message += `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n`;
+    message += `💵 *Monto:* ${formatCOP(amount)}\n`;
 
-  if (requestType === 'withdrawal' && bankName) {
-    message += `🏦 *Banco:* ${bankName}\n`;
-  }
+    if (requestType === 'withdrawal' && bankName) {
+        message += `🏦 *Banco:* ${bankName}\n`;
+    }
 
-  message += `🎫 *ID Solicitud:* #${shortId}\n`;
-  message += `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n`;
+    message += `🎫 *ID Solicitud:* #${shortId}\n`;
+    message += `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n`;
 
-  if (requestType === 'withdrawal') {
-    message += `⚡ Acción requerida: Transferir fondos al usuario y debitar saldo en la BD.`;
-  } else {
-    message += `⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.`;
-  }
+    if (requestType === 'withdrawal') {
+        message += `⚡ Acción requerida: Transferir fondos al usuario y debitar saldo en la BD.`;
+    } else {
+        message += `⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.`;
+    }
 
-  const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
-  window.open(whatsappUrl, '_blank');
+    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
 }
 
 /* ─── Format Helper ─── */
