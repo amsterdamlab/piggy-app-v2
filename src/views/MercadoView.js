@@ -1,6 +1,6 @@
 /* ============================================
    PIGGY APP — Mercado (Marketplace) View
-   Streamlined Direct Purchase Flow
+   Streamlined Direct Purchase Flow (Wallet-based)
    ============================================ */
 
 import { renderIcon } from '../icons.js';
@@ -8,6 +8,8 @@ import { renderBottomNav } from './GranjaView.js';
 import { navigateTo } from '../router.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { buyMarketplaceItem } from '../services/piggiesService.js';
+import { getWalletBalance, formatCOP } from '../services/walletService.js';
+import { AppState } from '../state.js';
 
 /** In-memory cache */
 let cachedItems = [];
@@ -162,35 +164,36 @@ function renderProductCard(item) {
 }
 
 /**
- * Show Full Screen Checkout for Direct Purchase.
+ * Show Full Screen Checkout — Wallet-based purchase flow.
  */
 export function showCheckoutModal(item) {
   // Remove existing if any
   const existing = document.getElementById('checkout-modal');
   if (existing) existing.remove();
 
-  // 1. Lock Body Scroll
+  // Lock Body Scroll
   document.body.style.overflow = 'hidden';
 
   const modal = document.createElement('div');
   modal.id = 'checkout-modal';
   modal.className = 'checkout-fullscreen animate-fade-in-up';
 
-  // Style for full screen override
+  // Full screen styles
   modal.style.position = 'fixed';
   modal.style.top = '0';
   modal.style.left = '0';
   modal.style.width = '100%';
-  modal.style.height = '100dvh'; // Dynamic viewport height
-  modal.style.backgroundColor = '#ffffff'; // Solid background
+  modal.style.height = '100dvh';
+  modal.style.backgroundColor = '#ffffff';
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
-  modal.style.overflowY = 'auto'; // Internal scroll if needed
+  modal.style.overflowY = 'auto';
+
+  const ADMIN_WHATSAPP = '573154870448';
 
   // Random names for suggestions
   const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
-  // Shuffle and pick 4
   const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 4);
 
   modal.innerHTML = `
@@ -204,7 +207,7 @@ export function showCheckoutModal(item) {
         border-bottom: 1px solid var(--color-border);
         position: sticky; top: 0; z-index: 10;">
         
-        <h3 class="modal-title" style="margin:0; font-size: 1.25rem;">Pasarela de Pago</h3>
+        <h3 class="modal-title" style="margin:0; font-size: 1.25rem;">Comprar Piggy</h3>
         <button class="checkout-close" id="checkout-close-btn" style="
             background: none; 
             border: none; 
@@ -219,7 +222,7 @@ export function showCheckoutModal(item) {
         </button>
     </div>
     
-    <!-- Checklist Body -->
+    <!-- Body -->
     <div class="checkout-body" style="padding: 24px 20px; flex: 1; display: flex; flex-direction: column; align-items: center;">
       
       <!-- Summary Card -->
@@ -230,7 +233,7 @@ export function showCheckoutModal(item) {
           background: #FFF0F5; 
           padding: 24px; 
           border-radius: 16px; 
-          margin-bottom: 32px;
+          margin-bottom: 28px;
           border: 1px solid rgba(236, 72, 153, 0.1);
           box-shadow: 0 8px 20px rgba(236, 72, 153, 0.05);">
           
@@ -247,13 +250,13 @@ export function showCheckoutModal(item) {
           
           <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">¡Compra tu Piggy!</h2>
           <p style="font-size: 1rem; color: var(--color-text-secondary); line-height: 1.4;">
-            Un nuevo integrante para que tu granja siga creciendo desde <br>
+            Un nuevo integrante para tu granja desde <br>
             <span style="font-size: 1.5rem; font-weight: 900; color: var(--color-primary); display:block; margin-top:4px;">${item.priceFormatted}</span>
           </p>
       </div>
 
       <!-- Custom Name Input Section -->
-      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 40px; text-align: center;">
+      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 28px; text-align: center;">
            
            <div style="margin-bottom: 20px;">
                 <input type="text" id="piggy-custom-name" 
@@ -262,7 +265,7 @@ export function showCheckoutModal(item) {
                        style="
                            width: 100%;
                            padding: 16px;
-                           border: 2px solid #fce7f3; /* Pink-100 */
+                           border: 2px solid #fce7f3;
                            border-radius: 16px;
                            font-size: 1.1rem;
                            font-weight: 600;
@@ -300,39 +303,90 @@ export function showCheckoutModal(item) {
            </div>
       </div>
 
-      <p class="mb-md text-center text-muted" style="margin-bottom: 24px;">Selecciona tu método de pago:</p>
-      
-      <div class="payment-methods" id="payment-methods-container" style="
-           width: 100%; 
-           max-width: 400px; 
-           display: flex; 
-           flex-direction: column; 
-           gap: 12px; 
-           opacity: 0.5; 
-           pointer-events: none; 
-           transition: opacity 0.3s;
-      ">
+      <!-- Wallet Section -->
+      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
         
-        <button class="payment-option" data-method="nequi" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
-          <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#5500A1; color:white; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">📱</div>
-          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">Nequi</span>
-          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
+        <!-- Balance Display -->
+        <div style="
+          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+          border-radius: 16px;
+          padding: 20px 24px;
+          margin-bottom: 16px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="font-size:0.8rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+          <div id="wallet-balance-display" style="font-size:2rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
+            <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
+          </div>
+          <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.1;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+        </div>
+
+        <!-- Recharge Button -->
+        <button id="btn-recargar-checkout" style="
+          width: 100%;
+          background: white;
+          color: #059669;
+          border: 2px solid #a7f3d0;
+          padding: 13px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          transition: all 0.2s;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Recargar mi Wallet
         </button>
-        
-        <button class="payment-option" data-method="bancolombia" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
-          <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#FDDA24; color:black; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">🏛️</div>
-          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">Bancolombia</span>
-          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
-        </button>
-        
-        <button class="payment-option" data-method="pse" style="display: flex; align-items: center; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; background: white; cursor: pointer; transition: all 0.2s;">
-           <div class="payment-icon" style="width: 40px; height: 40px; border-radius: 8px; background:#3366CC; color:white; display:flex; align-items:center; justify-content:center; font-size: 20px; margin-right: 16px;">🌐</div>
-          <span class="payment-name" style="font-weight: 600; font-size: 1rem;">PSE</span>
-          <div style="margin-left: auto; color: #ccc;">${renderIcon('arrowRight', '', '16')}</div>
+
+        <!-- Insufficient funds notice -->
+        <div id="insufficient-funds-notice" style="
+          background:#fef2f2;
+          border:1px solid #fecaca;
+          border-radius:10px;
+          padding:12px 16px;
+          font-size:0.82rem;
+          color:#dc2626;
+          text-align:center;
+          margin-bottom:12px;
+          display:none;
+        ">
+          Saldo insuficiente. Recarga tu Wallet para continuar.
+        </div>
+
+        <!-- Confirm Purchase Button -->
+        <button id="btn-confirm-purchase" style="
+          width: 100%;
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          color: white;
+          border: none;
+          padding: 15px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 1rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 6px 20px -4px rgba(236,72,153,0.4);
+          transition: all 0.2s;
+          opacity: 0.5;
+          pointer-events: none;
+        ">
+          Confirmar Compra con mi Wallet
         </button>
       </div>
 
-      <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 40px; padding-bottom: 20px; display: flex; justify-content: center;">
+      <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 32px; padding-bottom: 20px; display: flex; justify-content: center;">
          <div class="secure-badge" style="display: flex; gap: 16px; color: var(--color-text-tertiary); font-size: 0.8rem;">
             <span>🔒 Pagos seguros</span>
             <span>🛡️ Cifrado SSL</span>
@@ -346,88 +400,103 @@ export function showCheckoutModal(item) {
   // --- Logic ---
 
   const input = document.getElementById('piggy-custom-name');
-  const paymentContainer = document.getElementById('payment-methods-container');
+  const walletSection = document.getElementById('wallet-checkout-section');
+  const balanceDisplay = document.getElementById('wallet-balance-display');
+  const insufficientNotice = document.getElementById('insufficient-funds-notice');
+  const confirmBtn = document.getElementById('btn-confirm-purchase');
   const errorMsg = document.getElementById('name-error');
 
-  // Helper to Validate
-  const validateName = () => {
-    const val = input.value.trim();
-    const isValid = val.length >= 3; // Min 3 chars
+  let currentBalance = 0;
 
-    if (isValid) {
-      paymentContainer.style.opacity = '1';
-      paymentContainer.style.pointerEvents = 'auto';
-      errorMsg.style.opacity = '0';
-      input.style.borderColor = '#10B981'; // Green border for success
+  // Load wallet balance
+  getWalletBalance().then(balance => {
+    currentBalance = balance;
+    balanceDisplay.textContent = formatCOP(balance);
+    updatePurchaseState(input.value.trim());
+  }).catch(() => {
+    balanceDisplay.textContent = '$0';
+    updatePurchaseState(input.value.trim());
+  });
+
+  // Helper: update button states based on name + balance
+  const updatePurchaseState = (nameVal) => {
+    const nameValid = nameVal.length >= 3;
+    const hasFunds = currentBalance >= item.price;
+
+    // Unlock wallet section once name is valid
+    walletSection.style.opacity = nameValid ? '1' : '0.5';
+    walletSection.style.pointerEvents = nameValid ? 'auto' : 'none';
+
+    // Show/hide insufficient funds notice
+    insufficientNotice.style.display = (nameValid && !hasFunds) ? 'block' : 'none';
+
+    // Enable confirm button only if name valid + funds sufficient
+    if (nameValid && hasFunds) {
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.pointerEvents = 'auto';
     } else {
-      paymentContainer.style.opacity = '0.5';
-      paymentContainer.style.pointerEvents = 'none';
-      errorMsg.style.opacity = '1';
-      if (val.length > 0) {
-        input.style.borderColor = '#e0e0e0'; // Neutral if typing but short
-      } else {
-        input.style.borderColor = '#fce7f3'; // Reset to pink if empty
-      }
+      confirmBtn.style.opacity = '0.5';
+      confirmBtn.style.pointerEvents = 'none';
     }
-    return isValid;
+
+    // Name validation feedback
+    if (nameValid) {
+      errorMsg.style.opacity = '0';
+      input.style.borderColor = '#10B981';
+    } else if (nameVal.length > 0) {
+      errorMsg.style.opacity = '1';
+      input.style.borderColor = '#e0e0e0';
+    } else {
+      errorMsg.style.opacity = '0';
+      input.style.borderColor = '#fce7f3';
+    }
   };
 
   // Input listener
-  input.addEventListener('input', validateName);
+  input.addEventListener('input', () => updatePurchaseState(input.value.trim()));
 
-  // Suggestion Pills Logic (Global helper or attached to window as inline onclick needs it)
+  // Suggestion Pills
   window.selectPiggyName = (name) => {
     input.value = name;
-    validateName();
-    input.focus(); // Keep focus for UX
+    updatePurchaseState(name);
+    input.focus();
   };
 
   // Close Logic
   const close = () => {
-    document.body.style.overflow = ''; // Unlock scroll
-    delete window.selectPiggyName; // Cleanup global
+    document.body.style.overflow = '';
+    delete window.selectPiggyName;
     modal.remove();
   };
 
   document.getElementById('checkout-close-btn').addEventListener('click', close);
 
-  // Payment Logic
-  document.querySelectorAll('.payment-option').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const method = btn.dataset.method;
-      const customName = input.value.trim();
+  // Recargar Wallet — Open WhatsApp to admin
+  document.getElementById('btn-recargar-checkout').addEventListener('click', () => {
+    const profile = AppState.get('profile');
+    const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+    const msg = `🐷 *PIGGY APP — Solicitud de Recarga de Wallet*\n\n👤 *Usuario:* ${userName}\n\n💰 Hola, deseo recargar mi wallet para comprar Piggys.\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
 
-      if (customName.length < 3) return; // Basic Guard
+  // Confirm Purchase with Wallet
+  confirmBtn.addEventListener('click', async () => {
+    const customName = input.value.trim();
+    if (customName.length < 3 || currentBalance < item.price) return;
 
-      // Visual feedback on button
-      const originalContent = btn.innerHTML;
-      btn.style.opacity = '0.7';
-      btn.innerHTML = '<span class="spinner" style="width:20px;height:20px;border:2px solid #555;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite; margin-right: 10px; display:inline-block;"></span> Procesando...';
+    // Visual feedback
+    confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
+    confirmBtn.style.pointerEvents = 'none';
 
-      // Disable all
-      document.querySelectorAll('.payment-option').forEach(b => b.disabled = true);
-      input.disabled = true;
-
-      // Simulate network delay
-      await new Promise(r => setTimeout(r, 2000));
-
-      try {
-        // Execute Purchase Logic
-        await buyMarketplaceItem(item, customName);
-
-        close();
-        navigateTo('granja');
-
-      } catch (error) {
-        console.error(error);
-        alert('Error en la transacción: ' + error.message);
-
-        // Reset
-        btn.style.opacity = '1';
-        btn.innerHTML = originalContent;
-        document.querySelectorAll('.payment-option').forEach(b => b.disabled = false);
-        input.disabled = false;
-      }
-    });
+    try {
+      await buyMarketplaceItem(item, customName);
+      close();
+      navigateTo('granja');
+    } catch (error) {
+      console.error(error);
+      alert('Error en la transaccion: ' + error.message);
+      confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
+      confirmBtn.style.pointerEvents = 'auto';
+    }
   });
 }
