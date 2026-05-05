@@ -839,6 +839,11 @@ async function showReferralModal() {
     const pendingCount = stats?.pendingReferrals || 0;
     const currentTier = stats?.currentTier || { amount: 30000, label: '$30.000' };
 
+    // Saldo Comisiones = sum of commission_amount from completed referrals only
+    const commissionsEarned = referrals
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + (r.commission_amount || 0), 0);
+
     // Build referrals list
     let referralsListHTML = '';
     if (referrals.length === 0) {
@@ -860,7 +865,7 @@ async function showReferralModal() {
                 ${(r.referredName || 'U').charAt(0).toUpperCase()}
               </div>
               <div>
-                <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName || 'Usuario'}</div>
+                 <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName && r.referredName !== 'Usuario' ? r.referredName : 'Referido #' + (r.referred_id || '').slice(-6).toUpperCase()}</div>
                 <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
               </div>
             </div>
@@ -894,8 +899,8 @@ async function showReferralModal() {
           <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;">${referralCode}</div>
         </div>
         <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;">Balance Ganado</div>
-          <div style="font-size:1.2rem; font-weight:800; color:#059669;">${formatReferralBalance(balance)}</div>
+          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;">Saldo Comisiones</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#059669;">${formatReferralBalance(commissionsEarned)}</div>
         </div>
       </div>
 
