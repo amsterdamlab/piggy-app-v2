@@ -1,12 +1,22 @@
 -- =============================================
 -- TRANSACTIONAL PURCHASE FUNCTION
 -- Run this in Supabase SQL Editor
--- Now includes referral commission processing
+-- Includes referral commission AND current_month logic
 -- =============================================
 
--- Drop old version
-DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
-DROP FUNCTION IF EXISTS buy_piggy(uuid, uuid, numeric, text, numeric, text);
+-- Cleanup: Borrar todas las versiones antiguas de buy_piggy para evitar conflictos de firmas
+DO $$ 
+DECLARE 
+    func_record RECORD;
+BEGIN
+    FOR func_record IN 
+        SELECT oid::regprocedure as proc_name
+        FROM pg_proc 
+        WHERE proname = 'buy_piggy'
+    LOOP
+        EXECUTE 'DROP FUNCTION ' || func_record.proc_name;
+    END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION buy_piggy(
   p_item_id uuid,
@@ -14,7 +24,8 @@ CREATE OR REPLACE FUNCTION buy_piggy(
   p_price numeric,
   p_item_name text,
   p_extra_roi numeric,
-  p_category text
+  p_category text,
+  p_current_month integer DEFAULT 1
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -24,6 +35,11 @@ DECLARE
   v_new_piggy_id uuid;
   v_current_stock int;
   v_referral_result jsonb;
+  v_days_elapsed int;
+  v_days_remaining int;
+  v_total_cycle_days int := 143; -- ~4 months 3 weeks
+  v_full_name text;
+  v_whatsapp text;
 BEGIN
   -- 1. Lock and check stock
   SELECT stock INTO v_current_stock
@@ -39,26 +55,37 @@ BEGIN
     RAISE EXCEPTION 'Out of stock';
   END IF;
 
+  -- Calculate days remaining based on current_month
+  v_days_elapsed := GREATEST(0, (p_current_month - 1) * 30);
+  v_days_remaining := GREATEST(1, v_total_cycle_days - v_days_elapsed);
+
   -- 2. Deduct stock
   UPDATE marketplace
   SET stock = stock - 1
   WHERE id = p_item_id;
 
-  -- 3. Create the piggy
+  -- Fetch user profile data to store in piggies table
+  SELECT full_name, whatsapp INTO v_full_name, v_whatsapp
+  FROM profiles
+  WHERE id = p_user_id;
+
+  -- 3. Create the piggy with calculated end_date based on remaining days
   INSERT INTO piggies (
-    user_id, name, investment_amount, status,
-    extra_roi_bonus, category, current_weight
+    user_id, name, full_name, whatsapp, investment_amount, status,
+    extra_roi_bonus, category, current_weight,
+    purchase_date, end_date
   )
   VALUES (
-    p_user_id, p_item_name, p_price, 'engorde',
-    p_extra_roi, p_category, 15.0
+    p_user_id, p_item_name, v_full_name, v_whatsapp, p_price, 'engorde',
+    p_extra_roi, p_category, 15.0,
+    NOW(),
+    NOW() + (v_days_remaining || ' days')::interval
   )
   RETURNING id INTO v_new_piggy_id;
 
   -- 4. Process referral commission (only triggers on first purchase)
   --    This function checks internally if it's the user's first piggy
-  --    and if they have a pending referral. If both conditions are met,
-  --    it credits the referrer's wallet automatically.
+  --    and if they have a pending referral.
   BEGIN
     v_referral_result := process_referral_on_purchase(p_user_id);
   EXCEPTION WHEN OTHERS THEN
@@ -69,6 +96,7 @@ BEGIN
   RETURN json_build_object(
     'success', true,
     'piggy_id', v_new_piggy_id,
+    'days_remaining', v_days_remaining,
     'referral', v_referral_result
   );
 END;
