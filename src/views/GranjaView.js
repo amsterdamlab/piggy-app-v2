@@ -397,30 +397,6 @@ function buildGranjaFull(firstName, piggies, stats) {
                            letter-spacing: 0.5px;
                        ">+${stats.diferencialPreventaFormatted}</div>
                     </div>
-                    
-                    <!-- Fase de Maduracion (Progress Bar) -->
-                    <div style="grid-column: span 2;">
-                       <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:6px;">
-                           <div style="font-size:0.75rem; opacity:0.8;">Fase de Maduración Técnica</div>
-                           <div style="font-size:0.85rem; font-weight:600;">${stats.nextCloseDays !== null ? stats.nextCloseDays + ' días restantes' : '-'}</div>
-                       </div>
-                       
-                       <div style="background:rgba(0,0,0,0.25); height:8px; border-radius:10px; overflow:hidden; position:relative;">
-                           <div style="
-                               width:${stats.nextCloseProgress}%; 
-                               background: linear-gradient(90deg, #39FF14, #B4F8C8); 
-                               height:100%; 
-                               border-radius:10px; 
-                               box-shadow: 0 0 8px rgba(57,255,20,0.6);
-                               transition: width 1s ease-out;
-                           "></div>
-                       </div>
-
-                       <div style="display:flex; justify-content:space-between; margin-top:4px; opacity:0.6; font-size:10px;">
-                           <span>Inicio Ciclo</span>
-                           <span>Cosecha (19 sem)</span>
-                       </div>
-                    </div>
 
                     <!-- Disponible -->
                     <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px; position:relative;">
@@ -434,37 +410,60 @@ function buildGranjaFull(firstName, piggies, stats) {
                     </div>
                  </div>
 
-                 ${stats.saldoDisponible > 0 ? `
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                       <button id="btn-withdraw" style="
-                          background: white; 
-                          color: #059669; 
-                          border: none; 
-                          padding: 10px 20px; 
-                          border-radius: 12px; 
-                          font-weight: 700; 
-                          font-size: 0.9rem; 
-                          cursor: pointer;
-                          flex: 1;
-                          white-space: nowrap;
-                          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                          transition: transform 0.2s;
-                       ">Retiro</button>
-                       <button id="btn-meat" style="
-                          background: rgba(255,255,255,0.15); 
-                          color: white; 
-                          border: 1px solid rgba(255,255,255,0.3); 
-                          padding: 10px 20px; 
-                          border-radius: 12px; 
-                          font-weight: 600; 
-                          font-size: 0.9rem; 
-                          cursor: pointer;
-                          flex: 1;
-                          white-space: nowrap;
-                          backdrop-filter: blur(5px);
-                       ">Consumo</button>
-                    </div>
-                  ` : ''}
+                  <button id="btn-recargar-wallet" style="
+                     width: 100%;
+                     background: white;
+                     color: #059669;
+                     border: none;
+                     padding: 13px 20px;
+                     border-radius: 12px;
+                     font-weight: 700;
+                     font-size: 0.95rem;
+                     cursor: pointer;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center;
+                     gap: 8px;
+                     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                     transition: transform 0.2s, box-shadow 0.2s;
+                  "
+                  onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.2)';"
+                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                     Recargar mi Wallet
+                  </button>
+
+                  ${stats.saldoDisponible > 0 ? `
+                  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
+                     <button id="btn-withdraw" style="
+                        background: rgba(255,255,255,0.15);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 10px 20px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                        cursor: pointer;
+                        flex: 1;
+                        white-space: nowrap;
+                        backdrop-filter: blur(5px);
+                     ">&#128176; Retiro</button>
+                     <button id="btn-meat" style="
+                        background: rgba(255,255,255,0.15);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 10px 20px;
+                        border-radius: 12px;
+                        font-weight: 600;
+                        font-size: 0.85rem;
+                        cursor: pointer;
+                        flex: 1;
+                        white-space: nowrap;
+                        backdrop-filter: blur(5px);
+                     ">&#127969; Consumo</button>
+                  </div>
+                  ` : ""}
               </div>
            </div>
         </div>
@@ -759,7 +758,12 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
     });
   }
 
-  // Wallet Actions
+  // Recargar Wallet button
+  document.getElementById('btn-recargar-wallet')?.addEventListener('click', () => {
+    openWalletRechargeInfo();
+  });
+
+  // Wallet Actions (Retiro y Consumo) — only active when saldo > 0
   document.getElementById('btn-withdraw')?.addEventListener('click', () => {
     showWalletRequestModal('withdrawal', stats?.saldoDisponible || 0);
   });
@@ -767,7 +771,6 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   document.getElementById('btn-meat')?.addEventListener('click', () => {
     showWalletRequestModal('consumption', stats?.saldoDisponible || 0);
   });
-
   // Load referral code into greeting badge
   loadGreetingReferralCode();
 
@@ -1082,6 +1085,82 @@ function removeBonusModal() {
   const existing = document.getElementById('bonus-modal');
   if (existing) existing.remove();
 }
+/**
+ * Show Wallet Recharge Info modal with WhatsApp contact.
+ * Informs user how to top up their wallet balance.
+ */
+async function openWalletRechargeInfo() {
+  // Remove existing
+  const existing = document.getElementById('wallet-recharge-modal');
+  if (existing) existing.remove();
+
+  const profile = AppState.get('profile');
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const ADMIN_WHATSAPP = '573154870448';
+
+  const modal = document.createElement('div');
+  modal.id = 'wallet-recharge-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
+  modal.innerHTML = `
+    <div class="modal animate-scale-in" style="max-width:380px; padding:28px 24px; text-align:center;">
+      <button id="recharge-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; color:#9ca3af;">&#x2715;</button>
+
+      <div style="width:64px; height:64px; background:linear-gradient(135deg,#10B981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      </div>
+
+      <h3 style="margin:0 0 8px; font-size:1.2rem; font-weight:800; color:#1f2937;">Recargar mi Wallet</h3>
+      <p style="color:#6b7280; font-size:0.9rem; margin:0 0 24px; line-height:1.5;">
+        Para recargar tu wallet y poder comprar Piggys, comunicate con nuestro equipo por WhatsApp.
+      </p>
+
+      <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-bottom:24px; text-align:left;">
+        <div style="font-size:0.8rem; font-weight:700; color:#065f46; margin-bottom:8px;">&#128197; Proceso de Recarga:</div>
+        <div style="font-size:0.82rem; color:#047857; line-height:1.8;">
+          <div>1. Toca el boton de WhatsApp abajo</div>
+          <div>2. Indica el monto que deseas recargar</div>
+          <div>3. Realiza la transferencia bancaria</div>
+          <div>4. Tu saldo se actualiza en 24 horas</div>
+        </div>
+      </div>
+
+      <button id="recharge-whatsapp-btn" style="
+        width: 100%;
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(37,211,102,0.35);
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.122 1.528 5.855L0 24l6.336-1.506A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.727.885.916-3.623-.234-.373A9.818 9.818 0 0 1 2.182 12C2.182 6.574 6.574 2.182 12 2.182S21.818 6.574 21.818 12 17.426 21.818 12 21.818z"/></svg>
+        Contactar por WhatsApp
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close
+  const close = () => modal.remove();
+  document.getElementById('recharge-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // WhatsApp
+  document.getElementById('recharge-whatsapp-btn').addEventListener('click', () => {
+    const msg = `\u{1F430} *PIGGY APP \u2014 Solicitud de Recarga de Wallet*\n\n\u{1F464} *Usuario:* ${userName}\n\n\u{1F4B0} Hola, deseo recargar mi wallet para comprar Piggys.\n\n\u{1F4CB} Por favor indic\u00E0me el n\u00FAmero de cuenta y el proceso a seguir.`;
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+}
+
 
 /**
  * Show Wallet Request Modal (unified for Retiro and Consumo).
