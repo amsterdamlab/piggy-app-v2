@@ -4,6 +4,7 @@
    ============================================ */
 
 import { renderIcon } from '../icons.js';
+import { AppState } from '../state.js';
 import { getPiggyById, calculateBaseROI, formatCOP, formatPercentage, getDaysRemaining } from '../services/piggiesService.js';
 import { getUserPiggies } from '../services/piggiesService.js';
 import { getRouteParam, navigateTo } from '../router.js';
@@ -85,7 +86,7 @@ async function loadPiggyDetail(piggyId) {
                 <span class="text-md font-bold text-primary">${piggy.progress}%</span>
               </div>
               <div class="progress" style="height: 12px;">
-                <div class="progress__bar" style="width: ${piggy.progress}%;"></div>
+                <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
               </div>
               <div class="grid-2 mt-md">
                 <div class="piggy-detail__metric">
@@ -139,15 +140,13 @@ async function loadPiggyDetail(piggyId) {
           <!-- Liquidation (only if cycle complete) -->
           ${piggy.isComplete ? `
             <div class="section animate-fade-in-up" style="animation-delay:0.3s;">
-              <h3 class="section__title">Opciones de Liquidación</h3>
-              <div class="piggy-detail__liquidation">
-                <button class="btn btn--primary btn--block" id="btn-monetize">
-                  ${renderIcon('dollar', '', '20')}
-                  Monetizar — Transferencia Bancaria
-                </button>
-                <button class="btn btn--secondary btn--block" id="btn-consume" style="margin-top:var(--space-sm);">
-                  ${renderIcon('qrCode', '', '20')}
-                  Consumo — Canjear Producto
+              <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
+                <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Ciclo Completado</h3>
+                <p style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-md);">
+                  Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejado tu <strong>Disponibilidad del Cierre Comercial</strong> en el Saldo Disponible de tu Wallet.
+                </p>
+                <button class="btn btn--primary btn--block" id="btn-unlock-silver" style="background: linear-gradient(135deg, #94A3B8, #64748B); color: white;">
+                  Solicitar Desbloqueo Piggy Silver
                 </button>
               </div>
             </div>
@@ -160,6 +159,16 @@ async function loadPiggyDetail(piggyId) {
     // Back button
     document.getElementById('btn-back')?.addEventListener('click', () => {
       navigateTo('granja');
+    });
+
+    // Unlock Silver button
+    document.getElementById('btn-unlock-silver')?.addEventListener('click', () => {
+      const profile = AppState.get('profile');
+      const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+      const userPhone = profile?.whatsapp || '';
+      const ADMIN_WHATSAPP = '573154870448';
+      const msg = `🐷 *PIGGY APP — Solicitud de Desbloqueo Silver*\n\n👤 *Usuario:* ${userName}\n📱 *WhatsApp:* ${userPhone}\n\nHola, mi Piggy "${piggy.name}" ha completado su ciclo y deseo solicitar el desbloqueo de un Piggy Silver.`;
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
     });
   } catch (error) {
     console.error('Error loading piggy detail:', error);
