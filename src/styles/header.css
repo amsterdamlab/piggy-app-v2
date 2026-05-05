@@ -22,18 +22,20 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    height: 100%;
 }
 
 .top-nav__logo {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    height: 100%;
     cursor: pointer;
-    transition: transform var(--transition-fast);
+    transition: opacity var(--transition-fast);
+    padding: 0 4px;
 }
 
 .top-nav__logo:active {
-    transform: scale(0.95);
+    opacity: 0.75;
 }
 
 .top-nav__logo-icon {

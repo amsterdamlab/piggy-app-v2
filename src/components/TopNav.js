@@ -37,7 +37,7 @@ export function renderTopNav() {
     topNav.innerHTML = `
         <div class="top-nav__content">
             <div class="top-nav__logo" onclick="location.hash='#/granja'">
-                <img src="/piggyapp_logo1.png" alt="Piggy App" style="height:32px; width:auto; object-fit:contain; display:block;" />
+                <img src="/piggyapp_logo1.png" alt="Piggy App" style="height:42px; width:auto; object-fit:contain; display:block;" />
             </div>
             <button class="top-nav__logout" id="global-logout" aria-label="Cerrar sesión">
                 ${renderIcon('logout', '', '20')}
