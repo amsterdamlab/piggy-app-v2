@@ -12,58 +12,13 @@ import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../services/referralService.js';
 import { getWalletBalance, createWalletRequest, notifyAdminViaWhatsApp } from '../services/walletService.js';
+import { getRandomTip } from '../services/tipsService.js';
 
 /* =========================================
    DYNAMIC NOTIFICATIONS
-   Rotate randomly on each page load
+   Fetched from Supabase dynamic_tips table.
+   Managed manually by admin — no hardcoding.
    ========================================= */
-
-const NOTIFICATIONS = [
-  {
-    icon: '🎉',
-    title: 'Compra en locales aliados',
-    reward: 'Desbloquea un Piggy Silver (24h)',
-    color: '#8b5cf6',
-    bgColor: '#f5f3ff',
-    borderColor: '#ddd6fe',
-    cta: '#/aliados',
-  },
-  {
-    icon: '&#129352;',
-    title: 'Al cerrar un ciclo',
-    reward: 'Desbloquea Piggy Silver (24h)',
-    color: '#0891b2',
-    bgColor: '#ecfeff',
-    borderColor: '#a5f3fc',
-    cta: null,
-  },
-  {
-    icon: '&#128293;',
-    title: 'Compra la oferta de la semana',
-    reward: 'Desbloquea un Piggy Gold (24h)',
-    color: '#dc2626',
-    bgColor: '#fef2f2',
-    borderColor: '#fecaca',
-    cta: '#/gourmet',
-  },
-  {
-    icon: '&#129309;',
-    title: 'Refiere a un amigo y si compra su 1er Piggy',
-    reward: 'Obt&eacute;n $30.000 en tu Wallet',
-    color: '#059669',
-    bgColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
-    cta: null,
-  },
-];
-
-/**
- * Pick a random notification from the pool.
- */
-function getRandomNotification() {
-  const index = Math.floor(Math.random() * NOTIFICATIONS.length);
-  return NOTIFICATIONS[index];
-}
 
 /* =========================================
    DYNAMIC MISSION BANNERS
@@ -211,10 +166,16 @@ function renderMissionBanner(piggyCount) {
 }
 
 /**
- * Render the random notification strip.
+ * Render the notification strip.
+ * @param {Object} notif - Tip data from tipsService (already resolved)
  */
-function renderRandomNotification() {
-  const notif = getRandomNotification();
+function renderRandomNotification(notif) {
+  // Guard: if no tip data provided, render nothing
+  if (!notif) return '';
+
+  const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
+  const cursor  = notif.ctaUrl ? 'pointer' : 'default';
+
   return `
     <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
       <div id="dynamic-notification" style="
@@ -225,9 +186,9 @@ function renderRandomNotification() {
         display: flex;
         align-items: center;
         gap: 12px;
-        cursor: ${notif.cta ? 'pointer' : 'default'};
+        cursor: ${cursor};
         transition: transform 0.2s, box-shadow 0.2s;
-      " ${notif.cta ? `data-cta="${notif.cta}"` : ''}
+      " ${ctaAttr}
          onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
@@ -306,7 +267,11 @@ function buildGranjaShell(firstName) {
  */
 async function loadGranjaData(firstName) {
   try {
-    const piggies = await getUserPiggies();
+    // Fetch all data in parallel for performance
+    const [piggies, tipData] = await Promise.all([
+      getUserPiggies(),
+      getRandomTip(),
+    ]);
     const stats = await getDashboardStats(piggies);
 
     // Fetch wallet balance (referral commissions)
@@ -318,7 +283,7 @@ async function loadGranjaData(firstName) {
     AppState.set({ piggies });
 
     const app = document.getElementById('app');
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats);
+    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length);
   } catch (error) {
@@ -337,10 +302,10 @@ async function loadGranjaData(firstName) {
 /**
  * Build the full dashboard with data.
  */
-function buildGranjaFull(firstName, piggies, stats) {
+function buildGranjaFull(firstName, piggies, stats, tipData) {
   const piggyCount = piggies.length;
   const missionBanner = renderMissionBanner(piggyCount);
-  const notification = renderRandomNotification();
+  const notification = renderRandomNotification(tipData);
 
   return `
     <div class="page page--with-nav granja-page">
