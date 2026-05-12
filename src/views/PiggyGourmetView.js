@@ -13,6 +13,7 @@ import {
   formatGourmetPrice,
   buildGourmetWhatsAppLink,
 } from '../services/gourmetService.js';
+import { getReferralBonusBalance, createWalletRequest } from '../services/walletService.js';
 
 /* ─── Main Render ─── */
 
@@ -29,23 +30,8 @@ export function renderPiggyGourmetView() {
           <p style="margin:0; font-size:0.85rem; color:#6b7280;">Proteína fresca directo de la granja 🐷</p>
         </div>
 
-        <!-- Bonus Reminder -->
-        <div class="animate-fade-in-up" style="
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border: 1px solid #fcd34d;
-          border-radius: 16px;
-          padding: 16px 20px;
-          margin-bottom: 20px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        ">
-          <div style="font-size: 32px; flex-shrink: 0;">🎁</div>
-          <div>
-            <div style="font-weight: 700; color: #92400e; font-size: 0.9rem;">¡Tienes un bono de $50.000!</div>
-            <div style="font-size: 0.78rem; color: #a16207; margin-top: 2px;">Aplica en pedidos desde $150.000. Descuento directo al pagar.</div>
-          </div>
-        </div>
+        <!-- Bonus Reminder (Filled dynamically) -->
+        <div id="gourmet-bonus-container"></div>
 
         <!-- OFERTA DE LA SEMANA Banner -->
         <div class="animate-fade-in-up" style="animation-delay: 0.1s;">
@@ -140,8 +126,35 @@ export function renderPiggyGourmetView() {
 
 async function loadGourmetOffers() {
   try {
-    const offers = await getGourmetOffers();
-    renderOfferCards(offers);
+    const [offers, referralBonus] = await Promise.all([
+      getGourmetOffers(),
+      getReferralBonusBalance()
+    ]);
+
+    // Render dynamic bonus banner if user has balance
+    const bonusContainer = document.getElementById('gourmet-bonus-container');
+    if (bonusContainer && referralBonus > 0) {
+      bonusContainer.innerHTML = `
+        <div class="animate-fade-in-up" style="
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          border: 1px solid #fcd34d;
+          border-radius: 16px;
+          padding: 16px 20px;
+          margin-bottom: 20px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        ">
+          <div style="font-size: 32px; flex-shrink: 0;">🎁</div>
+          <div>
+            <div style="font-weight: 800; color: #92400e; font-size: 0.95rem;">¡Tienes Bonos de Consumo por ${formatGourmetPrice(referralBonus)}!</div>
+            <div style="font-size: 0.78rem; color: #a16207; margin-top: 2px;">Puedes usarlos para comprar carne de tu granja. Se aplicará como descuento.</div>
+          </div>
+        </div>
+      `;
+    }
+
+    renderOfferCards(offers, referralBonus);
   } catch (err) {
     console.error('Error loading gourmet offers:', err);
     const container = document.getElementById('gourmet-offers-container');
@@ -155,7 +168,7 @@ async function loadGourmetOffers() {
   }
 }
 
-function renderOfferCards(offers) {
+function renderOfferCards(offers, referralBonus) {
   const container = document.getElementById('gourmet-offers-container');
   if (!container) return;
 
@@ -173,10 +186,49 @@ function renderOfferCards(offers) {
 
   // Attach buy listeners
   offers.forEach(offer => {
-    document.querySelector(`[data-offer-id="${offer.id}"]`)?.addEventListener('click', () => {
-      const waLink = buildGourmetWhatsAppLink(offer);
-      window.open(waLink, '_blank');
-    });
+    const btn = document.querySelector(`[data-offer-id="${offer.id}"]`);
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        // If user has bonus, ask if they want to apply it
+        let appliedBonus = 0;
+        
+        if (referralBonus > 0) {
+          const maxApplicable = Math.min(referralBonus, offer.price);
+          const confirmUse = confirm(`Tienes ${formatGourmetPrice(referralBonus)} en Bonos de Consumo.\n\n¿Deseas aplicar ${formatGourmetPrice(maxApplicable)} como descuento para este pedido?`);
+          
+          if (confirmUse) {
+            btn.style.opacity = '0.5';
+            btn.innerText = 'Procesando...';
+            
+            // Record the consumption transaction in DB
+            const res = await createWalletRequest('consumption', maxApplicable);
+            if (!res.success) {
+              alert('Hubo un error al procesar tu bono: ' + res.reason);
+              btn.style.opacity = '1';
+              btn.innerHTML = 'Comprar';
+              return;
+            }
+            appliedBonus = maxApplicable;
+            alert(`¡Bono aplicado con éxito! Se descontaron ${formatGourmetPrice(maxApplicable)} de tu saldo de referidos.`);
+          }
+        }
+
+        // Build custom WhatsApp link with discount info
+        let waLink = buildGourmetWhatsAppLink(offer);
+        if (appliedBonus > 0) {
+            const finalPrice = offer.price - appliedBonus;
+            const extraMsg = encodeURIComponent(`\n\n*¡Atención!* He aplicado un Bono de Consumo por *${formatGourmetPrice(appliedBonus)}*.\n*Total a pagar:* ${formatGourmetPrice(finalPrice)}`);
+            waLink += extraMsg;
+        }
+
+        window.open(waLink, '_blank');
+        
+        // Reload view to reflect updated balance if bonus was used
+        if (appliedBonus > 0) {
+          setTimeout(() => { window.location.reload(); }, 1000);
+        }
+      });
+    }
   });
 }
 
