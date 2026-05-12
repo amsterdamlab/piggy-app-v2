@@ -13,6 +13,7 @@ import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../services/referralService.js';
 import { getWalletBalance, getReferralBonusBalance, createWalletRequest, notifyAdminViaWhatsApp } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
+import { getActiveMissions, completeMissionManual } from '../services/missionsService.js';
 
 /* =========================================
    DYNAMIC NOTIFICATIONS
@@ -26,26 +27,43 @@ import { getRandomTip } from '../services/tipsService.js';
    ========================================= */
 
 /**
- * Determine which mission banner to show based on user's piggy count.
- * M1: 0 piggies ? Welcome Bonus ($50,000 consumption bonus)
- * M2: 1 piggy  ? Buy 2nd Piggy ? +1% Commercial Margin
- * M3: 2 piggies ? Activate 3rd Piggy ? Maintain 10%
- * 3+ piggies: All missions complete, no banner
+ * Render the banner for the next active mission.
+ * Preserves the premium styles for M1, M2, M3 and creates a generalized
+ * beautiful banner for M4-M9 based on DB properties.
  */
-function renderMissionBanner(piggyCount) {
-  if (piggyCount === 0) {
-    // M1: No piggies yet ? Show welcome bonus banner
+function renderMissionBanner(activeMissions, piggyCount) {
+  if (!activeMissions || activeMissions.length === 0) {
+    // All missions complete! Show celebration
     return `
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-        <div class="banner banner--interactive" id="mission-banner" data-mission="m1" style="
-          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        <div style="
+          background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+          border: 1px solid #a7f3d0;
           border-radius: 16px;
-          padding: 20px 24px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
-          cursor: pointer;
+          padding: 18px 22px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        ">
+          <div style="font-size:32px;">&#127881;</div>
+          <div>
+            <div style="font-weight:800; color:#065f46; font-size:0.95rem;">&#161;Misiones completadas!</div>
+            <div style="font-size:0.78rem; color:#047857;">Tu granja est&aacute; al m&aacute;ximo rendimiento.</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const mission = activeMissions[0];
+
+  // Specific premium design for M1
+  if (mission.id === 'm1' && piggyCount === 0) {
+    return `
+      <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m1" data-cta="#/mercado" style="
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          border-radius: 16px; padding: 20px 24px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4); cursor: pointer;
         ">
           <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.06; background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🐷%3C/text%3E%3C/svg%3E'); pointer-events:none;"></div>
           <div style="position:relative; z-index:2;">
@@ -62,21 +80,14 @@ function renderMissionBanner(piggyCount) {
     `;
   }
 
-  if (piggyCount === 1) {
-    // M1 completed (has 1st piggy). Show redeem bonus CTA ? Gourmet
-    // Then show M2 below it
+  // Specific premium design for M2 (plus the M1 redeem reminder if they have exactly 1 piggy)
+  if (mission.id === 'm2' && piggyCount === 1) {
     return `
       <!-- M1 Completed: Redeem Bonus -->
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-        <div class="banner banner--interactive" id="mission-banner" data-mission="m1-redeem" style="
+        <div class="banner banner--interactive" id="mission-banner-redeem" data-mission="m1-redeem" data-cta="#/gourmet" style="
           background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-          border-radius: 16px;
-          padding: 18px 22px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4);
-          cursor: pointer;
+          border-radius: 16px; padding: 18px 22px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 25px -5px rgba(245, 158, 11, 0.4); cursor: pointer;
         ">
           <div style="position:relative; z-index:2; display:flex; align-items:center; gap:14px;">
             <div style="font-size:36px; flex-shrink:0;">&#127873;</div>
@@ -91,15 +102,9 @@ function renderMissionBanner(piggyCount) {
 
       <!-- M2: Buy 2nd Piggy -->
       <div class="section animate-fade-in-up" style="animation-delay: 0.35s;">
-        <div class="banner banner--interactive" id="mission-banner-m2" data-mission="m2" style="
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m2" data-cta="#/mercado" style="
           background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-          border-radius: 16px;
-          padding: 20px 24px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.4);
-          cursor: pointer;
+          border-radius: 16px; padding: 20px 24px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.4); cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
             <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">&#127850; MISI&Oacute;N 2</div>
@@ -115,26 +120,20 @@ function renderMissionBanner(piggyCount) {
     `;
   }
 
-  if (piggyCount === 2) {
-    // M2 completed, show M3
+  // Specific premium design for M3
+  if (mission.id === 'm3') {
     return `
       <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-        <div class="banner banner--interactive" id="mission-banner" data-mission="m3" style="
+        <div class="banner banner--interactive" id="mission-banner" data-mission="m3" data-cta="#/mercado" style="
           background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-          border-radius: 16px;
-          padding: 20px 24px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 8px 25px -5px rgba(8, 145, 178, 0.4);
-          cursor: pointer;
+          border-radius: 16px; padding: 20px 24px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 25px -5px rgba(8, 145, 178, 0.4); cursor: pointer;
         ">
           <div style="position:relative; z-index:2;">
             <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">&#127775; MISI&Oacute;N 3</div>
-            <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Activa tu 3er Piggy</div>
-            <div style="font-size:0.85rem; opacity:0.9;">&#10004; Mant&eacute;n el <strong>10% en Margen Comercial</strong> de la Granja</div>
+            <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Invita a un amigo a Piggy</div>
+            <div style="font-size:0.85rem; opacity:0.9;">&#10004; <strong>${mission.reward}</strong></div>
             <div style="margin-top:14px;">
-              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Ir al Mercado &#128048;</span>
+              <span style="background:white; color:#0e7490; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">Reclamar recompensa &#128048;</span>
             </div>
           </div>
           <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">&#128048;</div>
@@ -143,23 +142,28 @@ function renderMissionBanner(piggyCount) {
     `;
   }
 
-  // 3+ piggies: All missions complete! Show celebration
+  // Generic dynamic design for any other mission (M4-M9)
+  const isManual = !mission.cta;
+  const btnLabel = isManual ? 'Completar misión' : 'Ir a cumplir misión';
+  const ctaAttr  = mission.cta ? `data-cta="${mission.cta}"` : '';
+
   return `
     <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-      <div style="
-        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-        border: 1px solid #a7f3d0;
-        border-radius: 16px;
-        padding: 18px 22px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
+      <div class="banner banner--interactive" id="mission-banner" data-mission="${mission.id}" ${ctaAttr} style="
+        background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+        border-radius: 16px; padding: 20px 24px; color: white; position: relative; overflow: hidden; box-shadow: 0 8px 25px -5px rgba(139, 92, 246, 0.4); cursor: pointer;
       ">
-        <div style="font-size:32px;">&#127881;</div>
-        <div>
-          <div style="font-weight:800; color:#065f46; font-size:0.95rem;">&#161;Misiones completadas!</div>
-          <div style="font-size:0.78rem; color:#047857;">Tu granja est&aacute; al m&aacute;ximo. Margen Comercial: 10%</div>
+        <div style="position:relative; z-index:2;">
+          <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">
+            ${mission.icon} NUEVA MISI&Oacute;N
+          </div>
+          <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title}</div>
+          <div style="font-size:0.85rem; opacity:0.9;">&#10004; Recompensa: <strong>${mission.reward}</strong></div>
+          <div style="margin-top:14px;">
+            <span style="background:white; color:#6d28d9; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">${btnLabel} &rarr;</span>
+          </div>
         </div>
+        <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">${mission.icon.replace(/<[^>]*>?/gm, '') || '🚀'}</div>
       </div>
     </div>
   `;
@@ -268,11 +272,12 @@ function buildGranjaShell(firstName) {
 async function loadGranjaData(firstName) {
   try {
     // Fetch all data in parallel for performance
-    const [piggies, tipData, walletBalance, referralBonus] = await Promise.all([
+    const [piggies, tipData, walletBalance, referralBonus, activeMissions] = await Promise.all([
       getUserPiggies(),
       getRandomTip(),
       getWalletBalance(),
       getReferralBonusBalance(),
+      getActiveMissions(),
     ]);
     const stats = await getDashboardStats(piggies);
 
@@ -287,7 +292,7 @@ async function loadGranjaData(firstName) {
     AppState.set({ piggies });
 
     const app = document.getElementById('app');
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData);
+    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length);
   } catch (error) {
@@ -306,9 +311,9 @@ async function loadGranjaData(firstName) {
 /**
  * Build the full dashboard with data.
  */
-function buildGranjaFull(firstName, piggies, stats, tipData) {
+function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
   const piggyCount = piggies.length;
-  const missionBanner = renderMissionBanner(piggyCount);
+  const missionBanner = renderMissionBanner(activeMissions, piggyCount);
   const notification = renderRandomNotification(tipData);
 
   return `
@@ -670,32 +675,40 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Mission Banner click (dynamic based on mission)
   const missionBanner = document.getElementById('mission-banner');
   if (missionBanner) {
-    missionBanner.addEventListener('click', () => {
-      const mission = missionBanner.dataset.mission;
-      switch (mission) {
-        case 'm1':
-          // No piggies ? go to mercado to buy first piggy
-          navigateTo('mercado');
-          break;
-        case 'm1-redeem':
-          // Has 1 piggy ? redeem bonus ? go to gourmet
-          navigateTo('gourmet');
-          break;
-        case 'm3':
-          // Buy 3rd piggy ? go to mercado
-          navigateTo('mercado');
-          break;
-        default:
-          break;
+    missionBanner.addEventListener('click', async () => {
+      const missionId = missionBanner.dataset.mission;
+      const ctaUrl = missionBanner.dataset.cta;
+
+      // Special case: M1 Redeem bonus reminder
+      if (missionId === 'm1-redeem') {
+        navigateTo('gourmet');
+        return;
       }
+
+      // If there is a route CTA, navigate there
+      if (ctaUrl && ctaUrl.startsWith('#/')) {
+        navigateTo(ctaUrl.replace('#/', ''));
+        return;
+      }
+
+      // If no route CTA, it's a manual mission (e.g. m3, m5).
+      // Mark as complete, notify, and reload.
+      await completeMissionManual(missionId);
+      
+      // WhatsApp trigger logic for manual reward claims if requested (e.g., m3, m8, m9)
+      const isMock = window.location.hostname.includes('localhost') ? false : true; // Adjust as needed
+      // Temporary simple alert + reload for manual completions
+      alert('¡Misión completada! Procesando tu recompensa.');
+      
+      // Force reload to refresh missions from DB
+      window.location.reload();
     });
   }
 
-  // M2 Banner click (when piggyCount === 1, both banners visible)
-  const m2Banner = document.getElementById('mission-banner-m2');
-  if (m2Banner) {
-    m2Banner.addEventListener('click', () => {
-      navigateTo('mercado');
+  const m1Redeem = document.getElementById('mission-banner-redeem');
+  if (m1Redeem) {
+    m1Redeem.addEventListener('click', () => {
+      navigateTo('gourmet');
     });
   }
 
