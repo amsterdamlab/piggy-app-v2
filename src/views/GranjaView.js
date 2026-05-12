@@ -11,7 +11,7 @@ import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../services/referralService.js';
-import { getWalletBalance, createWalletRequest, notifyAdminViaWhatsApp } from '../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, createWalletRequest, notifyAdminViaWhatsApp } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
 
 /* =========================================
@@ -268,17 +268,21 @@ function buildGranjaShell(firstName) {
 async function loadGranjaData(firstName) {
   try {
     // Fetch all data in parallel for performance
-    const [piggies, tipData] = await Promise.all([
+    const [piggies, tipData, walletBalance, referralBonus] = await Promise.all([
       getUserPiggies(),
       getRandomTip(),
+      getWalletBalance(),
+      getReferralBonusBalance(),
     ]);
     const stats = await getDashboardStats(piggies);
 
-    // Fetch wallet balance (referral commissions)
-    const walletBalance = await getWalletBalance();
-    stats.walletBalance = walletBalance;
-    stats.saldoDisponible = (stats.disponible || 0) + walletBalance;
-    stats.saldoDisponibleFormatted = formatCOP(stats.saldoDisponible);
+    // wallet_balance = real cash (ciclos completados + recargas)
+    // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
+    stats.walletBalance          = walletBalance;
+    stats.referralBonus          = referralBonus;
+    stats.referralBonusFormatted = formatCOP(referralBonus);
+    stats.saldoDisponible        = walletBalance;
+    stats.saldoDisponibleFormatted = formatCOP(walletBalance);
 
     AppState.set({ piggies });
 
@@ -364,7 +368,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData) {
                     </div>
 
                     <!-- Disponible -->
-                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px; position:relative;">
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px;">
                        <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Saldo Disponible</div>
                        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                            <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
@@ -373,6 +377,28 @@ function buildGranjaFull(firstName, piggies, stats, tipData) {
                            </div>
                        </div>
                     </div>
+
+                    <!-- Bonos de Consumo (Referidos) — canje manual, NO es saldo retirable -->
+                    ${stats.referralBonus > 0 ? `
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.10); padding-top:12px; margin-top:4px;">
+                       <div style="display:flex; align-items:center; justify-content:space-between;">
+                         <div>
+                           <div style="font-size:0.72rem; opacity:0.75; margin-bottom:2px;">🎁 Bonos de Consumo (Referidos)</div>
+                           <div style="font-size:1.1rem; font-weight:700; color:#bbf7d0;">${stats.referralBonusFormatted}</div>
+                         </div>
+                         <span style="
+                           background:rgba(255,255,255,0.15);
+                           border:1px solid rgba(255,255,255,0.25);
+                           color:white;
+                           font-size:0.7rem;
+                           font-weight:700;
+                           padding:5px 10px;
+                           border-radius:8px;
+                           white-space:nowrap;
+                         ">Canjear por carne</span>
+                       </div>
+                    </div>
+                    ` : ''}
                  </div>
 
                   <button id="btn-recargar-wallet" style="
