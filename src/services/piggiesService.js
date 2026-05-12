@@ -17,6 +17,8 @@ import {
 
 /**
  * Fetch all piggies for the current user.
+ * Auto-marks expired piggies as 'completado' in DB so the trigger
+ * can calculate ROI and credit wallet_balance automatically.
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
@@ -30,7 +32,38 @@ export async function getUserPiggies() {
         .order('purchase_date', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return (data || []).map(enrichPiggyData);
+    const piggies = (data || []).map(enrichPiggyData);
+
+    // Auto-persist completion status for expired piggies
+    await markExpiredPiggies(client, piggies);
+
+    return piggies;
+}
+
+/**
+ * Find piggies whose end_date has passed but status is still 'engorde',
+ * and update them to 'completado' in the DB.
+ * The DB trigger (trg_handle_piggy_completion) handles ROI calculation
+ * and wallet_balance credit automatically.
+ * @param {Object} client - Supabase client
+ * @param {Array}  piggies - Already-enriched piggies array
+ */
+async function markExpiredPiggies(client, piggies) {
+    const expiredIds = piggies
+        .filter(p => p.isComplete && p.status !== 'completado')
+        .map(p => p.id);
+
+    if (expiredIds.length === 0) return;
+
+    const { error } = await client
+        .from('piggies')
+        .update({ status: 'completado' })
+        .in('id', expiredIds)
+        .neq('status', 'completado'); // Safety guard: never re-trigger
+
+    if (error) {
+        console.warn('markExpiredPiggies: could not update status', error.message);
+    }
 }
 
 /**
@@ -85,9 +118,6 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
-            // purchase_date and end_date calculate automatically in DB default or trigger, 
-            // but let's rely on default for purchase_date. 
-            // end_date default is 4mo3wk from now in schema.
         })
         .select()
         .single();
@@ -107,7 +137,6 @@ function enrichPiggyData(piggy) {
     const daysLeft = getDaysRemaining(piggy.end_date);
 
     // Calculate progress based on REVERSE logic (143 - daysLeft)
-    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100)));
 
@@ -137,7 +166,6 @@ export async function getDashboardStats(piggies) {
     const availablePiggies = piggies.filter((p) => p.isComplete);
 
     const piggyCount = activePiggies.length;
-    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
     // 1. Adquisición Bonos de Preventa (Active Investment)
@@ -151,21 +179,17 @@ export async function getDashboardStats(piggies) {
         return sum + (totalReturn - p.investment_amount);
     }, 0);
 
-    // 3. Disponible (Finished Cycles Total Value)
+    // 3. Disponible — kept for reference but wallet_balance from DB is the source of truth
     const disponible = availablePiggies.reduce((sum, p) => {
-        // Use stored final amount if exists, else calculate
         if (p.final_return_amount) return sum + p.final_return_amount;
-        // Re-calculate return based on when it finished (using same logic)
         const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
         return sum + totalReturn;
     }, 0);
 
-    // 4. Ciclo de cierre cercano (Min days left) & Progress
     let nextCloseDays = null;
     let nextCloseProgress = 0;
 
     if (activePiggies.length > 0) {
-        // Find piggy with minimum days left (closest to completion)
         const closestPiggy = activePiggies.reduce((prev, curr) =>
             (prev.daysLeft < curr.daysLeft) ? prev : curr
         );
@@ -191,12 +215,8 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
- * The current_month of the item determines how many days remain in the cycle.
- * @param {Object} item - The marketplace item
- * @param {string|null} customName - Optional custom name for the piggy
  */
 export async function buyMarketplaceItem(item, customName = null) {
-    // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
@@ -217,8 +237,6 @@ export async function buyMarketplaceItem(item, customName = null) {
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
-
-        // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
@@ -227,8 +245,6 @@ export async function buyMarketplaceItem(item, customName = null) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
-    // Call Database Function (RPC)
-    // Passes current_month so the DB calculates the correct end_date
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -244,12 +260,10 @@ export async function buyMarketplaceItem(item, customName = null) {
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
-    // Success! Fetch the created piggy to return it
     if (rpcData && rpcData.piggy_id) {
         return getPiggyById(rpcData.piggy_id);
     }
 
-    // Fallback just for fetching data, not for logic
     const { data: latest } = await client
         .from('piggies')
         .select('*')
@@ -262,15 +276,3 @@ export async function buyMarketplaceItem(item, customName = null) {
 
 // Re-export utility functions for use in views
 export { calculateBaseROI, calculateTotalReturn, formatCOP, formatPercentage, getDaysRemaining };
-
-/**
- * Handle "Solicitar Entrega de Carne" or Withdraw
- * Actually, this just updates user balance or logs for now.
- * Real implementation would need a new table 'transactions' or 'withdrawals'.
- */
-export async function requestWithdraw(amount) {
-   // This would call an RPC or insert into 'withdrawals' table
-   // returning success
-   await new Promise(r => setTimeout(r, 1000));
-   return true;
-}
