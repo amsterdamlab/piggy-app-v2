@@ -1,83 +1,76 @@
+/* ============================================
+   PIGGY APP — Piggies Service
+   Manages piggy CRUD and ROI calculations
+   ============================================ */
+
 import { getClient, isUsingMockData } from './supabase.js';
-import { MOCK_PIGGIES, simulateWeight } from './mockData.js';
-import { AppState } from '../state.js';
+import {
+    MOCK_PIGGIES,
+    calculateBaseROI,
+    calculateTotalReturn,
+    getProgressPercentage,
+    getDaysRemaining,
+    simulateWeight,
+    formatCOP,
+    formatPercentage,
+} from './mockData.js';
 
 /**
- * Get all piggies for the current user.
- * Fetches from Supabase DB, auto-detects expired piggies, and falls back to mock if not configured.
- * @returns {Promise<Array>}
+ * Fetch all piggies for the current user.
+ * Auto-marks expired piggies as 'completado' in DB so the trigger
+ * can calculate ROI and credit wallet_balance automatically.
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
-        const enriched = MOCK_PIGGIES.map(enrichPiggyData);
-        return enriched.sort((a, b) => new Date(b.purchase_date) - new Date(a.purchase_date));
+        return MOCK_PIGGIES.map(enrichPiggyData);
     }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-    if (!user) return [];
 
-    // Sync weights dynamically in the DB for this user before fetching
-    await client.rpc('sync_piggy_weights', { p_user_id: user.id });
-
-    // Find expired piggies automatically (moved from GranjaView to here)
-    await markExpiredPiggies(user.id);
+    // Sincronizar los pesos reales en base de datos antes de consultar
+    if (user) {
+        await client.rpc('sync_piggy_weights', { p_user_id: user.id }).catch(e => console.warn('Sync weight error:', e));
+    }
 
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('purchase_date', { ascending: false });
 
-    if (error) {
-        console.warn('Error fetching piggies:', error);
-        return [];
-    }
+    if (error) throw new Error(error.message);
+    const piggies = (data || []).map(enrichPiggyData);
 
-    // Enrich DB data with runtime calculated fields (daysLeft, progress)
-    return (data || []).map(enrichPiggyData);
+    // Auto-persist completion status for expired piggies
+    await markExpiredPiggies(client, piggies);
+
+    return piggies;
 }
 
 /**
- * Identify piggies that have passed their end_date and mark them as complete.
- * The DB trigger `handle_piggy_completion` will automatically calculate ROI 
- * and credit the wallet.
- * @param {string} userId 
+ * Find piggies whose end_date has passed but status is still 'engorde',
+ * and update them to 'completado' in the DB.
+ * The DB trigger (trg_handle_piggy_completion) handles ROI calculation
+ * and wallet_balance credit automatically.
+ * @param {Object} client - Supabase client
+ * @param {Array}  piggies - Already-enriched piggies array
  */
-export async function markExpiredPiggies(userId) {
-    if (isUsingMockData()) return;
+async function markExpiredPiggies(client, piggies) {
+    const expiredIds = piggies
+        .filter(p => p.isComplete && p.status !== 'completado')
+        .map(p => p.id);
 
-    const client = getClient();
-    
-    // Find piggies that are still "engorde" but end_date has passed
-    const { data: expiredPiggies, error: fetchError } = await client
+    if (expiredIds.length === 0) return;
+
+    const { error } = await client
         .from('piggies')
-        .select('id, end_date')
-        .eq('user_id', userId)
-        .eq('status', 'engorde')
-        .lte('end_date', new Date().toISOString());
+        .update({ status: 'completado' })
+        .in('id', expiredIds)
+        .neq('status', 'completado'); // Safety guard: never re-trigger
 
-    if (fetchError) {
-        console.warn('Error fetching expired piggies:', fetchError);
-        return;
+    if (error) {
+        console.warn('markExpiredPiggies: could not update status', error.message);
     }
-
-    if (!expiredPiggies || expiredPiggies.length === 0) return;
-
-    // Mark them as "completado"
-    // Using Promise.all since we might need to update multiple
-    await Promise.all(expiredPiggies.map(async (piggy) => {
-        const { error: updateError } = await client
-            .from('piggies')
-            .update({ status: 'completado' })
-            .eq('id', piggy.id);
-
-        if (updateError) {
-            console.warn(`Error updating expired piggy ${piggy.id}:`, updateError);
-        } else {
-            console.log(`✅ Piggy ${piggy.id} cycle completed. Trigger handled wallet credit.`);
-        }
-    }));
 }
 
 /**
@@ -312,61 +305,6 @@ export async function buyMarketplaceItem(item, customName = null) {
         .single();
 
     return enrichPiggyData(latest);
-}
-
-/**
- * Get days remaining until a specific date
- */
-function getDaysRemaining(endDateStr) {
-    if (!endDateStr) return 0;
-    const end = new Date(endDateStr);
-    const now = new Date();
-    const diffTime = end - now;
-    if (diffTime <= 0) return 0;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-/**
- * Format number as COP currency
- */
-function formatCOP(value) {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(value);
-}
-
-/**
- * Format decimal to percentage string
- */
-function formatPercentage(value) {
-    return `${(value * 100).toFixed(0)}%`;
-}
-
-/**
- * Calculate the base ROI based on number of active piggies
- * @param {number} activePiggyCount 
- * @returns {number} Decimal representation of ROI (e.g., 0.1 for 10%)
- */
-function calculateBaseROI(activePiggyCount) {
-    if (activePiggyCount === 0) return 0.08; // Base 8% without piggies
-    if (activePiggyCount === 1) return 0.08; // 1 piggy = 8%
-    if (activePiggyCount === 2) return 0.09; // 2 piggies = 9%
-    return 0.10; // 3 or more = 10%
-}
-
-/**
- * Calculate total return amount including base ROI and extra bonuses
- * @param {number} investmentAmount 
- * @param {number} baseROI Decimal (0.08 to 0.10)
- * @param {number} extraBonus Decimal (e.g. 0.01 for 1%)
- * @returns {number}
- */
-function calculateTotalReturn(investmentAmount, baseROI, extraBonus = 0) {
-    const totalROI = baseROI + extraBonus;
-    return investmentAmount * (1 + totalROI);
 }
 
 // Re-export utility functions for use in views
