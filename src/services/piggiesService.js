@@ -1,93 +1,113 @@
-/* ============================================
-   PIGGY APP — Piggies Service
-   Manages piggy CRUD and ROI calculations
-   ============================================ */
-
 import { getClient, isUsingMockData } from './supabase.js';
-import {
-    MOCK_PIGGIES,
-    calculateBaseROI,
-    calculateTotalReturn,
-    getProgressPercentage,
-    getDaysRemaining,
-    simulateWeight,
-    formatCOP,
-    formatPercentage,
-} from './mockData.js';
+import { MOCK_PIGGIES, simulateWeight } from './mockData.js';
+import { AppState } from '../state.js';
 
 /**
- * Fetch all piggies for the current user.
- * Auto-marks expired piggies as 'completado' in DB so the trigger
- * can calculate ROI and credit wallet_balance automatically.
+ * Get all piggies for the current user.
+ * Fetches from Supabase DB, auto-detects expired piggies, and falls back to mock if not configured.
+ * @returns {Promise<Array>}
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
-        return MOCK_PIGGIES.map(enrichPiggyData);
+        const enriched = MOCK_PIGGIES.map(enrichPiggyData);
+        return enriched.sort((a, b) => new Date(b.purchase_date) - new Date(a.purchase_date));
     }
 
     const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return [];
+
+    // Sync weights dynamically in the DB for this user before fetching
+    await client.rpc('sync_piggy_weights', { p_user_id: user.id });
+
+    // Find expired piggies automatically (moved from GranjaView to here)
+    await markExpiredPiggies(user.id);
+
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .order('purchase_date', { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
-    const piggies = (data || []).map(enrichPiggyData);
+    if (error) {
+        console.warn('Error fetching piggies:', error);
+        return [];
+    }
 
-    // Auto-persist completion status for expired piggies
-    await markExpiredPiggies(client, piggies);
-
-    return piggies;
+    // Enrich DB data with runtime calculated fields (daysLeft, progress)
+    return (data || []).map(enrichPiggyData);
 }
 
 /**
- * Find piggies whose end_date has passed but status is still 'engorde',
- * and update them to 'completado' in the DB.
- * The DB trigger (trg_handle_piggy_completion) handles ROI calculation
- * and wallet_balance credit automatically.
- * @param {Object} client - Supabase client
- * @param {Array}  piggies - Already-enriched piggies array
+ * Identify piggies that have passed their end_date and mark them as complete.
+ * The DB trigger `handle_piggy_completion` will automatically calculate ROI 
+ * and credit the wallet.
+ * @param {string} userId 
  */
-async function markExpiredPiggies(client, piggies) {
-    const expiredIds = piggies
-        .filter(p => p.isComplete && p.status !== 'completado')
-        .map(p => p.id);
+export async function markExpiredPiggies(userId) {
+    if (isUsingMockData()) return;
 
-    if (expiredIds.length === 0) return;
-
-    const { error } = await client
+    const client = getClient();
+    
+    // Find piggies that are still "engorde" but end_date has passed
+    const { data: expiredPiggies, error: fetchError } = await client
         .from('piggies')
-        .update({ status: 'completado' })
-        .in('id', expiredIds)
-        .neq('status', 'completado'); // Safety guard: never re-trigger
+        .select('id, end_date')
+        .eq('user_id', userId)
+        .eq('status', 'engorde')
+        .lte('end_date', new Date().toISOString());
 
-    if (error) {
-        console.warn('markExpiredPiggies: could not update status', error.message);
+    if (fetchError) {
+        console.warn('Error fetching expired piggies:', fetchError);
+        return;
     }
+
+    if (!expiredPiggies || expiredPiggies.length === 0) return;
+
+    // Mark them as "completado"
+    // Using Promise.all since we might need to update multiple
+    await Promise.all(expiredPiggies.map(async (piggy) => {
+        const { error: updateError } = await client
+            .from('piggies')
+            .update({ status: 'completado' })
+            .eq('id', piggy.id);
+
+        if (updateError) {
+            console.warn(`Error updating expired piggy ${piggy.id}:`, updateError);
+        } else {
+            console.log(`✅ Piggy ${piggy.id} cycle completed. Trigger handled wallet credit.`);
+        }
+    }));
 }
 
 /**
  * Get a single piggy by ID.
+ * @param {string} id 
+ * @returns {Promise<Object>}
  */
-export async function getPiggyById(piggyId) {
+export async function getPiggyById(id) {
     if (isUsingMockData()) {
-        const piggy = MOCK_PIGGIES.find((p) => p.id === piggyId);
-        return piggy ? enrichPiggyData(piggy) : null;
+        const piggy = MOCK_PIGGIES.find(p => p.id === id || p.id === Number(id));
+        if (!piggy) throw new Error('Piggy not found');
+        return enrichPiggyData(piggy);
     }
 
     const client = getClient();
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .eq('id', piggyId)
+        .eq('id', id)
         .single();
 
-    if (error) throw new Error(error.message);
-    return data ? enrichPiggyData(data) : null;
+    if (error || !data) throw new Error('Piggy no encontrado en DB');
+    return enrichPiggyData(data);
 }
 
 /**
- * Adopt a new piggy.
+ * Create a new piggy for the user (Testing / Admin purpose).
+ * Note: Use buyMarketplaceItem for real purchases.
+ * @param {string} piggyName 
+ * @returns {Promise<Object>}
  */
 export async function adoptPiggy(piggyName) {
     if (isUsingMockData()) {
@@ -97,6 +117,7 @@ export async function adoptPiggy(piggyName) {
             name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
+            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
             investment_amount: 250000,
             extra_roi_bonus: 0,
@@ -118,6 +139,9 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
+            // purchase_date and end_date calculate automatically in DB default or trigger, 
+            // but let's rely on default for purchase_date. 
+            // end_date default is 4mo3wk from now in schema.
         })
         .select()
         .single();
@@ -137,6 +161,7 @@ function enrichPiggyData(piggy) {
     const daysLeft = getDaysRemaining(piggy.end_date);
 
     // Calculate progress based on REVERSE logic (143 - daysLeft)
+    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100)));
 
@@ -166,6 +191,7 @@ export async function getDashboardStats(piggies) {
     const availablePiggies = piggies.filter((p) => p.isComplete);
 
     const piggyCount = activePiggies.length;
+    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
     // 1. Adquisición Bonos de Preventa (Active Investment)
@@ -179,17 +205,21 @@ export async function getDashboardStats(piggies) {
         return sum + (totalReturn - p.investment_amount);
     }, 0);
 
-    // 3. Disponible — kept for reference but wallet_balance from DB is the source of truth
+    // 3. Disponible (Finished Cycles Total Value)
     const disponible = availablePiggies.reduce((sum, p) => {
+        // Use stored final amount if exists, else calculate
         if (p.final_return_amount) return sum + p.final_return_amount;
+        // Re-calculate return based on when it finished (using same logic)
         const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
         return sum + totalReturn;
     }, 0);
 
+    // 4. Ciclo de cierre cercano (Min days left) & Progress
     let nextCloseDays = null;
     let nextCloseProgress = 0;
 
     if (activePiggies.length > 0) {
+        // Find piggy with minimum days left (closest to completion)
         const closestPiggy = activePiggies.reduce((prev, curr) =>
             (prev.daysLeft < curr.daysLeft) ? prev : curr
         );
@@ -215,8 +245,12 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
+ * The current_month of the item determines how many days remain in the cycle.
+ * @param {Object} item - The marketplace item
+ * @param {string|null} customName - Optional custom name for the piggy
  */
 export async function buyMarketplaceItem(item, customName = null) {
+    // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
@@ -237,6 +271,8 @@ export async function buyMarketplaceItem(item, customName = null) {
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
+
+        // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
@@ -245,6 +281,8 @@ export async function buyMarketplaceItem(item, customName = null) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
+    // Call Database Function (RPC)
+    // Passes current_month so the DB calculates the correct end_date
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -260,10 +298,12 @@ export async function buyMarketplaceItem(item, customName = null) {
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
+    // Success! Fetch the created piggy to return it
     if (rpcData && rpcData.piggy_id) {
         return getPiggyById(rpcData.piggy_id);
     }
 
+    // Fallback just for fetching data, not for logic
     const { data: latest } = await client
         .from('piggies')
         .select('*')
@@ -272,6 +312,61 @@ export async function buyMarketplaceItem(item, customName = null) {
         .single();
 
     return enrichPiggyData(latest);
+}
+
+/**
+ * Get days remaining until a specific date
+ */
+function getDaysRemaining(endDateStr) {
+    if (!endDateStr) return 0;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    const diffTime = end - now;
+    if (diffTime <= 0) return 0;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Format number as COP currency
+ */
+function formatCOP(value) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(value);
+}
+
+/**
+ * Format decimal to percentage string
+ */
+function formatPercentage(value) {
+    return `${(value * 100).toFixed(0)}%`;
+}
+
+/**
+ * Calculate the base ROI based on number of active piggies
+ * @param {number} activePiggyCount 
+ * @returns {number} Decimal representation of ROI (e.g., 0.1 for 10%)
+ */
+function calculateBaseROI(activePiggyCount) {
+    if (activePiggyCount === 0) return 0.08; // Base 8% without piggies
+    if (activePiggyCount === 1) return 0.08; // 1 piggy = 8%
+    if (activePiggyCount === 2) return 0.09; // 2 piggies = 9%
+    return 0.10; // 3 or more = 10%
+}
+
+/**
+ * Calculate total return amount including base ROI and extra bonuses
+ * @param {number} investmentAmount 
+ * @param {number} baseROI Decimal (0.08 to 0.10)
+ * @param {number} extraBonus Decimal (e.g. 0.01 for 1%)
+ * @returns {number}
+ */
+function calculateTotalReturn(investmentAmount, baseROI, extraBonus = 0) {
+    const totalROI = baseROI + extraBonus;
+    return investmentAmount * (1 + totalROI);
 }
 
 // Re-export utility functions for use in views
