@@ -5,7 +5,8 @@
 
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
-import { getUserPiggies, getDashboardStats, formatCOP } from '../services/piggiesService.js';
+import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
+import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
@@ -349,64 +350,167 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
 
               <!-- Decorative Big Icon -->
               <div style="position: absolute; bottom: -15px; right: -15px; opacity: 0.15; transform: rotate(-15deg); color:white;">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
               </div>
 
-              <!-- Header -->
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; position:relative; z-index:2;">
-                  <div>
-                     <h3 style="margin: 0; font-size: 1.1rem; opacity: 0.9; font-weight:600;">Wallet de ${firstName}</h3>
-                     <div style="font-size: 0.8rem; opacity: 0.8; margin-top:2px;">Billetera Inteligente Piggy</div>
-                  </div>
-                  <div style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">
-                     Activa &#128994;
-                  </div>
-              </div>
-
-              <!-- Main Balance Grid -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; position:relative; z-index:2;">
+              <div style="position:relative; z-index:2;">
+                 <h3 style="margin:0 0 20px 0; font-size:1.25rem; font-weight:700;">Wallet de ${firstName}</h3>
                  
-                 <!-- Retornos Recibidos -->
-                 <div>
-                    <div style="font-size: 0.8rem; opacity: 0.9; font-weight: 500; margin-bottom: 4px;">Retornos (Ganancia)</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                       ${stats.saldoDisponibleFormatted}
+                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Adquisicion -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Adquisición Bonos de Preventa</div>
+                       <div style="font-size:1rem; font-weight:600;">${stats.adquisicionBonosFormatted}</div>
                     </div>
+                    <!-- Diferencial (High Visual Weight) -->
+                    <div>
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Diferencial de Preventa</div>
+                       <div style="
+                           font-size: 1.3rem; 
+                           font-weight: 700; 
+                           color: #39FF14; 
+                           text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+                           letter-spacing: 0.5px;
+                       ">+${stats.diferencialPreventaFormatted}</div>
+                    </div>
+
+                    <!-- Disponible -->
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.15); padding-top:16px;">
+                       <div style="font-size:0.75rem; opacity:0.8; margin-bottom:4px;">Saldo Disponible</div>
+                       <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                           <div style="font-size:1.75rem; font-weight:800; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
+                           <div style="font-size:0.75rem; opacity:0.9; text-align:right; padding-bottom: 2px;">
+                               Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
+                           </div>
+                       </div>
+                    </div>
+
+                    <!-- Bonos de Consumo (Referidos) — canje manual, NO es saldo retirable -->
+                    ${stats.referralBonus > 0 ? `
+                    <div style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.10); padding-top:12px; margin-top:4px;">
+                       <div style="display:flex; align-items:center; justify-content:space-between;">
+                         <div>
+                           <div style="font-size:0.72rem; opacity:0.75; margin-bottom:2px;">🎁 Bonos de Consumo (Referidos)</div>
+                           <div style="font-size:1.1rem; font-weight:700; color:#bbf7d0;">${stats.referralBonusFormatted}</div>
+                         </div>
+                         <span style="
+                           background:rgba(255,255,255,0.15);
+                           border:1px solid rgba(255,255,255,0.25);
+                           color:white;
+                           font-size:0.7rem;
+                           font-weight:700;
+                           padding:5px 10px;
+                           border-radius:8px;
+                           white-space:nowrap;
+                         ">Canjear por carne</span>
+                       </div>
+                    </div>
+                    ` : ''}
                  </div>
 
-                 <!-- Bonos Referidos -->
-                 <div>
-                    <div style="font-size: 0.8rem; opacity: 0.9; font-weight: 500; margin-bottom: 4px;">Bonos Referidos</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                       ${stats.referralBonusFormatted}
-                    </div>
-                 </div>
+                  <button id="btn-recargar-wallet" style="
+                     width: 100%;
+                     background: white;
+                     color: #059669;
+                     border: none;
+                     padding: 13px 20px;
+                     border-radius: 12px;
+                     font-weight: 700;
+                     font-size: 0.95rem;
+                     cursor: pointer;
+                     display: flex;
+                     align-items: center;
+                     justify-content: center;
+                     gap: 8px;
+                     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                     transition: transform 0.2s, box-shadow 0.2s;
+                  "
+                  onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.2)';"
+                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
+                  >
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                     Recargar mi Wallet
+                  </button>
 
-                 <!-- Total Compras (En Ciclo) -->
-                 <div>
-                    <div style="font-size: 0.8rem; opacity: 0.9; font-weight: 500; margin-bottom: 4px;">Capital Activo</div>
-                    <div style="font-size: 1.1rem; font-weight: 700; opacity: 0.9;">
-                       ${stats.adquisicionBonosFormatted}
-                    </div>
-                 </div>
-
-                 <!-- ROI Estimado -->
-                 <div>
-                    <div style="font-size: 0.8rem; opacity: 0.9; font-weight: 500; margin-bottom: 4px;">Tasa Retorno Base</div>
-                    <div style="font-size: 1.1rem; font-weight: 700; opacity: 0.9;">
-                       ${stats.baseROIFormatted}
-                    </div>
-                 </div>
-
+                  ${stats.saldoDisponible > 0 ? `
+                  <div style="margin-top: 10px;">
+                     <button id="btn-retirar-saldo" style="
+                        background: rgba(255,255,255,0.18);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.35);
+                        padding: 11px 20px;
+                        border-radius: 12px;
+                        font-weight: 700;
+                        font-size: 0.88rem;
+                        cursor: pointer;
+                        width: 100%;
+                        backdrop-filter: blur(5px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                      "><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Retirar mi Saldo</button>
+                  </div>
+                  ` : ""}
               </div>
            </div>
         </div>
 
-        ${missionBanner}
-        
-        <div class="section" id="piggies-section">
-          ${renderPiggiesList(piggies, stats)}
+
+
+        <!-- ROI Info -->
+        ${stats.activeCount > 0 ? `
+          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 12px;">
+            <button id="btn-quick-buy" style="
+                background: #ec4899; 
+                color: white; 
+                border: none; 
+                width: 100%; 
+                padding: 14px 20px; 
+                border-radius: 12px; 
+                font-weight: 700; 
+                font-size: 1rem; 
+                cursor: pointer; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 10px;
+                box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+                transition: transform 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="
+                    background: white; 
+                    color: #ec4899;
+                    width: 22px; 
+                    height: 22px; 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    font-size: 18px;
+                    font-weight: 800;
+                    padding-bottom: 2px;
+                ">+</div>
+                Compra un Nuevo Piggy
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- Mis Cerdos -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.2s;">
+          <div class="section__header">
+            <h3 class="section__title">Mis Piggys</h3>
+            <a href="#/mercado" class="section__link">
+              Ver ofertas ${renderIcon('arrowRight', '', '14')}
+            </a>
+          </div>
+
+          ${piggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(piggies, stats.baseROI)}
         </div>
+
+        <!-- Dynamic Mission Banner -->
+        ${missionBanner}
+
       </div>
 
       ${renderBottomNav('granja')}
@@ -414,142 +518,144 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
   `;
 }
 
-/**
- * Render the list of piggies.
- */
-function renderPiggiesList(piggies, stats) {
-  if (piggies.length === 0) {
-    return `
-      <div class="empty-state">
-        <div class="empty-state__icon">${renderIcon('piggy')}</div>
-        <p>A&uacute;n no tienes ning&uacute;n Piggy.</p>
-        <button class="button button--primary" onclick="window.location.hash='#/mercado'">
-          Comprar mi primer Piggy
-        </button>
-      </div>
-    `;
-  }
+// ... renderGreeting remains the same ...
 
-  // Find the closest piggy if there are active ones
-  let closestPiggyHTML = '';
-  if (stats.nextCloseDays !== null) {
-    closestPiggyHTML = `
-      <div class="closest-piggy-alert animate-fade-in-up" style="animation-delay: 0.2s;">
-        <div class="closest-piggy-alert__icon">⏳</div>
-        <div class="closest-piggy-alert__content">
-          <div class="closest-piggy-alert__title">Próximo Piggy en completarse</div>
-          <div class="closest-piggy-alert__desc">
-            En <strong>${stats.nextCloseDays} d&iacute;as</strong> recibes tu dinero.
-          </div>
+function renderGreeting(firstName) {
+  const initial = firstName.charAt(0).toUpperCase();
+  return `
+    <div class="granja-greeting animate-fade-in" style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="granja-greeting__avatar">
+          <span class="granja-greeting__initial">${initial}</span>
+          <span class="granja-greeting__online"></span>
+        </div>
+        <div class="granja-greeting__text">
+          <span class="granja-greeting__welcome">¡Bienvenido!</span>
+          <span class="granja-greeting__name">Hola, ${firstName}</span>
         </div>
       </div>
-    `;
-  }
-
-  const listHTML = piggies.map((p, index) => {
-    // Stagger animation based on index
-    const delay = 0.2 + (index * 0.1);
-    
-    // Status Logic
-    const isCompleted = p.isComplete;
-    const progress = p.progress;
-    
-    const statusClass = isCompleted ? 'piggy-card__status--completed' : 'piggy-card__status--active';
-    const statusText = isCompleted ? '✓ Ciclo Completado' : 'Engorde';
-    const progressBarColor = isCompleted ? '#10B981' : 'var(--primary-color)';
-
-    // Liquidar button is replaced by a non-clickable text that guides user to Wallet
-    const actionArea = isCompleted
-      ? `<div style="text-align:center; font-size:0.8rem; color:#059669; font-weight:600; padding: 12px 0 4px 0; border-top: 1px dashed #e2e8f0; margin-top: 8px;">
-          ✓ El retorno de este ciclo ya está disponible en tu Wallet.
-         </div>`
-      : '';
-
-    return `
-      <div class="piggy-card animate-fade-in-up" style="animation-delay: ${delay}s;" data-id="${p.id}">
-        <div class="piggy-card__header">
-          <div class="piggy-card__avatar">
-            <img src="/img/categories/${p.category || 'standard'}.jpg" alt="Piggy" onerror="this.src='/img/default-piggy.jpg'; this.onerror=null;" />
-          </div>
-          <div class="piggy-card__info">
-            <h3 class="piggy-card__name">${p.name}</h3>
-            <div class="piggy-card__status ${statusClass}">${statusText}</div>
-          </div>
-          <div class="piggy-card__weight">
-            <span class="piggy-card__weight-value">${p.currentWeight}</span>
-            <span class="piggy-card__weight-unit">kg</span>
-          </div>
-        </div>
-        
-        <div class="piggy-card__details">
-          <div class="piggy-card__detail-row">
-            <span>Inversi&oacute;n</span>
-            <strong>${formatCOP(p.investment_amount)}</strong>
-          </div>
-          <div class="piggy-card__detail-row">
-            <span>Retorno proyectado</span>
-            <strong class="text-primary">${formatCOP(p.investment_amount + (p.investment_amount * (stats.baseROI + (p.extra_roi_bonus || 0))))}</strong>
-          </div>
-        </div>
-        
-        <div class="piggy-card__progress">
-          <div class="piggy-card__progress-header">
-            <span>Progreso del ciclo</span>
-            <span style="color: ${progressBarColor}; font-weight: bold;">${progress}%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-bar__fill" style="width: ${progress}%; background-color: ${progressBarColor};"></div>
-          </div>
-        </div>
-        
-        ${actionArea}
+      <div id="greeting-referral-code" style="
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+        letter-spacing: 1.5px;
+      " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(124,58,237,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124,58,237,0.3)'">
+        <span id="greeting-code-value">···</span>
       </div>
-    `;
-  }).join('');
-
-  return closestPiggyHTML + '<div class="piggies-list">' + listHTML + '</div>';
+    </div>
+  `;
 }
 
 /**
- * Common layout elements
+ * Render empty piggies state matching screen2.png.
  */
-function renderGreeting(firstName) {
+function renderEmptyPiggies() {
   return `
-    <div class="granja-header animate-fade-in-down">
-      <div class="granja-header__user">
-        <div class="avatar">
-          <span>${firstName.charAt(0)}</span>
-          <div class="avatar__badge"></div>
-        </div>
-        <div class="granja-header__text">
-          <span class="granja-header__welcome">¡Bienvenido!</span>
-          <h1 class="granja-header__name">Hola, ${firstName}</h1>
-        </div>
+    <div class="empty-state">
+      <div class="empty-state__icon">
+        <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" />
       </div>
-      <button class="icon-button" id="profile-btn" aria-label="Perfil">
-        ${renderIcon('moreHorizontal')}
+      <div class="empty-state__title">No tienes Piggys aún</div>
+      <div class="empty-state__description">
+        Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
+      </div>
+      <button class="btn btn--primary" id="btn-adopt-empty" onclick="location.hash='#/adopcion'">
+        Compra un nuevo Piggy
       </button>
     </div>
   `;
 }
 
-function renderBottomNav(activeTab) {
+// ... renderPiggiesList and renderPiggyCard remain the same ...
+
+function renderPiggiesList(piggies, baseROI) {
   return `
-    <nav class="bottom-nav">
-      <a href="#/" class="bottom-nav__item ${activeTab === 'granja' ? 'active' : ''}">
-        ${renderIcon('home')}
-        <span>Mi Granja</span>
+    <div class="piggies-list">
+      ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
+    </div>
+  `;
+}
+
+function renderPiggyCard(piggy, baseROI) {
+  const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
+  const projectedReturn = piggy.investment_amount * (1 + totalROI);
+
+  return `
+    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
+      <div class="piggy-card__header">
+        <div class="piggy-card__avatar">
+          <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+        </div>
+        <div class="piggy-card__info">
+          <div class="piggy-card__name">${piggy.name}</div>
+          <div class="piggy-card__status">
+            ${piggy.isComplete
+      ? '<span class="badge badge--success">✓ Ciclo completado</span>'
+      : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
+    }
+          </div>
+        </div>
+        ${piggy.extra_roi_bonus > 0 ? `
+          <span class="badge badge--warning">+${(piggy.extra_roi_bonus * 100).toFixed(0)}%</span>
+        ` : ''}
+      </div>
+
+      <div class="piggy-card__progress">
+        <div class="piggy-card__progress-header">
+          <span class="text-sm text-muted">Progreso del ciclo</span>
+          <span class="text-sm font-semibold">${piggy.progress}%</span>
+        </div>
+        <div class="progress">
+          <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
+        </div>
+      </div>
+
+      <div class="piggy-card__stats grid-2">
+        <div>
+          <div class="text-xs text-muted">Peso actual</div>
+          <div class="font-semibold">${piggy.currentWeight} kg</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted">Margen Comercial Estimado</div>
+          <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
+          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ... renderBottomNav remains the same ...
+export function renderBottomNav(activeTab) {
+  return `
+    <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
+      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
+        <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
+        <span>Granja</span>
       </a>
-      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'active' : ''}">
-        ${renderIcon('piggy')}
+      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
+        <span class="bottom-nav__icon">
+          <span class="icon" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+          </span>
+        </span>
         <span>Mercado</span>
       </a>
-      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'active' : ''}">
-        ${renderIcon('shoppingBag')}
-        <span>Gourmet</span>
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
+        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
+        <span>Tienda</span>
       </a>
-      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'active' : ''}">
-        ${renderIcon('mapPin')}
+      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
+        <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
         <span>Aliados</span>
       </a>
     </nav>
@@ -557,148 +663,707 @@ function renderBottomNav(activeTab) {
 }
 
 /**
- * Event Listeners
+ * Attach event listeners.
  */
 function attachGranjaListeners(hasPiggies, stats, piggyCount) {
-  // Navigation
-  document.querySelectorAll('.bottom-nav__item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      const href = e.currentTarget.getAttribute('href');
-      if (href) navigateTo(href);
+  // Piggy card click
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
     });
   });
 
-  // Profile Button Action
-  const profileBtn = document.getElementById('profile-btn');
-  if (profileBtn) {
-    profileBtn.addEventListener('click', async () => {
-      if (confirm('¿Deseas cerrar sesión?')) {
-        await signOut();
-        AppState.clear();
-        navigateTo('#/login');
+  // Mission Banner click (dynamic based on mission)
+  const missionBanner = document.getElementById('mission-banner');
+  if (missionBanner) {
+    missionBanner.addEventListener('click', async () => {
+      const missionId = missionBanner.dataset.mission;
+      const ctaUrl = missionBanner.dataset.cta;
+
+      // Special case: M1 Redeem bonus reminder
+      if (missionId === 'm1-redeem') {
+        navigateTo('gourmet');
+        return;
       }
+
+      // If there is a route CTA, navigate there
+      if (ctaUrl && ctaUrl.startsWith('#/')) {
+        navigateTo(ctaUrl.replace('#/', ''));
+        return;
+      }
+
+      // If no route CTA, it's a manual mission (e.g. m3, m5).
+      // Mark as complete, notify, and reload.
+      await completeMissionManual(missionId);
+      
+      // WhatsApp trigger logic for manual reward claims if requested (e.g., m3, m8, m9)
+      const isMock = window.location.hostname.includes('localhost') ? false : true; // Adjust as needed
+      // Temporary simple alert + reload for manual completions
+      alert('¡Misión completada! Procesando tu recompensa.');
+      
+      // Force reload to refresh missions from DB
+      window.location.reload();
     });
   }
 
-  // Interactive Banners Action (Dynamic CTA resolution)
-  const banners = document.querySelectorAll('.banner--interactive');
-  banners.forEach(banner => {
-    banner.addEventListener('click', () => {
-      const cta = banner.getAttribute('data-cta');
-      const missionId = banner.getAttribute('data-mission');
-
-      if (cta) {
-        navigateTo(cta);
-      } else if (missionId === 'm3') {
-        // Special case for M3 (Referrals)
-        handleReferralAction();
-      } else {
-        // Fallback for missions without explicit CTA
-        alert(`Has hecho clic en la misión: ${missionId}. Instrucciones en desarrollo.`);
-      }
+  const m1Redeem = document.getElementById('mission-banner-redeem');
+  if (m1Redeem) {
+    m1Redeem.addEventListener('click', () => {
+      navigateTo('gourmet');
     });
-  });
+  }
 
   // Dynamic Notification click
-  const notif = document.getElementById('dynamic-notification');
-  if (notif) {
-    notif.addEventListener('click', () => {
-      const cta = notif.getAttribute('data-cta');
-      if (cta) navigateTo(cta);
+  const notifEl = document.getElementById('dynamic-notification');
+  if (notifEl && notifEl.dataset.cta) {
+    notifEl.addEventListener('click', () => {
+      const cta = notifEl.dataset.cta;
+      if (cta.startsWith('#/')) {
+        navigateTo(cta.replace('#/', ''));
+      } else {
+        window.open(cta, '_blank');
+      }
     });
   }
 
-  // Piggy Cards click
-  const piggyCards = document.querySelectorAll('.piggy-card');
-  piggyCards.forEach(card => {
-    card.addEventListener('click', (e) => {
-      // Prevent click if they clicked the 'liquidar' button (handled below)
-      if (e.target.closest('.piggy-card__action')) return;
-      
-      const id = card.getAttribute('data-id');
-      if (id) navigateTo(`#/piggy/${id}`);
+  // Quick Buy Action
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+    quickBuyBtn.addEventListener('click', async () => {
+      quickBuyBtn.style.opacity = '0.7';
+      quickBuyBtn.style.pointerEvents = 'none';
+
+      try {
+        const items = await getMarketplaceItems();
+        // Find Standard Initial Piggy (Month 1, Standard)
+        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+
+        if (standardPiggy) {
+          showCheckoutModal(standardPiggy);
+        } else {
+          navigateTo('mercado');
+        }
+      } catch (error) {
+        console.error('Quick buy error:', error);
+        navigateTo('mercado');
+      } finally {
+        quickBuyBtn.style.opacity = '1';
+        quickBuyBtn.style.pointerEvents = 'auto';
+      }
     });
+  }
+
+  // Recargar Wallet button
+  document.getElementById('btn-recargar-wallet')?.addEventListener('click', () => {
+    openWalletRechargeInfo();
   });
 
-  // Wallet WhatsApp claim listeners (Removed inside card, but keeping logic in case it's used elsewhere)
-  const wpButtons = document.querySelectorAll('.btn-whatsapp-claim');
-  wpButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-       e.stopPropagation(); // don't go to detail page
-       
-       // Build WhatsApp message for cycle completion
-       const adminPhone = '573001234567'; // Replace with real admin
-       const msg = `Hola equipo Piggy, mi ciclo ha terminado y quiero solicitar el desbloqueo de mi Piggy Silver o coordinar el uso de mi Wallet.`;
-       const wpUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(msg)}`;
-       
-       window.open(wpUrl, '_blank');
-    });
+  // Unified Retirar mi Saldo button
+  document.getElementById('btn-retirar-saldo')?.addEventListener('click', () => {
+    showRetiroSaldoModal(stats?.saldoDisponible || 0);
+  });
+  // Load referral code into greeting badge
+  loadGreetingReferralCode();
+
+  // Greeting referral code click ? open referral modal
+  document.getElementById('greeting-referral-code')?.addEventListener('click', () => {
+    showReferralModal();
   });
 }
 
 /**
- * Handle Referral Logic (M3)
+ * Load the referral code into the greeting badge.
  */
-async function handleReferralAction() {
+async function loadGreetingReferralCode() {
   try {
     const code = await getMyReferralCode();
-    
-    const modalHTML = `
-      <div class="modal-overlay" id="referral-modal" style="display:flex; justify-content:center; align-items:center; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; padding:20px;">
-        <div class="modal-content animate-fade-in-up" style="background:white; border-radius:24px; padding:32px; width:100%; max-width:400px; text-align:center; position:relative;">
-          <button id="close-referral-modal" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer;">&times;</button>
-          
-          <div style="font-size:48px; margin-bottom:16px;">&#129309;</div>
-          <h3 style="font-size:1.4rem; color:#111827; margin-bottom:8px; font-weight:800;">Invita y Gana</h3>
-          <p style="color:#6b7280; font-size:0.95rem; margin-bottom:24px; line-height:1.5;">
-            Comparte tu c&oacute;digo con amigos. Cuando ellos compren su primer Piggy, <strong style="color:#0891b2;">¡ambos ganan un bono de consumo!</strong>
-          </p>
+    const codeEl = document.getElementById('greeting-code-value');
+    if (codeEl) codeEl.textContent = code || '···';
+  } catch (err) {
+    console.warn('Error loading referral code:', err);
+  }
+}
 
-          <div style="background:#f3f4f6; border:2px dashed #cbd5e1; border-radius:16px; padding:16px; margin-bottom:24px;">
-            <div style="font-size:0.75rem; color:#6b7280; text-transform:uppercase; font-weight:700; letter-spacing:1px; margin-bottom:4px;">Tu C&oacute;digo</div>
-            <div style="font-size:1.8rem; font-weight:900; color:#0e7490; letter-spacing:2px;">${code}</div>
+/**
+ * Show the Referral Program modal with explanation, referrals list,
+ * commission tiers, and WhatsApp share button.
+ */
+async function showReferralModal() {
+  // Remove existing
+  const existing = document.getElementById('referral-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'referral-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  // Show loading state first
+  modal.innerHTML = `
+    <div class="modal animate-scale-in" style="max-width:420px; max-height:90vh; overflow-y:auto;">
+      <div class="modal__handle"></div>
+      <button class="bonus-close" id="referral-modal-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+      <div class="loading-container" style="padding:40px 0;">
+        <div class="spinner"></div>
+        <span>Cargando referidos...</span>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Close handlers
+  const close = () => modal.remove();
+  document.getElementById('referral-modal-close').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Fetch data
+  try {
+    const [code, stats] = await Promise.all([
+      getMyReferralCode(),
+      getMyReferralStats(),
+    ]);
+
+    const referralCode = code || '---';
+    const balance = stats?.balance || 0;
+    const referrals = stats?.referrals || [];
+    const completedCount = stats?.completedReferrals || 0;
+    const pendingCount = stats?.pendingReferrals || 0;
+    const currentTier = stats?.currentTier || { amount: 30000, label: '$30.000' };
+
+    // Saldo Comisiones = sum of commission_amount from completed referrals only
+    const commissionsEarned = referrals
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + (r.commission_amount || 0), 0);
+
+    // Build referrals list
+    let referralsListHTML = '';
+    if (referrals.length === 0) {
+      referralsListHTML = `
+        <div style="text-align:center; padding:16px 0; color:#9ca3af; font-size:0.85rem;">
+          Aún no tienes referidos. ¡Comparte tu código!
+        </div>
+      `;
+    } else {
+      referralsListHTML = referrals.map(r => {
+        const statusIcon = r.status === 'completed' ? '?' : r.status === 'pending' ? '?' : '?';
+        const statusLabel = r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
+        const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
+        const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        return `
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f4f6;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; border-radius:50%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#6b7280;">
+                ${(r.referredName || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                 <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName || 'Sin nombre'}</div>
+                <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
+              </div>
+            </div>
+            <div style="font-weight:700; font-size:0.85rem; color:${r.status === 'completed' ? '#059669' : '#9ca3af'};">
+              ${commissionText}
+            </div>
           </div>
+        `;
+      }).join('');
+    }
 
-          <button id="share-referral-btn" class="button button--primary" style="width:100%; background:linear-gradient(135deg, #0891b2 0%, #0e7490 100%);">
-            Compartir c&oacute;digo ahora
-          </button>
+    // Build modal content
+    const modalContent = modal.querySelector('.modal');
+    modalContent.innerHTML = `
+      <div class="modal__handle"></div>
+      <button class="bonus-close" id="referral-modal-close-2" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+
+      <!-- Header -->
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:48px; margin-bottom:8px;">🤝</div>
+        <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
+        <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
+          Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
+        </p>
+      </div>
+
+      <!-- Code + Balance -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu Código</div>
+          <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;">${referralCode}</div>
+        </div>
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;">Saldo Comisiones</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#059669;">${formatReferralBalance(commissionsEarned)}</div>
         </div>
       </div>
+
+      <!-- Stats Row -->
+      <div style="display:flex; gap:8px; margin-bottom:20px;">
+        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${completedCount}</div>
+          <div style="font-size:0.65rem; color:#6b7280;">Completados</div>
+        </div>
+        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${pendingCount}</div>
+          <div style="font-size:0.65rem; color:#6b7280;">Pendientes</div>
+        </div>
+      </div>
+
+      <!-- Mis Referidos -->
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;">Mis Referidos</h4>
+        <div style="max-height:160px; overflow-y:auto; border:1px solid #f3f4f6; border-radius:12px; padding:4px 14px;">
+          ${referralsListHTML}
+        </div>
+      </div>
+
+      <!-- Commission Tiers -->
+      <div style="margin-bottom:24px;">
+        <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:#374151;">Tabla de Comisiones</h4>
+        <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:#f9fafb; padding:8px 14px; font-size:0.7rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">
+            <span>Rango</span>
+            <span style="text-align:center;">Referidos</span>
+            <span style="text-align:right;">Comisión</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥉 Bronce</span>
+            <span style="text-align:center; color:#6b7280;">0 - 5</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥈 Plata</span>
+            <span style="text-align:center; color:#6b7280;">6 - 15</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥇 Oro</span>
+            <span style="text-align:center; color:#6b7280;">16+</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$80.000</span>
+          </div>
+        </div>
+        <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;">
+          La comisión se asigna automáticamente una única vez cuando tu referido compra su primer Piggy.
+        </p>
+      </div>
+
+      <!-- Share Button -->
+      <button id="btn-modal-share-referral" style="
+        width: 100%;
+        background: linear-gradient(135deg, #25d366, #128c7e);
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 6px 16px rgba(37,211,102,0.35);
+        transition: transform 0.2s;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        💬 Invitar Amigos por WhatsApp
+      </button>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Re-attach close
+    document.getElementById('referral-modal-close-2')?.addEventListener('click', close);
 
-    document.getElementById('close-referral-modal').addEventListener('click', () => {
-      document.getElementById('referral-modal').remove();
-    });
-
-    document.getElementById('share-referral-btn').addEventListener('click', async () => {
-      const shared = await shareReferralCode();
-      if (shared) {
-        document.getElementById('share-referral-btn').innerText = '¡Compartido!';
-        document.getElementById('share-referral-btn').style.background = '#10B981';
-        setTimeout(() => {
-          document.getElementById('referral-modal')?.remove();
-          // Completing M3 manually after successful share
-          completeMissionManual('m3').then(() => {
-            // Reload view to reflect updated mission banner
-            renderGranjaView();
-          });
-        }, 1500);
+    // Share button
+    document.getElementById('btn-modal-share-referral')?.addEventListener('click', async () => {
+      if (referralCode && referralCode !== '---') {
+        await shareReferralCode(referralCode);
       }
     });
 
-  } catch (error) {
-    console.error('Error fetching referral code:', error);
-    alert('Hubo un error al generar tu código. Intenta de nuevo más tarde.');
+  } catch (err) {
+    console.error('Error loading referral modal:', err);
+    const modalContent = modal.querySelector('.modal');
+    if (modalContent) {
+      modalContent.innerHTML = `
+        <div class="modal__handle"></div>
+        <button class="bonus-close" id="referral-modal-close-err" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+        <div style="text-align:center; padding:30px 0;">
+          <p style="color:#ef4444;">Error al cargar datos de referidos.</p>
+          <button class="btn btn--text" id="referral-modal-retry">Reintentar</button>
+        </div>
+      `;
+      document.getElementById('referral-modal-close-err')?.addEventListener('click', close);
+      document.getElementById('referral-modal-retry')?.addEventListener('click', () => {
+        close();
+        showReferralModal();
+      });
+    }
   }
 }
 
 /**
- * Utility to remove modals
+ * Show Bonus Modal
  */
-function removeBonusModal() {
-  const modal = document.getElementById('referral-modal');
-  if (modal) modal.remove();
+function showBonusModal(hasPiggies) {
+  // Remove existing
+  removeBonusModal();
+
+  const modal = document.createElement('div');
+  modal.id = 'bonus-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  modal.innerHTML = `
+    <div class="modal bonus-modal animate-scale-in">
+        <div class="modal__handle"></div>
+        <button class="bonus-close" id="bonus-close-btn">${renderIcon('close', '', '24')}</button>
+        
+        <div class="bonus-header">
+            <!-- Image removed for cleaner look -->
+            <h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3>
+            <p class="text-center text-primary font-bold text-lg">$50.000 PESOS EN CONSUMO DE CARNE</p>
+        </div>
+
+        <div class="bonus-content mt-md" style="flex: 2;">
+            <h4 class="font-bold mb-sm">Términos y Condiciones: Bono de Bienvenida</h4>
+            
+            <div class="bonus-text-scroll">
+                <p><strong>1. Definición del Beneficio:</strong><br/>
+                PIGGY otorga un Bono de Consumo por valor de CINCUENTA MIL PESOS M/CTE ($50.000 COP) a todo usuario nuevo que complete satisfactoriamente el registro en la plataforma y realice su primera adopción de un "Piggy" (pago único de $1.000.000 COP).</p>
+
+                <p><strong>2. Condiciones de Redención:</strong><br/>
+                Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Granja Villa Morales, bajo las siguientes condiciones:</p>
+                <ul>
+                    <li><strong>Compra Mínima:</strong> El valor del pedido debe ser igual o superior a CIENTO CINCUENTA MIL PESOS M/CTE ($150.000 COP), sin incluir costos de envío.</li>
+                    <li><strong>Aplicación del Bono:</strong> Una vez cumplido el monto mínimo, el bono de $50.000 se restará del valor total a pagar por los productos.</li>
+                    <li><strong>Alcance de Productos:</strong> El beneficio es válido exclusivamente para la compra de proteína animal: Cerdo, Pollo y Res. No aplica para otros servicios o productos dentro de la plataforma.</li>
+                </ul>
+
+                <p><strong>3. Política de Envíos y Logística:</strong></p>
+                <ul>
+                    <li><strong>Cali:</strong> El servicio de domicilio será completamente gratuito unicamente para entregas dentro del perímetro urbano de la ciudad de Cali.</li>
+                    <li><strong>Otras Ubicaciones:</strong> Para entregas en municipios aledaños (Jamundí, Palmira, Yumbo, etc.) o en el resto del territorio nacional, el USUARIO deberá asumir el 100% del costo del envío, el cual se cotizará según la ubicación y el peso del pedido.</li>
+                </ul>
+
+                <p><strong>4. Vigencia y Restricciones:</strong></p>
+                <ul>
+                    <li>El bono es personal, intransferible y no es canjeable por dinero en efectivo.</li>
+                    <li>Solo se permite la redención de un (1) bono por usuario único y por la primera compra de activo productivo.</li>
+                    <li>El bono tendrá una vigencia de 30 días calendario a partir del momento de la confirmación de la primera compra del piggy inicial.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bonus-footer mt-lg">
+            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">
+                ${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $50.000!'}
+            </button>
+            ${!hasPiggies ? '<p class="text-xs text-center mt-sm text-muted">Debes tener un Piggy activo para redimir.</p>' : ''}
+        </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close logic
+  const close = () => modal.remove();
+  document.getElementById('bonus-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+
+  // Action logic
+  document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
+    close();
+    // Always navigate to Piggy Gourmet for bonus redemption
+    navigateTo('gourmet');
+  });
 }
+
+function removeBonusModal() {
+  const existing = document.getElementById('bonus-modal');
+  if (existing) existing.remove();
+}
+/**
+ * Show Wallet Recharge Info modal with WhatsApp contact.
+ * Informs user how to top up their wallet balance.
+ */
+async function openWalletRechargeInfo() {
+  // Remove existing
+  const existing = document.getElementById('wallet-recharge-modal');
+  if (existing) existing.remove();
+
+  const profile = AppState.get('profile');
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const ADMIN_WHATSAPP = '573154870448';
+
+  const modal = document.createElement('div');
+  modal.id = 'wallet-recharge-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
+  modal.innerHTML = `
+    <div class="modal animate-scale-in" style="max-width:380px; padding:28px 24px; text-align:center;">
+      <button id="recharge-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; color:#9ca3af;">&#x2715;</button>
+
+      <div style="width:64px; height:64px; background:linear-gradient(135deg,#10B981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+      </div>
+
+      <h3 style="margin:0 0 8px; font-size:1.2rem; font-weight:800; color:#1f2937;">Recargar mi Wallet</h3>
+      <p style="color:#6b7280; font-size:0.9rem; margin:0 0 24px; line-height:1.5;">
+        Para recargar tu wallet y poder comprar Piggys, comunicate con nuestro equipo por WhatsApp.
+      </p>
+
+      <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-bottom:24px; text-align:left;">
+        <div style="font-size:0.8rem; font-weight:700; color:#065f46; margin-bottom:8px;">&#128197; Proceso de Recarga:</div>
+        <div style="font-size:0.82rem; color:#047857; line-height:1.8;">
+          <div>1. Toca el boton de WhatsApp abajo</div>
+          <div>2. Indica el monto que deseas recargar</div>
+          <div>3. Realiza la transferencia bancaria</div>
+          <div>4. Tu saldo se actualiza en 24 horas</div>
+        </div>
+      </div>
+
+      <button id="recharge-whatsapp-btn" style="
+        width: 100%;
+        background: linear-gradient(135deg, #25D366, #128C7E);
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 12px rgba(37,211,102,0.35);
+      ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.122 1.528 5.855L0 24l6.336-1.506A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.727.885.916-3.623-.234-.373A9.818 9.818 0 0 1 2.182 12C2.182 6.574 6.574 2.182 12 2.182S21.818 6.574 21.818 12 17.426 21.818 12 21.818z"/></svg>
+        Contactar por WhatsApp
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close
+  const close = () => modal.remove();
+  document.getElementById('recharge-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // WhatsApp
+  document.getElementById('recharge-whatsapp-btn').addEventListener('click', () => {
+    const msg = `\u{1F430} *PIGGY APP \u2014 Solicitud de Recarga de Wallet*\n\n\u{1F464} *Usuario:* ${userName}\n\n\u{1F4B0} Hola, deseo recargar mi wallet para comprar Piggys.\n\n\u{1F4CB} Por favor indic\u00E0me el n\u00FAmero de cuenta y el proceso a seguir.`;
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+}
+
+
+/**
+ * Unified "Retirar mi Saldo" modal — multi-step flow.
+ * Step 1: Choose type (Dinero o Consumo)
+ * Step 2a (Dinero): Enter amount + choose bank -> WhatsApp
+ * Step 2b (Consumo): Enter amount -> "Solicitar Bonos de Consumo" -> WhatsApp
+ */
+function showRetiroSaldoModal(availableAmount) {
+  const existing = document.getElementById('retiro-modal');
+  if (existing) existing.remove();
+
+  const ADMIN_WHATSAPP = '573154870448';
+  const profile = AppState.get('profile');
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const userPhone = profile?.phone_number || '';
+  const minAmount = 10000;
+  const BANKS = ['Bancolombia', 'Davivienda', 'BBVA', 'Nequi', 'Daviplata', 'Banco de Bogota', 'Scotiabank Colpatria', 'Otro'];
+
+  const modal = document.createElement('div');
+  modal.id = 'retiro-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  const renderStep1 = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:44px; margin-bottom:10px;">&#128176;</div>
+        <h3 style="margin:0 0 6px; font-size:1.2rem; font-weight:800; color:#111827;">Retirar mi Saldo</h3>
+        <p style="margin:0 0 16px; font-size:0.82rem; color:#6b7280;">Saldo disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+        <p style="text-align:center; font-size:0.85rem; font-weight:600; color:#374151; margin:0 0 4px;">Como deseas tu saldo?</p>
+        <button id="retiro-tipo-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+          <span style="font-size:26px;">&#127968;</span>
+          <div style="text-align:left;">
+            <div>Dinero en cuenta</div>
+            <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Transferencia bancaria a tu cuenta</div>
+          </div>
+        </button>
+        <button id="retiro-tipo-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+          <span style="font-size:26px;">&#129385;</span>
+          <div style="text-align:left;">
+            <div>Bonos de Consumo</div>
+            <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Canjear por productos de carne</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  `;
+
+  const renderStep2Dinero = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:36px; margin-bottom:8px;">&#127968;</div>
+        <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Retiro de Dinero</h3>
+        <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Monto a retirar</label>
+          <div style="position:relative;">
+            <input type="number" id="retiro-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+              style="width:100%; padding:12px 50px 12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+              onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';" />
+            <button type="button" id="btn-todo-retiro" onclick="document.getElementById('retiro-amount').value='${availableAmount}'; document.getElementById('retiro-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-weight:700; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:0.78rem;">Todo</button>
+          </div>
+          <div id="retiro-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
+        </div>
+        <div>
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Banco destino</label>
+          <select id="retiro-bank" style="width:100%; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:0.95rem; color:#111827; outline:none; background:white; box-sizing:border-box; cursor:pointer; transition:border 0.2s;"
+            onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';">
+            <option value="">Selecciona tu banco</option>
+            ${BANKS.map(b => '<option value="' + b + '">' + b + '</option>').join('')}
+          </select>
+        </div>
+        <button id="retiro-confirm-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
+          Solicitar Retiro via WhatsApp
+        </button>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Nuestro equipo procesara el retiro de tu dinero en maximo 48 horas.</p>
+      </div>
+    </div>
+  `;
+
+  const renderStep2Consumo = () => `
+    <div class="modal animate-scale-in" style="position:relative; padding-bottom:8px;">
+      <div class="modal__handle"></div>
+      <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
+      <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
+      <div style="text-align:center; padding:20px 24px 0;">
+        <div style="font-size:36px; margin-bottom:8px;">&#129385;</div>
+        <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Bonos de Consumo</h3>
+        <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#d97706;">${formatCOP(availableAmount)}</strong></p>
+      </div>
+      <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
+          <label style="font-size:0.78rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">Cuanto saldo deseas en bonos?</label>
+          <div style="position:relative;">
+            <input type="number" id="consumo-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
+              style="width:100%; padding:12px 50px 12px 14px; border:2px solid #e5e7eb; border-radius:12px; font-size:1rem; font-weight:700; color:#111827; outline:none; box-sizing:border-box; transition:border 0.2s;"
+              onfocus="this.style.borderColor='#f59e0b';" onblur="this.style.borderColor='#e5e7eb';" />
+            <button type="button" id="btn-todo-consumo" onclick="document.getElementById('consumo-amount').value='${availableAmount}'; document.getElementById('consumo-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:#fffbeb; border:1px solid #fcd34d; color:#d97706; font-weight:700; cursor:pointer; padding:4px 10px; border-radius:8px; font-size:0.78rem;">Todo</button>
+          </div>
+          <div id="consumo-amount-error" style="font-size:0.72rem; color:#dc2626; margin-top:4px; display:none;"></div>
+        </div>
+        <button id="retiro-confirm-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+          Solicitar Bonos de Consumo via WhatsApp
+        </button>
+        <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:0;">Nuestro equipo procesara el canje de tus bonos una vez realices tu compra de carne.</p>
+      </div>
+    </div>
+  `;
+
+  const attachClose = (onBack) => {
+    document.getElementById('retiro-close')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
+  };
+
+  const goToStep1 = () => {
+    modal.innerHTML = renderStep1();
+    attachClose(null);
+    document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
+    document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
+  };
+
+  const goToStep2Dinero = () => {
+    modal.innerHTML = renderStep2Dinero();
+    attachClose(goToStep1);
+    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', () => {
+      const errDiv = document.getElementById('retiro-amount-error');
+      const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
+      const bank = document.getElementById('retiro-bank')?.value;
+      if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
+      if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
+      if (!bank) { errDiv.textContent = 'Selecciona un banco'; errDiv.style.display = 'block'; return; }
+      errDiv.style.display = 'none';
+      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de RETIRO DE DINERO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83D\uDCB5 *Monto a retirar:* ' + formatCOP(amount) + '\n\uD83C\uDFE6 *Banco destino:* ' + bank + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor procesar la transferencia y confirmar por este medio.';
+      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      modal.remove();
+    });
+  };
+
+  const goToStep2Consumo = () => {
+    modal.innerHTML = renderStep2Consumo();
+    attachClose(goToStep1);
+    document.getElementById('retiro-confirm-consumo')?.addEventListener('click', () => {
+      const errDiv = document.getElementById('consumo-amount-error');
+      const amount = parseFloat(document.getElementById('consumo-amount')?.value || 0);
+      if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
+      if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
+      errDiv.style.display = 'none';
+      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de BONOS DE CONSUMO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83E\uDD69 *Monto en bonos:* ' + formatCOP(amount) + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor coordinar la entrega de bonos de carne y confirmar por este medio.';
+      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      modal.remove();
+    });
+  };
+
+  document.body.appendChild(modal);
+  goToStep1();
+}
+
+/**
+ * Show success confirmation after wallet request.
+ */
+function showWalletRequestSuccess(requestType, amount, bank, requestId) {
+  const isWithdrawal = requestType === 'withdrawal';
+  const shortId = requestId ? requestId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
+  const typeLabel = isWithdrawal ? 'Retiro' : 'Consumo';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
+  modal.innerHTML = `
+    <div class="modal animate-scale-in text-center" style="max-width:400px;">
+      <button class="bonus-close" id="wallet-success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+      <div style="width:60px; height:60px; background:${isWithdrawal ? '#d1fae5' : '#fef3c7'}; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+          <span style="font-size:28px;">${isWithdrawal ? '\u2705' : '\u{1F969}'}</span>
+      </div>
+      <h3 style="margin:0 0 8px; font-size:1.15rem; font-weight:800; color:#1f2937;">Solicitud de ${typeLabel} Recibida</h3>
+      <p style="color:#6b7280; font-size:0.9rem; margin:0 0 16px;">
+        Tu solicitud de <strong>${typeLabel.toLowerCase()}</strong> por <strong>${formatCOP(amount)}</strong>${isWithdrawal && bank ? ` a <strong>${bank}</strong>` : ''} ha sido registrada.
+      </p>
+
+      <div style="background:#f9fafb; padding:14px; border-radius:10px; margin-bottom:16px; text-align:left; font-size:0.85rem;">
+          <div style="margin-bottom:4px;"><strong>Comprobante:</strong> #${typeLabel.toUpperCase().slice(0, 3)}-${shortId}</div>
+          <div style="margin-bottom:4px;"><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CO')}</div>
+          <div><strong>Estado:</strong> <span style="color:#f59e0b; font-weight:600;">Pendiente</span></div>
+      </div>
+
+      <p style="color:#9ca3af; font-size:0.78rem; margin:0 0 20px;">
+        ${isWithdrawal
+      ? 'Nuestro equipo procesar\u00E1 tu retiro en un plazo m\u00E1ximo de 3 d\u00EDas h\u00E1biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
+      : 'Nuestro equipo se comunicar\u00E1 contigo por WhatsApp para coordinar la entrega de tu pedido.'}
+      </p>
+
+      <button class="btn btn--primary btn--block" id="wallet-success-close" style="width:100%; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">Entendido</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const closeModal = () => modal.remove();
+  document.getElementById('wallet-success-close').addEventListener('click', closeModal);
+  document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
+}
+
