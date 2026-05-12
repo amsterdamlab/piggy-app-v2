@@ -27,50 +27,72 @@ export async function getUserPiggies() {
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
+    if (!user) return [];
 
     // Sincronizar los pesos reales en base de datos antes de consultar
     if (user) {
-        await client.rpc('sync_piggy_weights', { p_user_id: user.id }).catch(e => console.warn('Sync weight error:', e));
+        const { error: syncError } = await client.rpc('sync_piggy_weights', { p_user_id: user.id });
+        if (syncError) console.warn('Sync weight error:', syncError);
     }
 
     const { data, error } = await client
         .from('piggies')
         .select('*')
-        .order('purchase_date', { ascending: false });
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) throw new Error(error.message);
-    const piggies = (data || []).map(enrichPiggyData);
+    if (error) {
+        console.warn('Error fetching piggies:', error);
+        return [];
+    }
 
     // Auto-persist completion status for expired piggies
-    await markExpiredPiggies(client, piggies);
+    await markExpiredPiggies(user.id);
 
-    return piggies;
+    // Enrich DB data with runtime calculated fields (daysLeft, progress)
+    return (data || []).map(enrichPiggyData);
 }
 
 /**
- * Find piggies whose end_date has passed but status is still 'engorde',
- * and update them to 'completado' in the DB.
- * The DB trigger (trg_handle_piggy_completion) handles ROI calculation
- * and wallet_balance credit automatically.
- * @param {Object} client - Supabase client
- * @param {Array}  piggies - Already-enriched piggies array
+ * Identify piggies that have passed their end_date and mark them as complete.
+ * The DB trigger `handle_piggy_completion` will automatically calculate ROI 
+ * and credit the wallet.
+ * @param {string} userId 
  */
-async function markExpiredPiggies(client, piggies) {
-    const expiredIds = piggies
-        .filter(p => p.isComplete && p.status !== 'completado')
-        .map(p => p.id);
+export async function markExpiredPiggies(userId) {
+    if (isUsingMockData()) return;
 
-    if (expiredIds.length === 0) return;
-
-    const { error } = await client
+    const client = getClient();
+    
+    // Find piggies that are still "engorde" but end_date has passed
+    const { data: expiredPiggies, error: fetchError } = await client
         .from('piggies')
-        .update({ status: 'completado' })
-        .in('id', expiredIds)
-        .neq('status', 'completado'); // Safety guard: never re-trigger
+        .select('id, end_date')
+        .eq('user_id', userId)
+        .eq('status', 'engorde')
+        .lte('end_date', new Date().toISOString());
 
-    if (error) {
-        console.warn('markExpiredPiggies: could not update status', error.message);
+    if (fetchError) {
+        console.warn('Error fetching expired piggies:', fetchError);
+        return;
     }
+
+    if (!expiredPiggies || expiredPiggies.length === 0) return;
+
+    // Mark them as "completado"
+    // Using Promise.all since we might need to update multiple
+    await Promise.all(expiredPiggies.map(async (piggy) => {
+        const { error: updateError } = await client
+            .from('piggies')
+            .update({ status: 'completado' })
+            .eq('id', piggy.id);
+
+        if (updateError) {
+            console.warn(`Error updating expired piggy ${piggy.id}:`, updateError);
+        } else {
+            console.log(`✅ Piggy ${piggy.id} cycle completed. Trigger handled wallet credit.`);
+        }
+    }));
 }
 
 /**
