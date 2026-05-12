@@ -1366,3 +1366,4 @@ function showWalletRequestSuccess(requestType, amount, bank, requestId) {
   document.getElementById('wallet-success-close').addEventListener('click', closeModal);
   document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
 }
+
