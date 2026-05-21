@@ -92,7 +92,7 @@ function buildGranjaShell(firstName) {
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
-        <h2 class="granja-title">Mi Granja (Test)</h2>
+        <h2 class="granja-title">Mi Granja</h2>
 
         ${renderWalletSkeleton(firstName)}
 
@@ -165,7 +165,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
     <div class="page page--with-nav granja-page">
       <div class="page__content">
         ${renderGreeting(firstName)}
-        <h2 class="granja-title animate-fade-in-up">Mi Granja (Test)</h2>
+        <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
 
         <!-- Dynamic Notification (rotates on refresh) -->
         ${notification}
