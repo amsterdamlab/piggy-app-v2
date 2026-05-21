@@ -109,29 +109,29 @@ async function loadPiggyDetail(piggyId) {
 
           <!-- Financial info -->
           <div class="section animate-fade-in-up" style="animation-delay:0.2s;">
-            <h3 class="section__title">Información Financiera</h3>
+            <h3 class="section__title">Información Comercial</h3>
             <div class="card">
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Bono de Preventa</span>
+                <span class="text-sm text-muted">Preventa Comercial</span>
                 <span class="font-semibold">${formatCOP(piggy.investment_amount)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Margen Comercial Estimado</span>
-                <span class="font-semibold">${formatPercentage(baseROI)}</span>
+                <span class="text-sm text-muted">Comisión Comercial Variable</span>
+                <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
-                  <span class="text-sm text-muted">Bono Extra</span>
-                  <span class="font-semibold text-primary">+${formatPercentage(piggy.extra_roi_bonus)}</span>
+                  <span class="text-sm text-muted">Comisión Extra</span>
+                  <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
                 </div>
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Diferencial de Preventa</span>
+                <span class="font-semibold">Comisión Comercial</span>
                 <span class="font-bold text-primary" style="font-size:var(--text-lg);">${formatCOP(gain)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Disponibilidad al Cierre Comercial</span>
+                <span class="font-semibold">Saldo del Cierre Comercial</span>
                 <span class="font-bold" style="font-size:var(--text-lg);">${formatCOP(projectedReturn)}</span>
               </div>
             </div>
@@ -143,10 +143,10 @@ async function loadPiggyDetail(piggyId) {
               <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                 <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Ciclo Completado</h3>
                 <p style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-md);">
-                  Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejado tu <strong>Disponibilidad del Cierre Comercial</strong> en el Saldo Disponible de tu Wallet.
+                  Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
                 </p>
-                <button class="btn btn--primary btn--block" id="btn-unlock-silver" style="background: linear-gradient(135deg, #94A3B8, #64748B); color: white;">
-                  Solicitar Desbloqueo Piggy Silver
+                <button class="btn btn--primary btn--block" id="btn-ver-wallet" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">
+                  Ver Cuenta Agroproductiva
                 </button>
               </div>
             </div>
@@ -161,14 +161,9 @@ async function loadPiggyDetail(piggyId) {
       navigateTo('granja');
     });
 
-    // Unlock Silver button
-    document.getElementById('btn-unlock-silver')?.addEventListener('click', () => {
-      const profile = AppState.get('profile');
-      const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-      const userPhone = profile?.whatsapp || '';
-      const ADMIN_WHATSAPP = '573154870448';
-      const msg = `🐷 *PIGGY APP — Solicitud de Desbloqueo Silver*\n\n👤 *Usuario:* ${userName}\n📱 *WhatsApp:* ${userPhone}\n\nHola, mi Piggy "${piggy.name}" ha completado su ciclo y deseo solicitar el desbloqueo de un Piggy Silver.`;
-      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+    // Ver Cuenta Agroproductiva button → wallet
+    document.getElementById('btn-ver-wallet')?.addEventListener('click', () => {
+      navigateTo('wallet');
     });
   } catch (error) {
     console.error('Error loading piggy detail:', error);
