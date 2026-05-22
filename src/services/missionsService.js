@@ -150,16 +150,18 @@ function mergeWithDefinitions(dbRows, autoMap) {
  * Manual missions are only updated when completeMissionManual() is called.
  * @returns {Promise<Array>}
  */
-export async function getMissions() {
+export async function getMissions(piggiesOverride = null) {
     if (isUsingMockData()) {
-        return syncMissionsStatus();
+        return syncMissionsStatus(piggiesOverride);
     }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
 
-    const piggies = AppState.get('piggies') || [];
+    // Use passed piggies if available (avoids race condition when called in parallel
+    // with getUserPiggies() before AppState has been updated).
+    const piggies = piggiesOverride ?? AppState.get('piggies') ?? [];
     const profile = AppState.get('profile');
     const autoMap = buildAutoCompletionMap(piggies, profile);
 
@@ -252,8 +254,8 @@ export async function completeMissionManual(missionKey) {
  * Get only active (not completed AND not locked) missions.
  * @returns {Promise<Array>}
  */
-export async function getActiveMissions() {
-    const missions = await getMissions();
+export async function getActiveMissions(piggiesOverride = null) {
+    const missions = await getMissions(piggiesOverride);
     return missions.filter(m => !m.is_completed && !m.is_locked);
 }
 
@@ -278,8 +280,8 @@ const _mockManualCompletions = new Set();
  * Synchronous fallback used only in mock/dev mode.
  * Returns missions with auto-detected status from AppState.
  */
-export function syncMissionsStatus() {
-    const piggies = AppState.get('piggies') || [];
+export function syncMissionsStatus(piggiesOverride = null) {
+    const piggies = piggiesOverride ?? AppState.get('piggies') ?? [];
     const profile = AppState.get('profile');
     const autoMap = buildAutoCompletionMap(piggies, profile);
 

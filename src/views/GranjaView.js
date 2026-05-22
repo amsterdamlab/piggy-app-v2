@@ -115,15 +115,21 @@ function buildGranjaShell(firstName) {
  */
 async function loadGranjaData(firstName) {
   try {
-    // Fetch all data in parallel for performance
-    const [piggies, tipData, walletBalance, referralBonus, activeMissions] = await Promise.all([
-      getUserPiggies(),
+    // ── Paso 1: cargar piggies primero y actualizar AppState ──────────────
+    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
+    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
+    // con getUserPiggies(), AppState todavía está vacío → race condition.
+    const piggies = await getUserPiggies();
+    AppState.set({ piggies });
+
+    // ── Paso 2: cargar el resto de datos en paralelo (sin dependencias) ───
+    const [tipData, walletBalance, referralBonus, activeMissions, stats] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
       getReferralBonusBalance(),
-      getActiveMissions(),
+      getActiveMissions(piggies),   // ← recibe piggies directamente, sin leer AppState
+      getDashboardStats(piggies),
     ]);
-    const stats = await getDashboardStats(piggies);
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
@@ -132,8 +138,6 @@ async function loadGranjaData(firstName) {
     stats.referralBonusFormatted = formatCOP(referralBonus);
     stats.saldoDisponible        = walletBalance;
     stats.saldoDisponibleFormatted = formatCOP(walletBalance);
-
-    AppState.set({ piggies });
 
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions);
@@ -234,8 +238,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
   `;
 }
 
-// ... renderGreeting remains the same ...
-
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -246,7 +248,7 @@ function renderGreeting(firstName) {
           <span class="granja-greeting__online"></span>
         </div>
         <div class="granja-greeting__text">
-          <span class="granja-greeting__welcome">\u00A1Bienvenido!</span>
+          <span class="granja-greeting__welcome">¡Bienvenido!</span>
           <span class="granja-greeting__name">Hola, ${firstName}</span>
         </div>
       </div>
@@ -265,7 +267,7 @@ function renderGreeting(firstName) {
         white-space: nowrap;
         letter-spacing: 1.5px;
       " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(124,58,237,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124,58,237,0.3)'">
-        <span id="greeting-code-value">\u00B7\u00B7\u00B7</span>
+        <span id="greeting-code-value">···</span>
       </div>
     </div>
   `;
@@ -280,7 +282,7 @@ function renderEmptyPiggies() {
       <div class="empty-state__icon">
         <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" />
       </div>
-      <div class="empty-state__title">No tienes Piggys a\u00FAn</div>
+      <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
@@ -290,8 +292,6 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
-
-// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 function renderPiggiesList(piggies, baseROI) {
   return `
@@ -315,8 +315,8 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-      ? '<span class="badge badge--success">\u2713 Ciclo completado</span>'
-      : `<span class="badge badge--primary">${piggy.daysLeft} d\u00EDas restantes</span>`
+      ? '<span class="badge badge--success">✓ Ciclo completado</span>'
+      : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
     }
           </div>
         </div>
@@ -350,10 +350,9 @@ function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
-// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
-    <nav class="bottom-nav" aria-label="Navegaci\u00F3n principal" style="grid-template-columns: repeat(4, 1fr);">
+    <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
       <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
@@ -378,9 +377,6 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
-/**
- * Attach event listeners.
- */
 function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
@@ -439,7 +435,7 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Referral code + modal (delegated to module)
   loadGreetingReferralCode();
 
-  // Greeting referral code click \u2192 open referral modal
+  // Greeting referral code click → open referral modal
   document.getElementById('greeting-referral-code')?.addEventListener('click', () => {
     showReferralModal();
   });
