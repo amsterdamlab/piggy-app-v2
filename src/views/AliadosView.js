@@ -5,6 +5,7 @@
 import { renderIcon } from '../icons.js';
 import { renderBottomNav } from './GranjaView.js';
 import { getAllies, getAllyCategories } from '../services/alliesService.js';
+import { completeMissionOnVisit } from '../services/missionsService.js';
 
 let activeCategory = null;
 
@@ -13,6 +14,9 @@ let activeCategory = null;
  */
 export function renderAliadosView() {
   const app = document.getElementById('app');
+
+  // M5: auto-complete "Compra en locales aliados" on first visit
+  completeMissionOnVisit('m5');
 
   app.innerHTML = `
     <div class="page page--with-nav aliados-page">
@@ -146,8 +150,8 @@ function renderAllyCard(ally) {
         <h3 class="ally-card__name">${ally.name}</h3>
         <span class="ally-card__specialty">${specialty}</span>
 
-        <p class="ally-card__contact-line" style="font-size:12px;color:#475569;margin:2px 0;">📞 ${phone}</p>
-        <p class="ally-card__contact-line" style="font-size:12px;color:#475569;margin:2px 0;">📍 ${address}</p>
+        <p class="ally-card__contact-line">📞 ${phone}</p>
+        <p class="ally-card__contact-line">📍 ${address}</p>
 
         <p class="ally-card__description">${description}</p>
         

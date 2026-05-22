@@ -4,6 +4,7 @@
    ============================================ */
 
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../../services/referralService.js';
+import { completeMissionOnVisit } from '../../services/missionsService.js';
 
 /**
  * Load the referral code into the greeting badge.
@@ -12,7 +13,7 @@ export async function loadGreetingReferralCode() {
   try {
     const code = await getMyReferralCode();
     const codeEl = document.getElementById('greeting-code-value');
-    if (codeEl) codeEl.textContent = code || '\u00B7\u00B7\u00B7';
+    if (codeEl) codeEl.textContent = code || '···';
   } catch (err) {
     console.warn('Error loading referral code:', err);
   }
@@ -23,6 +24,9 @@ export async function loadGreetingReferralCode() {
  * commission tiers, and WhatsApp share button.
  */
 export async function showReferralModal() {
+  // M3: auto-complete "Invita a un amigo a Piggy" on first referral modal open
+  completeMissionOnVisit('m3');
+
   // Remove existing
   const existing = document.getElementById('referral-modal');
   if (existing) existing.remove();
@@ -64,17 +68,15 @@ export async function showReferralModal() {
     const pendingCount = stats?.pendingReferrals || 0;
     const currentTier = stats?.currentTier || { amount: 30000, label: '$30.000' };
 
-    // Saldo Comisiones = sum of commission_amount from completed referrals only
     const commissionsEarned = referrals
       .filter(r => r.status === 'completed')
       .reduce((sum, r) => sum + (r.commission_amount || 0), 0);
 
-    // Build referrals list
     let referralsListHTML = '';
     if (referrals.length === 0) {
       referralsListHTML = `
         <div style="text-align:center; padding:16px 0; color:#9ca3af; font-size:0.85rem;">
-          A\u00FAn no tienes referidos. \u00A1Comparte tu c\u00F3digo!
+          Aún no tienes referidos. ¡Comparte tu código!
         </div>
       `;
     } else {
@@ -91,7 +93,7 @@ export async function showReferralModal() {
               </div>
               <div>
                  <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName || 'Sin nombre'}</div>
-                <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} \u00B7 ${statusIcon} ${statusLabel}</div>
+                <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
               </div>
             </div>
             <div style="font-weight:700; font-size:0.85rem; color:${r.status === 'completed' ? '#059669' : '#9ca3af'};">
@@ -102,25 +104,22 @@ export async function showReferralModal() {
       }).join('');
     }
 
-    // Build modal content
     const modalContent = modal.querySelector('.modal');
     modalContent.innerHTML = `
       <div class="modal__handle"></div>
       <button class="bonus-close" id="referral-modal-close-2" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
 
-      <!-- Header -->
       <div style="text-align:center; margin-bottom:20px;">
         <div style="font-size:48px; margin-bottom:8px;">🤝</div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
-          Comparte tu c\u00F3digo con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisi\u00F3n autom\u00E1tica en tu wallet.
+          Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
         </p>
       </div>
 
-      <!-- Code + Balance -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
         <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu C\u00F3digo</div>
+          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu Código</div>
           <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;">${referralCode}</div>
         </div>
         <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;">
@@ -129,7 +128,6 @@ export async function showReferralModal() {
         </div>
       </div>
 
-      <!-- Stats Row -->
       <div style="display:flex; gap:8px; margin-bottom:20px;">
         <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
           <div style="font-size:1.1rem; font-weight:800; color:#111827;">${completedCount}</div>
@@ -141,7 +139,6 @@ export async function showReferralModal() {
         </div>
       </div>
 
-      <!-- Mis Referidos -->
       <div style="margin-bottom:20px;">
         <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;">Mis Referidos</h4>
         <div style="max-height:160px; overflow-y:auto; border:1px solid #f3f4f6; border-radius:12px; padding:4px 14px;">
@@ -149,14 +146,13 @@ export async function showReferralModal() {
         </div>
       </div>
 
-      <!-- Commission Tiers -->
       <div style="margin-bottom:24px;">
         <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:#374151;">Tabla de Comisiones</h4>
         <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:#f9fafb; padding:8px 14px; font-size:0.7rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">
             <span>Rango</span>
             <span style="text-align:center;">Referidos</span>
-            <span style="text-align:right;">Comisi\u00F3n</span>
+            <span style="text-align:right;">Comisión</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥉 Bronce</span>
@@ -175,11 +171,10 @@ export async function showReferralModal() {
           </div>
         </div>
         <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;">
-          La comisi\u00F3n se asigna autom\u00E1ticamente una \u00FAnica vez cuando tu referido compra su primer Piggy.
+          La comisión se asigna automáticamente una única vez cuando tu referido compra su primer Piggy.
         </p>
       </div>
 
-      <!-- Share Button -->
       <button id="btn-modal-share-referral" style="
         width: 100%;
         background: linear-gradient(135deg, #25d366, #128c7e);
@@ -201,10 +196,8 @@ export async function showReferralModal() {
       </button>
     `;
 
-    // Re-attach close
     document.getElementById('referral-modal-close-2')?.addEventListener('click', close);
 
-    // Share button
     document.getElementById('btn-modal-share-referral')?.addEventListener('click', async () => {
       if (referralCode && referralCode !== '---') {
         await shareReferralCode(referralCode);

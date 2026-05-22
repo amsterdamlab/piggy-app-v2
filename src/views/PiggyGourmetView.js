@@ -14,11 +14,15 @@ import {
   buildGourmetWhatsAppLink,
 } from '../services/gourmetService.js';
 import { getReferralBonusBalance, createWalletRequest } from '../services/walletService.js';
+import { completeMissionOnVisit } from '../services/missionsService.js';
 
 /* ─── Main Render ─── */
 
 export function renderPiggyGourmetView() {
   const app = document.getElementById('app');
+
+  // M1: auto-complete "Obtén tu Bono de Bienvenida" on first visit to Tienda
+  completeMissionOnVisit('m1');
 
   app.innerHTML = `
     <div class="page page--with-nav">
@@ -131,7 +135,6 @@ async function loadGourmetOffers() {
       getReferralBonusBalance()
     ]);
 
-    // Render dynamic bonus banner if user has balance
     const bonusContainer = document.getElementById('gourmet-bonus-container');
     if (bonusContainer && referralBonus > 0) {
       bonusContainer.innerHTML = `
@@ -184,12 +187,10 @@ function renderOfferCards(offers, referralBonus) {
 
   container.innerHTML = offers.map((offer, index) => renderOfferCard(offer, index)).join('');
 
-  // Attach buy listeners
   offers.forEach(offer => {
     const btn = document.querySelector(`[data-offer-id="${offer.id}"]`);
     if (btn) {
       btn.addEventListener('click', async () => {
-        // If user has bonus, ask if they want to apply it
         let appliedBonus = 0;
         
         if (referralBonus > 0) {
@@ -200,7 +201,6 @@ function renderOfferCards(offers, referralBonus) {
             btn.style.opacity = '0.5';
             btn.innerText = 'Procesando...';
             
-            // Record the consumption transaction in DB
             const res = await createWalletRequest('consumption', maxApplicable);
             if (!res.success) {
               alert('Hubo un error al procesar tu bono: ' + res.reason);
@@ -213,7 +213,6 @@ function renderOfferCards(offers, referralBonus) {
           }
         }
 
-        // Build custom WhatsApp link with discount info
         let waLink = buildGourmetWhatsAppLink(offer);
         if (appliedBonus > 0) {
             const finalPrice = offer.price - appliedBonus;
@@ -223,7 +222,6 @@ function renderOfferCards(offers, referralBonus) {
 
         window.open(waLink, '_blank');
         
-        // Reload view to reflect updated balance if bonus was used
         if (appliedBonus > 0) {
           setTimeout(() => { window.location.reload(); }, 1000);
         }
@@ -249,7 +247,6 @@ function renderOfferCard(offer, index) {
       " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'" 
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.06)'">
 
-        <!-- Card Header -->
         <div style="
           background: linear-gradient(135deg, #fff7ed, #ffedd5);
           padding: 16px 20px;
@@ -283,7 +280,6 @@ function renderOfferCard(offer, index) {
           ` : ''}
         </div>
 
-        <!-- Card Body -->
         <div style="padding: 16px 20px;">
           <p style="margin:0 0 14px 0; font-size:0.82rem; color:#6b7280; line-height:1.5;">
             ${offer.description}
