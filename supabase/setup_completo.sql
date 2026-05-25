@@ -60,6 +60,12 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can see own missions') THEN
     CREATE POLICY "Users can see own missions" ON public.missions FOR SELECT USING (auth.uid() = user_id);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can insert own missions') THEN
+    CREATE POLICY "Users can insert own missions" ON public.missions FOR INSERT WITH CHECK (auth.uid() = user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can update own missions') THEN
+    CREATE POLICY "Users can update own missions" ON public.missions FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
 END $$;
 
 -- 5. VERIFICACIÓN FINAL

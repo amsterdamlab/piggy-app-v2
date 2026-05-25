@@ -181,8 +181,8 @@ export async function getMissions(piggiesOverride = null) {
     const autoRows = MISSION_DEFINITIONS
         .filter(def => autoKeys.includes(def.key))
         .map(def => {
-            const isCompleted = autoMap[def.key] || false;
             const existing    = dbMap.get(def.key);
+            const isCompleted = autoMap[def.key] || existing?.is_completed || false;
             return {
                 user_id:      user.id,
                 mission_key:  def.key,

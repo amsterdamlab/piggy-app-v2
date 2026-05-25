@@ -75,4 +75,5 @@ CREATE POLICY "Public allies read" ON public.allies FOR SELECT USING (true);
 
 -- Misiones son privadas
 CREATE POLICY "Users can see own missions" ON public.missions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own missions" ON public.missions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own missions" ON public.missions FOR UPDATE USING (auth.uid() = user_id);
