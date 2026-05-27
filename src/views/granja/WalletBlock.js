@@ -5,6 +5,8 @@
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../../services/walletService.js';
+import { getUserPiggies, getDashboardStats } from '../../services/piggiesService.js';
 
 /**
  * Render the Wallet banner card (Green compact representation).
@@ -608,4 +610,48 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
   const closeModal = () => modal.remove();
   document.getElementById('wallet-success-close').addEventListener('click', closeModal);
   document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
+}
+
+/**
+ * Load wallet data autonomously and show the Wallet Drawer.
+ */
+export async function openWalletDrawer() {
+  try {
+    const profile = AppState.get('profile');
+    const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+
+    // Load piggies to calculate stats accurately
+    const piggies = AppState.get('piggies') || await getUserPiggies();
+    
+    const [balance, referral, stats, transactions] = await Promise.all([
+      getWalletBalance(),
+      getReferralBonusBalance(),
+      getDashboardStats(piggies),
+      getWalletTransactions()
+    ]);
+
+    stats.walletBalance            = balance;
+    stats.referralBonus            = referral;
+    stats.referralBonusFormatted   = formatCOP(referral);
+    stats.saldoDisponible          = balance;
+    stats.saldoDisponibleFormatted = formatCOP(balance);
+    stats.transactions             = transactions;
+
+    showWalletDrawer(firstName, stats);
+  } catch (error) {
+    console.error('Error opening autonomous wallet drawer:', error);
+    // Fallback in case of failure
+    const profile = AppState.get('profile');
+    const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+    showWalletDrawer(firstName, {
+      saldoDisponible: 0,
+      saldoDisponibleFormatted: formatCOP(0),
+      referralBonus: 0,
+      referralBonusFormatted: formatCOP(0),
+      baseROIFormatted: '12%',
+      adquisicionBonosFormatted: formatCOP(0),
+      diferencialPreventaFormatted: formatCOP(0),
+      transactions: []
+    });
+  }
 }
