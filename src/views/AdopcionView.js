@@ -10,7 +10,7 @@ import { adoptPiggy } from '../services/piggiesService.js';
 import { getWalletBalance, deductWalletBalance } from '../services/walletService.js';
 import { formatCOP } from '../services/mockData.js';
 import { AppState } from '../state.js';
-import { openWalletRechargeInfo } from './granja/WalletBlock.js';
+import { openWalletRechargeInfo, openWalletDrawer } from './granja/WalletBlock.js';
 
 
 /**
@@ -224,9 +224,19 @@ function showCheckoutModal(piggyName) {
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
   // Recargar
-  document.getElementById('adopcion-btn-recargar').addEventListener('click', () => {
-    close();
-    openWalletRechargeInfo();
+  const recargarBtn = document.getElementById('adopcion-btn-recargar');
+  recargarBtn.addEventListener('click', async () => {
+    const originalText = recargarBtn.innerHTML;
+    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid #059669;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+    recargarBtn.style.pointerEvents = 'none';
+    try {
+      await openWalletDrawer(true);
+      close();
+    } catch (e) {
+      console.error('Error opening wallet from adoption view:', e);
+      recargarBtn.innerHTML = originalText;
+      recargarBtn.style.pointerEvents = 'auto';
+    }
   });
 
   // Confirm
