@@ -50,7 +50,7 @@ trigger: always_on
 
 **VI. PROTOCOLO DE CONEXIÓN Y DESPLIEGUE (GitHub & Vercel)**
 
-* **Uso Exclusivo de MCP para Deployment:** Al realizar un push, commit o cualquier tipo de deployment a GitHub, **SIEMPRE** hazlo de forma exclusiva a través del servidor MCP de GitHub (`push_files`, `create_or_update_file`, etc.). Está estrictamente prohibido buscar u/o intentar utilizar opciones alternas locales en la terminal (como intentar invocar comandos de git o npm locales), dado que el entorno local no dispone de estas herramientas o credenciales en el PATH y genera fallas innecesarias de ejecución.
+* **Uso Exclusivo de MCP para Deployment (No usar comandos de Windows/Terminal):** Al realizar un push, commit o cualquier tipo de deployment a GitHub, **SIEMPRE** hazlo de forma exclusiva a través del servidor MCP de GitHub (`push_files`, `create_or_update_file`, etc.). **Queda estrictamente prohibido utilizar el sistema o terminal de Windows para realizar despliegues o comandos de git** (tales como `git add`, `git commit` o scripts de subida), ya que estas herramientas locales carecen de las credenciales adecuadas y el entorno local no dispone de ellas en su PATH. Todo el flujo de despliegue remoto debe gestionarse únicamente interactuando con las herramientas MCP provistas.
 
 * **Verificación Unica de Conexión:** Al inicio de cada sesión, verifica **una sola vez** la conexión con GitHub vía MCP.
   * *Repositorio Objetivo:* `piggy-app-v2`.
