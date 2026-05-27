@@ -39,7 +39,6 @@ DECLARE
   v_days_remaining int;
   v_total_cycle_days int := 143; -- ~4 months 3 weeks
   v_full_name text;
-  v_whatsapp text;
 BEGIN
   -- 1. Lock and check stock
   SELECT stock INTO v_current_stock
@@ -64,19 +63,19 @@ BEGIN
   SET stock = stock - 1
   WHERE id = p_item_id;
 
-  -- Fetch user profile data to store in piggies table
-  SELECT full_name, whatsapp INTO v_full_name, v_whatsapp
+  -- Fetch user full_name from profiles to store in piggies table for easy identification
+  SELECT full_name INTO v_full_name
   FROM profiles
   WHERE id = p_user_id;
 
   -- 3. Create the piggy with calculated end_date based on remaining days
   INSERT INTO piggies (
-    user_id, name, full_name, whatsapp, investment_amount, status,
+    user_id, name, full_name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
     purchase_date, end_date
   )
   VALUES (
-    p_user_id, p_item_name, v_full_name, v_whatsapp, p_price, 'engorde',
+    p_user_id, p_item_name, v_full_name, p_price, 'engorde',
     p_extra_roi, p_category, 15.0,
     NOW(),
     NOW() + (v_days_remaining || ' days')::interval

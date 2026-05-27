@@ -329,14 +329,28 @@ export function showFlashMissionModal(mission) {
         confirmBtn.style.pointerEvents = 'none';
 
         try {
-            const result = await buyFlashMission(mission.id, customName);
-            if (!result.success) throw new Error(result.error || 'Error en la transacción');
+            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
+            const deductResult = await deductWalletBalance(price);
+            if (!deductResult.success) {
+                throw new Error(
+                    deductResult.reason === 'insufficient_balance'
+                        ? 'Saldo insuficiente en tu Wallet.'
+                        : 'No se pudo procesar el pago. Intenta de nuevo.'
+                );
+            }
 
-            // Deduct wallet balance
-            await deductWalletBalance(price);
+            // Wallet descontada ✅ — ahora crear el piggy
+            const result = await buyFlashMission(mission.id, customName);
+            if (!result.success) throw new Error(result.error || 'Error al registrar el piggy');
 
             close();
-            navigateTo('granja');
+            // Navegar al piggy recién comprado: la URL #/piggy/{id} activa PiggyDetailView.
+            // Al volver atrás, el dashboard recarga desde BD sin la misión.
+            if (result.piggy && result.piggy.id) {
+                window.location.hash = `#/piggy/${result.piggy.id}`;
+            } else {
+                navigateTo('granja');
+            }
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
