@@ -136,7 +136,20 @@ function showCheckoutModal(piggyName) {
     <div class="modal checkout-modal animate-fade-in-up" style="position:relative;">
       <div class="modal__header-row">
         <h3 class="modal-title text-white">Confirmar Compra</h3>
-        <button class="checkout-close" id="checkout-close-btn">${renderIcon('close', '', '24')}</button>
+        <button class="checkout-close" id="checkout-close-btn" style="
+            background: #fef2f2;
+            color: #ef4444;
+            border: none;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;">
+            ${renderIcon('close', '', '20')}
+        </button>
       </div>
       
       <div class="checkout-body" style="padding: 24px 20px;">
