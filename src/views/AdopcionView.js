@@ -166,10 +166,22 @@ function showCheckoutModal(piggyName) {
 
         <!-- Recharge Button -->
         <button id="adopcion-btn-recargar" style="
-          width:100%; background:white; color:#059669; border:2px solid #a7f3d0;
-          padding:12px 20px; border-radius:12px; font-weight:700; font-size:0.9rem;
-          cursor:pointer; display:flex; align-items:center; justify-content:center;
-          gap:8px; margin-bottom:12px; transition:all 0.2s;
+          width: 100%;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          color: white;
+          border: none;
+          padding: 13px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          box-shadow: 0 4px 15px rgba(234, 88, 12, 0.25);
+          transition: all 0.2s;
         ">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
           Recargar mi Cuenta
@@ -227,7 +239,7 @@ function showCheckoutModal(piggyName) {
   const recargarBtn = document.getElementById('adopcion-btn-recargar');
   recargarBtn.addEventListener('click', async () => {
     const originalText = recargarBtn.innerHTML;
-    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid #059669;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
     recargarBtn.style.pointerEvents = 'none';
     try {
       await openWalletDrawer(true);
@@ -258,7 +270,7 @@ function showCheckoutModal(piggyName) {
       navigateTo('granja');
     } catch (error) {
       console.error(error);
-      alert('Error en la transacci\u00F3n: ' + error.message);
+      alert('Error en la transacción: ' + error.message);
       confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
       confirmBtn.style.pointerEvents = 'auto';
     }
