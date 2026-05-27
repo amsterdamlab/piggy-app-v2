@@ -18,7 +18,7 @@ trigger: always_on
 
 **II. PROTOCOLO DE CONSERVACIÓN DE CONTEXTO (Multi-Agent Memory)**
 
-* **La Regla del "Chesterton's Fence":** Antes de eliminar o refactorizar código que no creaste tú (o que creaste en un prompt anterior), debes analizar y enunciar *por qué* ese código existía. No borres sin entender la dependencia.
+* **La Regla del "Chesterton’s Fence":** Antes de eliminar o refactorizar código que no creaste tú (o que creaste en un prompt anterior), debes analizar y enunciar *por qué* ese código existía. No borres sin entender la dependencia.
 * **Código Auto-Documentado:** Los nombres de variables y funciones deben ser tan descriptivos que no requieran comentarios (`getUserById` es mejor que `getData`).
 * *Excepción:* Usa comentarios *explicativos* solo para lógica de negocio compleja o decisiones no obvias ("hack" temporal).
 
@@ -50,6 +50,8 @@ trigger: always_on
 
 **VI. PROTOCOLO DE CONEXIÓN Y DESPLIEGUE (GitHub & Vercel)**
 
+* **Uso Exclusivo de MCP para Deployment:** Al realizar un push, commit o cualquier tipo de deployment a GitHub, **SIEMPRE** hazlo de forma exclusiva a través del servidor MCP de GitHub (`push_files`, `create_or_update_file`, etc.). Está estrictamente prohibido buscar u/o intentar utilizar opciones alternas locales en la terminal (como intentar invocar comandos de git o npm locales), dado que el entorno local no dispone de estas herramientas o credenciales en el PATH y genera fallas innecesarias de ejecución.
+
 * **Verificación Unica de Conexión:** Al inicio de cada sesión, verifica **una sola vez** la conexión con GitHub vía MCP.
   * *Repositorio Objetivo:* `piggy-app-v2`.
   * *Regla:* Una vez confirmada la conexión, no vuelvas a verificarla en la misma sesión.
@@ -58,10 +60,10 @@ trigger: always_on
   * *Alcance del Push:* Sube **exclusivamente** los archivos modificados o creados para la tarea actual. No hagas push de todo el proyecto innecesariamente.
   * *Nota:* La sincronización Vercel-GitHub ya existe; tu responsabilidad es solo subir el código.
 
-* **⚠️ Regla de Archivos Grandes (>1200 líneas):** Antes de hacer push de un archivo que supere las **1,200 líneas**, DETENTE y NO intentes subirlo automáticamente vía MCP. En su lugar:
+* **⚠️ Regla de Archivos Grandes (>1000 líneas):** Antes de hacer push de un archivo que supere las **1,000 líneas**, DETENTE y NO intentes subirlo automáticamente vía MCP. En su lugar:
   1. Informa al usuario que el archivo es demasiado grande para push automático.
   2. Proporciona el **paso a paso manual** para subir el archivo vía la interfaz web de GitHub:
      - Ir a `https://github.com/amsterdamlab/piggy-app-v2/edit/main/<ruta_del_archivo>`
      - Borrar el contenido, copiar/pegar desde el archivo local, y hacer commit.
   3. *Prevención:* Cuando un archivo se acerque a las 800+ líneas, sugiere proactivamente **dividirlo en módulos más pequeños** (componentización).
-  * *Razón:* El token limit de salida del agente no permite incluir archivos completos de más de ~1200 líneas en un solo mensaje, causando bloqueo.
+  * *Razón:* El token limit de salida del agente no permite incluir archivos completos de más de ~1000 líneas en un solo mensaje, causando bloqueo.
