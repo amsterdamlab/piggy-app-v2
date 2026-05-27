@@ -306,7 +306,7 @@ export function showCheckoutModal(item) {
       </div>
 
       <!-- Wallet Section -->
-      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; opacity: 0.5; pointer-events: none; transition: opacity 0.3s;">
+      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; transition: opacity 0.3s;">
         
         <!-- Balance Display -->
         <div style="
@@ -426,12 +426,12 @@ export function showCheckoutModal(item) {
     const nameValid = nameVal.length >= 3;
     const hasFunds = currentBalance >= item.price;
 
-    // Unlock wallet section once name is valid
-    walletSection.style.opacity = nameValid ? '1' : '0.5';
-    walletSection.style.pointerEvents = nameValid ? 'auto' : 'none';
+    // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
+    walletSection.style.opacity = '1';
+    walletSection.style.pointerEvents = 'auto';
 
     // Show/hide insufficient funds notice
-    insufficientNotice.style.display = (nameValid && !hasFunds) ? 'block' : 'none';
+    insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
 
     // Enable confirm button only if name valid + funds sufficient
     if (nameValid && hasFunds) {
