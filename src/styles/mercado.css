@@ -303,20 +303,22 @@
 
 .mcard__ribbon span {
     position: absolute;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 120px;
-    padding: 3px 0;
+    height: 18px;
     color: #fff;
     font-size: 9px;
     font-weight: 800;
     text-shadow: 0 1px 1px rgba(0,0,0,0.15);
     text-transform: uppercase;
-    text-align: center;
     right: -25px;
     top: 15px;
     transform: rotate(45deg);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     letter-spacing: 0.05em;
+    line-height: 1;
 }
 
 .mcard__ribbon--advanced span {
