@@ -164,11 +164,9 @@ export function showWalletDrawer(firstName, stats) {
             box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.3);
          ">
             <div style="font-size:0.75rem; opacity:0.85; margin-bottom:4px;">Saldo Disponible</div>
-            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                <div style="font-size:2rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
-                <div style="font-size:0.75rem; opacity:0.9; text-align:right;">
-                   Margen Comercial: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
-                </div>
+            <div style="font-size:2.2rem; font-weight:850; letter-spacing: -0.5px; line-height: 1; margin-bottom: 8px;">${stats.saldoDisponibleFormatted}</div>
+            <div style="font-size:0.8rem; opacity:0.9;">
+               Margen Comercial: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
             </div>
          </div>
 
