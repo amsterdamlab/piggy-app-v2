@@ -5,7 +5,6 @@
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
-import { AppState } from '../state.js';
 
 /* ─── Helpers ─────────────────────────────── */
 
@@ -93,7 +92,6 @@ export async function buyFlashMission(missionId, piggyName) {
     const expiry = computeExpiry(mission.activated_at, mission.duration_hours || 72);
     if (expiry.expired) return { success: false, error: 'La oferta ha expirado' };
 
-    const profile = AppState.get('profile');
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
         : mission.piggy_label;
@@ -104,8 +102,6 @@ export async function buyFlashMission(missionId, piggyName) {
         .insert({
             user_id:           user.id,
             name:              finalName,
-            full_name:         profile?.full_name || '',
-            whatsapp:          profile?.whatsapp || '',
             investment_amount: mission.price || 1000000,
             status:            'engorde',
             extra_roi_bonus:   mission.extra_roi_bonus || 0,
@@ -255,7 +251,6 @@ export async function buyCycleCompletionMission(missionId, piggyName) {
         return { success: false, error: 'La oferta ha expirado' };
     }
 
-    const profile = AppState.get('profile');
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
         : mission.piggy_label;
@@ -266,8 +261,6 @@ export async function buyCycleCompletionMission(missionId, piggyName) {
         .insert({
             user_id:           user.id,
             name:              finalName,
-            full_name:         profile?.full_name || '',
-            whatsapp:          profile?.whatsapp || '',
             investment_amount: mission.price || 1000000,
             status:            'engorde',
             extra_roi_bonus:   mission.extra_roi_bonus || 0,
