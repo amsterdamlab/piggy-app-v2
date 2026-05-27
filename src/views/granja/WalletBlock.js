@@ -433,7 +433,9 @@ function showRetiroSaldoModal(availableAmount) {
       <div class="modal__handle"></div>
       <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
       <div style="text-align:center; padding:20px 24px 0;">
-        <div style="font-size:44px; margin-bottom:10px;">💰</div>
+        <div style="width:64px; height:64px; background:linear-gradient(135deg,#10B981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" /><rect x="6" y="8" width="12" height="12" rx="2" /><path d="M 12 11 v 6" /><path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" /></svg>
+        </div>
         <h3 style="margin:0 0 6px; font-size:1.2rem; font-weight:800; color:#111827;">Retirar mi Saldo</h3>
         <p style="margin:0 0 16px; font-size:0.82rem; color:#6b7280;">Saldo disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
       </div>
