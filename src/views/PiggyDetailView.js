@@ -8,6 +8,7 @@ import { AppState } from '../state.js';
 import { getPiggyById, calculateBaseROI, formatCOP, formatPercentage, getDaysRemaining } from '../services/piggiesService.js';
 import { getUserPiggies } from '../services/piggiesService.js';
 import { getRouteParam, navigateTo } from '../router.js';
+import { openWalletDrawer } from './granja/WalletBlock.js';
 
 /**
  * Render the Piggy Detail view.
@@ -161,9 +162,9 @@ async function loadPiggyDetail(piggyId) {
       navigateTo('granja');
     });
 
-    // Ver Cuenta Agroproductiva button → wallet
+    // Ver Cuenta Agroproductiva button → wallet drawer
     document.getElementById('btn-ver-wallet')?.addEventListener('click', () => {
-      navigateTo('wallet');
+      openWalletDrawer();
     });
   } catch (error) {
     console.error('Error loading piggy detail:', error);
