@@ -13,6 +13,17 @@ const WHATSAPP_PHONE = '573154870448';
 
 const DEFAULT_OFFERS = [
     {
+        id: 'cerdo-entero-especial',
+        name: 'Cerdo entero disponible',
+        description: 'Compra cerdo en etapa final de engorde o en canal entero o despostado con precios exclusivos de granja por ser parte de Piggy App.',
+        original_price: null,
+        price: 950000,
+        tag: '✨ Exclusivo Granja',
+        emoji: '🐷',
+        is_active: true,
+        sort_order: 0,
+    },
+    {
         id: 'combo-parrilla',
         name: 'Combo Parrillero Familiar',
         description: '3kg Costilla de cerdo + 2kg Chorizo artesanal + 1kg Chicharrón',
@@ -54,23 +65,44 @@ const DEFAULT_OFFERS = [
  * Returns offers sorted by `sort_order`.
  */
 export async function getGourmetOffers() {
+    const specialOffer = {
+        id: 'cerdo-entero-especial',
+        name: 'Cerdo entero disponible',
+        description: 'Compra cerdo en etapa final de engorde o en canal entero o despostado con precios exclusivos de granja por ser parte de Piggy App.',
+        original_price: null,
+        price: 950000,
+        tag: '✨ Exclusivo Granja',
+        emoji: '🐷',
+        is_active: true,
+        sort_order: 0,
+    };
+
+    let baseOffers = [];
     if (isUsingMockData()) {
-        return DEFAULT_OFFERS.filter(o => o.is_active);
+        baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
+    } else {
+        try {
+            const client = getClient();
+            const { data, error } = await client
+                .from('gourmet_offers')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            baseOffers = data && data.length > 0 ? data : DEFAULT_OFFERS.filter(o => o.is_active);
+        } catch (err) {
+            console.warn('🐷 GourmetService: Error fetching offers, using defaults', err);
+            baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
+        }
     }
 
-    try {
-        const client = getClient();
-        const { data, error } = await client
-            .from('gourmet_offers')
-            .select('*')
-            .eq('is_active', true)
-            .order('sort_order', { ascending: true });
-
-        if (error) throw error;
-        return data && data.length > 0 ? data : DEFAULT_OFFERS.filter(o => o.is_active);
-    } catch (err) {
-        console.warn('🐷 GourmetService: Error fetching offers, using defaults', err);
-        return DEFAULT_OFFERS.filter(o => o.is_active);
+    // Filter out our special offer if it already exists in baseOffers (to prevent duplicates if it's in the DB)
+    const hasSpecialInDb = baseOffers.some(o => o.id === specialOffer.id || o.name === specialOffer.name);
+    if (hasSpecialInDb) {
+        return baseOffers;
+    } else {
+        return [specialOffer, ...baseOffers.filter(o => o.id !== specialOffer.id)];
     }
 }
 
