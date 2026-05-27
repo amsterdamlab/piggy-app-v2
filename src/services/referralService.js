@@ -164,10 +164,13 @@ export async function getMyReferralStats() {
         .eq('referrer_id', user.id)
         .order('created_at', { ascending: false });
 
-    const allReferrals = (referrals || []).map(r => ({
-        ...r,
-        referredName: r.profiles?.full_name || 'Usuario',
-    }));
+    const allReferrals = (referrals || []).map(r => {
+        const profileObj = r.profiles || r['profiles!referred_id'];
+        return {
+            ...r,
+            referredName: profileObj?.full_name || 'Usuario',
+        };
+    });
     const completedCount = allReferrals.filter(r => r.status === 'completed').length;
     const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
 
