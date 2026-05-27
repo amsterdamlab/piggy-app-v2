@@ -72,7 +72,7 @@ export function renderWalletBanner(firstName, stats) {
                     gap: 8px;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                     transition: transform 0.2s, box-shadow 0.2s;
-                 "
+                  "
                  onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.15)';"
                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
                  >
@@ -615,18 +615,19 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
 /**
  * Load wallet data autonomously and show the Wallet Drawer.
  */
-export async function openWalletDrawer() {
+export async function openWalletDrawer(autoOpenRecharge = false) {
   try {
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
     // Load piggies to calculate stats accurately
     const piggies = AppState.get('piggies') || await getUserPiggies();
+    const piggiesList = Array.isArray(piggies) ? piggies : [];
     
     const [balance, referral, stats, transactions] = await Promise.all([
       getWalletBalance(),
       getReferralBonusBalance(),
-      getDashboardStats(piggies),
+      getDashboardStats(piggiesList),
       getWalletTransactions()
     ]);
 
@@ -638,6 +639,10 @@ export async function openWalletDrawer() {
     stats.transactions             = transactions;
 
     showWalletDrawer(firstName, stats);
+
+    if (autoOpenRecharge) {
+      openWalletRechargeInfo();
+    }
   } catch (error) {
     console.error('Error opening autonomous wallet drawer:', error);
     // Fallback in case of failure
@@ -653,5 +658,9 @@ export async function openWalletDrawer() {
       diferencialPreventaFormatted: formatCOP(0),
       transactions: []
     });
+
+    if (autoOpenRecharge) {
+      openWalletRechargeInfo();
+    }
   }
 }
