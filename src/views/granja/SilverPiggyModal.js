@@ -99,17 +99,20 @@ export function showSilverPiggyModal(silverExpiry) {
                 color: white; text-align: center; position: relative; overflow: hidden;
                 box-shadow: 0 12px 30px -5px rgba(139,92,246,0.5);
             ">
+                <!-- Decorative BG -->
                 <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.07;
                     background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🌟%3C/text%3E%3C/svg%3E');
                     pointer-events:none;">
                 </div>
 
+                <!-- Badge -->
                 <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:4px 14px;
                     border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1.5px;
                     text-transform:uppercase; margin-bottom:12px;">
                     ⭐ OFERTA EXCLUSIVA · MISIÓN 6
                 </div>
 
+                <!-- Icon + Title -->
                 <div style="font-size:56px; margin-bottom:8px;">🌟</div>
                 <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">Piggy Silver</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.9; line-height:1.4;">
@@ -117,6 +120,7 @@ export function showSilverPiggyModal(silverExpiry) {
                     <strong>+1% adicional</strong> en tu Margen Comercial.
                 </p>
 
+                <!-- Countdown -->
                 <div id="silver-countdown-wrapper" style="
                     background: rgba(0,0,0,0.25); border-radius: 14px;
                     padding: 12px 20px; margin-top: 16px;
@@ -131,12 +135,14 @@ export function showSilverPiggyModal(silverExpiry) {
                     </div>
                 </div>
 
+                <!-- Big decoration -->
                 <div style="position:absolute; bottom:-20px; right:-10px; font-size:80px; opacity:0.12; transform:rotate(-15deg);">🐷</div>
             </div>
 
             <!-- Body -->
             <div style="padding: 20px 20px 0;">
 
+                <!-- Benefit pill -->
                 <div style="
                     background: linear-gradient(135deg, #ecfdf5, #d1fae5);
                     border: 1px solid #a7f3d0; border-radius: 12px;
@@ -150,6 +156,7 @@ export function showSilverPiggyModal(silverExpiry) {
                     </div>
                 </div>
 
+                <!-- Name Input -->
                 <div style="margin-bottom: 16px;">
                     <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
                         Ponle un nombre a tu Piggy Silver
@@ -180,7 +187,9 @@ export function showSilverPiggyModal(silverExpiry) {
                     </div>
                 </div>
 
+                <!-- Wallet / Purchase Section -->
                 <div id="silver-wallet-section" style="opacity:0.5; pointer-events:none; transition:opacity 0.3s;">
+                    <!-- Balance -->
                     <div id="silver-balance-card" style="
                         background: linear-gradient(135deg, #6366f1, #4f46e5);
                         border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
@@ -195,6 +204,7 @@ export function showSilverPiggyModal(silverExpiry) {
                         <div style="font-size:40px; opacity:0.3;">💰</div>
                     </div>
 
+                    <!-- Insufficient funds notice -->
                     <div id="silver-insufficient" style="
                         background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
                         padding:10px 14px; font-size:0.8rem; color:#dc2626; text-align:center;
@@ -203,11 +213,13 @@ export function showSilverPiggyModal(silverExpiry) {
                         Saldo insuficiente. Recarga tu Wallet para continuar.
                     </div>
 
+                    <!-- Price Row -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 4px; margin-bottom:12px;">
                         <span style="font-size:0.85rem; color:#6b7280;">Precio Piggy Silver</span>
-                        <span style="font-size:1.1rem; font-weight:800; color:#6366f1;">$1.000.000</span>
+                        <span style="font-size:1.1rem; font-weight:800; color:#6366f1;">${SILVER_PIGGY_ITEM.priceFormatted}</span>
                     </div>
 
+                    <!-- Confirm Button -->
                     <button id="silver-confirm-btn" style="
                         width: 100%; background: linear-gradient(135deg, #6366f1, #4f46e5);
                         color: white; border: none; padding: 15px;
@@ -220,6 +232,7 @@ export function showSilverPiggyModal(silverExpiry) {
                     </button>
                 </div>
 
+                <!-- Footer security -->
                 <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem;">
                     🔒 Transacción segura · Cifrado SSL
                 </div>
@@ -229,6 +242,7 @@ export function showSilverPiggyModal(silverExpiry) {
 
     document.body.appendChild(modal);
 
+    // ── Logic ────────────────────────────────────────────────
     const nameInput     = document.getElementById('silver-piggy-name');
     const walletSection = document.getElementById('silver-wallet-section');
     const balanceDisplay= document.getElementById('silver-balance-display');
@@ -237,6 +251,7 @@ export function showSilverPiggyModal(silverExpiry) {
     const nameError     = document.getElementById('silver-name-error');
     let currentBalance  = 0;
 
+    // Load balance
     getWalletBalance().then(bal => {
         currentBalance = bal;
         balanceDisplay.textContent = formatCOP(bal);
@@ -270,6 +285,7 @@ export function showSilverPiggyModal(silverExpiry) {
         nameInput.focus();
     };
 
+    // Countdown in modal
     _countdownInterval = setInterval(() => {
         const t = getRemainingTime(silverExpiry);
         const el = document.getElementById('silver-countdown-time');
@@ -283,8 +299,9 @@ export function showSilverPiggyModal(silverExpiry) {
         } else {
             clearInterval(_countdownInterval);
         }
-    }, 30000);
+    }, 30000); // update every 30s
 
+    // Close
     const close = () => {
         document.body.style.overflow = '';
         delete window._silverSelectName;
@@ -295,6 +312,7 @@ export function showSilverPiggyModal(silverExpiry) {
     document.getElementById('silver-modal-close').addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
+    // Confirm Purchase
     confirmBtn.addEventListener('click', async () => {
         const customName = nameInput.value.trim();
         if (customName.length < 3 || currentBalance < SILVER_PIGGY_ITEM.price) return;
@@ -303,12 +321,18 @@ export function showSilverPiggyModal(silverExpiry) {
         confirmBtn.style.pointerEvents = 'none';
 
         try {
-            await buyMarketplaceItem(SILVER_PIGGY_ITEM, customName);
-
+            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
             const deductResult = await deductWalletBalance(SILVER_PIGGY_ITEM.price);
             if (!deductResult.success) {
-                console.error('[WALLET] Silver piggy balance deduction failed:', deductResult.reason);
+                throw new Error(
+                    deductResult.reason === 'insufficient_balance'
+                        ? 'Saldo insuficiente en tu Wallet.'
+                        : 'No se pudo procesar el pago. Intenta de nuevo.'
+                );
             }
+
+            // Wallet descontada ✅ — ahora crear el piggy
+            await buyMarketplaceItem(SILVER_PIGGY_ITEM, customName);
 
             close();
             navigateTo('granja');
