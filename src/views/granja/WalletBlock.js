@@ -72,11 +72,11 @@ export function renderWalletBanner(firstName, stats) {
                     gap: 8px;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
                     transition: transform 0.2s, box-shadow 0.2s;
-                  "
+                 "
                  onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,0.15)';"
                  onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
                  >
-                    <span>🔍</span> Explorar Mi Cuenta
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Explorar Mi Cuenta
                  </button>
               </div>
            </div>
@@ -142,7 +142,9 @@ export function showWalletDrawer(firstName, stats) {
 
       <!-- Header -->
       <div style="text-align:center; padding:20px 24px 0;">
-        <div style="font-size:44px; margin-bottom:8px;">💰</div>
+        <div style="width:64px; height:64px; background:linear-gradient(135deg,#10B981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+        </div>
         <h3 style="margin:0 0 4px 0; font-size:1.25rem; font-weight:800; color:#111827;">Cuenta Agro de ${firstName}</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280;">Detalles y trazabilidad de tu cuenta agropecuaria</p>
       </div>
@@ -222,7 +224,7 @@ export function showWalletDrawer(firstName, stats) {
                box-shadow: 0 4px 12px rgba(16,185,129,0.25);
             ">
                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-               Recargar mi Wallet
+               Recargar mi Cuenta
             </button>
 
             ${stats.saldoDisponible > 0 ? `
@@ -352,13 +354,13 @@ export async function openWalletRechargeInfo() {
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
       </div>
 
-      <h3 style="margin:0 0 8px; font-size:1.2rem; font-weight:800; color:#1f2937;">Recargar mi Wallet</h3>
+      <h3 style="margin:0 0 8px; font-size:1.2rem; font-weight:800; color:#1f2937;">Recargar mi Cuenta</h3>
       <p style="color:#6b7280; font-size:0.9rem; margin:0 0 24px; line-height:1.5;">
-        Para recargar tu wallet y poder comprar Piggys, comunicate con nuestro equipo por WhatsApp.
+        Para recargar tu cuenta y poder comprar Piggys, comunícate con nuestro equipo por WhatsApp.
       </p>
 
       <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-bottom:24px; text-align:left;">
-        <div style="font-size:0.8rem; font-weight:700; color:#065f46; margin-bottom:8px;">&#128197; Proceso de Recarga:</div>
+        <div style="font-size:0.8rem; font-weight:700; color:#065f46; margin-bottom:8px;">📅 Proceso de Recarga:</div>
         <div style="font-size:0.82rem; color:#047857; line-height:1.8;">
           <div>1. Toca el boton de WhatsApp abajo</div>
           <div>2. Indica el monto que deseas recargar</div>
@@ -398,7 +400,7 @@ export async function openWalletRechargeInfo() {
 
   // WhatsApp
   document.getElementById('recharge-whatsapp-btn').addEventListener('click', () => {
-    const msg = `\u{1F430} *PIGGY APP \u2014 Solicitud de Recarga de Wallet*\n\n\u{1F464} *Usuario:* ${userName}\n\n\u{1F4B0} Hola, deseo recargar mi wallet para comprar Piggys.\n\n\u{1F4CB} Por favor indic\u00E0me el n\u00FAmero de cuenta y el proceso a seguir.`;
+    const msg = `🐷 *PIGGY APP — Solicitud de Recarga de Cuenta*\n\n👤 *Usuario:* ${userName}\n\n💰 Hola, deseo recargar mi cuenta para comprar Piggys.\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
   });
 }
@@ -431,21 +433,21 @@ function showRetiroSaldoModal(availableAmount) {
       <div class="modal__handle"></div>
       <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
       <div style="text-align:center; padding:20px 24px 0;">
-        <div style="font-size:44px; margin-bottom:10px;">&#128176;</div>
+        <div style="font-size:44px; margin-bottom:10px;">💰</div>
         <h3 style="margin:0 0 6px; font-size:1.2rem; font-weight:800; color:#111827;">Retirar mi Saldo</h3>
         <p style="margin:0 0 16px; font-size:0.82rem; color:#6b7280;">Saldo disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
       </div>
       <div style="padding:0 20px 24px; display:flex; flex-direction:column; gap:12px;">
         <p style="text-align:center; font-size:0.85rem; font-weight:600; color:#374151; margin:0 0 4px;">Como deseas tu saldo?</p>
         <button id="retiro-tipo-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(16,185,129,0.3);">
-          <span style="font-size:26px;">&#127968;</span>
+          <span style="font-size:26px;">🏠</span>
           <div style="text-align:left;">
             <div>Dinero en cuenta</div>
             <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Transferencia bancaria a tu cuenta</div>
           </div>
         </button>
         <button id="retiro-tipo-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:18px 20px; border-radius:14px; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:14px; box-shadow:0 4px 12px rgba(245,158,11,0.3);">
-          <span style="font-size:26px;">&#129385;</span>
+          <span style="font-size:26px;">🥩</span>
           <div style="text-align:left;">
             <div>Bonos de Consumo</div>
             <div style="font-size:0.72rem; opacity:0.85; font-weight:500;">Canjear por productos de carne</div>
@@ -461,7 +463,7 @@ function showRetiroSaldoModal(availableAmount) {
       <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
       <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
       <div style="text-align:center; padding:20px 24px 0;">
-        <div style="font-size:36px; margin-bottom:8px;">&#127968;</div>
+        <div style="font-size:36px; margin-bottom:8px;">🏠</div>
         <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Retiro de Dinero</h3>
         <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#059669;">${formatCOP(availableAmount)}</strong></p>
       </div>
@@ -497,7 +499,7 @@ function showRetiroSaldoModal(availableAmount) {
       <button id="retiro-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; z-index:3;">&times;</button>
       <button id="retiro-back" style="background:none; border:none; position:absolute; left:16px; top:18px; font-size:13px; color:#6b7280; cursor:pointer; z-index:3; font-weight:600;">&larr; Volver</button>
       <div style="text-align:center; padding:20px 24px 0;">
-        <div style="font-size:36px; margin-bottom:8px;">&#129385;</div>
+        <div style="font-size:36px; margin-bottom:8px;">🥩</div>
         <h3 style="margin:0 0 4px; font-size:1.1rem; font-weight:800; color:#111827;">Bonos de Consumo</h3>
         <p style="margin:0 0 16px; font-size:0.8rem; color:#6b7280;">Disponible: <strong style="color:#d97706;">${formatCOP(availableAmount)}</strong></p>
       </div>
@@ -543,7 +545,7 @@ function showRetiroSaldoModal(availableAmount) {
       if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
       if (!bank) { errDiv.textContent = 'Selecciona un banco'; errDiv.style.display = 'block'; return; }
       errDiv.style.display = 'none';
-      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de RETIRO DE DINERO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83D\uDCB5 *Monto a retirar:* ' + formatCOP(amount) + '\n\uD83C\uDFE6 *Banco destino:* ' + bank + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor procesar la transferencia y confirmar por este medio.';
+      const msg = '🐷 *PIGGY APP — Solicitud de RETIRO DE DINERO*\n\n👤 *Usuario:* ' + userName + '\n📱 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n💵 *Monto a retirar:* ' + formatCOP(amount) + '\n🏦 *Banco destino:* ' + bank + '\n📅 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n⚡ Por favor procesar la transferencia y confirmar por este medio.';
       window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
       modal.remove();
     });
@@ -558,7 +560,7 @@ function showRetiroSaldoModal(availableAmount) {
       if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
       if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
       errDiv.style.display = 'none';
-      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de BONOS DE CONSUMO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83E\uDD69 *Monto en bonos:* ' + formatCOP(amount) + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor coordinar la entrega de bonos de carne y confirmar por este medio.';
+      const msg = '🐷 *PIGGY APP — Solicitud de BONOS DE CONSUMO*\n\n👤 *Usuario:* ' + userName + '\n📱 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n🥩 *Monto en bonos:* ' + formatCOP(amount) + '\n📅 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n⚡ Por favor coordinar la entrega de bonos de carne y confirmar por este medio.';
       window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
       modal.remove();
     });
@@ -583,7 +585,7 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
     <div class="modal animate-scale-in text-center" style="max-width:400px;">
       <button class="bonus-close" id="wallet-success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
       <div style="width:60px; height:60px; background:${isWithdrawal ? '#d1fae5' : '#fef3c7'}; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
-          <span style="font-size:28px;">${isWithdrawal ? '\u2705' : '\u{1F969}'}</span>
+          <span style="font-size:28px;">${isWithdrawal ? '✅' : '🥩'}</span>
       </div>
       <h3 style="margin:0 0 8px; font-size:1.15rem; font-weight:800; color:#1f2937;">Solicitud de ${typeLabel} Recibida</h3>
       <p style="color:#6b7280; font-size:0.9rem; margin:0 0 16px;">
@@ -598,8 +600,8 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
 
       <p style="color:#9ca3af; font-size:0.78rem; margin:0 0 20px;">
         ${isWithdrawal
-      ? 'Nuestro equipo procesar\u00E1 tu retiro en un plazo m\u00E1ximo de 3 d\u00EDas h\u00E1biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
-      : 'Nuestro equipo se comunicar\u00E1 contigo por WhatsApp para coordinar la entrega de tu pedido.'}
+      ? 'Nuestro equipo procesará tu retiro en un plazo máximo de 3 días hábiles. Te enviaremos un mensaje de WhatsApp para confirmar.'
+      : 'Nuestro equipo se comunicará contigo por WhatsApp para coordinar la entrega de tu pedido.'}
       </p>
 
       <button class="btn btn--primary btn--block" id="wallet-success-close" style="width:100%; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">Entendido</button>
