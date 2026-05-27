@@ -10,6 +10,8 @@ import { adoptPiggy } from '../services/piggiesService.js';
 import { getWalletBalance, deductWalletBalance } from '../services/walletService.js';
 import { formatCOP } from '../services/mockData.js';
 import { AppState } from '../state.js';
+import { openWalletRechargeInfo } from './granja/WalletBlock.js';
+
 
 /**
  * Render the Adopcion view.
@@ -30,8 +32,10 @@ export function renderAdopcionView() {
       <div class="page__content adopcion-content">
         
         <!-- Piggy Image Circle -->
+        <!-- Piggy Image Circle -->
         <div class="adopcion-image-wrapper animate-scale-in">
           <div class="adopcion-image adopcion-image--clean">
+            <!-- Clean image without badge -->
             <img src="pig1.png" alt="Piggy Bank" class="adopcion-image__img" />
           </div>
         </div>
@@ -81,17 +85,22 @@ export function renderAdopcionView() {
 }
 
 function attachAdopcionListeners() {
+  // Back button
   document.getElementById('btn-back-adopcion')?.addEventListener('click', () => {
     navigateTo('granja');
   });
 
+  // Name chips
   const input = document.getElementById('piggy-name-input');
   document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      if (input) input.value = chip.dataset.name;
+      if (input) {
+        input.value = chip.dataset.name;
+      }
     });
   });
 
+  // Init Purchase Flow (Open Checkout Modal)
   document.getElementById('btn-adopt-init')?.addEventListener('click', () => {
     const name = input?.value?.trim();
     if (!name) {
@@ -103,8 +112,11 @@ function attachAdopcionListeners() {
 }
 
 /**
- * Show Checkout Modal — Wallet-based purchase flow.
- * Validates balance, confirms purchase, and deducts wallet balance atomically.
+ * Show Checkout/Payment Gateway Modal
+ */
+
+/**
+ * Show Checkout Modal — Wallet-based purchase flow
  */
 function showCheckoutModal(piggyName) {
   const existing = document.getElementById('checkout-modal');
@@ -132,12 +144,20 @@ function showCheckoutModal(piggyName) {
         <!-- Piggy Summary -->
         <div style="text-align:center; margin-bottom:20px;">
           <div style="font-size:0.95rem; color:#4b5563; margin-bottom:4px;">Comprando</div>
-          <div style="font-size:1.2rem; font-weight:800; color:#1f2937;">Piggy "${piggyName}"</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#1f2937;">Piggy &quot;${piggyName}&quot;</div>
           <div style="font-size:1.5rem; font-weight:900; color:var(--color-primary); margin-top:4px;">${formatCOP(ITEM_PRICE)}</div>
         </div>
 
         <!-- Wallet Balance -->
-        <div style="background:linear-gradient(135deg,#10B981 0%,#059669 100%); border-radius:14px; padding:18px 20px; margin-bottom:14px; color:white; position:relative; overflow:hidden;">
+        <div style="
+          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+          border-radius: 14px;
+          padding: 18px 20px;
+          margin-bottom: 14px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        ">
           <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
           <div id="adopcion-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px;">
             <span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
@@ -145,18 +165,31 @@ function showCheckoutModal(piggyName) {
         </div>
 
         <!-- Recharge Button -->
-        <button id="adopcion-btn-recargar" style="width:100%; background:white; color:#059669; border:2px solid #a7f3d0; padding:12px 20px; border-radius:12px; font-weight:700; font-size:0.9rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; transition:all 0.2s;">
+        <button id="adopcion-btn-recargar" style="
+          width:100%; background:white; color:#059669; border:2px solid #a7f3d0;
+          padding:12px 20px; border-radius:12px; font-weight:700; font-size:0.9rem;
+          cursor:pointer; display:flex; align-items:center; justify-content:center;
+          gap:8px; margin-bottom:12px; transition:all 0.2s;
+        ">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-          Recargar mi Wallet
+          Recargar mi Cuenta
         </button>
 
         <!-- Insufficient Notice -->
-        <div id="adopcion-insufficient" style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:10px 14px; font-size:0.82rem; color:#dc2626; text-align:center; margin-bottom:12px; display:none;">
-          Saldo insuficiente. Recarga tu Wallet para continuar.
-        </div>
+        <div id="adopcion-insufficient" style="
+          background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+          padding:10px 14px; font-size:0.82rem; color:#dc2626; text-align:center;
+          margin-bottom:12px; display:none;
+        ">Saldo insuficiente. Recarga tu Cuenta para continuar.</div>
 
         <!-- Confirm Button -->
-        <button id="adopcion-btn-confirm" style="width:100%; background:linear-gradient(135deg,#ec4899,#db2777); color:white; border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s; opacity:0.5; pointer-events:none;">
+        <button id="adopcion-btn-confirm" style="
+          width:100%; background:linear-gradient(135deg,#ec4899,#db2777); color:white;
+          border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:1rem;
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+          box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
+          opacity:0.5; pointer-events:none;
+        ">
           Confirmar Compra con mi Wallet
         </button>
       </div>
@@ -170,7 +203,7 @@ function showCheckoutModal(piggyName) {
   const confirmBtn = document.getElementById('adopcion-btn-confirm');
   let currentBalance = 0;
 
-  // Load balance and update UI
+  // Load balance
   getWalletBalance().then(balance => {
     currentBalance = balance;
     balanceDisplay.textContent = formatCOP(balance);
@@ -185,27 +218,26 @@ function showCheckoutModal(piggyName) {
     insufficientNotice.style.display = 'block';
   });
 
+  // Close
   const close = () => modal.remove();
   document.getElementById('checkout-close-btn').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  // Recargar — Open WhatsApp to admin
+  // Recargar
   document.getElementById('adopcion-btn-recargar').addEventListener('click', () => {
-    const msg = `🐷 *PIGGY APP — Solicitud de Recarga de Wallet*\n\n👤 *Usuario:* ${userName}\n\n💰 Hola, deseo recargar mi wallet para comprar Piggys.\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+    close();
+    openWalletRechargeInfo();
   });
 
-  // Confirm Purchase — validate, buy, and deduct balance
+  // Confirm
   confirmBtn.addEventListener('click', async () => {
     if (currentBalance < ITEM_PRICE) return;
-
     confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
     confirmBtn.style.pointerEvents = 'none';
-
     try {
       await adoptPiggy(piggyName);
 
-      // ─── CRÍTICO: Descontar balance de la wallet en DB ───
+      // ─── CRÍTICO: Descontar balance de la wallet ───
       const deductResult = await deductWalletBalance(ITEM_PRICE);
       if (!deductResult.success) {
         console.error('[WALLET] Balance deduction failed after adoption:', deductResult.reason);
@@ -216,7 +248,7 @@ function showCheckoutModal(piggyName) {
       navigateTo('granja');
     } catch (error) {
       console.error(error);
-      alert('Error en la transacción: ' + error.message);
+      alert('Error en la transacci\u00F3n: ' + error.message);
       confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
       confirmBtn.style.pointerEvents = 'auto';
     }

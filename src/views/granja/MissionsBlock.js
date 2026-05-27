@@ -456,6 +456,7 @@ function renderCycleMissionBanner(mission) {
         silver:  { gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6d28d9', icon: '🌟' },
         gold:    { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇' },
         premium: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎' },
+        advanced: { gradient: 'linear-gradient(135deg, #A855F7 0%, #8B5CF6 50%, #7E22CE 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#7E22CE', icon: '⚡' },
     };
     const t        = typeThemes[mission.piggy_type] || typeThemes.silver;
     const roiPct   = `+${((mission.extra_roi_bonus || 0) * 100).toFixed(0)}%`;

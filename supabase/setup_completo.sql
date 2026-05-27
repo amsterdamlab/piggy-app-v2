@@ -8,6 +8,8 @@ ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS category TEXT;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS extra_roi NUMERIC DEFAULT 0;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 10;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_month INTEGER DEFAULT 1;
+ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 15.0;
 
 ALTER TABLE public.piggies ADD COLUMN IF NOT EXISTS name TEXT;
 
@@ -15,12 +17,14 @@ ALTER TABLE public.allies ADD COLUMN IF NOT EXISTS discount_info TEXT;
 ALTER TABLE public.allies ADD COLUMN IF NOT EXISTS logo_url TEXT;
 
 -- 2. INSERTAR PRODUCTOS DEL MARKETPLACE
-INSERT INTO public.marketplace (item_name, description, price, extra_roi, stock, category)
+INSERT INTO public.marketplace (item_name, description, price, extra_roi, stock, category, current_month, current_weight)
 VALUES
-  ('Piggy Estándar', 'Comienza tu camino en el agro. Un cerdo de raza clásica con rendimiento sólido.', 1000000, 0, 50, 'standard'),
-  ('Piggy Premium', 'Cerdo de raza premium con alimentación especial. Bono de +1% adicional.', 1200000, 0.01, 20, 'accelerator'),
-  ('Piggy Elite', 'Cerdo élite con genética superior y cuidado personalizado. Bono de +2% adicional.', 1500000, 0.02, 10, 'accelerator'),
-  ('Acelerador Nutricional', 'Suplemento premium que mejora el crecimiento. +1% al cerdo seleccionado.', 150000, 0.01, 100, 'booster');
+  ('Piggy Estándar', 'Comienza tu camino en el agro. Un cerdo de raza clásica con rendimiento sólido.', 1000000, 0.00, 25, 'standard', 1, 15.0),
+  ('Piggy Advanced (Mes 2)', 'Cerdo en etapa de engorde avanzada. Compra al mismo precio de siempre pero ahorra tiempo.', 1000000, 0.00, 15, 'advanced', 2, 45.0),
+  ('Piggy Advanced (Mes 3)', 'Cerdo con máximo periodo de avance en su ciclo de engorde (3 meses).', 1000000, 0.00, 10, 'advanced', 3, 65.0),
+  ('Piggy Silver', 'Comercializado en un mercado plus con un +1% de margen comercial adicional.', 1000000, 0.01, 20, 'silver', 1, 15.0),
+  ('Piggy Gold', 'Comercializado en un mercado plus premium con un +2% de margen comercial adicional.', 1000000, 0.02, 12, 'gold', 1, 15.0),
+  ('Piggy Premium', 'Comercializado en un mercado plus exclusivo con un +3% de margen comercial adicional.', 1000000, 0.03, 8, 'premium', 1, 15.0);
 
 -- 3. INSERTAR ALIADOS
 INSERT INTO public.allies (name, category, location, discount_info)

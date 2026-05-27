@@ -288,3 +288,49 @@
     align-items: center;
     gap: var(--space-md);
 }
+
+/* Ribbon Styles for Piggies */
+.mcard__ribbon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 85px;
+    height: 85px;
+    overflow: hidden;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.mcard__ribbon span {
+    position: absolute;
+    display: block;
+    width: 120px;
+    padding: 3px 0;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    text-transform: uppercase;
+    text-align: center;
+    right: -25px;
+    top: 15px;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: 0.05em;
+}
+
+.mcard__ribbon--advanced span {
+    background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+}
+
+.mcard__ribbon--silver span {
+    background: linear-gradient(135deg, #BDC3C7 0%, #7F8C8D 100%);
+}
+
+.mcard__ribbon--gold span {
+    background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+}
+
+.mcard__ribbon--premium span {
+    background: linear-gradient(135deg, #EC4899 0%, #9D174D 100%);
+}
