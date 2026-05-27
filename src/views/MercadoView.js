@@ -211,7 +211,6 @@ export function showCheckoutModal(item) {
         
         <h3 class="modal-title" style="margin:0; font-size: 1.25rem;">Pasarela de Pago</h3>
         <button class="checkout-close" id="checkout-close-btn" style="
-            background: none; 
             border: none; 
             cursor: pointer; 
             padding: 8px; 
@@ -219,7 +218,9 @@ export function showCheckoutModal(item) {
             display: flex; 
             align-items: center; 
             justify-content: center;
-            background: #f0f0f0;">
+            background: #fef2f2;
+            color: #ef4444;
+            transition: all 0.2s;">
             ${renderIcon('close', '', '20')}
         </button>
     </div>
