@@ -59,8 +59,8 @@ export async function getReferralBonusBalance() {
 
 /**
  * Deduct an amount from the user's wallet balance after a successful purchase.
- * Inserts a DEBIT transaction into wallet_transactions — the DB trigger
- * auto-updates wallet_balance in profiles atomically.
+ * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should
+ * handle this atomically. Until then, we call this immediately after a confirmed purchase.
  *
  * @param {number} amount - Amount in COP to deduct
  * @returns {{ success: boolean, newBalance?: number, reason?: string }}
@@ -183,6 +183,39 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
 
     const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
+}
+
+/* ─── Get Transaction History ─── */
+
+/**
+ * Fetch all wallet transactions for the current user.
+ * Ordered by created_at DESC (newest first).
+ * @returns {Promise<Array>} Transaction history
+ */
+export async function getWalletTransactions() {
+    if (isUsingMockData()) {
+        return [
+            { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', created_at: new Date().toISOString() },
+            { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', created_at: new Date(Date.now() - 86400000).toISOString() }
+        ];
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await client
+        .from('wallet_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching wallet transactions:', error);
+        return [];
+    }
+
+    return data || [];
 }
 
 /* ─── Format Helper ─── */

@@ -11,7 +11,7 @@ import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
 import { showCheckoutModal } from './MercadoView.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { getWalletBalance, getReferralBonusBalance } from '../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
 import { getActiveMissions } from '../services/missionsService.js';
 import {
@@ -133,8 +133,9 @@ async function loadGranjaData(firstName) {
 
     // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
-        tipData, walletBalance, referralBonus,
-        activeMissions, flashMissions, cycleMissions, stats,
+      tipData, walletBalance, referralBonus,
+      activeMissions, flashMissions, cycleMissions, stats,
+      transactions,
     ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
@@ -143,6 +144,7 @@ async function loadGranjaData(firstName) {
       getActiveUserFlashMissions(),
       getActiveCycleMissions(),
       getDashboardStats(piggies),
+      getWalletTransactions(),
     ]);
 
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
@@ -156,6 +158,7 @@ async function loadGranjaData(firstName) {
     stats.referralBonusFormatted = formatCOP(referralBonus);
     stats.saldoDisponible        = walletBalance;
     stats.saldoDisponibleFormatted = formatCOP(walletBalance);
+    stats.transactions           = transactions;
 
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);

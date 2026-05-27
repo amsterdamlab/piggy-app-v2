@@ -142,6 +142,48 @@ export function renderWalletBanner(firstName, stats) {
               </div>
            </div>
         </div>
+
+        <!-- Historial de Transacciones (Trazabilidad) -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.12s; margin-top: -12px; margin-bottom: 24px;">
+           <div style="padding: 20px; border-radius: 16px; background: white; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                 <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #1f2937; display: flex; align-items: center; gap: 8px;">
+                    <span>🧾</span> Trazabilidad de Movimientos
+                 </h4>
+                 <span style="font-size: 0.72rem; color: #4b5563; font-weight: 700; background: #e5e7eb; padding: 4px 10px; border-radius: 8px;">
+                    ${(stats.transactions || []).length} registro(s)
+                 </span>
+              </div>
+
+              <div id="transactions-list" style="max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+                 ${(stats.transactions || []).length === 0 ? `
+                    <div style="text-align: center; padding: 24px 0; color: #9ca3af; font-size: 0.85rem;">
+                       <span style="font-size:24px; display:block; margin-bottom:8px;">📂</span> No hay transacciones registradas aún.
+                    </div>
+                 ` : (stats.transactions || []).map(tx => {
+                    const isDebit = tx.amount < 0;
+                    const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
+                    const badgeColor = isDebit ? '#dc2626' : '#059669';
+                    const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
+                    const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
+                       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    return `
+                       <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 12px; background: #f9fafb; border: 1px solid #f3f4f6; transition: background 0.2s;">
+                          <div style="display: flex; flex-direction: column; gap: 4px; max-width: 70%;">
+                             <span style="font-size: 0.82rem; font-weight: 700; color: #374151; word-break: break-word;">${tx.description || 'Transacción de Wallet'}</span>
+                             <span style="font-size: 0.7rem; color: #9ca3af; font-weight: 500;">${dateStr}</span>
+                          </div>
+                          <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 10px; border-radius: 8px; white-space: nowrap;">
+                             ${amountStr}
+                          </span>
+                       </div>
+                    `;
+                 }).join('')}
+              </div>
+           </div>
+        </div>
   `;
 }
 
@@ -455,8 +497,8 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
 
       <p style="color:#9ca3af; font-size:0.78rem; margin:0 0 20px;">
         ${isWithdrawal
-      ? 'Nuestro equipo procesará tu retiro en un plazo máximo de 3 días hábiles. Te enviaremos un mensaje de WhatsApp para confirmar.'
-      : 'Nuestro equipo se comunicará contigo por WhatsApp para coordinar la entrega de tu pedido.'}
+      ? 'Nuestro equipo procesar\u00E1 tu retiro en un plazo m\u00E1ximo de 3 d\u00EDas h\u00E1biles. Te enviaremos un mensaje de WhatsApp para confirmar.'
+      : 'Nuestro equipo se comunicar\u00E1 contigo por WhatsApp para coordinar la entrega de tu pedido.'}
       </p>
 
       <button class="btn btn--primary btn--block" id="wallet-success-close" style="width:100%; background:linear-gradient(135deg, #10B981, #059669); border:none; color:white; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">Entendido</button>
