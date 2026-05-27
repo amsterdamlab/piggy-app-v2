@@ -14,10 +14,15 @@ import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getWalletBalance, getReferralBonusBalance } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
 import { getActiveMissions } from '../services/missionsService.js';
+import {
+    getActiveUserFlashMissions,
+    getActiveCycleMissions,
+    detectAndCreateCycleMissions,
+} from '../services/flashMissionsService.js';
 
-/* ── Module imports (Granja Section blocks) ────────── */
+/* ── Module imports (Granja Section blocks) ───────── */
 import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
-import { renderMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
+import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
 import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
 import { removeBonusModal } from './granja/WelcomeBonusModal.js';
 
@@ -115,21 +120,34 @@ function buildGranjaShell(firstName) {
  */
 async function loadGranjaData(firstName) {
   try {
-    // ── Paso 1: cargar piggies primero y actualizar AppState ──────────────
+    // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
     // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
     // para calcular qué misiones están completadas. Si se ejecuta en paralelo
     // con getUserPiggies(), AppState todavía está vacío → race condition.
     const piggies = await getUserPiggies();
     AppState.set({ piggies });
 
-    // ── Paso 2: cargar el resto de datos en paralelo (sin dependencias) ───
-    const [tipData, walletBalance, referralBonus, activeMissions, stats] = await Promise.all([
+    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
+    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
+    await detectAndCreateCycleMissions(piggies);
+
+    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
+    const [
+        tipData, walletBalance, referralBonus,
+        activeMissions, flashMissions, cycleMissions, stats,
+    ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
       getReferralBonusBalance(),
-      getActiveMissions(piggies),   // ← recibe piggies directamente, sin leer AppState
+      getActiveMissions(piggies),
+      getActiveUserFlashMissions(),
+      getActiveCycleMissions(),
       getDashboardStats(piggies),
     ]);
+
+    // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
+    window._activeFlashMissions = flashMissions;
+    window._activeCycleMissions = cycleMissions;
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
@@ -140,7 +158,7 @@ async function loadGranjaData(firstName) {
     stats.saldoDisponibleFormatted = formatCOP(walletBalance);
 
     const app = document.getElementById('app');
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions);
+    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length);
   } catch (error) {
@@ -160,9 +178,14 @@ async function loadGranjaData(firstName) {
 /**
  * Build the full dashboard with data.
  */
-function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
-  const piggyCount = piggies.length;
-  const missionBanner = renderMissionBanner(activeMissions, piggyCount);
+function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions) {
+  const piggyCount    = piggies.length;
+  const missionBanner = renderPriorityMissionBanner(
+      flashMissions  || [],
+      cycleMissions  || [],
+      activeMissions || [],
+      piggyCount
+  );
   const notification = renderRandomNotification(tipData);
 
   return `
@@ -238,6 +261,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions) {
   `;
 }
 
+// ... renderGreeting remains the same ...
+
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -292,6 +317,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 function renderPiggiesList(piggies, baseROI) {
   return `
@@ -350,6 +377,7 @@ function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
+// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
@@ -377,6 +405,9 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
+/**
+ * Attach event listeners.
+ */
 function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
