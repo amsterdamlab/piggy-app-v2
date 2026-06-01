@@ -166,6 +166,44 @@ export async function adoptPiggy(piggyName) {
 }
 
 /**
+ * Generate a stable hash number from a string (piggy ID) to pick a
+ * consistent random photo (1-5) per piggy without changing on refresh.
+ * @param {string} idStr
+ * @returns {number} 1 to 5
+ */
+function getPiggyPhotoNumber(idStr) {
+    let hash = 0;
+    const str = String(idStr || 'default');
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return (Math.abs(hash) % 5) + 1; // Returns 1, 2, 3, 4 or 5
+}
+
+/**
+ * Determine the growth stage and build the image URL for a piggy.
+ * Stage 1 → Month 1  (daysElapsed 0-30)
+ * Stage 2 → Months 2-3 (daysElapsed 31-90)
+ * Stage 3 → Month 4 to end of cycle (daysElapsed > 90 or completed)
+ * @param {string} piggyId
+ * @param {number} daysElapsed
+ * @param {boolean} isComplete
+ * @returns {string} Image URL
+ */
+function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
+    let stage;
+    if (isComplete || daysElapsed > 90) {
+        stage = 3;
+    } else if (daysElapsed > 30) {
+        stage = 2;
+    } else {
+        stage = 1;
+    }
+    const photoNum = getPiggyPhotoNumber(piggyId);
+    return `assets/piggies/stage${stage}/pig${photoNum}.png`;
+}
+
+/**
  * Enrich a piggy record with computed fields for display.
  */
 function enrichPiggyData(piggy) {
@@ -188,12 +226,16 @@ function enrichPiggyData(piggy) {
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
+    // Assign a stable, stage-based random image
+    const imageUrl = getPiggyImageUrl(piggy.id, daysElapsed, isComplete);
+
     return {
         ...piggy,
         progress,
         daysLeft,
         currentWeight: weight.toFixed(1),
         isComplete,
+        imageUrl,
         name: piggy.name || `Piggy #${piggy.id.slice(-4)}`,
     };
 }
