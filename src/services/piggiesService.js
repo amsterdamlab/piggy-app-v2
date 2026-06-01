@@ -80,7 +80,6 @@ export async function markExpiredPiggies(userId) {
     if (!expiredPiggies || expiredPiggies.length === 0) return;
 
     // Mark them as "completado"
-    // Using Promise.all since we might need to update multiple
     await Promise.all(expiredPiggies.map(async (piggy) => {
         const { error: updateError } = await client
             .from('piggies')
@@ -120,7 +119,6 @@ export async function getPiggyById(id) {
 
 /**
  * Create a new piggy for the user (Testing / Admin purpose).
- * Note: Use buyMarketplaceItem for real purchases.
  * @param {string} piggyName 
  * @returns {Promise<Object>}
  */
@@ -132,7 +130,6 @@ export async function adoptPiggy(piggyName) {
             name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
             investment_amount: 250000,
             extra_roi_bonus: 0,
@@ -154,9 +151,6 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 1000000,
             status: 'engorde',
             current_weight: 15.0,
-            // purchase_date and end_date calculate automatically in DB default or trigger, 
-            // but let's rely on default for purchase_date. 
-            // end_date default is 4mo3wk from now in schema.
         })
         .select()
         .single();
@@ -166,9 +160,17 @@ export async function adoptPiggy(piggyName) {
 }
 
 /**
- * Generate a stable hash number from a string (piggy ID) to pick a
- * consistent random photo (1-5) per piggy without changing on refresh.
- * @param {string} idStr
+ * Generate a STABLE hash number from a piggy's unique ID.
+ * Returns a number from 1 to 5 that never changes for the same piggy.
+ * This ensures the same animal always shows the same photo variant.
+ *
+ * PIGGY 1 (hash → 1): et1-1.jpg → et2-1.jpg → et3-1.jpg
+ * PIGGY 2 (hash → 2): et1-2.jpg → et2-2.jpg → et3-2.jpg
+ * PIGGY 3 (hash → 3): et1-3.jpg → et2-3.jpg → et3-3.jpg
+ * PIGGY 4 (hash → 4): et1-4.jpg → et2-4.jpg → et3-4.jpg
+ * PIGGY 5 (hash → 5): et1-5.jpg → et2-5.jpg → et3-5.jpg
+ *
+ * @param {string} idStr - The piggy's unique ID
  * @returns {number} 1 to 5
  */
 function getPiggyPhotoNumber(idStr) {
@@ -177,18 +179,23 @@ function getPiggyPhotoNumber(idStr) {
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return (Math.abs(hash) % 5) + 1; // Returns 1, 2, 3, 4 or 5
+    return (Math.abs(hash) % 5) + 1; // Returns 1, 2, 3, 4, or 5
 }
 
 /**
- * Determine the growth stage and build the image URL for a piggy.
- * Stage 1 → Month 1  (daysElapsed 0-30)
- * Stage 2 → Months 2-3 (daysElapsed 31-90)
- * Stage 3 → Month 4 to end of cycle (daysElapsed > 90 or completed)
+ * Build the image URL for a piggy based on its growth stage and stable photo number.
+ *
+ * Stage rules:
+ *   Stage 1 → Month 1       (daysElapsed 0–30)         → et1-{n}.jpg
+ *   Stage 2 → Months 2–3   (daysElapsed 31–90)         → et2-{n}.jpg
+ *   Stage 3 → Month 4+ / completed (daysElapsed > 90)  → et3-{n}.jpg
+ *
+ * Fallback: if the image fails to load (onerror) the UI falls back to pig1.png.
+ *
  * @param {string} piggyId
  * @param {number} daysElapsed
  * @param {boolean} isComplete
- * @returns {string} Image URL
+ * @returns {string} Relative image URL
  */
 function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
     let stage;
@@ -200,7 +207,8 @@ function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
         stage = 1;
     }
     const photoNum = getPiggyPhotoNumber(piggyId);
-    return `assets/piggies/stage${stage}/pig${photoNum}.png`;
+    // Pattern: assets/piggies/stage{1|2|3}/et{1|2|3}-{1..5}.jpg
+    return `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
 }
 
 /**
@@ -214,7 +222,6 @@ function enrichPiggyData(piggy) {
     const daysLeft = getDaysRemaining(piggy.end_date);
 
     // Calculate progress based on REVERSE logic (143 - daysLeft)
-    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     const progress = Math.min(100, Math.max(0, Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100)));
 
@@ -226,7 +233,7 @@ function enrichPiggyData(piggy) {
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
-    // Assign a stable, stage-based random image
+    // Assign a stable, stage-based image URL (consistent per piggy ID)
     const imageUrl = getPiggyImageUrl(piggy.id, daysElapsed, isComplete);
 
     return {
@@ -248,35 +255,27 @@ export async function getDashboardStats(piggies) {
     const availablePiggies = piggies.filter((p) => p.isComplete);
 
     const piggyCount = activePiggies.length;
-    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
-    // 1. Adquisición Bonos de Preventa (Active Investment)
     const adquisicionBonos = activePiggies.reduce(
         (sum, p) => sum + (p.investment_amount || 0), 0
     );
 
-    // 2. Diferencial de Preventa (Projected Gain for Active)
     const diferencialPreventa = activePiggies.reduce((sum, p) => {
         const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
         return sum + (totalReturn - p.investment_amount);
     }, 0);
 
-    // 3. Disponible (Finished Cycles Total Value)
     const disponible = availablePiggies.reduce((sum, p) => {
-        // Use stored final amount if exists, else calculate
         if (p.final_return_amount) return sum + p.final_return_amount;
-        // Re-calculate return based on when it finished (using same logic)
         const totalReturn = calculateTotalReturn(p.investment_amount, baseROI, p.extra_roi_bonus || 0);
         return sum + totalReturn;
     }, 0);
 
-    // 4. Ciclo de cierre cercano (Min days left) & Progress
     let nextCloseDays = null;
     let nextCloseProgress = 0;
 
     if (activePiggies.length > 0) {
-        // Find piggy with minimum days left (closest to completion)
         const closestPiggy = activePiggies.reduce((prev, curr) =>
             (prev.daysLeft < curr.daysLeft) ? prev : curr
         );
@@ -302,12 +301,8 @@ export async function getDashboardStats(piggies) {
 
 /**
  * Buy a piggy from the marketplace.
- * The current_month of the item determines how many days remain in the cycle.
- * @param {Object} item - The marketplace item
- * @param {string|null} customName - Optional custom name for the piggy
  */
 export async function buyMarketplaceItem(item, customName = null) {
-    // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
@@ -328,8 +323,6 @@ export async function buyMarketplaceItem(item, customName = null) {
             current_weight: item.current_weight || 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
-
-        // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
@@ -338,8 +331,6 @@ export async function buyMarketplaceItem(item, customName = null) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
-    // Call Database Function (RPC)
-    // Passes current_month so the DB calculates the correct end_date
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -355,12 +346,10 @@ export async function buyMarketplaceItem(item, customName = null) {
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
-    // Success! Fetch the created piggy to return it
     if (rpcData && rpcData.piggy_id) {
         return getPiggyById(rpcData.piggy_id);
     }
 
-    // Fallback just for fetching data, not for logic
     const { data: latest } = await client
         .from('piggies')
         .select('*')
