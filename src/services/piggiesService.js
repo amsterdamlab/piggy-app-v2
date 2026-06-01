@@ -229,8 +229,32 @@ function enrichPiggyData(piggy) {
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
-    // Assign a stable, stage-based random image or use DB override if available
-    const imageUrl = piggy.image_url || getPiggyImageUrl(piggy.id, daysElapsed, isComplete);
+    // Determine current growth stage
+    let currentStage;
+    if (isComplete || daysElapsed > 90) {
+        currentStage = 3;
+    } else if (daysElapsed > 30) {
+        currentStage = 2;
+    } else {
+        currentStage = 1;
+    }
+
+    let imageUrl = piggy.image_url;
+
+    if (imageUrl) {
+        // If it's a standard pattern like 'assets/piggies/stageX/etX-Y.jpg',
+        // we dynamically update the stage X to match the actual current growth stage!
+        // This ensures the piggy GROWING works automatically while keeping the photo number Y!
+        const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
+        if (match) {
+            const photoNum = match[1];
+            imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+        }
+    } else {
+        // Fallback in case image_url is empty in DB
+        const photoNum = getPiggyPhotoNumber(piggy.id);
+        imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+    }
 
     return {
         ...piggy,
@@ -324,6 +348,7 @@ export async function buyMarketplaceItem(item, customName = null) {
             name: finalName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
+            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
