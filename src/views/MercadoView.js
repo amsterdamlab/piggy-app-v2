@@ -128,6 +128,7 @@ function renderProductCard(item) {
   const daysSaved = item.cycleTotalDays - daysRemaining;
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
+  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
 
   return `
     <div class="mcard animate-fade-in-up">
@@ -141,7 +142,7 @@ function renderProductCard(item) {
       <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
         <div class="mcard__img-wrap">
-          <img src="assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig1.png'" />
+          <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig1.png'" />
         </div>
         
         <button class="mcard__buy-btn" id="buy-${item.id}">
@@ -207,6 +208,10 @@ export function showCheckoutModal(item) {
   modal.style.flexDirection = 'column';
   modal.style.overflowY = 'auto'; // Internal scroll if needed
 
+  const photoNum = getMarketplacePhotoNumber(item.id);
+  const stage = (item.currentMonth || 1) >= 4 ? 3 : (item.currentMonth || 1) >= 2 ? 2 : 1;
+  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+
   // Random names for suggestions
   const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
   // Shuffle and pick 4
@@ -262,7 +267,7 @@ export function showCheckoutModal(item) {
               overflow: hidden; 
               border: 3px solid white; 
               box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-              <img src="assets/piggies/stage${(item.currentMonth || 1) >= 4 ? '3' : (item.currentMonth || 1) >= 2 ? '2' : '1'}/et${(item.currentMonth || 1) >= 4 ? '3' : (item.currentMonth || 1) >= 2 ? '2' : '1'}-${getMarketplacePhotoNumber(item.id)}.jpg" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig1.png'">
+              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig1.png'">
           </div>
           
           <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">¡Compra tu Piggy!</h2>
