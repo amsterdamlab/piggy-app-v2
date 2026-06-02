@@ -128,7 +128,10 @@ function renderProductCard(item) {
   const daysSaved = item.cycleTotalDays - daysRemaining;
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  if (imgSrc && !imgSrc.startsWith('/') && !imgSrc.startsWith('http')) {
+    imgSrc = '/' + imgSrc;
+  }
 
   return `
     <div class="mcard animate-fade-in-up">
@@ -210,7 +213,10 @@ export function showCheckoutModal(item) {
 
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = (item.currentMonth || 1) >= 4 ? 3 : (item.currentMonth || 1) >= 2 ? 2 : 1;
-  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  if (imgSrc && !imgSrc.startsWith('/') && !imgSrc.startsWith('http')) {
+    imgSrc = '/' + imgSrc;
+  }
 
   // Random names for suggestions
   const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];

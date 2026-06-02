@@ -248,12 +248,17 @@ function enrichPiggyData(piggy) {
         const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
         if (match) {
             const photoNum = match[1];
-            imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+            imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
         }
     } else {
         // Fallback in case image_url is empty in DB
         const photoNum = getPiggyPhotoNumber(piggy.id);
-        imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+        imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+    }
+
+    // Ensure leading slash for absolute root path resolution in browser
+    if (imageUrl && !imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
+        imageUrl = '/' + imageUrl;
     }
 
     return {
