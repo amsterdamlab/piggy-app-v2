@@ -249,18 +249,22 @@ function enrichPiggyData(piggy) {
             const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
             if (match) {
                 const photoNum = match[1];
-                imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+                imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
             }
         }
     } else {
         // Fallback in case image_url is empty in DB
         const photoNum = getPiggyPhotoNumber(piggy.id);
-        imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+        imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
     }
 
-    // Ensure leading slash for absolute root path resolution in browser
-    if (imageUrl && !imageUrl.startsWith('/') && !imageUrl.startsWith('http')) {
-        imageUrl = '/' + imageUrl;
+    // Ensure it uses the GitHub Raw URL directly as requested by the user
+    // This bypasses any Vercel caching/asset serving issues and forces images to load
+    if (imageUrl && !imageUrl.startsWith('http')) {
+        if (imageUrl.startsWith('/')) {
+            imageUrl = imageUrl.slice(1);
+        }
+        imageUrl = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imageUrl}`;
     }
 
     console.log("🐷 [enrichPiggyData] Piggy:", {
@@ -365,7 +369,6 @@ export async function buyMarketplaceItem(item, customName = null) {
             name: finalName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
