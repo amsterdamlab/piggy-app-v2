@@ -261,6 +261,16 @@ function enrichPiggyData(piggy) {
         imageUrl = '/' + imageUrl;
     }
 
+    console.log("🐷 [enrichPiggyData] Piggy:", {
+        id: piggy.id,
+        name: piggy.name,
+        db_image_url: piggy.image_url,
+        final_imageUrl: imageUrl,
+        daysElapsed,
+        currentStage,
+        isComplete
+    });
+
     return {
         ...piggy,
         progress,
