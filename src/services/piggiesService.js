@@ -247,20 +247,12 @@ function enrichPiggyData(piggy) {
         // This ensures the piggy GROWING works automatically while keeping the photo number Y!
         const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
         if (match) {
-            let photoNum = match[1];
-            // Si estamos en la etapa 1 y el número de foto es 1 (cuya imagen et1-1.jpg está corrupta en GitHub),
-            // lo redirigimos a la foto 2 (et1-2.jpg) que sí carga perfectamente y es una hermosa foto de un cerdito manchado.
-            if (currentStage === 1 && photoNum === '1') {
-                photoNum = '2';
-            }
+            const photoNum = match[1];
             imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
         }
     } else {
         // Fallback in case image_url is empty in DB
-        let photoNum = getPiggyPhotoNumber(piggy.id);
-        if (currentStage === 1 && photoNum === 1) {
-            photoNum = 2; // Evitar et1-1.jpg corrupto en etapa 1
-        }
+        const photoNum = getPiggyPhotoNumber(piggy.id);
         imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
     }
 
@@ -371,6 +363,7 @@ export async function buyMarketplaceItem(item, customName = null) {
             name: finalName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
+            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
