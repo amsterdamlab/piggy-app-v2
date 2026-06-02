@@ -242,13 +242,15 @@ function enrichPiggyData(piggy) {
     let imageUrl = piggy.image_url;
 
     if (imageUrl) {
-        // If it's a standard pattern like 'assets/piggies/stageX/etX-Y.jpg',
-        // we dynamically update the stage X to match the actual current growth stage!
-        // This ensures the piggy GROWING works automatically while keeping the photo number Y!
-        const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
-        if (match) {
-            const photoNum = match[1];
-            imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+        if (!imageUrl.startsWith('http')) {
+            // If it's a standard pattern like 'assets/piggies/stageX/etX-Y.jpg',
+            // we dynamically update the stage X to match the actual current growth stage!
+            // This ensures the piggy GROWING works automatically while keeping the photo number Y!
+            const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
+            if (match) {
+                const photoNum = match[1];
+                imageUrl = `/assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+            }
         }
     } else {
         // Fallback in case image_url is empty in DB
