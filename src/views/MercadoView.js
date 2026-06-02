@@ -128,9 +128,12 @@ function renderProductCard(item) {
   const daysSaved = item.cycleTotalDays - daysRemaining;
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
-  if (imgSrc && !imgSrc.startsWith('/') && !imgSrc.startsWith('http')) {
-    imgSrc = '/' + imgSrc;
+  let imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  if (imgSrc && !imgSrc.startsWith('http')) {
+    if (imgSrc.startsWith('/')) {
+      imgSrc = imgSrc.slice(1);
+    }
+    imgSrc = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imgSrc}`;
   }
 
   return `
@@ -213,9 +216,12 @@ export function showCheckoutModal(item) {
 
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = (item.currentMonth || 1) >= 4 ? 3 : (item.currentMonth || 1) >= 2 ? 2 : 1;
-  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
-  if (imgSrc && !imgSrc.startsWith('/') && !imgSrc.startsWith('http')) {
-    imgSrc = '/' + imgSrc;
+  let imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  if (imgSrc && !imgSrc.startsWith('http')) {
+    if (imgSrc.startsWith('/')) {
+      imgSrc = imgSrc.slice(1);
+    }
+    imgSrc = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imgSrc}`;
   }
 
   // Random names for suggestions
@@ -501,7 +507,7 @@ export function showCheckoutModal(item) {
 
   document.getElementById('checkout-close-btn').addEventListener('click', close);
 
-  // Recharge Wallet
+  // Recargar Wallet
   const recargarBtn = document.getElementById('btn-recargar-checkout');
   recargarBtn.addEventListener('click', async () => {
     const originalText = recargarBtn.innerHTML;
