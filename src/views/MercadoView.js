@@ -148,7 +148,7 @@ function renderProductCard(item) {
       <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
         <div class="mcard__img-wrap">
-          <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig1.png'" />
+          <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         
         <button class="mcard__buy-btn" id="buy-${item.id}">
@@ -279,7 +279,7 @@ export function showCheckoutModal(item) {
               overflow: hidden; 
               border: 3px solid white; 
               box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig1.png'">
+              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
           </div>
           
           <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">¡Compra tu Piggy!</h2>
