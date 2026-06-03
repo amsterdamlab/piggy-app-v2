@@ -133,9 +133,9 @@ async function loadGranjaData(firstName) {
 
     // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
-      tipData, walletBalance, referralBonus,
-      activeMissions, flashMissions, cycleMissions, stats,
-      transactions,
+        tipData, walletBalance, referralBonus,
+        activeMissions, flashMissions, cycleMissions, stats,
+        transactions,
     ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
@@ -308,7 +308,7 @@ function renderEmptyPiggies() {
   return `
     <div class="empty-state">
       <div class="empty-state__icon">
-        <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" />
+        <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
       </div>
       <div class="empty-state__title">No tienes Piggys aún</div>
       <div class="empty-state__description">
@@ -339,7 +339,7 @@ function renderPiggyCard(piggy, baseROI) {
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
-          <img src="pig1.png" alt="Piggy" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />
+          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         <div class="piggy-card__info">
           <div class="piggy-card__name">${piggy.name}</div>
