@@ -36,7 +36,7 @@ export function renderAdopcionView() {
         <div class="adopcion-image-wrapper animate-scale-in">
           <div class="adopcion-image adopcion-image--clean">
             <!-- Clean image without badge -->
-            <img src="pig1.png" alt="Piggy Bank" class="adopcion-image__img" />
+            <img src="pig2.jpg" alt="Piggy Bank" class="adopcion-image__img" />
           </div>
         </div>
 
@@ -283,7 +283,7 @@ function showCheckoutModal(piggyName) {
       navigateTo('granja');
     } catch (error) {
       console.error(error);
-      alert('Error en la transacción: ' + error.message);
+      alert('Error en la transacci\u00F3n: ' + error.message);
       confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
       confirmBtn.style.pointerEvents = 'auto';
     }
