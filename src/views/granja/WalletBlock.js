@@ -279,7 +279,7 @@ export function showWalletDrawer(firstName, stats) {
                      <div style="display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: white; border: 1px solid #f3f4f6; margin-bottom: 8px;">
                         <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
                            <span style="font-size: 0.85rem; font-weight: 700; color: #374151; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
-                           <span style="font-size: 0.7rem; color: #9ca3af; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                           <span style="font-size: 0.7rem; color: #9ca3af; margin-top: 2px;">
                              <strong style="font-weight: 800;">${accountType}</strong> &bull; ${dateStr}
                            </span>
                         </div>
