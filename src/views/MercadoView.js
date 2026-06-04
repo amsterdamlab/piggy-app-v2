@@ -466,8 +466,8 @@ export function showCheckoutModal(item) {
     // Show/hide insufficient funds notice
     insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
 
-    // Enable confirm button only if name valid + funds sufficient
-    if (nameValid && hasFunds) {
+    // Enable confirm button directly if they have sufficient funds
+    if (hasFunds) {
       confirmBtn.style.opacity = '1';
       confirmBtn.style.pointerEvents = 'auto';
     } else {
@@ -481,7 +481,8 @@ export function showCheckoutModal(item) {
       input.style.borderColor = '#10B981';
     } else if (nameVal.length > 0) {
       errorMsg.style.opacity = '1';
-      input.style.borderColor = '#e0e0e0';
+      errorMsg.textContent = '* El nombre debe tener al menos 3 caracteres';
+      input.style.borderColor = '#dc2626';
     } else {
       errorMsg.style.opacity = '0';
       input.style.borderColor = '#fce7f3';
@@ -526,7 +527,17 @@ export function showCheckoutModal(item) {
   // Confirm Purchase
   confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
-    if (customName.length < 3 || currentBalance < item.price) return;
+    
+    // Check name validation on click
+    if (customName.length < 3) {
+      errorMsg.style.opacity = '1';
+      errorMsg.textContent = '* Debes darle un nombre de al menos 3 letras a tu cerdito';
+      input.style.borderColor = '#dc2626';
+      input.focus();
+      return;
+    }
+
+    if (currentBalance < item.price) return;
 
     // Visual feedback
     confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
