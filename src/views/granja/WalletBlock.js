@@ -182,11 +182,11 @@ export function showWalletDrawer(firstName, stats) {
             </div>
          </div>
 
-         <!-- Bonos de Consumo (Referidos) -->
+         <!-- Bonos de Consumo -->
          ${stats.referralBonus > 0 ? `
          <div style="background:#fffbeb; border:1px solid #fef3c7; padding:12px 16px; border-radius:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
             <div>
-              <div style="font-size:0.72rem; color:#b45309; margin-bottom:2px;">🎁 Bonos de Consumo (Referidos)</div>
+              <div style="font-size:0.72rem; color:#b45309; margin-bottom:2px;">🎁 Bonos de Consumo</div>
               <div style="font-size:1.05rem; font-weight:700; color:#92400e;">${stats.referralBonusFormatted}</div>
             </div>
             <button id="btn-canjear-carne-drawer" style="
@@ -266,9 +266,11 @@ export function showWalletDrawer(firstName, stats) {
                   </div>
                ` : (stats.transactions || []).map(tx => {
                   const isDebit = tx.amount < 0;
+                  const isConsumo = tx.wallet_type === 'consumo';
                   const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
                   const badgeColor = isDebit ? '#dc2626' : '#059669';
                   const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
+                  const typeLabel = isConsumo ? '🎁 Bono' : '🥩 Dinero';
                   const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                   });
@@ -276,8 +278,11 @@ export function showWalletDrawer(firstName, stats) {
                   return `
                      <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: white; border: 1px solid #f3f4f6;">
                         <div style="display: flex; flex-direction: column; gap: 2px; max-width: 65%;">
-                           <span style="font-size: 0.78rem; font-weight: 700; color: #4b5563; word-break: break-word;">${tx.description || 'Movimiento de Cuenta'}</span>
-                           <span style="font-size: 0.65rem; color: #9ca3af; font-weight: 500;">${dateStr}</span>
+                           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                              <span style="font-size: 0.65rem; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #4b5563; font-weight: 800;">${typeLabel}</span>
+                           </div>
+                           <span style="font-size: 0.78rem; font-weight: 700; color: #374151; word-break: break-word; line-height: 1.2;">${tx.description || 'Movimiento de Cuenta'}</span>
+                           <span style="font-size: 0.65rem; color: #9ca3af; font-weight: 500; margin-top: 2px;">${dateStr}</span>
                         </div>
                         <span style="font-size: 0.8rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">
                            ${amountStr}
