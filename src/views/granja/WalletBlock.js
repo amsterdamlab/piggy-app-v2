@@ -250,21 +250,18 @@ export function showWalletDrawer(firstName, stats) {
 
          <!-- Trazabilidad de Movimientos (Transaction History) -->
          <div style="padding: 18px; border-radius: 16px; background: #f9fafb; border: 1px solid #e5e7eb; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-               <h4 style="margin: 0; font-size: 0.9rem; font-weight: 800; color: #374151; display: flex; align-items: center; gap: 6px;">
-                  <span>🧾</span> Historial de Movimientos
+            <div style="margin-bottom: 8px;">
+               <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #374151;">
+                  Historial de Movimientos
                </h4>
-               <span style="font-size: 0.68rem; color: #4b5563; font-weight: 700; background: #e5e7eb; padding: 4px 8px; border-radius: 6px;">
-                  ${(stats.transactions || []).length} transacción(es)
-               </span>
             </div>
 
-            <div id="transactions-list-drawer" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;">
+            <div id="transactions-list-drawer" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px;">
                ${(stats.transactions || []).length === 0 ? `
                   <div style="text-align: center; padding: 20px 0; color: #9ca3af; font-size: 0.8rem;">
                      <span style="font-size:20px; display:block; margin-bottom:4px;">📂</span> No hay transacciones registradas aún.
                   </div>
-               ` : (stats.transactions || []).map(tx => {
+               ` : (stats.transactions || []).map((tx, i, arr) => {
                   const isDebit = tx.amount < 0;
                   const isConsumo = tx.wallet_type === 'consumo';
                   const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
@@ -274,16 +271,18 @@ export function showWalletDrawer(firstName, stats) {
                   const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                   });
+                  const isLast = i === arr.length - 1;
+                  const borderBottom = isLast ? 'none' : '1px solid #e5e7eb';
                   
                   return `
-                     <div style="display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: white; border: 1px solid #f3f4f6; margin-bottom: 8px;">
+                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
                         <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
                            <span style="font-size: 0.85rem; font-weight: 700; color: #374151; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
-                           <span style="font-size: 0.7rem; color: #9ca3af; margin-top: 2px;">
+                           <span style="font-size: 0.7rem; color: #9ca3af; margin-top: 2px; white-space: nowrap;">
                              <span style="font-size: 0.8rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
                            </span>
                         </div>
-                        <span style="font-size: 0.85rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 10px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; margin-top: -2px;">
+                        <span style="font-size: 0.85rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 10px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
                            ${amountStr}
                         </span>
                      </div>
