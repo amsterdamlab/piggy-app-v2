@@ -63,7 +63,7 @@ BEGIN
   PERFORM set_config('app.wallet_update_authorized', 'true', true);
   
   INSERT INTO wallet_transactions (user_id, amount, type, description, wallet_type)
-  VALUES (p_user_id, p_amount, 'debit', 'Retención por solicitud en proceso (' || p_type || ')', v_wallet_type);
+  VALUES (p_user_id, p_amount, 'debit', 'Retención por solicitud en proceso (' || p_type || ')', v_wallet_type::public.wallet_type_enum);
   
   PERFORM set_config('app.wallet_update_authorized', '', true);
 
@@ -85,21 +85,18 @@ BEGIN
   -- Si aprueban: NO hacemos nada con el saldo, ¡porque ya se lo descontamos el día 1!
   IF OLD.status = 'pending' AND NEW.status = 'processed' THEN
     NEW.processed_at = now();
-    RAISE LOG 'Solicitud % procesada exitosamente (saldo ya estaba descontado)', NEW.id;
   END IF;
 
-  -- Si rechazan: DEVOLVEMOS el dinero insertando un crédito
+  -- Si rechazan: DEVOLVEMOS el dinero insertando un crédito automático
   IF OLD.status = 'pending' AND NEW.status = 'rejected' THEN
-    
     PERFORM set_config('app.wallet_update_authorized', 'true', true);
     
     INSERT INTO wallet_transactions (user_id, amount, type, description, wallet_type)
-    VALUES (NEW.user_id, NEW.amount, 'credit', 'Reembolso por solicitud rechazada', NEW.wallet_type);
+    VALUES (NEW.user_id, NEW.amount, 'credit', 'Reembolso por solicitud rechazada', NEW.wallet_type::public.wallet_type_enum);
     
     PERFORM set_config('app.wallet_update_authorized', '', true);
 
     NEW.processed_at = now();
-    RAISE LOG 'Solicitud % rechazada. Se ha emitido un reembolso.', NEW.id;
   END IF;
 
   RETURN NEW;
