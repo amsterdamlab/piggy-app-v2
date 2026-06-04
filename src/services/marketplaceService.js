@@ -40,7 +40,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'standard',
         current_weight: 15.0,
         current_month: 1,
-        image_url: null,
+        image_url: 'assets/piggies/stage1/et1-1.jpg',
     },
     {
         id: 2,
@@ -52,7 +52,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'advanced',
         current_weight: 45.0,
         current_month: 2,
-        image_url: null,
+        image_url: 'assets/piggies/stage2/et2-1.jpg',
     },
     {
         id: 3,
@@ -64,7 +64,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'advanced',
         current_weight: 65.0,
         current_month: 3,
-        image_url: null,
+        image_url: 'assets/piggies/stage2/et2-2.jpg',
     },
     {
         id: 4,
@@ -76,7 +76,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'silver',
         current_weight: 15.0,
         current_month: 1,
-        image_url: null,
+        image_url: 'assets/piggies/stage1/et1-2.jpg',
     },
     {
         id: 5,
@@ -88,7 +88,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'gold',
         current_weight: 15.0,
         current_month: 1,
-        image_url: null,
+        image_url: 'assets/piggies/stage1/et1-3.jpg',
     },
     {
         id: 6,
@@ -100,7 +100,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'premium',
         current_weight: 15.0,
         current_month: 1,
-        image_url: null,
+        image_url: 'assets/piggies/stage1/et1-4.jpg',
     }
 ];
 
