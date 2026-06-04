@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.format_transaction_amount()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Si el tipo contiene palabras clave de resta, forzamos a que el monto sea negativo
-  IF LOWER(NEW.type) LIKE '%debit%' OR LOWER(NEW.type) LIKE '%retiro%' OR LOWER(NEW.type) LIKE '%canje%' THEN
+  IF LOWER(NEW.type::text) LIKE '%debit%' OR LOWER(NEW.type::text) LIKE '%retiro%' OR LOWER(NEW.type::text) LIKE '%canje%' THEN
     NEW.amount := -ABS(NEW.amount);
   ELSE
     -- Por defecto (credit, recarga, bono), forzamos a que sea positivo
