@@ -34,10 +34,10 @@ export async function getWalletBalance() {
 }
 
 /**
- * Fetch the current user's referral commission balance.
+ * Fetch the current user's consumption bonus balance (previously just referral commission).
  * These are NOT withdrawable cash — they are exchanged for meat-consumption coupons.
- * Updated manually by admin after each canje is processed.
- * @returns {number} Referral bonus balance in COP
+ * Updated automatically by triggers (e.g. Welcome Bonus) or manually by admin.
+ * @returns {number} Consumption bonus balance in COP
  */
 export async function getReferralBonusBalance() {
     if (isUsingMockData()) return 0;
@@ -195,8 +195,9 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
 export async function getWalletTransactions() {
     if (isUsingMockData()) {
         return [
-            { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', created_at: new Date().toISOString() },
-            { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', created_at: new Date(Date.now() - 86400000).toISOString() }
+            { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
+            { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
+            { id: '3', amount: 30000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
         ];
     }
 
