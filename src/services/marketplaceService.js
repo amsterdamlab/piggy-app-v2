@@ -40,6 +40,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'standard',
         current_weight: 15.0,
         current_month: 1,
+        image_url: null,
     },
     {
         id: 2,
@@ -51,6 +52,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'advanced',
         current_weight: 45.0,
         current_month: 2,
+        image_url: null,
     },
     {
         id: 3,
@@ -62,6 +64,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'advanced',
         current_weight: 65.0,
         current_month: 3,
+        image_url: null,
     },
     {
         id: 4,
@@ -73,6 +76,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'silver',
         current_weight: 15.0,
         current_month: 1,
+        image_url: null,
     },
     {
         id: 5,
@@ -84,6 +88,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'gold',
         current_weight: 15.0,
         current_month: 1,
+        image_url: null,
     },
     {
         id: 6,
@@ -95,6 +100,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         category: 'premium',
         current_weight: 15.0,
         current_month: 1,
+        image_url: null,
     }
 ];
 
