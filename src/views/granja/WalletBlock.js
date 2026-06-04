@@ -270,21 +270,20 @@ export function showWalletDrawer(firstName, stats) {
                   const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
                   const badgeColor = isDebit ? '#dc2626' : '#059669';
                   const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
-                  const typeLabel = isConsumo ? '🎁 Bono' : '🥩 Dinero';
+                  const accountType = isConsumo ? 'Consumo' : 'Comercio';
                   const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                   });
                   
                   return `
-                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: white; border: 1px solid #f3f4f6;">
-                        <div style="display: flex; flex-direction: column; gap: 2px; max-width: 65%;">
-                           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                              <span style="font-size: 0.65rem; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #4b5563; font-weight: 800;">${typeLabel}</span>
-                           </div>
-                           <span style="font-size: 0.78rem; font-weight: 700; color: #374151; word-break: break-word; line-height: 1.2;">${tx.description || 'Movimiento de Cuenta'}</span>
-                           <span style="font-size: 0.65rem; color: #9ca3af; font-weight: 500; margin-top: 2px;">${dateStr}</span>
+                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 12px; background: white; border: 1px solid #f3f4f6; margin-bottom: 8px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px; max-width: 65%;">
+                           <span style="font-size: 0.85rem; font-weight: 700; color: #374151; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
+                           <span style="font-size: 0.7rem; color: #9ca3af; margin-top: 2px;">
+                             <strong style="font-weight: 800;">${accountType}</strong> &bull; ${dateStr}
+                           </span>
                         </div>
-                        <span style="font-size: 0.8rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">
+                        <span style="font-size: 0.85rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 10px; border-radius: 8px; white-space: nowrap;">
                            ${amountStr}
                         </span>
                      </div>
