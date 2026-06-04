@@ -5,7 +5,7 @@
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, createWalletRequest, notifyAdminViaWhatsApp } from '../../services/walletService.js';
 import { getUserPiggies, getDashboardStats } from '../../services/piggiesService.js';
 
 /**
@@ -542,16 +542,31 @@ function showRetiroSaldoModal(availableAmount) {
   const goToStep2Dinero = () => {
     modal.innerHTML = renderStep2Dinero();
     attachClose(goToStep1);
-    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', () => {
+    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
       const bank = document.getElementById('retiro-bank')?.value;
       if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
       if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
       if (!bank) { errDiv.textContent = 'Selecciona un banco'; errDiv.style.display = 'block'; return; }
+      
+      const btn = document.getElementById('retiro-confirm-dinero');
+      btn.innerText = 'Procesando...';
+      btn.disabled = true;
+
       errDiv.style.display = 'none';
-      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de RETIRO DE DINERO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83D\uDCB5 *Monto a retirar:* ' + formatCOP(amount) + '\n\uD83C\uDFE6 *Banco destino:* ' + bank + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor procesar la transferencia y confirmar por este medio.';
-      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      
+      const res = await createWalletRequest('withdrawal', amount, bank);
+      if (!res.success) {
+        errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
+        errDiv.style.display = 'block';
+        btn.innerText = 'Solicitar Retiro via WhatsApp';
+        btn.disabled = false;
+        return;
+      }
+
+      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, bank, res.requestId);
+      showWalletRequestSuccess('withdrawal', amount, bank, res.requestId);
       modal.remove();
     });
   };
@@ -559,14 +574,29 @@ function showRetiroSaldoModal(availableAmount) {
   const goToStep2Consumo = () => {
     modal.innerHTML = renderStep2Consumo();
     attachClose(goToStep1);
-    document.getElementById('retiro-confirm-consumo')?.addEventListener('click', () => {
+    document.getElementById('retiro-confirm-consumo')?.addEventListener('click', async () => {
       const errDiv = document.getElementById('consumo-amount-error');
       const amount = parseFloat(document.getElementById('consumo-amount')?.value || 0);
       if (!amount || amount < minAmount) { errDiv.textContent = 'El monto minimo es ' + formatCOP(minAmount); errDiv.style.display = 'block'; return; }
       if (amount > availableAmount) { errDiv.textContent = 'El monto supera tu saldo disponible'; errDiv.style.display = 'block'; return; }
+      
+      const btn = document.getElementById('retiro-confirm-consumo');
+      btn.innerText = 'Procesando...';
+      btn.disabled = true;
+
       errDiv.style.display = 'none';
-      const msg = '\uD83D\uDC37 *PIGGY APP \u2014 Solicitud de BONOS DE CONSUMO*\n\n\uD83D\uDC64 *Usuario:* ' + userName + '\n\uD83D\uDCF1 *WhatsApp:* ' + (userPhone || 'No registrado') + '\n\uD83E\uDD69 *Monto en bonos:* ' + formatCOP(amount) + '\n\uD83D\uDCC5 *Fecha:* ' + new Date().toLocaleDateString('es-CO') + '\n\n\u26A1 Por favor coordinar la entrega de bonos de carne y confirmar por este medio.';
-      window.open('https://wa.me/' + ADMIN_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+      
+      const res = await createWalletRequest('consumption', amount, null);
+      if (!res.success) {
+        errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
+        errDiv.style.display = 'block';
+        btn.innerText = 'Solicitar Bonos de Consumo via WhatsApp';
+        btn.disabled = false;
+        return;
+      }
+
+      notifyAdminViaWhatsApp('consumption', amount, userName, userPhone, null, res.requestId);
+      showWalletRequestSuccess('consumption', amount, null, res.requestId);
       modal.remove();
     });
   };
