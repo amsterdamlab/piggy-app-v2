@@ -6,6 +6,7 @@
 
 import { getClient, isUsingMockData } from './supabase.js';
 import { formatCOP } from './mockData.js';
+import { AppState } from '../state.js';
 
 /* ─── Commission Tiers ─── */
 
@@ -98,12 +99,31 @@ export async function linkReferral(referredUserId, referralCode) {
 /* ─── Get My Referral Code ─── */
 
 /**
+ * Generate a referral code for mock mode based on first 3 letters of full name and 3 random digits.
+ * @param {string} fullName 
+ * @returns {string}
+ */
+export function generateMockReferralCode(fullName) {
+    const cleaned = (fullName || 'PIG').toUpperCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents/diacritics
+        .replace(/[^A-Z]/g, '');
+    const prefix = cleaned.length >= 3 ? cleaned.slice(0, 3) : (cleaned + 'PIG').slice(0, 3);
+    const randomNum = Math.floor(100 + Math.random() * 900); // 3 digits
+    return `${prefix}${randomNum}`;
+}
+
+/**
  * Fetch the current user's referral code.
  * @returns {string|null}
  */
 export async function getMyReferralCode() {
     if (isUsingMockData()) {
-        return 'MOCK1234';
+        const profile = AppState.get('profile');
+        if (profile?.referral_code) {
+            return profile.referral_code;
+        }
+        const name = profile?.full_name || 'Alejandra García';
+        return generateMockReferralCode(name);
     }
 
     const client = getClient();

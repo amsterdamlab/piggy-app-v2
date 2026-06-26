@@ -6,6 +6,7 @@
 import { getClient, isUsingMockData } from './supabase.js';
 import { MOCK_USER, MOCK_PROFILE } from './mockData.js';
 import { AppState } from '../state.js';
+import { generateMockReferralCode } from './referralService.js';
 
 // Mock session control
 let mockLoggedIn = false;
@@ -25,6 +26,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             email,
             terms_accepted: true,
             habeas_data_accepted: true,
+            referral_code: generateMockReferralCode(fullName),
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email },
@@ -52,7 +54,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
         const { error: profileError } = await client.from('profiles').insert(profile);
 
         if (profileError) {
-            console.warn('\uD83D\uDC37 Profile insert error:', profileError.message);
+            console.warn('🐷 Profile insert error:', profileError.message);
         }
 
         // Update AppState immediately

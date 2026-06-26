@@ -15,6 +15,7 @@ export const MOCK_PROFILE = {
     whatsapp: '+573001234567',
     terms_accepted: true,
     habeas_data_accepted: true,
+    referral_code: 'ALE582',
     created_at: '2026-01-15T10:00:00Z',
 };
 

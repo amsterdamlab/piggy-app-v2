@@ -32,28 +32,38 @@ CREATE INDEX IF NOT EXISTS idx_referrals_status ON referrals(status);
 CREATE OR REPLACE FUNCTION generate_referral_code()
 RETURNS TRIGGER AS $$
 DECLARE
-  base_code VARCHAR(10);
+  cleaned_name TEXT;
+  name_prefix VARCHAR(3);
+  rand_num INTEGER;
   final_code VARCHAR(10);
-  suffix INTEGER := 0;
-  clean_name VARCHAR;
+  attempts INTEGER := 0;
 BEGIN
-  -- Take first 4 characters from full_name, uppercase, remove accents
-  clean_name := UPPER(
-    TRANSLATE(
-      COALESCE(SUBSTRING(NEW.full_name FROM 1 FOR 4), 'USER'),
-      'ÁÉÍÓÚáéíóúÑñ',
-      'AEIOUaeiouNn'
-    )
-  );
+  -- Normalize name (remove accents, convert to uppercase, keep only A-Z)
+  cleaned_name := translate(upper(COALESCE(NEW.full_name, '')), 'ÁÉÍÓÚÜÑ', 'AEIOUUN');
+  cleaned_name := regexp_replace(cleaned_name, '[^A-Z]', '', 'g');
+  
+  -- If name prefix is less than 3 chars, pad it with random letters
+  IF length(cleaned_name) >= 3 THEN
+    name_prefix := substr(cleaned_name, 1, 3);
+  ELSE
+    name_prefix := substr(cleaned_name || 'PIG', 1, 3);
+  END IF;
 
-  -- Build base code: NAME4 + last 4 chars of user ID
-  base_code := clean_name || UPPER(RIGHT(NEW.id::TEXT, 4));
-  final_code := base_code;
-
-  -- Handle collisions by adding a numeric suffix
-  WHILE EXISTS (SELECT 1 FROM profiles WHERE referral_code = final_code AND id != NEW.id) LOOP
-    suffix := suffix + 1;
-    final_code := base_code || suffix::TEXT;
+  LOOP
+    attempts := attempts + 1;
+    
+    IF attempts < 100 THEN
+      -- Standard format: 3 letters + 3 digits (e.g., LAU591)
+      rand_num := floor(random() * 900 + 100)::integer; -- 100 to 999
+      final_code := name_prefix || rand_num::text;
+    ELSE
+      -- Fallback to avoid infinite loop on collision exhaustion (3 letters + 4 digits)
+      rand_num := floor(random() * 9000 + 1000)::integer; -- 1000 to 9999
+      final_code := name_prefix || rand_num::text;
+    END IF;
+    
+    -- Handle collisions
+    EXIT WHEN NOT EXISTS (SELECT 1 FROM profiles WHERE referral_code = final_code AND id != NEW.id) OR attempts > 200;
   END LOOP;
 
   NEW.referral_code := final_code;
@@ -72,14 +82,8 @@ CREATE TRIGGER trg_generate_referral_code
 -- ─── 4. Generate codes for existing users ───
 
 UPDATE profiles
-SET referral_code = UPPER(
-  TRANSLATE(
-    COALESCE(SUBSTRING(full_name FROM 1 FOR 4), 'USER'),
-    'ÁÉÍÓÚáéíóúÑñ',
-    'AEIOUaeiouNn'
-  )
-) || UPPER(RIGHT(id::TEXT, 4))
-WHERE referral_code IS NULL;
+SET referral_code = substr(md5(random()::text), 1, 6)
+WHERE referral_code IS NULL OR length(referral_code) > 6;
 
 -- ─── 5. Function to process referral on first purchase ───
 
@@ -157,15 +161,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own referrals (as referrer or referred)
+DROP POLICY IF EXISTS "Users can read own referrals" ON referrals;
 CREATE POLICY "Users can read own referrals"
   ON referrals FOR SELECT
   USING (auth.uid() = referrer_id OR auth.uid() = referred_id);
 
 -- Only internal functions (service_role) can insert/update referrals
+DROP POLICY IF EXISTS "Service can manage referrals" ON referrals;
 CREATE POLICY "Service can manage referrals"
   ON referrals FOR ALL
   USING (true)
   WITH CHECK (true);
+
 
 -- Allow reading referral_code from any profile (needed for code validation)
 -- This is handled by existing profiles RLS (if profiles are readable)
