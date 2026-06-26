@@ -5,7 +5,7 @@
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, createWalletRequest, notifyAdminViaWhatsApp } from '../../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, createWalletRequest, notifyAdminViaWhatsApp, rechargeWallet } from '../../services/walletService.js';
 import { getUserPiggies, getDashboardStats } from '../../services/piggiesService.js';
 
 /**
@@ -309,7 +309,7 @@ export function showWalletDrawer(firstName, stats) {
   // Recharge trigger
   document.getElementById('btn-recargar-wallet-drawer')?.addEventListener('click', () => {
     close();
-    openWalletRechargeInfo();
+    openWalletRechargeInfo(stats);
   });
 
   // Withdrawal trigger
@@ -331,11 +331,16 @@ export function showWalletDrawer(firstName, stats) {
 }
 
 /**
- * Show Wallet Recharge Info modal with WhatsApp contact.
- * Informs user how to top up their wallet balance.
+ * Show the new multi-step Wallet Recharge modal:
+ * Step 1: Amount selector
+ * Step 2: Payment method (Wompi Simulation or WhatsApp)
+ * Step 3: Wompi Simulator Widget
+ * Step 4: Processing animation
+ * Step 5: Success / Failure receipt
+ *
+ * @param {Object} liveStats - The stats object used by the current drawer (mutated in-place for mock mode)
  */
-export async function openWalletRechargeInfo() {
-  // Remove existing
+export async function openWalletRechargeInfo(liveStats = null) {
   const existing = document.getElementById('wallet-recharge-modal');
   if (existing) existing.remove();
 
@@ -343,67 +348,488 @@ export async function openWalletRechargeInfo() {
   const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
   const ADMIN_WHATSAPP = '573154870448';
 
+  // Shared mutable mock state so that the drawer updates after simulation
+  const mockState = {
+    balance: liveStats?.saldoDisponible || 0,
+    transactions: [...(liveStats?.transactions || [])],
+  };
+
   const modal = document.createElement('div');
   modal.id = 'wallet-recharge-modal';
   modal.className = 'modal-overlay';
   modal.style.zIndex = '10000';
-  modal.innerHTML = `
-    <div class="modal animate-scale-in" style="max-width:380px; padding:28px 24px; text-align:center;">
-      <button id="recharge-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:22px; cursor:pointer; color:#9ca3af;">&#x2715;</button>
-
-      <div style="width:64px; height:64px; background:linear-gradient(135deg,#10B981,#059669); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-      </div>
-
-      <h3 style="margin:0 0 8px; font-size:1.2rem; font-weight:800; color:#1f2937;">Recargar mi Cuenta</h3>
-      <p style="color:#6b7280; font-size:0.9rem; margin:0 0 24px; line-height:1.5;">
-        Para recargar tu cuenta y poder comprar Piggys, comunícate con nuestro equipo por WhatsApp.
-      </p>
-
-      <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:12px; padding:16px; margin-bottom:24px; text-align:left;">
-        <div style="font-size:0.8rem; font-weight:700; color:#065f46; margin-bottom:8px;">&#128197; Proceso de Recarga:</div>
-        <div style="font-size:0.82rem; color:#047857; line-height:1.8;">
-          <div>1. Toca el boton de WhatsApp abajo</div>
-          <div>2. Indica el monto que deseas recargar</div>
-          <div>3. Realiza la transferencia bancaria</div>
-          <div>4. Tu saldo se actualiza en 24 horas</div>
-        </div>
-      </div>
-
-      <button id="recharge-whatsapp-btn" style="
-        width: 100%;
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: white;
-        border: none;
-        padding: 14px 20px;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        box-shadow: 0 4px 12px rgba(37,211,102,0.35);
-      ">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.122 1.528 5.855L0 24l6.336-1.506A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.007-1.37l-.36-.213-3.727.885.916-3.623-.234-.373A9.818 9.818 0 0 1 2.182 12C2.182 6.574 6.574 2.182 12 2.182S21.818 6.574 21.818 12 17.426 21.818 12 21.818z"/></svg>
-        Contactar por WhatsApp
-      </button>
-    </div>
-  `;
-
   document.body.appendChild(modal);
 
-  // Close
   const close = () => modal.remove();
-  document.getElementById('recharge-close-btn').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  // WhatsApp
-  document.getElementById('recharge-whatsapp-btn').addEventListener('click', () => {
-    const msg = `\u{1F430} *PIGGY APP \u2014 Solicitud de Recarga de Cuenta*\n\n\u{1F464} *Usuario:* ${userName}\n\n\u{1F4B0} Hola, deseo recargar mi cuenta para comprar Piggys.\n\n\u{1F4CB} Por favor ind\u00EDcame el n\u00FAmero de cuenta y el proceso a seguir.`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-  });
+  /* ── QUICK AMOUNT PRESETS ── */
+  const PRESETS = [50000, 100000, 200000, 500000];
+  let selectedAmount = 100000;
+  let activeMethod = 'tarjeta'; // 'tarjeta' | 'pse'
+  let simulationResult = null;   // 'simulated_approved' | 'simulated_rejected'
+
+  /* ─────────────────────────────────────────
+     STEP 1 — Amount selector
+  ───────────────────────────────────────── */
+  const renderStep1 = () => {
+    modal.innerHTML = `
+      <div class="modal animate-scale-in" style="max-width:400px; position:relative;">
+        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:16px;font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
+
+        <!-- Header -->
+        <div style="text-align:center; padding:28px 24px 0;">
+          <div style="width:60px;height:60px;background:linear-gradient(135deg,#10B981,#059669);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+          <h3 style="margin:0 0 4px;font-size:1.2rem;font-weight:800;color:#111827;">Recargar mi Cuenta</h3>
+          <p style="margin:0 0 20px;font-size:0.82rem;color:#6b7280;">Selecciona el monto que deseas ingresar</p>
+        </div>
+
+        <div style="padding:0 20px 24px;">
+          <!-- Preset buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            ${PRESETS.map(p => `
+              <button class="preset-btn" data-amount="${p}" style="
+                padding:14px 10px;
+                border-radius:12px;
+                border:2px solid ${selectedAmount === p ? '#10B981' : '#e5e7eb'};
+                background:${selectedAmount === p ? '#ecfdf5' : 'white'};
+                color:${selectedAmount === p ? '#059669' : '#374151'};
+                font-weight:700;
+                font-size:0.9rem;
+                cursor:pointer;
+                transition:all 0.15s;
+              ">${formatCOP(p)}</button>
+            `).join('')}
+          </div>
+
+          <!-- Custom amount -->
+          <div style="margin-bottom:20px;">
+            <label style="font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:6px;">O ingresa un monto personalizado</label>
+            <div style="position:relative;">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:#9ca3af;font-size:0.95rem;">$</span>
+              <input type="number" id="rch-custom-amount" placeholder="Ej: 150000" min="10000"
+                value="${PRESETS.includes(selectedAmount) ? '' : selectedAmount}"
+                style="width:100%;padding:12px 14px 12px 26px;border:2px solid #e5e7eb;border-radius:12px;font-size:0.95rem;font-weight:700;color:#111827;outline:none;box-sizing:border-box;transition:border 0.2s;"
+                onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e5e7eb';" />
+            </div>
+          </div>
+
+          <!-- CTA -->
+          <button id="rch-step1-next" style="
+            width:100%;background:linear-gradient(135deg,#10B981,#059669);color:white;border:none;
+            padding:14px;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer;
+            box-shadow:0 4px 12px rgba(16,185,129,0.3);transition:opacity 0.2s;
+          ">Continuar →</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('rch-close').addEventListener('click', close);
+
+    // Preset selection
+    modal.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedAmount = parseInt(btn.dataset.amount);
+        document.getElementById('rch-custom-amount').value = '';
+        renderStep1();
+      });
+    });
+
+    // Custom amount input
+    document.getElementById('rch-custom-amount').addEventListener('input', (e) => {
+      const v = parseInt(e.target.value);
+      if (!isNaN(v) && v > 0) selectedAmount = v;
+    });
+
+    document.getElementById('rch-step1-next').addEventListener('click', () => {
+      const customVal = parseInt(document.getElementById('rch-custom-amount').value);
+      if (!isNaN(customVal) && customVal >= 10000) selectedAmount = customVal;
+      if (!selectedAmount || selectedAmount < 10000) {
+        alert('El monto mínimo de recarga es $10.000');
+        return;
+      }
+      renderStep2();
+    });
+  };
+
+  /* ─────────────────────────────────────────
+     STEP 2 — Payment method chooser
+  ───────────────────────────────────────── */
+  const renderStep2 = () => {
+    modal.innerHTML = `
+      <div class="modal animate-scale-in" style="max-width:400px;position:relative;">
+        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:16px;font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
+        <button id="rch-back" style="background:none;border:none;position:absolute;left:16px;top:18px;font-size:13px;color:#6b7280;cursor:pointer;z-index:3;font-weight:600;">&#8592; Volver</button>
+
+        <div style="text-align:center;padding:28px 24px 16px;">
+          <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:800;color:#111827;">Método de Pago</h3>
+          <p style="margin:0;font-size:0.82rem;color:#6b7280;">Monto: <strong style="color:#059669;">${formatCOP(selectedAmount)}</strong></p>
+        </div>
+
+        <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:12px;">
+
+          <!-- Wompi Simulation Option -->
+          <button id="rch-wompi-btn" style="
+            background:linear-gradient(135deg,#6C14D0,#9B1DBA);
+            color:white;border:none;padding:18px 20px;border-radius:14px;
+            font-weight:700;font-size:0.95rem;cursor:pointer;
+            display:flex;align-items:center;gap:14px;
+            box-shadow:0 4px 16px rgba(108,20,208,0.35);
+            text-align:left;
+          ">
+            <div style="width:42px;height:42px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:20px;">💳</span>
+            </div>
+            <div>
+              <div style="font-size:0.95rem;font-weight:800;">Pagar con Wompi</div>
+              <div style="font-size:0.72rem;opacity:0.85;font-weight:400;">Tarjeta de crédito · PSE · Nequi (Simulación)</div>
+            </div>
+            <div style="margin-left:auto;background:rgba(255,255,255,0.2);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:700;">SIMULAR</div>
+          </button>
+
+          <!-- WhatsApp Fallback -->
+          <button id="rch-whatsapp-btn" style="
+            background:white;border:2px solid #e5e7eb;color:#374151;
+            padding:16px 20px;border-radius:14px;font-weight:600;font-size:0.9rem;
+            cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;
+            transition:border 0.2s;
+          " onmouseover="this.style.borderColor='#25D366';" onmouseout="this.style.borderColor='#e5e7eb';">
+            <div style="width:42px;height:42px;background:#ecfdf5;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:22px;">📲</span>
+            </div>
+            <div>
+              <div style="font-size:0.9rem;font-weight:700;">Recarga Asistida</div>
+              <div style="font-size:0.72rem;color:#9ca3af;font-weight:400;">Transferencia manual vía WhatsApp</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+    `;
+
+    document.getElementById('rch-close').addEventListener('click', close);
+    document.getElementById('rch-back').addEventListener('click', renderStep1);
+
+    document.getElementById('rch-wompi-btn').addEventListener('click', renderStep3Wompi);
+    document.getElementById('rch-whatsapp-btn').addEventListener('click', () => {
+      close();
+      const msg = `🐷 *PIGGY APP — Solicitud de Recarga de Cuenta*\n\n👤 *Usuario:* ${userName}\n\n💰 Monto a recargar: *${formatCOP(selectedAmount)}*\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+    });
+  };
+
+  /* ─────────────────────────────────────────
+     STEP 3 — Wompi Simulator Widget
+  ───────────────────────────────────────── */
+  const renderStep3Wompi = () => {
+    const PSE_BANKS = ['Bancolombia', 'Davivienda', 'BBVA Colombia', 'Banco de Bogotá', 'Nequi', 'Daviplata', 'Banco Popular', 'Banco Caja Social'];
+
+    modal.innerHTML = `
+      <div style="max-width:420px;width:90vw;background:white;border-radius:20px;overflow:hidden;position:relative;">
+
+        <!-- 🔬 SIMULATION CONTROL BAR -->
+        <div style="background:#1e293b;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="color:#94a3b8;font-size:0.7rem;font-weight:600;">🔬 MODO SIMULACIÓN WOMPI</span>
+          <div style="display:flex;gap:8px;">
+            <button id="sim-approve" style="background:#16a34a;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;">🟢 Aprobar</button>
+            <button id="sim-reject" style="background:#dc2626;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:0.7rem;font-weight:700;cursor:pointer;">🔴 Rechazar</button>
+          </div>
+        </div>
+
+        <!-- Wompi Header -->
+        <div style="background:linear-gradient(135deg,#6C14D0,#9B1DBA);padding:20px 24px;color:white;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-weight:900;font-size:1.1rem;letter-spacing:-0.5px;">🔐 wompi</div>
+            <div style="font-size:0.7rem;opacity:0.75;background:rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;">by Bancolombia</div>
+          </div>
+          <div style="font-size:0.75rem;opacity:0.85;margin-bottom:4px;">Total a pagar</div>
+          <div style="font-size:2rem;font-weight:900;letter-spacing:-1px;">${formatCOP(selectedAmount)}</div>
+          <div style="font-size:0.72rem;opacity:0.7;margin-top:4px;">Piggy App — Recarga de Cuenta Agro</div>
+        </div>
+
+        <!-- Payment Method Tabs -->
+        <div style="display:flex;border-bottom:2px solid #f1f5f9;">
+          <button id="tab-tarjeta" class="wompi-tab" style="flex:1;padding:12px;background:white;border:none;font-weight:700;font-size:0.82rem;color:#6C14D0;border-bottom:2px solid #6C14D0;cursor:pointer;margin-bottom:-2px;">💳 Tarjeta</button>
+          <button id="tab-pse" class="wompi-tab" style="flex:1;padding:12px;background:white;border:none;font-weight:600;font-size:0.82rem;color:#6b7280;cursor:pointer;">🏦 PSE</button>
+        </div>
+
+        <!-- Tarjeta Form -->
+        <div id="wompi-tarjeta" style="padding:20px;">
+          <div style="margin-bottom:14px;">
+            <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Número de tarjeta</label>
+            <input id="card-number" placeholder="0000 0000 0000 0000" maxlength="19"
+              style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.95rem;font-weight:600;letter-spacing:2px;outline:none;box-sizing:border-box;transition:border 0.2s;"
+              onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';"
+              oninput="this.value=this.value.replace(/\\D/g,'').slice(0,16).replace(/(\\d{4})(?=\\d)/g,'$1 ')" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Vencimiento</label>
+              <input id="card-expiry" placeholder="MM / AA" maxlength="7"
+                style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.95rem;font-weight:600;outline:none;box-sizing:border-box;transition:border 0.2s;"
+                onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';"
+                oninput="let v=this.value.replace(/\\D/g,'').slice(0,4);if(v.length>2)v=v.slice(0,2)+' / '+v.slice(2);this.value=v;" />
+            </div>
+            <div>
+              <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">CVV</label>
+              <input id="card-cvv" placeholder="•••" maxlength="4" type="password"
+                style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.95rem;font-weight:600;outline:none;box-sizing:border-box;transition:border 0.2s;"
+                onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';" />
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Nombre en la tarjeta</label>
+            <input id="card-name" placeholder="LAURA GOMEZ" style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.9rem;font-weight:600;outline:none;box-sizing:border-box;transition:border 0.2s;text-transform:uppercase;"
+              onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';" />
+          </div>
+          <button id="wompi-pay-btn" style="
+            width:100%;background:linear-gradient(135deg,#6C14D0,#9B1DBA);color:white;border:none;
+            padding:14px;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer;
+            box-shadow:0 4px 14px rgba(108,20,208,0.4);display:flex;align-items:center;justify-content:center;gap:8px;
+          ">
+            🔐 Pagar ${formatCOP(selectedAmount)}
+          </button>
+        </div>
+
+        <!-- PSE Form (hidden by default) -->
+        <div id="wompi-pse" style="padding:20px;display:none;">
+          <div style="margin-bottom:14px;">
+            <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Banco</label>
+            <select id="pse-bank" style="width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.9rem;outline:none;background:white;cursor:pointer;box-sizing:border-box;transition:border 0.2s;"
+              onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';">
+              <option value="">Selecciona tu banco</option>
+              ${PSE_BANKS.map(b => `<option value="${b}">${b}</option>`).join('')}
+            </select>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Tipo de persona</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <label style="border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;">
+                <input type="radio" name="pse-type" value="natural" checked style="accent-color:#6C14D0;"> Natural
+              </label>
+              <label style="border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:0.85rem;font-weight:600;">
+                <input type="radio" name="pse-type" value="juridica" style="accent-color:#6C14D0;"> Jurídica
+              </label>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:0.72rem;font-weight:700;color:#374151;display:block;margin-bottom:6px;">Cédula / NIT</label>
+            <input id="pse-doc" placeholder="1234567890" style="width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:0.9rem;font-weight:600;outline:none;box-sizing:border-box;transition:border 0.2s;"
+              onfocus="this.style.borderColor='#6C14D0';" onblur="this.style.borderColor='#e5e7eb';" />
+          </div>
+          <button id="wompi-pse-btn" style="
+            width:100%;background:linear-gradient(135deg,#6C14D0,#9B1DBA);color:white;border:none;
+            padding:14px;border-radius:12px;font-weight:800;font-size:1rem;cursor:pointer;
+            box-shadow:0 4px 14px rgba(108,20,208,0.4);display:flex;align-items:center;justify-content:center;gap:8px;
+          ">
+            🏦 Continuar con PSE
+          </button>
+        </div>
+
+        <!-- Security note -->
+        <div style="padding:0 20px 20px;text-align:center;">
+          <p style="font-size:0.68rem;color:#9ca3af;margin:0;">🔒 Transacción cifrada con SSL · Wompi by Bancolombia</p>
+        </div>
+      </div>
+    `;
+
+    // Tab switching
+    document.getElementById('tab-tarjeta').addEventListener('click', () => {
+      activeMethod = 'tarjeta';
+      document.getElementById('wompi-tarjeta').style.display = 'block';
+      document.getElementById('wompi-pse').style.display = 'none';
+      document.getElementById('tab-tarjeta').style.color = '#6C14D0';
+      document.getElementById('tab-tarjeta').style.borderBottom = '2px solid #6C14D0';
+      document.getElementById('tab-tarjeta').style.fontWeight = '700';
+      document.getElementById('tab-pse').style.color = '#6b7280';
+      document.getElementById('tab-pse').style.borderBottom = 'none';
+      document.getElementById('tab-pse').style.fontWeight = '600';
+    });
+    document.getElementById('tab-pse').addEventListener('click', () => {
+      activeMethod = 'pse';
+      document.getElementById('wompi-pse').style.display = 'block';
+      document.getElementById('wompi-tarjeta').style.display = 'none';
+      document.getElementById('tab-pse').style.color = '#6C14D0';
+      document.getElementById('tab-pse').style.borderBottom = '2px solid #6C14D0';
+      document.getElementById('tab-pse').style.fontWeight = '700';
+      document.getElementById('tab-tarjeta').style.color = '#6b7280';
+      document.getElementById('tab-tarjeta').style.borderBottom = 'none';
+      document.getElementById('tab-tarjeta').style.fontWeight = '600';
+    });
+
+    // Simulation control
+    document.getElementById('sim-approve').addEventListener('click', () => {
+      simulationResult = 'simulated_approved';
+      document.getElementById('sim-approve').style.background = '#15803d';
+      document.getElementById('sim-approve').style.boxShadow = '0 0 0 2px white, 0 0 0 4px #16a34a';
+      document.getElementById('sim-reject').style.background = '#6b7280';
+      document.getElementById('sim-reject').style.boxShadow = 'none';
+    });
+    document.getElementById('sim-reject').addEventListener('click', () => {
+      simulationResult = 'simulated_rejected';
+      document.getElementById('sim-reject').style.background = '#b91c1c';
+      document.getElementById('sim-reject').style.boxShadow = '0 0 0 2px white, 0 0 0 4px #dc2626';
+      document.getElementById('sim-approve').style.background = '#6b7280';
+      document.getElementById('sim-approve').style.boxShadow = 'none';
+    });
+
+    // Trigger pay
+    const handlePay = () => {
+      if (!simulationResult) {
+        alert('⚠️ Selecciona primero el resultado de la simulación: 🟢 Aprobar o 🔴 Rechazar');
+        return;
+      }
+      renderStep4Processing();
+    };
+    document.getElementById('wompi-pay-btn').addEventListener('click', handlePay);
+    document.getElementById('wompi-pse-btn').addEventListener('click', handlePay);
+  };
+
+  /* ─────────────────────────────────────────
+     STEP 4 — Processing animation
+  ───────────────────────────────────────── */
+  const renderStep4Processing = () => {
+    modal.innerHTML = `
+      <div style="max-width:360px;width:90vw;background:white;border-radius:20px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#6C14D0,#9B1DBA);padding:14px 20px;">
+          <div style="font-weight:900;font-size:1rem;color:white;">🔐 wompi</div>
+        </div>
+        <div style="padding:48px 28px;text-align:center;">
+          <div style="width:70px;height:70px;margin:0 auto 20px;">
+            <div style="width:70px;height:70px;border:4px solid #ede9fe;border-top-color:#6C14D0;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          </div>
+          <h3 style="margin:0 0 8px;font-size:1.1rem;font-weight:800;color:#1e293b;">Procesando pago...</h3>
+          <p style="margin:0;font-size:0.82rem;color:#64748b;">Estamos procesando tu recarga de <strong>${formatCOP(selectedAmount)}</strong>.<br>Por favor no cierres esta ventana.</p>
+        </div>
+        <div style="padding:0 20px 20px;text-align:center;">
+          <p style="font-size:0.68rem;color:#9ca3af;margin:0;">🔒 Transacción cifrada con SSL · Wompi by Bancolombia</p>
+        </div>
+      </div>
+    `;
+
+    // Add spinner animation
+    if (!document.getElementById('wompi-spin-style')) {
+      const style = document.createElement('style');
+      style.id = 'wompi-spin-style';
+      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+    }
+
+    // Simulate processing delay then call the service
+    setTimeout(async () => {
+      try {
+        const result = await rechargeWallet(selectedAmount, activeMethod, simulationResult, mockState);
+        renderStep5Result(result);
+      } catch (err) {
+        console.error('Wompi simulation error:', err);
+        renderStep5Result({ success: false, reason: err.message });
+      }
+    }, 2200);
+  };
+
+  /* ─────────────────────────────────────────
+     STEP 5 — Result (success or failure)
+  ───────────────────────────────────────── */
+  const renderStep5Result = (result) => {
+    const isApproved = result.success;
+    const refId = (result.transactionId || Date.now().toString()).slice(-10).toUpperCase();
+    const now = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const methodLabel = activeMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE';
+
+    modal.innerHTML = `
+      <div style="max-width:380px;width:90vw;background:white;border-radius:20px;overflow:hidden;">
+        <!-- Wompi Result Header -->
+        <div style="background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#dc2626,#b91c1c)'};padding:28px 24px;text-align:center;color:white;">
+          <div style="font-size:48px;margin-bottom:8px;">${isApproved ? '✅' : '❌'}</div>
+          <div style="font-weight:900;font-size:1rem;opacity:0.8;margin-bottom:6px;">🔐 wompi</div>
+          <h3 style="margin:0 0 4px;font-size:1.2rem;font-weight:900;">${isApproved ? '¡Pago Aprobado!' : 'Pago Rechazado'}</h3>
+          <p style="margin:0;font-size:0.82rem;opacity:0.85;">${isApproved ? 'Tu recarga fue procesada exitosamente' : 'Tu pago no pudo ser procesado'}</p>
+        </div>
+
+        <!-- Receipt -->
+        <div style="padding:20px;">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed #e2e8f0;">
+              <span style="font-size:0.75rem;color:#64748b;font-weight:600;">REFERENCIA</span>
+              <span style="font-size:0.75rem;color:#1e293b;font-weight:800;font-family:monospace;">#${refId}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:0.8rem;color:#64748b;">Monto</span>
+              <span style="font-size:0.8rem;font-weight:700;color:${isApproved ? '#16a34a' : '#dc2626'};">${isApproved ? '+' : ''}${formatCOP(selectedAmount)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:0.8rem;color:#64748b;">Método</span>
+              <span style="font-size:0.8rem;font-weight:600;color:#1e293b;">${methodLabel}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:0.8rem;color:#64748b;">Estado</span>
+              <span style="font-size:0.8rem;font-weight:700;background:${isApproved ? '#dcfce7' : '#fee2e2'};color:${isApproved ? '#16a34a' : '#dc2626'};padding:2px 8px;border-radius:6px;">${isApproved ? 'APROBADO' : 'RECHAZADO'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span style="font-size:0.8rem;color:#64748b;">Fecha</span>
+              <span style="font-size:0.8rem;color:#1e293b;">${now}</span>
+            </div>
+            ${isApproved && result.newBalance !== undefined ? `
+            <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e2e8f0;display:flex;justify-content:space-between;">
+              <span style="font-size:0.8rem;color:#64748b;">Nuevo saldo</span>
+              <span style="font-size:0.9rem;font-weight:800;color:#059669;">${formatCOP(result.newBalance)}</span>
+            </div>
+            ` : ''}
+          </div>
+
+          ${!isApproved ? `
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#9a3412;">
+            💡 El rechazo fue registrado en tu historial de transacciones para trazabilidad. Puedes intentarlo nuevamente o usar la recarga asistida por WhatsApp.
+          </div>
+          ` : `
+          <div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#065f46;">
+            ✅ Tu saldo ha sido actualizado. Ya puedes adquirir tus Piggies.
+          </div>
+          `}
+
+          <button id="wompi-result-close" style="
+            width:100%;background:${isApproved ? 'linear-gradient(135deg,#10B981,#059669)' : 'linear-gradient(135deg,#6C14D0,#9B1DBA)'};color:white;border:none;
+            padding:14px;border-radius:12px;font-weight:800;font-size:0.95rem;cursor:pointer;
+          ">${isApproved ? '✅ Ver mi Cuenta' : '🔄 Intentar de nuevo'}</button>
+        </div>
+
+        <div style="padding:0 20px 16px;text-align:center;">
+          <p style="font-size:0.65rem;color:#9ca3af;margin:0;">🔒 wompi by Bancolombia · Simulación interna Piggy App</p>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('wompi-result-close').addEventListener('click', () => {
+      close();
+      // If approved: update the live drawer if it's still open
+      if (isApproved && liveStats) {
+        liveStats.saldoDisponible = mockState.balance;
+        liveStats.saldoDisponibleFormatted = formatCOP(mockState.balance);
+        liveStats.transactions = mockState.transactions;
+
+        // Re-render balance in drawer without full reload
+        const balanceEl = document.querySelector('#wallet-drawer-modal [data-wallet-balance]');
+        if (balanceEl) balanceEl.textContent = formatCOP(mockState.balance);
+      }
+      // Always trigger a full drawer reload so balance + history reflect the DB
+      import('../../services/walletService.js').then(({ getWalletBalance, getWalletTransactions }) => {
+        Promise.all([getWalletBalance(), getWalletTransactions()]).then(([newBal, newTxs]) => {
+          if (liveStats) {
+            liveStats.saldoDisponible = newBal;
+            liveStats.saldoDisponibleFormatted = formatCOP(newBal);
+            liveStats.transactions = newTxs;
+          }
+          // Re-open the drawer with fresh data
+          import('./WalletBlock.js').then(({ openWalletDrawer }) => openWalletDrawer());
+        }).catch(() => {});
+      }).catch(() => {});
+    });
+  };
+
+  // Kick off the flow
+  renderStep1();
 }
 
 
