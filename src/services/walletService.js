@@ -110,6 +110,100 @@ export async function deductWalletBalance(amount) {
     return { success: true, newBalance: currentBalance - amount };
 }
 
+/* ─── Recharge Wallet (Wompi Simulation) ─── */
+
+/**
+ * Recharge the user's wallet balance with a simulation_recharge transaction.
+ * Records full traceability: payment method, simulation status, and description.
+ * Supports both mock mode and real Supabase mode.
+ *
+ * @param {number} amount - Amount in COP to credit
+ * @param {'tarjeta' | 'pse'} paymentMethod - Payment method used in the simulation
+ * @param {'simulated_approved' | 'simulated_rejected'} simulationStatus - Result of the simulation
+ * @param {Object} mockState - (Mock mode only) Mutable object with { balance, transactions }
+ * @returns {{ success: boolean, newBalance?: number, transactionId?: string, reason?: string }}
+ */
+export async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null) {
+    const isApproved = simulationStatus === 'simulated_approved';
+
+    if (isUsingMockData()) {
+        // In mock mode we mutate the provided mockState reference
+        if (!mockState) return { success: false, reason: 'mock_state_required' };
+
+        const newTransaction = {
+            id: `sim-${Date.now()}`,
+            amount: isApproved ? amount : 0,
+            type: 'simulation_recharge',
+            description: isApproved
+                ? `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Simulación Aprobada`
+                : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Simulación Rechazada`,
+            wallet_type: 'dinero',
+            payment_method: paymentMethod,
+            simulation_status: simulationStatus,
+            created_at: new Date().toISOString(),
+        };
+
+        mockState.transactions.unshift(newTransaction);
+        if (isApproved) {
+            mockState.balance += amount;
+        }
+
+        return {
+            success: isApproved,
+            newBalance: mockState.balance,
+            transactionId: newTransaction.id,
+            reason: isApproved ? null : 'simulated_rejected',
+        };
+    }
+
+    // Real Supabase mode
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    const description = isApproved
+        ? `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`
+        : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;
+
+    // Insert transaction — the DB trigger only credits wallet if NOT rejected
+    const { data, error } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: isApproved ? amount : 0,
+            type: 'simulation_recharge',
+            description,
+            wallet_type: 'dinero',
+            payment_method: paymentMethod,
+            simulation_status: simulationStatus,
+        })
+        .select('id')
+        .single();
+
+    if (error) {
+        console.error('Error inserting recharge transaction:', error);
+        return { success: false, reason: error.message };
+    }
+
+    if (!isApproved) {
+        return { success: false, reason: 'simulated_rejected', transactionId: data?.id };
+    }
+
+    // Read updated balance to return it
+    const { data: profile } = await client
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', user.id)
+        .single();
+
+    return {
+        success: true,
+        newBalance: profile?.wallet_balance || 0,
+        transactionId: data?.id,
+    };
+}
+
+
 /* ─── Create Wallet Request ─── */
 
 /**
