@@ -10,6 +10,36 @@ import { formatCOP } from './mockData.js';
 /** Admin WhatsApp number for notifications */
 const ADMIN_WHATSAPP = '573154870448';
 
+/* ─── Mock Mode LocalStorage Persistence ─── */
+let mockBalance = null;
+let mockTransactions = null;
+
+function initMockState() {
+    if (mockBalance === null) {
+        const storedBal = localStorage.getItem('mock_wallet_balance');
+        if (storedBal !== null) {
+            mockBalance = parseFloat(storedBal);
+        } else {
+            mockBalance = 0;
+            localStorage.setItem('mock_wallet_balance', '0');
+        }
+    }
+
+    if (mockTransactions === null) {
+        const storedTxs = localStorage.getItem('mock_wallet_transactions');
+        if (storedTxs !== null) {
+            mockTransactions = JSON.parse(storedTxs);
+        } else {
+            mockTransactions = [
+                { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
+                { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
+                { id: '3', amount: 30000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
+            ];
+            localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        }
+    }
+}
+
 /* ─── Get Wallet Balance ─── */
 
 /**
@@ -18,7 +48,10 @@ const ADMIN_WHATSAPP = '573154870448';
  * @returns {number} Balance in COP
  */
 export async function getWalletBalance() {
-    if (isUsingMockData()) return 0;
+    if (isUsingMockData()) {
+        initMockState();
+        return mockBalance;
+    }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
@@ -127,8 +160,7 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
     const isApproved = simulationStatus === 'simulated_approved';
 
     if (isUsingMockData()) {
-        // In mock mode we mutate the provided mockState reference
-        if (!mockState) return { success: false, reason: 'mock_state_required' };
+        initMockState();
 
         const newTransaction = {
             id: `sim-${Date.now()}`,
@@ -143,14 +175,23 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
             created_at: new Date().toISOString(),
         };
 
-        mockState.transactions.unshift(newTransaction);
+        mockTransactions.unshift(newTransaction);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+
         if (isApproved) {
-            mockState.balance += amount;
+            mockBalance += amount;
+            localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+        }
+
+        // Mutate the provided mockState reference if passed to sync with UI
+        if (mockState) {
+            mockState.balance = mockBalance;
+            mockState.transactions = mockTransactions;
         }
 
         return {
             success: isApproved,
-            newBalance: mockState.balance,
+            newBalance: mockBalance,
             transactionId: newTransaction.id,
             reason: isApproved ? null : 'simulated_rejected',
         };
@@ -288,11 +329,8 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
  */
 export async function getWalletTransactions() {
     if (isUsingMockData()) {
-        return [
-            { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
-            { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
-            { id: '3', amount: 30000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
-        ];
+        initMockState();
+        return mockTransactions;
     }
 
     const client = getClient();
