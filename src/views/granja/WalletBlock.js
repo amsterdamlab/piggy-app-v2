@@ -782,6 +782,11 @@ export async function openWalletRechargeInfo(liveStats = null) {
           ${!isApproved ? `
           <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#9a3412;">
             💡 El rechazo fue registrado en tu historial de transacciones para trazabilidad. Puedes intentarlo nuevamente o usar la recarga asistida por WhatsApp.
+            ${result.reason && result.reason !== 'simulated_rejected' ? `
+            <div style="margin-top:8px;padding:8px;background:#fef2f2;border:1px solid #fee2e2;border-radius:6px;color:#991b1b;font-family:sans-serif;font-size:0.7rem;word-break:break-all;">
+              <strong>Detalle del error:</strong> ${result.reason}
+            </div>
+            ` : ''}
           </div>
           ` : `
           <div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#065f46;">
