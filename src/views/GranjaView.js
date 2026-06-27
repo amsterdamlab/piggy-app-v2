@@ -133,9 +133,9 @@ async function loadGranjaData(firstName) {
 
     // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
-        tipData, walletBalance, referralBonus,
-        activeMissions, flashMissions, cycleMissions, stats,
-        transactions,
+      tipData, walletBalance, referralBonus,
+      activeMissions, flashMissions, cycleMissions, stats,
+      transactions,
     ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
@@ -264,8 +264,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
   `;
 }
 
-// ... renderGreeting remains the same ...
-
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -321,8 +319,6 @@ function renderEmptyPiggies() {
   `;
 }
 
-// ... renderPiggiesList and renderPiggyCard remain the same ...
-
 function renderPiggiesList(piggies, baseROI) {
   return `
     <div class="piggies-list">
@@ -345,7 +341,7 @@ function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-      ? '<span class="badge badge--success">✓ Ciclo completado</span>'
+      ? '<span class="badge badge--success">✓ Completado</span>'
       : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
     }
           </div>
@@ -373,14 +369,13 @@ function renderPiggyCard(piggy, baseROI) {
         <div>
           <div class="text-xs text-muted">Margen Comercial Estimado</div>
           <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
-          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye bono extra +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
+          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye comisión +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
   `;
 }
 
-// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
@@ -408,9 +403,6 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
-/**
- * Attach event listeners.
- */
 function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {

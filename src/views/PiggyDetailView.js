@@ -74,7 +74,7 @@ async function loadPiggyDetail(piggyId) {
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
             <span class="badge ${piggy.isComplete ? 'badge--success' : 'badge--primary'}">
-              ${piggy.isComplete ? '✓ Ciclo Completado' : `${piggy.daysLeft} días restantes`}
+              ${piggy.isComplete ? '✓ Completado' : `${piggy.daysLeft} días restantes`}
             </span>
           </div>
 
@@ -142,7 +142,7 @@ async function loadPiggyDetail(piggyId) {
           ${piggy.isComplete ? `
             <div class="section animate-fade-in-up" style="animation-delay:0.3s;">
               <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
-                <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Ciclo Completado</h3>
+                <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Completado</h3>
                 <p style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-md);">
                   Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
                 </p>
