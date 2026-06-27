@@ -319,6 +319,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     letter-spacing: 0.05em;
     line-height: 1;
+    padding-left: 10px;
 }
 
 .mcard__ribbon--advanced span {
