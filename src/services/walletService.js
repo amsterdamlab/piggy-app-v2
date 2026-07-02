@@ -154,10 +154,12 @@ export async function deductWalletBalance(amount) {
  * @param {'tarjeta' | 'pse'} paymentMethod - Payment method used in the simulation
  * @param {'simulated_approved' | 'simulated_rejected'} simulationStatus - Result of the simulation
  * @param {Object} mockState - (Mock mode only) Mutable object with { balance, transactions }
+ * @param {string|null} [reference=null] - Wompi transaction reference for idempotency
  * @returns {{ success: boolean, newBalance?: number, transactionId?: string, reason?: string }}
  */
-export async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null) {
+export async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null, reference = null) {
     const isApproved = simulationStatus === 'simulated_approved';
+    const refStr = reference ? ` [Ref: ${reference}]` : '';
 
     if (isUsingMockData()) {
         initMockState();
@@ -167,8 +169,8 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
             amount: isApproved ? amount : 0,
             type: 'simulation_recharge',
             description: isApproved
-                ? `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Simulación Aprobada`
-                : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Simulación Rechazada`,
+                ? `Recarga Wompi${refStr || ` (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`}`
+                : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`,
             wallet_type: 'dinero',
             payment_method: paymentMethod,
             simulation_status: simulationStatus,
@@ -203,8 +205,31 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
     if (!user) return { success: false, reason: 'not_authenticated' };
 
     const description = isApproved
-        ? `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`
+        ? (reference ? `Recarga Wompi [Ref: ${reference}]` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`)
         : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;
+
+    // Idempotencia: Verificar si el Webhook ya insertó esta transacción por referencia
+    if (reference && isApproved) {
+        const { data: existingTx } = await client
+            .from('wallet_transactions')
+            .select('id')
+            .eq('description', description)
+            .single();
+
+        if (existingTx) {
+            const { data: profile } = await client
+                .from('profiles')
+                .select('wallet_balance')
+                .eq('id', user.id)
+                .single();
+
+            return {
+                success: true,
+                newBalance: profile?.wallet_balance || 0,
+                transactionId: existingTx.id,
+            };
+        }
+    }
 
     // Insert transaction — the DB trigger only credits wallet if NOT rejected
     const { data, error } = await client
