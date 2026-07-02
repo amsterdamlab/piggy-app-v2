@@ -6,6 +6,7 @@
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, createWalletRequest, notifyAdminViaWhatsApp, rechargeWallet } from '../../services/walletService.js';
+import { openWompiWidget, getWompiEnvironment } from '../../services/wompiService.js';
 import { getUserPiggies, getDashboardStats } from '../../services/piggiesService.js';
 
 /**
@@ -375,7 +376,12 @@ export async function openWalletRechargeInfo(liveStats = null) {
   const renderStep1 = () => {
     modal.innerHTML = `
       <div class="modal animate-scale-in" style="max-width:400px; position:relative;">
-        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:16px;font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
+        ${getWompiEnvironment() === 'sandbox' ? `
+          <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; border-radius:16px 16px 0 0;">
+            🧪 MODO PRUEBAS (SANDBOX) — Recargas simuladas sin cobro real
+          </div>
+        ` : ''}
+        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:${getWompiEnvironment() === 'sandbox' ? '42px' : '16px'};font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
 
         <!-- Header -->
         <div style="text-align:center; padding:28px 24px 0;">
@@ -460,8 +466,13 @@ export async function openWalletRechargeInfo(liveStats = null) {
   const renderStep2 = () => {
     modal.innerHTML = `
       <div class="modal animate-scale-in" style="max-width:400px;position:relative;">
-        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:16px;font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
-        <button id="rch-back" style="background:none;border:none;position:absolute;left:16px;top:18px;font-size:13px;color:#6b7280;cursor:pointer;z-index:3;font-weight:600;">&#8592; Volver</button>
+        ${getWompiEnvironment() === 'sandbox' ? `
+          <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; border-radius:16px 16px 0 0;">
+            🧪 MODO PRUEBAS (SANDBOX) — Recargas simuladas sin cobro real
+          </div>
+        ` : ''}
+        <button id="rch-close" style="background:none;border:none;position:absolute;right:16px;top:${getWompiEnvironment() === 'sandbox' ? '42px' : '16px'};font-size:22px;cursor:pointer;color:#6b7280;z-index:3;">&#x2715;</button>
+        <button id="rch-back" style="background:none;border:none;position:absolute;left:16px;top:${getWompiEnvironment() === 'sandbox' ? '44px' : '18px'};font-size:13px;color:#6b7280;cursor:pointer;z-index:3;font-weight:600;">&#8592; Volver</button>
 
         <div style="text-align:center;padding:28px 24px 16px;">
           <h3 style="margin:0 0 4px;font-size:1.1rem;font-weight:800;color:#111827;">Método de Pago</h3>
@@ -470,7 +481,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
         <div style="padding:0 20px 24px;display:flex;flex-direction:column;gap:12px;">
 
-          <!-- Wompi Simulation Option -->
+          <!-- Wompi Real / JS Widget Option -->
           <button id="rch-wompi-btn" style="
             background:linear-gradient(135deg,#6C14D0,#9B1DBA);
             color:white;border:none;padding:18px 20px;border-radius:14px;
@@ -484,9 +495,9 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
             <div>
               <div style="font-size:0.95rem;font-weight:800;">Pagar con Wompi</div>
-              <div style="font-size:0.72rem;opacity:0.85;font-weight:400;">Tarjeta de crédito · PSE · Nequi (Simulación)</div>
+              <div style="font-size:0.72rem;opacity:0.85;font-weight:400;">Bancolombia · Nequi · PSE · Tarjeta</div>
             </div>
-            <div style="margin-left:auto;background:rgba(255,255,255,0.2);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:700;">SIMULAR</div>
+            <div style="margin-left:auto;background:rgba(255,255,255,0.2);border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:700;">ONLINE</div>
           </button>
 
           <!-- WhatsApp Fallback -->
@@ -505,6 +516,11 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
           </button>
 
+          <!-- Enlace discreto a simulación manual offline -->
+          <div style="text-align:center; margin-top:4px;">
+            <span id="rch-wompi-sim-link" style="font-size:0.72rem; color:#6C14D0; text-decoration:underline; cursor:pointer; font-weight:600;">🔬 Abrir simulador manual offline</span>
+          </div>
+
         </div>
       </div>
     `;
@@ -512,7 +528,34 @@ export async function openWalletRechargeInfo(liveStats = null) {
     document.getElementById('rch-close').addEventListener('click', close);
     document.getElementById('rch-back').addEventListener('click', renderStep1);
 
-    document.getElementById('rch-wompi-btn').addEventListener('click', renderStep3Wompi);
+    const handleWompiOnline = async () => {
+      renderStep4Processing();
+      try {
+        const res = await openWompiWidget({
+          amountInCOP: selectedAmount,
+          userId: profile?.id || 'anon',
+          customerData: { fullName: profile?.full_name || userName }
+        });
+
+        if (res.status === 'CANCELLED') {
+          renderStep2();
+          return;
+        }
+
+        if (res.success) {
+          const rechargeRes = await rechargeWallet(selectedAmount, 'wompi_widget', 'simulated_approved', mockState, res.reference);
+          renderStep5Result(rechargeRes);
+        } else {
+          renderStep5Result({ success: false, reason: res.reason || 'El pago no fue aprobado por Wompi.' });
+        }
+      } catch (err) {
+        console.error('Error abriendo Wompi Widget:', err);
+        renderStep5Result({ success: false, reason: err.message || 'No se pudo iniciar la pasarela de pagos.' });
+      }
+    };
+
+    document.getElementById('rch-wompi-btn').addEventListener('click', handleWompiOnline);
+    document.getElementById('rch-wompi-sim-link').addEventListener('click', renderStep3Wompi);
     document.getElementById('rch-whatsapp-btn').addEventListener('click', () => {
       close();
       const msg = `🐷 *PIGGY APP — Solicitud de Recarga de Cuenta*\n\n👤 *Usuario:* ${userName}\n\n💰 Monto a recargar: *${formatCOP(selectedAmount)}*\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
