@@ -120,14 +120,14 @@ export function renderLegalModal(options = {}) {
           <label class="checkbox" for="check-terms">
             <input type="checkbox" class="checkbox__input" id="check-terms" />
             <span class="checkbox__label">
-              He leído y acepto los <strong class="text-primary">Términos y Condiciones</strong> de Piggy App.
+              He leído y acepto los <a href="terminos-y-condiciones.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline;">Términos y Condiciones</a> de Piggy App.
             </span>
           </label>
 
           <label class="checkbox" for="check-habeas">
             <input type="checkbox" class="checkbox__input" id="check-habeas" />
             <span class="checkbox__label">
-              Autorizo el <strong class="text-primary">Tratamiento de Datos Personales</strong> (Habeas Data).
+              Autorizo el <a href="tratamiento-de-datos.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline;">Tratamiento de Datos Personales</a> (Habeas Data).
             </span>
           </label>
         </div>
