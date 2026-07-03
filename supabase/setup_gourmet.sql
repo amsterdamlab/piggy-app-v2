@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.gourmet_offers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
-    price NUMERIC NOT NULL,
+    price NUMERIC NOT NULL DEFAULT 0,
     original_price NUMERIC,
     tag TEXT,
     emoji TEXT,
@@ -17,6 +17,16 @@ CREATE TABLE IF NOT EXISTS public.gourmet_offers (
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 1.5. Ensure columns exist if the table was created previously without them
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS price NUMERIC NOT NULL DEFAULT 0;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS original_price NUMERIC;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS tag TEXT;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS emoji TEXT;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.gourmet_offers ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
 
 -- 2. Enable RLS (Row Level Security)
 ALTER TABLE public.gourmet_offers ENABLE ROW LEVEL SECURITY;
