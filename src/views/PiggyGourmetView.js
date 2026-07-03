@@ -63,7 +63,7 @@ export function renderPiggyGourmetView() {
               <div style="font-weight:700; color:#166534; font-size:0.85rem; margin-bottom:4px;">Información de entregas</div>
               <div style="font-size:0.78rem; color:#15803d; line-height:1.5;">
                 <strong>Cali:</strong> Domicilio gratis en zona urbana.<br/>
-                <strong>Otros municipios:</strong> Costo de envío según ubicación and peso.
+                <strong>Otros municipios:</strong> Costo de envío según ubicación y peso.
               </div>
             </div>
           </div>
@@ -211,9 +211,9 @@ function renderOfferCard(offer, index) {
       " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'" 
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.06)'">
 
-        <!-- Card Header Image with Overlay (Replaces old colored header & emojis) -->
+        <!-- Card Header Image with Overlay - Height reduced to 90px (half) -->
         <div style="
-          height: 180px;
+          height: 90px;
           position: relative;
           background-image: url('${imageUrl}');
           background-size: cover;
@@ -230,9 +230,9 @@ function renderOfferCard(offer, index) {
           <!-- Overlay Badge (Semi-transparent Red) & Discount Percentage (Glassmorphism with shadow) -->
           <div style="
             position: absolute;
-            top: 14px;
-            left: 16px;
-            right: 16px;
+            top: 8px;
+            left: 12px;
+            right: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -241,29 +241,29 @@ function renderOfferCard(offer, index) {
             <span style="
               background: rgba(220, 38, 38, 0.6);
               color: white;
-              font-size: 0.68rem;
+              font-size: 0.62rem;
               font-weight: 800;
-              padding: 4px 10px;
+              padding: 3px 8px;
               border-radius: 20px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
               backdrop-filter: blur(4px);
               -webkit-backdrop-filter: blur(4px);
-              box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+              box-shadow: 0 2px 4px rgba(0,0,0,0.15);
             ">${offer.tag || '🔥 Oferta'}</span>
             
             ${discount > 0 ? `
               <div style="
                 background: rgba(255, 255, 255, 0.25);
                 color: white;
-                font-size: 0.72rem;
+                font-size: 0.68rem;
                 font-weight: 900;
-                padding: 5px 11px;
+                padding: 4px 8px;
                 border-radius: 20px;
                 backdrop-filter: blur(4px);
                 -webkit-backdrop-filter: blur(4px);
                 border: 1px solid rgba(255, 255, 255, 0.35);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
                 text-shadow: 0 1px 3px rgba(0,0,0,0.5);
               ">-${discount}%</div>
             ` : ''}
@@ -272,18 +272,18 @@ function renderOfferCard(offer, index) {
           <!-- Title Overlay at the bottom of the image -->
           <div style="
             position: absolute;
-            bottom: 16px;
-            left: 16px;
-            right: 16px;
+            bottom: 8px;
+            left: 12px;
+            right: 12px;
             z-index: 2;
           ">
             <h4 style="
               margin: 0;
-              font-size: 1.25rem;
+              font-size: 1.1rem;
               font-weight: 800;
               color: white;
               text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-              line-height: 1.25;
+              line-height: 1.2;
             ">${offer.name}</h4>
           </div>
         </div>
