@@ -2,7 +2,7 @@
    PIGGY APP — Piggy Gourmet View
    Meat combo offers & bonus redemption
    Now powered by DB-backed gourmetService with premium real images.
-   ========================================================================== */
+   ========================================================================= */
 
 import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
@@ -28,19 +28,16 @@ export function renderPiggyGourmetView() {
     <div class="page page--with-nav">
       <div class="page__content">
 
-        <!-- Title -->
+        <!-- Title & Subtitle (Standardized size matching other sections) -->
         <div class="animate-fade-in" style="margin-bottom:24px;">
-          <h2 style="margin:0 0 4px 0; font-size:1.6rem; font-weight:800; color:#1f2937;">Tienda Piggy</h2>
-          <p style="margin:0; font-size:0.85rem; color:#6b7280;">Proteína fresca directo de la granja 🐷</p>
+          <h2 style="font-size: var(--text-3xl); font-weight: var(--font-extrabold); color: var(--color-text-primary); margin: 0 0 var(--space-xs) 0;">Tienda</h2>
+          <p style="font-size: var(--text-sm); color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin: 0;">
+            Carne fresca directo desde Granja Valle Morales. Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad. Tenemos envío GRATIS en la ciudad de Cali. ¡Haz tu pedido aquí!
+          </p>
         </div>
 
         <!-- Bonus Reminder (Filled dynamically) -->
         <div id="gourmet-bonus-container"></div>
-
-        <!-- OFERTA DE LA SEMANA Banner Container (Filled dynamically) -->
-        <div id="gourmet-weekly-banner-container">
-          <div class="skeleton" style="width:100%; height:200px; border-radius:20px; margin-bottom:24px;"></div>
-        </div>
 
         <!-- Offer Cards Container -->
         <div id="gourmet-offers-container" style="display:flex; flex-direction:column; gap:20px; margin-bottom:24px;">
@@ -66,7 +63,7 @@ export function renderPiggyGourmetView() {
               <div style="font-weight:700; color:#166534; font-size:0.85rem; margin-bottom:4px;">Información de entregas</div>
               <div style="font-size:0.78rem; color:#15803d; line-height:1.5;">
                 <strong>Cali:</strong> Domicilio gratis en zona urbana.<br/>
-                <strong>Otros municipios:</strong> Costo de envío según ubicación y peso.
+                <strong>Otros municipios:</strong> Costo de envío según ubicación and peso.
               </div>
             </div>
           </div>
@@ -85,75 +82,10 @@ export function renderPiggyGourmetView() {
 
 async function loadGourmetOffers() {
   try {
-    let [offers, referralBonus] = await Promise.all([
+    const [offers, referralBonus] = await Promise.all([
       getGourmetOffers(),
       getReferralBonusBalance()
     ]);
-
-    // Find the offer marked as "OFERTA DE LA SEMANA" to display as the main banner
-    let weeklyOffer = offers.find(o => o.tag && o.tag.toUpperCase().includes('OFERTA DE LA SEMANA'));
-    
-    // Default values if no weekly offer is found in the database
-    let weeklyBannerTitle = "Combos de Carne Fresca";
-    let weeklyBannerDesc = "Directo de Granja Villa Morales. Cerdo, pollo y res de la mejor calidad. Envío gratis en Cali.";
-    let weeklyBannerImage = 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80';
-    let weeklyBannerTag = "🔥 Oferta de la Semana";
-
-    if (weeklyOffer) {
-      weeklyBannerTitle = weeklyOffer.name;
-      weeklyBannerDesc = weeklyOffer.description;
-      weeklyBannerImage = weeklyOffer.image_url || weeklyBannerImage;
-      weeklyBannerTag = weeklyOffer.tag || weeklyBannerTag;
-      // Filter it out from standard list so it's not duplicated below
-      offers = offers.filter(o => o.id !== weeklyOffer.id);
-    }
-
-    // Render Weekly Banner with real image background and dark overlay
-    const weeklyContainer = document.getElementById('gourmet-weekly-banner-container');
-    if (weeklyContainer) {
-      weeklyContainer.innerHTML = `
-        <div class="animate-fade-in-up" style="animation-delay: 0.1s;">
-          <div style="
-            height: 200px;
-            border-radius: 20px;
-            position: relative;
-            background-image: url('${weeklyBannerImage}');
-            background-size: cover;
-            background-position: center;
-            overflow: hidden;
-            margin-bottom: 24px;
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
-          ">
-            <!-- Dark gradient overlay for text readability -->
-            <div style="
-              position: absolute;
-              top: 0; left: 0; right: 0; bottom: 0;
-              background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.15) 100%);
-              z-index: 1;
-            "></div>
-
-            <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; z-index: 2; color: white;">
-              <div style="
-                background: #dc2626;
-                color: white;
-                display: inline-block;
-                padding: 4px 12px;
-                border-radius: 20px;
-                font-size: 0.65rem;
-                font-weight: 800;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                margin-bottom: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-              ">${weeklyBannerTag}</div>
-
-              <h3 style="margin:0 0 6px 0; font-size:1.5rem; font-weight:800; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${weeklyBannerTitle}</h3>
-              <p style="margin:0; opacity:0.9; font-size:0.82rem; line-height:1.4; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${weeklyBannerDesc}</p>
-            </div>
-          </div>
-        </div>
-      `;
-    }
 
     // Render dynamic bonus banner if user has balance
     const bonusContainer = document.getElementById('gourmet-bonus-container');
@@ -196,7 +128,10 @@ function renderOfferCards(offers, referralBonus) {
   const container = document.getElementById('gourmet-offers-container');
   if (!container) return;
 
-  if (offers.length === 0) {
+  // Filter out the weekly banner block entirely from the UI (no longer needed)
+  const displayOffers = offers.filter(o => !o.tag || !o.tag.toUpperCase().includes('OFERTA DE LA SEMANA'));
+
+  if (displayOffers.length === 0) {
     container.innerHTML = `
       <div style="text-align:center; padding:32px; color:#9ca3af;">
           <div style="font-size:48px; margin-bottom:12px;">🥩</div>
@@ -206,10 +141,10 @@ function renderOfferCards(offers, referralBonus) {
     return;
   }
 
-  container.innerHTML = offers.map((offer, index) => renderOfferCard(offer, index)).join('');
+  container.innerHTML = displayOffers.map((offer, index) => renderOfferCard(offer, index)).join('');
 
   // Attach buy listeners
-  offers.forEach(offer => {
+  displayOffers.forEach(offer => {
     const btn = document.querySelector(`[data-offer-id="${offer.id}"]`);
     if (btn) {
       btn.addEventListener('click', async () => {
@@ -292,7 +227,7 @@ function renderOfferCard(offer, index) {
             z-index: 1;
           "></div>
 
-          <!-- Overlay Badge & Discount Percentage -->
+          <!-- Overlay Badge (Semi-transparent Red) & Discount Percentage (Glassmorphism with shadow) -->
           <div style="
             position: absolute;
             top: 14px;
@@ -304,7 +239,7 @@ function renderOfferCard(offer, index) {
             z-index: 2;
           ">
             <span style="
-              background: #dc2626;
+              background: rgba(220, 38, 38, 0.6);
               color: white;
               font-size: 0.68rem;
               font-weight: 800;
@@ -312,18 +247,24 @@ function renderOfferCard(offer, index) {
               border-radius: 20px;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-              box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+              backdrop-filter: blur(4px);
+              -webkit-backdrop-filter: blur(4px);
+              box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             ">${offer.tag || '🔥 Oferta'}</span>
             
             ${discount > 0 ? `
               <div style="
-                background: #16a34a;
+                background: rgba(255, 255, 255, 0.25);
                 color: white;
                 font-size: 0.72rem;
                 font-weight: 900;
                 padding: 5px 11px;
                 border-radius: 20px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                border: 1px solid rgba(255, 255, 255, 0.35);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                text-shadow: 0 1px 3px rgba(0,0,0,0.5);
               ">-${discount}%</div>
             ` : ''}
           </div>
