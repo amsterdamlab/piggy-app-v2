@@ -46,6 +46,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
         const profile = {
             id: data.user.id,
             full_name: fullName,
+            email,
             whatsapp,
             terms_accepted: true,
             habeas_data_accepted: true,
@@ -54,7 +55,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
         const { error: profileError } = await client.from('profiles').insert(profile);
 
         if (profileError) {
-            console.warn('🐷 Profile insert error:', profileError.message);
+            console.warn(' 🐷 Profile insert error:', profileError.message);
         }
 
         // Update AppState immediately
