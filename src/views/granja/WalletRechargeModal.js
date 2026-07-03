@@ -260,11 +260,17 @@ export async function openWalletRechargeInfo(liveStats = null) {
     const handleWompiOnline = async () => {
       renderStep4Processing();
       try {
+        // Habilitar temporalmente el scroll del body para que el iframe de Wompi responda al scroll
+        document.body.style.overflow = '';
+
         const res = await openWompiWidget({
           amountInCOP: selectedAmount,
           userId: profile?.id || 'anon',
           customerData: { fullName: profile?.full_name || userName }
         });
+
+        // Bloquear nuevamente el scroll
+        document.body.style.overflow = 'hidden';
 
         if (res.status === 'CANCELLED') {
           renderStep2();
@@ -279,6 +285,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
         }
       } catch (err) {
         console.error('Error abriendo Wompi Widget:', err);
+        document.body.style.overflow = 'hidden';
         renderStep5Result({ success: false, reason: err.message || 'No se pudo iniciar la pasarela de pagos.' });
       }
     };
