@@ -259,7 +259,15 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
     const handleWompiOnline = async () => {
       renderStep4Processing();
+      const uiShell = document.getElementById('ui-shell');
+      const prevUiDisplay = uiShell ? uiShell.style.display : '';
+      const prevModalDisplay = modal.style.display;
+
       try {
+        // Ocultar la aplicación de fondo y el modal para que no causen scrollbar extra
+        if (uiShell) uiShell.style.display = 'none';
+        modal.style.display = 'none';
+
         // Habilitar temporalmente el scroll del body para que el iframe de Wompi responda al scroll
         document.body.style.overflow = '';
 
@@ -269,6 +277,9 @@ export async function openWalletRechargeInfo(liveStats = null) {
           customerData: { fullName: profile?.full_name || userName }
         });
 
+        // Restaurar visibilidad
+        if (uiShell) uiShell.style.display = prevUiDisplay;
+        modal.style.display = prevModalDisplay;
         // Bloquear nuevamente el scroll
         document.body.style.overflow = 'hidden';
 
@@ -285,6 +296,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
         }
       } catch (err) {
         console.error('Error abriendo Wompi Widget:', err);
+        if (uiShell) uiShell.style.display = prevUiDisplay;
+        modal.style.display = prevModalDisplay;
         document.body.style.overflow = 'hidden';
         renderStep5Result({ success: false, reason: err.message || 'No se pudo iniciar la pasarela de pagos.' });
       }
@@ -361,6 +374,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
               <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Wompi Colombia</span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
               <span style="font-size:0.78rem; font-weight:800; background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#16a34a' : '#dc2626'}; padding:4px 10px; border-radius:8px;">${isApproved ? 'APROBADO' : 'RECHAZADO'}</span>
             </div>
             <div style="display:flex; justify-content:space-between;">
