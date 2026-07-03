@@ -1,15 +1,15 @@
-/* ============================================
+/* ==========================================================================
    PIGGY APP — Gourmet Service
    Manages Piggy Gourmet offers from database.
    Falls back to local defaults when using mock data.
-   ============================================ */
+   ========================================================================== */
 
 import { getClient, isUsingMockData } from './supabase.js';
 import { AppState } from '../state.js';
 
 const WHATSAPP_PHONE = '573154870448';
 
-/* ─── Default Offers (Fallback / Mock Mode) ─── */
+/* ─── Default Offers (Fallback / Mock Mode with Real Image URLs) ─── */
 
 const DEFAULT_OFFERS = [
     {
@@ -20,8 +20,9 @@ const DEFAULT_OFFERS = [
         price: 950000,
         tag: '✨ Exclusivo Granja',
         emoji: '🐷',
+        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
         is_active: true,
-        sort_order: 0,
+        sort_order: 1,
     },
     {
         id: 'combo-parrilla',
@@ -31,8 +32,9 @@ const DEFAULT_OFFERS = [
         price: 149000,
         tag: '🔥 Más vendido',
         emoji: '🥩',
+        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
         is_active: true,
-        sort_order: 1,
+        sort_order: 2,
     },
     {
         id: 'combo-premium',
@@ -42,8 +44,9 @@ const DEFAULT_OFFERS = [
         price: 178000,
         tag: '⭐ Premium',
         emoji: '🍖',
+        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
         is_active: true,
-        sort_order: 2,
+        sort_order: 3,
     },
     {
         id: 'combo-semanal',
@@ -53,8 +56,9 @@ const DEFAULT_OFFERS = [
         price: 135000,
         tag: '💰 Ahorra más',
         emoji: '🐔',
+        image_url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80',
         is_active: true,
-        sort_order: 3,
+        sort_order: 4,
     },
 ];
 
@@ -65,18 +69,6 @@ const DEFAULT_OFFERS = [
  * Returns offers sorted by `sort_order`.
  */
 export async function getGourmetOffers() {
-    const specialOffer = {
-        id: 'cerdo-entero-especial',
-        name: 'Cerdo entero disponible',
-        description: 'Compra cerdo en etapa final de engorde o en canal entero o despostado con precios exclusivos de granja por ser parte de Piggy App.',
-        original_price: null,
-        price: 950000,
-        tag: '✨ Exclusivo Granja',
-        emoji: '🐷',
-        is_active: true,
-        sort_order: 0,
-    };
-
     let baseOffers = [];
     if (isUsingMockData()) {
         baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
@@ -92,18 +84,11 @@ export async function getGourmetOffers() {
             if (error) throw error;
             baseOffers = data && data.length > 0 ? data : DEFAULT_OFFERS.filter(o => o.is_active);
         } catch (err) {
-            console.warn('🐷 GourmetService: Error fetching offers, using defaults', err);
+            console.warn(' 🐷 GourmetService: Error fetching offers, using defaults', err);
             baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
         }
     }
-
-    // Filter out our special offer if it already exists in baseOffers (to prevent duplicates if it's in the DB)
-    const hasSpecialInDb = baseOffers.some(o => o.id === specialOffer.id || o.name === specialOffer.name);
-    if (hasSpecialInDb) {
-        return baseOffers;
-    } else {
-        return [specialOffer, ...baseOffers.filter(o => o.id !== specialOffer.id)];
-    }
+    return baseOffers;
 }
 
 /**
@@ -124,7 +109,7 @@ export async function getAllGourmetOffers() {
         if (error) throw error;
         return data || DEFAULT_OFFERS;
     } catch (err) {
-        console.warn('🐷 GourmetService: Error fetching all offers', err);
+        console.warn(' 🐷 GourmetService: Error fetching all offers', err);
         return DEFAULT_OFFERS;
     }
 }
