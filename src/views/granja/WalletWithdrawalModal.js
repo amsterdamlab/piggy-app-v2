@@ -24,7 +24,7 @@ export function showRetiroSaldoModal(availableAmount) {
   const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
   const userPhone = profile?.phone_number || '';
   const minAmount = 10000;
-  const BANKS = ['Bancolombia', 'Davivienda', 'BBVA', 'Nequi', 'Daviplata', 'Banco de Bogota', 'Scotiabank Colpatria', 'Otro'];
+  const BANKS = ['Bancolombia', 'Davivienda', 'BBVA', 'Nequi', 'Daviplata', 'Banco de Bogotá', 'Scotiabank Colpatria', 'Otro'];
 
   const modal = document.createElement('div');
   modal.id = 'retiro-modal';
@@ -33,7 +33,9 @@ export function showRetiroSaldoModal(availableAmount) {
   modal.style.left = '0';
   modal.style.width = '100vw';
   modal.style.height = '100dvh';
-  modal.style.background = '#0f172a';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
@@ -41,8 +43,24 @@ export function showRetiroSaldoModal(availableAmount) {
   modal.style.justifyContent = 'center';
   modal.style.padding = '0';
 
+  // Persistent white container to prevent black flickers
+  const container = document.createElement('div');
+  container.className = 'animate-scale-in';
+  container.style.width = '100%';
+  container.style.maxWidth = '520px';
+  container.style.height = '100dvh';
+  container.style.maxHeight = '100dvh';
+  container.style.background = 'white';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.overflow = 'hidden';
+  container.style.position = 'relative';
+  container.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)';
+
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+
   const renderStep1 = () => `
-    <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
       <!-- Sticky Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -62,7 +80,7 @@ export function showRetiroSaldoModal(availableAmount) {
         <p style="text-align:center; font-size:0.85rem; font-weight:600; color:#374151; margin:0 0 4px;">¿Cómo deseas tu saldo?</p>
         <button id="retiro-tipo-dinero" style="background:linear-gradient(135deg,#10B981,#059669); color:white; border:none; padding:20px; border-radius:16px; font-weight:700; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:16px; box-shadow:0 6px 20px rgba(16,185,129,0.35); text-align:left; transition:all 0.2s;" onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
           <div style="width:46px; height:46px; background:white; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <span style="font-size:24px;">&#127968;</span>
+            <span style="font-size:24px;">🏦</span>
           </div>
           <div>
             <div style="font-size:1.02rem; font-weight:800; margin-bottom:2px;">Dinero en cuenta</div>
@@ -71,7 +89,7 @@ export function showRetiroSaldoModal(availableAmount) {
         </button>
         <button id="retiro-tipo-consumo" style="background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:20px; border-radius:16px; font-weight:700; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:16px; box-shadow:0 6px 20px rgba(245,158,11,0.35); text-align:left; transition:all 0.2s;" onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
           <div style="width:46px; height:46px; background:white; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-            <span style="font-size:24px;">&#129385;</span>
+            <span style="font-size:24px;">🥩</span>
           </div>
           <div>
             <div style="font-size:1.02rem; font-weight:800; margin-bottom:2px;">Bonos de Consumo</div>
@@ -79,11 +97,9 @@ export function showRetiroSaldoModal(availableAmount) {
           </div>
         </button>
       </div>
-    </div>
   `;
 
   const renderStep2Dinero = () => `
-    <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
       <!-- Sticky Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -105,7 +121,7 @@ export function showRetiroSaldoModal(availableAmount) {
             <input type="number" id="retiro-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
               style="width:100%; padding:14px 70px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
               onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e2e8f0';" />
-            <button type="button" id="btn-todo-retiro" onclick="document.getElementById('retiro-amount').value='${availableAmount}'; document.getElementById('retiro-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-weight:800; cursor:pointer; padding:6px 12px; border-radius:10px; font-size:0.78rem;">Todo</button>
+            <button type="button" id="btn-todo-retiro" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#ecfdf5; border:1px solid #a7f3d0; color:#059669; font-weight:800; cursor:pointer; padding:6px 12px; border-radius:10px; font-size:0.78rem;">Todo</button>
           </div>
           <div id="retiro-amount-error" style="font-size:0.75rem; color:#dc2626; margin-top:6px; display:none; font-weight:600;"></div>
         </div>
@@ -122,11 +138,9 @@ export function showRetiroSaldoModal(availableAmount) {
         </button>
         <p style="text-align:center; font-size:0.75rem; color:#9ca3af; margin:0;">🔒 Nuestro equipo procesará el retiro en tu cuenta personal en máximo 48 horas hábiles.</p>
       </div>
-    </div>
   `;
 
   const renderStep2Consumo = () => `
-    <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
       <!-- Sticky Header -->
       <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
         <div style="display:flex; align-items:center; gap:12px;">
@@ -148,7 +162,7 @@ export function showRetiroSaldoModal(availableAmount) {
             <input type="number" id="consumo-amount" placeholder="Ej: 50000" min="${minAmount}" max="${availableAmount}"
               style="width:100%; padding:14px 70px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
               onfocus="this.style.borderColor='#f59e0b';" onblur="this.style.borderColor='#e2e8f0';" />
-            <button type="button" id="btn-todo-consumo" onclick="document.getElementById('consumo-amount').value='${availableAmount}'; document.getElementById('consumo-amount').dispatchEvent(new Event('input'));" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#fffbeb; border:1px solid #fcd34d; color:#d97706; font-weight:800; cursor:pointer; padding:6px 12px; border-radius:10px; font-size:0.78rem;">Todo</button>
+            <button type="button" id="btn-todo-consumo" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:#fffbeb; border:1px solid #fcd34d; color:#d97706; font-weight:800; cursor:pointer; padding:6px 12px; border-radius:10px; font-size:0.78rem;">Todo</button>
           </div>
           <div id="consumo-amount-error" style="font-size:0.75rem; color:#dc2626; margin-top:6px; display:none; font-weight:600;"></div>
         </div>
@@ -157,7 +171,6 @@ export function showRetiroSaldoModal(availableAmount) {
         </button>
         <p style="text-align:center; font-size:0.75rem; color:#9ca3af; margin:0;">🥩 Nuestro equipo se comunicará contigo por WhatsApp para coordinar la entrega de tu pedido.</p>
       </div>
-    </div>
   `;
 
   const safeRemove = () => {
@@ -174,15 +187,25 @@ export function showRetiroSaldoModal(availableAmount) {
   };
 
   const goToStep1 = () => {
-    modal.innerHTML = renderStep1();
+    container.innerHTML = renderStep1();
     attachClose(null);
     document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
     document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
   };
 
   const goToStep2Dinero = () => {
-    modal.innerHTML = renderStep2Dinero();
+    container.innerHTML = renderStep2Dinero();
     attachClose(goToStep1);
+
+    // Setup the "Todo" button dynamically
+    document.getElementById('btn-todo-retiro')?.addEventListener('click', () => {
+      const input = document.getElementById('retiro-amount');
+      if (input) {
+        input.value = availableAmount;
+        input.dispatchEvent(new Event('input'));
+      }
+    });
+
     document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
@@ -213,8 +236,18 @@ export function showRetiroSaldoModal(availableAmount) {
   };
 
   const goToStep2Consumo = () => {
-    modal.innerHTML = renderStep2Consumo();
+    container.innerHTML = renderStep2Consumo();
     attachClose(goToStep1);
+
+    // Setup the "Todo" button dynamically
+    document.getElementById('btn-todo-consumo')?.addEventListener('click', () => {
+      const input = document.getElementById('consumo-amount');
+      if (input) {
+        input.value = availableAmount;
+        input.dispatchEvent(new Event('input'));
+      }
+    });
+
     document.getElementById('retiro-confirm-consumo')?.addEventListener('click', async () => {
       const errDiv = document.getElementById('consumo-amount-error');
       const amount = parseFloat(document.getElementById('consumo-amount')?.value || 0);
@@ -242,7 +275,6 @@ export function showRetiroSaldoModal(availableAmount) {
     });
   };
 
-  document.body.appendChild(modal);
   goToStep1();
 }
 
@@ -262,7 +294,9 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
   modal.style.left = '0';
   modal.style.width = '100vw';
   modal.style.height = '100dvh';
-  modal.style.background = '#0f172a';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';

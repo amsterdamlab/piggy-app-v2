@@ -41,13 +41,31 @@ export async function openWalletRechargeInfo(liveStats = null) {
   modal.style.left = '0';
   modal.style.width = '100vw';
   modal.style.height = '100dvh';
-  modal.style.background = '#0f172a';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
   modal.style.alignItems = 'center';
   modal.style.justifyContent = 'center';
   modal.style.padding = '0';
+
+  // Persistent white container to prevent black flickers
+  const container = document.createElement('div');
+  container.className = 'animate-scale-in';
+  container.style.width = '100%';
+  container.style.maxWidth = '520px';
+  container.style.height = '100dvh';
+  container.style.maxHeight = '100dvh';
+  container.style.background = 'white';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.overflow = 'hidden';
+  container.style.position = 'relative';
+  container.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)';
+
+  modal.appendChild(container);
   document.body.appendChild(modal);
 
   const close = () => {
@@ -61,14 +79,12 @@ export async function openWalletRechargeInfo(liveStats = null) {
   /* ── QUICK AMOUNT PRESETS ── */
   const PRESETS = [50000, 100000, 200000, 500000];
   let selectedAmount = 100000;
-  let activeMethod = 'wompi_widget';
 
   /* ─────────────────────────────────────────
      STEP 1 — Amount selector
   ───────────────────────────────────────── */
   const renderStep1 = () => {
-    modal.innerHTML = `
-      <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    container.innerHTML = `
         ${getWompiEnvironment() === 'sandbox' ? `
           <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; flex-shrink:0;">
             🧪 MODO PRUEBAS (SANDBOX) — Recargas simuladas sin cobro real
@@ -126,24 +142,40 @@ export async function openWalletRechargeInfo(liveStats = null) {
             box-shadow:0 4px 14px rgba(16,185,129,0.35); transition:opacity 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
           ">Continuar <span style="font-size:1.1rem;">→</span></button>
         </div>
-      </div>
     `;
 
     document.getElementById('rch-close').addEventListener('click', close);
 
-    // Preset selection
-    modal.querySelectorAll('.preset-btn').forEach(btn => {
+    // Preset selection: Actualización reactiva de estilos para evitar re-renderizado total (flicker)
+    container.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         selectedAmount = parseInt(btn.dataset.amount);
-        document.getElementById('rch-custom-amount').value = '';
-        renderStep1();
+        const customInput = document.getElementById('rch-custom-amount');
+        if (customInput) customInput.value = '';
+
+        container.querySelectorAll('.preset-btn').forEach(b => {
+          b.style.borderColor = '#e5e7eb';
+          b.style.background = 'white';
+          b.style.color = '#374151';
+        });
+        btn.style.borderColor = '#10B981';
+        btn.style.background = '#ecfdf5';
+        btn.style.color = '#059669';
       });
     });
 
     // Custom amount input
     document.getElementById('rch-custom-amount').addEventListener('input', (e) => {
       const v = parseInt(e.target.value);
-      if (!isNaN(v) && v > 0) selectedAmount = v;
+      if (!isNaN(v) && v > 0) {
+        selectedAmount = v;
+        // Quitar selección visual de los presets
+        container.querySelectorAll('.preset-btn').forEach(b => {
+          b.style.borderColor = '#e5e7eb';
+          b.style.background = 'white';
+          b.style.color = '#374151';
+        });
+      }
     });
 
     document.getElementById('rch-step1-next').addEventListener('click', () => {
@@ -161,8 +193,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
      STEP 2 — Payment method chooser
   ───────────────────────────────────────── */
   const renderStep2 = () => {
-    modal.innerHTML = `
-      <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    container.innerHTML = `
         ${getWompiEnvironment() === 'sandbox' ? `
           <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; flex-shrink:0;">
             🧪 MODO PRUEBAS (SANDBOX) — Recargas simuladas sin cobro real
@@ -221,7 +252,6 @@ export async function openWalletRechargeInfo(liveStats = null) {
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
           <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Pasarela de pago segura operada por Bancolombia</p>
         </div>
-      </div>
     `;
 
     document.getElementById('rch-close').addEventListener('click', close);
@@ -265,8 +295,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
      STEP 4 — Processing animation
   ───────────────────────────────────────── */
   const renderStep4Processing = () => {
-    modal.innerHTML = `
-      <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    container.innerHTML = `
         <div style="background:linear-gradient(135deg,#6C14D0,#9B1DBA); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
           <div style="font-weight:900; font-size:1.15rem; color:white;">🔐 wompi</div>
           <div style="font-size:0.75rem; color:white; opacity:0.85; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px;">by Bancolombia</div>
@@ -281,7 +310,6 @@ export async function openWalletRechargeInfo(liveStats = null) {
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
           <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Transacción cifrada con SSL · Wompi by Bancolombia</p>
         </div>
-      </div>
     `;
 
     // Add spinner animation
@@ -301,8 +329,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
     const refId = (result.transactionId || Date.now().toString()).slice(-10).toUpperCase();
     const now = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-    modal.innerHTML = `
-      <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    container.innerHTML = `
         <!-- Wompi Result Header -->
         <div style="background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#dc2626,#b91c1c)'}; padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
           <div style="font-size:48px; margin-bottom:8px;">${isApproved ? '✅' : '❌'}</div>
@@ -327,7 +354,6 @@ export async function openWalletRechargeInfo(liveStats = null) {
               <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Wompi Colombia</span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
               <span style="font-size:0.78rem; font-weight:800; background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#16a34a' : '#dc2626'}; padding:4px 10px; border-radius:8px;">${isApproved ? 'APROBADO' : 'RECHAZADO'}</span>
             </div>
             <div style="display:flex; justify-content:space-between;">
@@ -367,7 +393,6 @@ export async function openWalletRechargeInfo(liveStats = null) {
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
           <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Cuentas Agro seguras · Piggy App</p>
         </div>
-      </div>
     `;
 
     document.getElementById('wompi-result-close').addEventListener('click', () => {

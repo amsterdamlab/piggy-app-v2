@@ -29,7 +29,9 @@ export function showWalletDrawer(firstName, stats) {
   modal.style.left = '0';
   modal.style.width = '100vw';
   modal.style.height = '100dvh';
-  modal.style.background = '#0f172a';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
