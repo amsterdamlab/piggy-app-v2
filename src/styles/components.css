@@ -250,14 +250,15 @@
     transform: translateX(-50%);
     width: 100%;
     max-width: var(--app-max-width);
-    height: var(--bottom-nav-height);
+    min-height: var(--bottom-nav-height);
+    height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
     background: var(--color-white);
     border-top: 1px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: space-around;
     z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .bottom-nav__item {
@@ -292,6 +293,7 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -305,9 +307,11 @@
     width: 100%;
     max-width: var(--app-max-width);
     padding: var(--space-xl);
+    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
     animation: slideUp var(--transition-base) ease-out;
-    max-height: 90vh;
+    max-height: 88dvh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal__handle {
