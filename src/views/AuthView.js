@@ -601,15 +601,117 @@ async function performUpdatePassword(newPassword) {
 }
 
 /**
- * Update submit button loading state without full re-render.
+ * Execute the signup after terms are accepted.
  */
-function updateSubmitButton() {
+async function performSignUp({ email, password, fullName, whatsapp, referralCode }) {
+  isSubmitting = true;
+  updateSubmitButton('Creando cuenta...');
+
+  try {
+    const result = await signUp({ email, password, fullName, whatsapp });
+
+    if (result.error) {
+      showFormError(translateSupabaseError(result.error), result.error);
+      return;
+    }
+
+    // Link referral if code was provided
+    if (referralCode && result.user?.id) {
+      updateSubmitButton('Vinculando invitación...');
+      try {
+        const linkResult = await linkReferral(result.user.id, referralCode);
+        if (linkResult.linked) {
+          console.log('🐷 Referral linked successfully');
+        } else {
+          console.warn('🐷 Referral link skipped:', linkResult.reason);
+        }
+      } catch (refErr) {
+        // Don't block signup if referral linking fails
+        console.warn('🐷 Referral linking error (non-blocking):', refErr);
+      }
+    }
+
+    updateSubmitButton('Iniciando sesión...');
+    navigateTo('granja');
+  } catch (error) {
+    console.error('🐷 SignUp error:', error);
+    showFormError('Ha ocurrido un error en el registro. Inténtalo de nuevo.', error.message || error);
+  } finally {
+    isSubmitting = false;
+    updateSubmitButton();
+  }
+}
+
+/**
+ * Execute the sign in.
+ */
+async function performSignIn({ email, password }) {
+  isSubmitting = true;
+  updateSubmitButton('Verificando credenciales...');
+
+  try {
+    const result = await signIn({ email, password });
+
+    if (result.error) {
+      showFormError(translateSupabaseError(result.error), result.error);
+    } else {
+      updateSubmitButton('Iniciando sesión...');
+      navigateTo('granja');
+    }
+  } catch (error) {
+    console.error('🐷 SignIn error:', error);
+    showFormError('Ha ocurrido un error al intentar iniciar sesión. Inténtalo de nuevo.', error.message || error);
+  } finally {
+    isSubmitting = false;
+    updateSubmitButton();
+  }
+}
+
+/**
+ * Translate common Supabase error messages to Spanish.
+ */
+function translateSupabaseError(errorMessage) {
+  const translations = {
+    'Invalid login credentials': 'Correo o contraseña incorrectos.',
+    'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
+    'Password should be at least 6 characters': 'Tu contraseña debe tener al menos 6 caracteres.',
+    'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
+    'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
+  };
+
+  return translations[errorMessage] || errorMessage;
+}
+
+/**
+ * Show form error.
+ */
+function showFormError(message, rawError = null) {
+  formError = message;
+  const errorEl = document.getElementById('form-error');
+  if (errorEl) {
+    if (rawError) {
+      errorEl.innerHTML = `${message}<br><span style="font-size: 0.7rem; color: #ef4444; font-family: monospace; display: block; margin-top: 4px; word-break: break-all; font-weight: normal;">[Detalle Técnico: ${rawError}]</span>`;
+    } else {
+      errorEl.textContent = message;
+    }
+    errorEl.classList.add('auth-form__error--visible');
+  }
+}
+
+/**
+ * Update submit button loading state with custom progress message.
+ */
+function updateSubmitButton(customText = null) {
   const btn = document.getElementById('auth-submit');
   if (!btn) return;
 
   btn.disabled = isSubmitting;
   if (isSubmitting) {
-    btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;"></span>';
+    const text = customText || 'Cargando...';
+    btn.innerHTML = `
+      <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;vertical-align:middle;display:inline-block;"></span>
+      <span style="vertical-align:middle;">${text}</span>
+    `;
   } else {
     btn.innerHTML = `
       ${activeAuthTab === 'forgot' ? 'Enviar Enlace' : (activeAuthTab === 'reset' ? 'Guardar Contraseña' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'))}
