@@ -467,7 +467,7 @@ function translateSupabaseError(errorMessage) {
   const translations = {
     'Invalid login credentials': 'Correo o contraseña incorrectos.',
     'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
-    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+    'Password should be at least 6 characters': 'Tu contraseña debe tener al menos 6 caracteres.',
     'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
     'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
   };
