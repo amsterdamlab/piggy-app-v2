@@ -45,7 +45,7 @@ export function renderAuthView() {
             data-tab="login"
             id="tab-login"
           >
-            Iniciar Sesi\u00F3n
+            Iniciar Sesión
           </button>
         </div>
 
@@ -67,7 +67,7 @@ export function renderAuthView() {
             ${isSubmitting ? 'disabled' : ''}
           >
             ${isSubmitting ? '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;"></span>' : ''}
-            ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesi\u00F3n'}
+            ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
           </button>
         </form>
 
@@ -75,7 +75,7 @@ export function renderAuthView() {
         <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
           <p class="auth-legal__text" style="font-size: 0.75rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400;">
             Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
-            T\u00E9rminos y Condiciones
+            Términos y Condiciones
           </p>
         </div>
 
@@ -113,7 +113,7 @@ function renderFormFields() {
             class="input-wrapper__field"
             id="field-name"
             name="fullName"
-            placeholder="Ej: Juan P\u00E9rez"
+            placeholder="Ej: Juan Pérez"
             autocomplete="name"
             required
           />
@@ -121,7 +121,7 @@ function renderFormFields() {
       </div>
 
       <div class="input-group">
-        <label class="input-group__label" for="field-email">Correo Electr\u00F3nico</label>
+        <label class="input-group__label" for="field-email">Correo Electrónico</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
           <input
@@ -153,7 +153,7 @@ function renderFormFields() {
       </div>
 
       <div class="input-group">
-        <label class="input-group__label" for="field-password">Contrase\u00F1a</label>
+        <label class="input-group__label" for="field-password">Contraseña</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
           <input
@@ -161,21 +161,21 @@ function renderFormFields() {
             class="input-wrapper__field"
             id="field-password"
             name="password"
-            placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+            placeholder="••••••••"
             autocomplete="new-password"
             required
             minlength="6"
           />
-          <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contrase\u00F1a">
+          <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
             ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
           </button>
         </div>
       </div>
 
       <div class="input-group">
-        <label class="input-group__label" for="field-referral">\u00BFTienes un c\u00F3digo de invitaci\u00F3n? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
+        <label class="input-group__label" for="field-referral">¿Tienes un código de invitación? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
-          <span class="input-wrapper__icon">\uD83C\uDF81</span>
+          <span class="input-wrapper__icon">🎁</span>
           <input
             type="text"
             class="input-wrapper__field"
@@ -189,12 +189,29 @@ function renderFormFields() {
         </div>
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:4px; min-height:18px;"></div>
       </div>
+
+      <!-- Checkboxes de Términos y Tratamiento de Datos -->
+      <div class="auth-checkboxes" style="margin-top: 24px; display: flex; flex-direction: column; gap: 14px; text-align: left;">
+        <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
+          <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
+          <span>
+            He leído y acepto los <a href="terminos-y-condiciones.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Términos y Condiciones</a> de Piggy App.
+          </span>
+        </label>
+
+        <label class="checkbox" for="check-habeas" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
+          <input type="checkbox" id="check-habeas" name="acceptHabeas" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
+          <span>
+            Autorizo el <a href="tratamiento-de-datos.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Tratamiento de Datos Personales</a> (Habeas Data).
+          </span>
+        </label>
+      </div>
     `;
   }
 
   return `
     <div class="input-group">
-      <label class="input-group__label" for="field-email">Correo Electr\u00F3nico</label>
+      <label class="input-group__label" for="field-email">Correo Electrónico</label>
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
         <input
@@ -211,8 +228,8 @@ function renderFormFields() {
 
     <div class="input-group">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <label class="input-group__label" for="field-password">Contrase\u00F1a</label>
-        <a href="#" class="text-primary font-semibold" style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.3px;">Olvid\u00E9 mi contrase\u00F1a</a>
+        <label class="input-group__label" for="field-password">Contraseña</label>
+        <a href="#" class="text-primary font-semibold" style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.3px;">Olvidé mi contraseña</a>
       </div>
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
@@ -221,11 +238,11 @@ function renderFormFields() {
           class="input-wrapper__field"
           id="field-password"
           name="password"
-          placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+          placeholder="••••••••"
           autocomplete="current-password"
           required
         />
-        <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contrase\u00F1a">
+        <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
           ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
         </button>
       </div>
@@ -290,15 +307,15 @@ function attachAuthListeners() {
       return;
     }
 
-    if (statusEl) statusEl.textContent = '\u23F3';
+    if (statusEl) statusEl.textContent = '⏳';
     referralDebounce = setTimeout(async () => {
       try {
         const result = await validateReferralCode(code);
-        if (statusEl) statusEl.textContent = result.valid ? '\u2705' : '\u274C';
+        if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
         if (feedbackEl) {
           feedbackEl.textContent = result.valid
             ? `Invitado por: ${result.referrerName}`
-            : 'C\u00F3digo no encontrado';
+            : 'Código no encontrado';
           feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
         }
       } catch {
@@ -310,6 +327,28 @@ function attachAuthListeners() {
 
   // Form submission
   document.getElementById('auth-form')?.addEventListener('submit', handleSubmit);
+
+  // Enable/disable submit button dynamically based on registration checkboxes
+  const checkTerms = document.getElementById('check-terms');
+  const checkHabeas = document.getElementById('check-habeas');
+  const submitBtn = document.getElementById('auth-submit');
+
+  const updateSubmitState = () => {
+    if (activeAuthTab === 'register' && checkTerms && checkHabeas && submitBtn) {
+      const allChecked = checkTerms.checked && checkHabeas.checked;
+      submitBtn.disabled = !allChecked || isSubmitting;
+      submitBtn.style.opacity = allChecked ? '1' : '0.5';
+    } else if (submitBtn) {
+      submitBtn.disabled = isSubmitting;
+      submitBtn.style.opacity = '1';
+    }
+  };
+
+  checkTerms?.addEventListener('change', updateSubmitState);
+  checkHabeas?.addEventListener('change', updateSubmitState);
+
+  // Initial check
+  updateSubmitState();
 }
 
 /**
@@ -340,18 +379,17 @@ async function handleSubmit(e) {
       return;
     }
 
-    // Show terms modal BEFORE creating account
-    renderLegalModal({
-      onAccept: async () => {
-        await performSignUp({ email, password, fullName, whatsapp, referralCode });
-      },
-      onReject: () => {
-        // User cancelled - do nothing, stay on auth
-        console.log('User declined terms, signup cancelled.');
-      },
-    });
+    const termsChecked = document.getElementById('check-terms')?.checked;
+    const habeasChecked = document.getElementById('check-habeas')?.checked;
+
+    if (!termsChecked || !habeasChecked) {
+      showFormError('Debes aceptar los Términos y Condiciones y la autorización de Tratamiento de Datos para continuar.');
+      return;
+    }
+
+    await performSignUp({ email, password, fullName, whatsapp, referralCode });
   } else {
-    // Login flow - direct
+    // Login flow — direct
     await performSignIn({ email, password });
   }
 }
@@ -376,20 +414,20 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
       try {
         const linkResult = await linkReferral(result.user.id, referralCode);
         if (linkResult.linked) {
-          console.log('Referral linked successfully');
+          console.log('🐷 Referral linked successfully');
         } else {
-          console.warn('Referral link skipped:', linkResult.reason);
+          console.warn('🐷 Referral link skipped:', linkResult.reason);
         }
       } catch (refErr) {
         // Don't block signup if referral linking fails
-        console.warn('Referral linking error (non-blocking):', refErr);
+        console.warn('🐷 Referral linking error (non-blocking):', refErr);
       }
     }
 
     navigateTo('granja');
   } catch (error) {
-    console.error('SignUp error:', error);
-    showFormError('Ha ocurrido un error. Int\u00E9ntalo de nuevo.');
+    console.error('🐷 SignUp error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -412,8 +450,8 @@ async function performSignIn({ email, password }) {
       navigateTo('granja');
     }
   } catch (error) {
-    console.error('SignIn error:', error);
-    showFormError('Ha ocurrido un error. Int\u00E9ntalo de nuevo.');
+    console.error('🐷 SignIn error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -425,11 +463,11 @@ async function performSignIn({ email, password }) {
  */
 function translateSupabaseError(errorMessage) {
   const translations = {
-    'Invalid login credentials': 'Correo o contrase\u00F1a incorrectos.',
-    'User already registered': 'Este correo ya est\u00E1 registrado. Intenta iniciar sesi\u00F3n.',
-    'Password should be at least 6 characters': 'La contrase\u00F1a debe tener al menos 6 caracteres.',
+    'Invalid login credentials': 'Correo o contraseña incorrectos.',
+    'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
+    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
     'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
-    'Signup is not allowed for this instance': 'El registro no est\u00E1 disponible en este momento.',
+    'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
   };
 
   return translations[errorMessage] || errorMessage;
@@ -459,7 +497,7 @@ function updateSubmitButton() {
     btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
   } else {
     btn.innerHTML = `
-      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesi\u00F3n'}
+      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
     `;
   }
 }
