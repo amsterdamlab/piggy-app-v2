@@ -13,6 +13,49 @@ let mockLoggedIn = false;
 let mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted: false };
 
 /**
+ * Helper de resiliencia: Verifica o crea en public.profiles el registro del usuario.
+ * Resuelve el problema donde un usuario existe en auth.users (puede hacer login) pero
+ * no tiene fila en public.profiles debido a fallos de RLS o triggers en el registro inicial.
+ */
+async function ensureProfileExists(client, user, fallbackMeta = {}) {
+    if (!user) return null;
+    try {
+        const { data } = await client.from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (data) return data;
+
+        console.warn('🐷 Perfil huérfano detectado en public.profiles. Sincronizando desde auth.users...');
+        const newProfile = {
+            id: user.id,
+            full_name: fallbackMeta.full_name || user.user_metadata?.full_name || user.email,
+            email: user.email,
+            whatsapp: fallbackMeta.whatsapp || user.user_metadata?.whatsapp || null,
+            terms_accepted: true,
+            habeas_data_accepted: true,
+            referral_balance: 30000,
+        };
+
+        const { data: createdProfile, error: upsertError } = await client
+            .from('profiles')
+            .upsert(newProfile)
+            .select()
+            .maybeSingle();
+
+        if (upsertError) {
+            console.warn('🐷 Error al autorrecuperar perfil huérfano:', upsertError.message);
+            return newProfile;
+        }
+        return createdProfile || newProfile;
+    } catch (e) {
+        console.error('🐷 Excepción en ensureProfileExists:', e);
+        return null;
+    }
+}
+
+/**
  * Sign up with email and password.
  * Terms are already accepted before calling this function.
  */
@@ -38,7 +81,16 @@ export async function signUp({ email, password, fullName, whatsapp }) {
     }
 
     const client = getClient();
-    const { data, error } = await client.auth.signUp({ email, password });
+    const { data, error } = await client.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: fullName,
+                whatsapp: whatsapp
+            }
+        }
+    });
 
     if (error) return { user: null, error: error.message };
 
@@ -54,10 +106,10 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             referral_balance: 30000,
         };
 
-        const { error: profileError } = await client.from('profiles').insert(profile);
+        const { error: profileError } = await client.from('profiles').upsert(profile);
 
         if (profileError) {
-            console.warn('🐷 Profile insert error:', profileError.message);
+            console.warn('🐷 Profile upsert error:', profileError.message);
         }
 
         // Update AppState immediately
@@ -132,12 +184,7 @@ export async function getProfile() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return null;
 
-    const { data } = await client.from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    return data;
+    return await ensureProfileExists(client, user);
 }
 
 /**
