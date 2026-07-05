@@ -55,7 +55,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
         const { error: profileError } = await client.from('profiles').insert(profile);
 
         if (profileError) {
-            console.warn(' 🐷 Profile insert error:', profileError.message);
+            console.warn('🐷 Profile insert error:', profileError.message);
         }
 
         // Update AppState immediately
@@ -177,6 +177,7 @@ export async function checkSession() {
     }
 
     const client = getClient();
+
     const { data: { session } } = await client.auth.getSession();
 
     if (session?.user) {
@@ -191,4 +192,43 @@ export async function checkSession() {
     } else {
         AppState.set({ authLoading: false });
     }
+
+    // Escuchar cambios de estado para restablecimiento de contraseña
+    client.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+            console.log('🐷 PASSWORD_RECOVERY event caught!');
+            AppState.set({ isResettingPassword: true });
+        }
+    });
+}
+
+/**
+ * Send password reset email.
+ */
+export async function sendPasswordReset(email) {
+    if (isUsingMockData()) {
+        console.log(`🐷 Mock: Sending password reset to ${email}`);
+        return { error: null };
+    }
+
+    const client = getClient();
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#auth`
+    });
+
+    return { error: error?.message || null };
+}
+
+/**
+ * Update password for current authenticated user (recovery flow).
+ */
+export async function updatePassword(newPassword) {
+    if (isUsingMockData()) {
+        console.log('🐷 Mock: Updated password successfully');
+        return { error: null };
+    }
+
+    const client = getClient();
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    return { error: error?.message || null };
 }

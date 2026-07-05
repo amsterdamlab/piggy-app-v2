@@ -4,13 +4,13 @@
    ============================================ */
 
 import { renderIcon } from '../icons.js';
-import { signUp, signIn } from '../services/authService.js';
+import { signUp, signIn, sendPasswordReset, updatePassword } from '../services/authService.js';
 import { validateReferralCode, linkReferral } from '../services/referralService.js';
 import { renderLegalModal } from '../components/LegalModal.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 
-/** @type {'register' | 'login'} */
+/** @type {'register' | 'login' | 'forgot' | 'reset'} */
 let activeAuthTab = 'register';
 let passwordVisible = false;
 let isSubmitting = false;
@@ -21,6 +21,12 @@ let formError = null;
  */
 export function renderAuthView() {
   const app = document.getElementById('app');
+  const state = AppState.getState();
+
+  // If in recovery flow, force tab to 'reset'
+  if (state.isResettingPassword && activeAuthTab !== 'reset') {
+    activeAuthTab = 'reset';
+  }
 
   app.innerHTML = `
     <div class="auth-page page">
@@ -31,23 +37,36 @@ export function renderAuthView() {
           <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
         </div>
 
-        <!-- Auth Tabs -->
-        <div class="tabs auth-tabs animate-fade-in-up" id="auth-tabs">
-          <button
-            class="tabs__tab ${activeAuthTab === 'register' ? 'tabs__tab--active' : ''}"
-            data-tab="register"
-            id="tab-register"
-          >
-            Crear Cuenta
-          </button>
-          <button
-            class="tabs__tab ${activeAuthTab === 'login' ? 'tabs__tab--active' : ''}"
-            data-tab="login"
-            id="tab-login"
-          >
-            Iniciar Sesión
-          </button>
-        </div>
+        <!-- Auth Tabs / Header -->
+        ${(activeAuthTab === 'forgot' || activeAuthTab === 'reset') ? `
+          <div style="text-align: center; margin-bottom: 24px; width: 100%; animation: fadeIn var(--transition-base) ease-out;">
+            <h2 style="font-size: var(--text-xl); font-weight: var(--font-extrabold); color: var(--color-text-primary); margin: 0 0 8px 0; text-transform: none;">
+              ${activeAuthTab === 'forgot' ? 'Recuperar Contraseña' : 'Nueva Contraseña'}
+            </h2>
+            <p style="font-size: var(--text-sm); color: var(--color-text-secondary); margin: 0; line-height: 1.4;">
+              ${activeAuthTab === 'forgot' 
+                ? 'Ingresa tu correo electrónico para recibir un enlace de recuperación.' 
+                : 'Ingresa tu nueva contraseña para acceder a tu granja.'}
+            </p>
+          </div>
+        ` : `
+          <div class="tabs auth-tabs animate-fade-in-up" id="auth-tabs">
+            <button
+              class="tabs__tab ${activeAuthTab === 'register' ? 'tabs__tab--active' : ''}"
+              data-tab="register"
+              id="tab-register"
+            >
+              Crear Cuenta
+            </button>
+            <button
+              class="tabs__tab ${activeAuthTab === 'login' ? 'tabs__tab--active' : ''}"
+              data-tab="login"
+              id="tab-login"
+            >
+              Iniciar Sesión
+            </button>
+          </div>
+        `}
 
         <!-- Form -->
         <form class="auth-form animate-fade-in-up" id="auth-form" novalidate>
@@ -67,17 +86,26 @@ export function renderAuthView() {
             ${isSubmitting ? 'disabled' : ''}
           >
             ${isSubmitting ? '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;"></span>' : ''}
-            ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+            ${activeAuthTab === 'forgot' ? 'Enviar Enlace' : (activeAuthTab === 'reset' ? 'Guardar Contraseña' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'))}
           </button>
         </form>
 
+        <!-- Back to login link -->
+        ${activeAuthTab === 'forgot' ? `
+          <div style="text-align: center; margin-top: 16px; margin-bottom: 24px; animation: fadeIn var(--transition-base) ease-out;">
+            <a href="#" id="btn-back-to-login" class="text-primary font-semibold" style="font-size: 0.85rem; text-decoration: underline; color: #fb2c74;">Volver a Iniciar Sesión</a>
+          </div>
+        ` : ''}
+
         <!-- Legal Footer -->
-        <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
-          <p class="auth-legal__text" style="font-size: 0.75rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400;">
-            Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
-            Términos y Condiciones
-          </p>
-        </div>
+        ${(activeAuthTab === 'register' || activeAuthTab === 'login') ? `
+          <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
+            <p class="auth-legal__text" style="font-size: 0.75rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400;">
+              Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
+              Términos y Condiciones
+            </p>
+          </div>
+        ` : ''}
 
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
@@ -211,6 +239,49 @@ function renderFormFields() {
     `;
   }
 
+  if (activeAuthTab === 'forgot') {
+    return `
+      <div class="input-group">
+        <label class="input-group__label" for="field-email">Correo Electrónico</label>
+        <div class="input-wrapper">
+          <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
+          <input
+            type="email"
+            class="input-wrapper__field"
+            id="field-email"
+            name="email"
+            placeholder="tu@correo.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+      </div>
+    `;
+  }
+
+  if (activeAuthTab === 'reset') {
+    return `
+      <div class="input-group">
+        <label class="input-group__label" for="field-new-password">Nueva Contraseña</label>
+        <div class="input-wrapper">
+          <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
+          <input
+            type="${passwordVisible ? 'text' : 'password'}"
+            class="input-wrapper__field"
+            id="field-new-password"
+            name="newPassword"
+            placeholder="Mínimo 6 caracteres"
+            required
+            minlength="6"
+          />
+          <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
+            ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   return `
     <div class="input-group">
       <label class="input-group__label" for="field-email">Correo Electrónico</label>
@@ -231,7 +302,7 @@ function renderFormFields() {
     <div class="input-group">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <label class="input-group__label" for="field-password">Contraseña</label>
-        <a href="#" class="text-primary font-semibold" style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.3px;">Olvidé mi contraseña</a>
+        <a href="#" class="text-primary font-semibold" id="btn-forgot-password" style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:0.3px;">Olvidé mi contraseña</a>
       </div>
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
@@ -270,7 +341,7 @@ function attachAuthListeners() {
   // Password toggle
   document.getElementById('toggle-password')?.addEventListener('click', () => {
     passwordVisible = !passwordVisible;
-    const passwordField = document.getElementById('field-password');
+    const passwordField = document.getElementById('field-password') || document.getElementById('field-new-password');
     if (passwordField) {
       passwordField.type = passwordVisible ? 'text' : 'password';
       const toggleBtn = document.getElementById('toggle-password');
@@ -280,6 +351,22 @@ function attachAuthListeners() {
           : renderIcon('eye', '', '18');
       }
     }
+  });
+
+  // Click on "Olvidé mi contraseña"
+  document.getElementById('btn-forgot-password')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    activeAuthTab = 'forgot';
+    formError = null;
+    renderAuthView();
+  });
+
+  // Click on "Volver a Iniciar Sesión"
+  document.getElementById('btn-back-to-login')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    activeAuthTab = 'login';
+    formError = null;
+    renderAuthView();
   });
 
   // Referral code live validation
@@ -363,6 +450,26 @@ async function handleSubmit(e) {
   const form = e.target;
   const formData = new FormData(form);
 
+  if (activeAuthTab === 'forgot') {
+    const email = formData.get('email')?.trim();
+    if (!email) {
+      showFormError('Por favor ingresa tu correo electrónico.');
+      return;
+    }
+    await performForgotPassword(email);
+    return;
+  }
+
+  if (activeAuthTab === 'reset') {
+    const newPassword = formData.get('newPassword')?.trim();
+    if (!newPassword || newPassword.length < 6) {
+      showFormError('Tu contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    await performUpdatePassword(newPassword);
+    return;
+  }
+
   const email = formData.get('email')?.trim();
   const password = formData.get('password')?.trim();
 
@@ -397,62 +504,47 @@ async function handleSubmit(e) {
 }
 
 /**
- * Execute the signup after terms are accepted.
+ * Execute the forgot password flow.
  */
-async function performSignUp({ email, password, fullName, whatsapp, referralCode }) {
+async function performForgotPassword(email) {
   isSubmitting = true;
   updateSubmitButton();
 
   try {
-    const result = await signUp({ email, password, fullName, whatsapp });
-
-    if (result.error) {
-      showFormError(translateSupabaseError(result.error));
-      return;
-    }
-
-    // Link referral if code was provided
-    if (referralCode && result.user?.id) {
-      try {
-        const linkResult = await linkReferral(result.user.id, referralCode);
-        if (linkResult.linked) {
-          console.log('🐷 Referral linked successfully');
-        } else {
-          console.warn('🐷 Referral link skipped:', linkResult.reason);
-        }
-      } catch (refErr) {
-        // Don't block signup if referral linking fails
-        console.warn('🐷 Referral linking error (non-blocking):', refErr);
-      }
-    }
-
-    navigateTo('granja');
-  } catch (error) {
-    console.error('🐷 SignUp error:', error);
-    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
-  } finally {
-    isSubmitting = false;
-    updateSubmitButton();
-  }
-}
-
-/**
- * Execute the sign in.
- */
-async function performSignIn({ email, password }) {
-  isSubmitting = true;
-  updateSubmitButton();
-
-  try {
-    const result = await signIn({ email, password });
+    const result = await sendPasswordReset(email);
 
     if (result.error) {
       showFormError(translateSupabaseError(result.error));
     } else {
-      navigateTo('granja');
+      formError = null;
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="auth-page page">
+          <div class="auth-page__content">
+            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
+            </div>
+            
+            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📧</div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Correo Enviado!</h2>
+              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                Te hemos enviado un enlace de restablecimiento a <strong>${email}</strong>. Revisa tu bandeja de entrada y spam.
+              </p>
+              <button id="btn-success-back" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
+                Volver al Inicio
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('btn-success-back')?.addEventListener('click', () => {
+        activeAuthTab = 'login';
+        renderAuthView();
+      });
     }
   } catch (error) {
-    console.error('🐷 SignIn error:', error);
+    console.error('🐷 ForgotPassword error:', error);
     showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
   } finally {
     isSubmitting = false;
@@ -461,29 +553,50 @@ async function performSignIn({ email, password }) {
 }
 
 /**
- * Translate common Supabase error messages to Spanish.
+ * Execute the update password flow (recovery).
  */
-function translateSupabaseError(errorMessage) {
-  const translations = {
-    'Invalid login credentials': 'Correo o contraseña incorrectos.',
-    'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
-    'Password should be at least 6 characters': 'Tu contraseña debe tener al menos 6 caracteres.',
-    'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
-    'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
-  };
+async function performUpdatePassword(newPassword) {
+  isSubmitting = true;
+  updateSubmitButton();
 
-  return translations[errorMessage] || errorMessage;
-}
+  try {
+    const result = await updatePassword(newPassword);
 
-/**
- * Show form error.
- */
-function showFormError(message) {
-  formError = message;
-  const errorEl = document.getElementById('form-error');
-  if (errorEl) {
-    errorEl.textContent = message;
-    errorEl.classList.add('auth-form__error--visible');
+    if (result.error) {
+      showFormError(translateSupabaseError(result.error));
+    } else {
+      AppState.set({ isResettingPassword: false });
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="auth-page page">
+          <div class="auth-page__content">
+            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
+            </div>
+            
+            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
+              <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Contraseña Guardada!</h2>
+              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                Tu contraseña ha sido actualizada exitosamente. Ya puedes acceder a todas las funciones de tu Cuenta Agro.
+              </p>
+              <button id="btn-success-farm" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
+                Ingresar a Mi Granja
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('btn-success-farm')?.addEventListener('click', () => {
+        navigateTo('granja');
+      });
+    }
+  } catch (error) {
+    console.error('🐷 UpdatePassword error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
+  } finally {
+    isSubmitting = false;
+    updateSubmitButton();
   }
 }
 
@@ -496,10 +609,10 @@ function updateSubmitButton() {
 
   btn.disabled = isSubmitting;
   if (isSubmitting) {
-    btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;"></span>';
+    btn.innerHTML = '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;"></span>';
   } else {
     btn.innerHTML = `
-      ${activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'}
+      ${activeAuthTab === 'forgot' ? 'Enviar Enlace' : (activeAuthTab === 'reset' ? 'Guardar Contraseña' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'))}
     `;
   }
 }
