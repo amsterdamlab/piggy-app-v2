@@ -10,7 +10,7 @@ import { renderLegalModal } from '../components/LegalModal.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 
-/** @type {'register' | 'login' | 'forgot' | 'reset'} */
+/** @type {'register' | 'login'} */
 let activeAuthTab = 'register';
 let passwordVisible = false;
 let isSubmitting = false;
@@ -72,6 +72,9 @@ export function renderAuthView() {
         <form class="auth-form animate-fade-in-up" id="auth-form" novalidate>
           ${renderFormFields()}
 
+          <!-- Status notification message -->
+          <div id="auth-status-banner" style="display: none; margin-bottom: 14px; padding: 12px 16px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; text-align: center; line-height: 1.4; transition: all 0.3s ease;"></div>
+
           <!-- Error message -->
           <div class="auth-form__error ${formError ? 'auth-form__error--visible' : ''}" id="form-error">
             ${formError || ''}
@@ -100,17 +103,18 @@ export function renderAuthView() {
         <!-- Legal Footer -->
         ${(activeAuthTab === 'register' || activeAuthTab === 'login') ? `
           <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
-            <p class="auth-legal__text" style="font-size: 0.75rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400;">
-              Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros<br/>
-              Términos y Condiciones
+            <p class="auth-legal__text" style="font-size: 0.72rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400; white-space: nowrap;">
+              Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros Términos y Condiciones
             </p>
           </div>
         ` : ''}
 
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
-          <div style="display: flex; justify-content: center; margin-bottom: 8px;">
-            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 24px; width: auto; object-fit: contain;" />
+          <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px;">
+            <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="height: 32px; width: auto; object-fit: contain;" />
+            <span style="color: #94a3b8; font-size: 14px; font-weight: bold;">×</span>
+            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 32px; width: auto; object-fit: contain;" />
           </div>
           <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR GRANJA VALLE MORALES</p>
           <div class="auth-trust__icons">
@@ -203,7 +207,7 @@ function renderFormFields() {
         </div>
       </div>
 
-      <div class="input-group" style="margin-bottom: 8px;">
+      <div class="input-group" style="margin-bottom: 2px;">
         <label class="input-group__label" for="field-referral">¿Tienes un código de invitación? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">🎁</span>
@@ -221,7 +225,7 @@ function renderFormFields() {
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:2px;"></div>
       </div>
       <!-- Checkboxes de Términos y Tratamiento de Datos -->
-      <div class="auth-checkboxes" style="margin-top: 0; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+      <div class="auth-checkboxes" style="margin-top: -4px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
         <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
           <span>
@@ -606,17 +610,22 @@ async function performUpdatePassword(newPassword) {
 async function performSignUp({ email, password, fullName, whatsapp, referralCode }) {
   isSubmitting = true;
   updateSubmitButton('Creando cuenta...');
+  showStatusMessage('🔄 Iniciando creación de tu cuenta agro y verificando datos...', '#1e3a8a', '#eff6ff', '#bfdbfe');
 
   try {
-    const result = await signUp({ email, password, fullName, whatsapp });
+    const result = await signUp({ email, password, fullName, whatsapp }, (msg) => {
+      showStatusMessage(msg, '#1e3a8a', '#eff6ff', '#bfdbfe');
+    });
 
     if (result.error) {
+      hideStatusMessage();
       showFormError(translateSupabaseError(result.error), result.error);
       return;
     }
 
     // Link referral if code was provided
     if (referralCode && result.user?.id) {
+      showStatusMessage('🎁 Vinculando código de invitación con tu referente...', '#6b21a8', '#faf5ff', '#e9d5ff');
       updateSubmitButton('Vinculando invitación...');
       try {
         const linkResult = await linkReferral(result.user.id, referralCode);
@@ -631,10 +640,12 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
       }
     }
 
+    showStatusMessage('✅ ¡Cuenta creada con éxito! Redirigiendo a tu granja...', '#065f46', '#ecfdf5', '#a7f3d0');
     updateSubmitButton('Iniciando sesión...');
-    navigateTo('granja');
+    setTimeout(() => navigateTo('granja'), 600);
   } catch (error) {
     console.error('🐷 SignUp error:', error);
+    hideStatusMessage();
     showFormError('Ha ocurrido un error en el registro. Inténtalo de nuevo.', error.message || error);
   } finally {
     isSubmitting = false;
@@ -648,18 +659,24 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
 async function performSignIn({ email, password }) {
   isSubmitting = true;
   updateSubmitButton('Verificando credenciales...');
+  showStatusMessage('🔄 Conectando con el servidor de seguridad para validar tu acceso...', '#1e3a8a', '#eff6ff', '#bfdbfe');
 
   try {
-    const result = await signIn({ email, password });
+    const result = await signIn({ email, password }, (msg) => {
+      showStatusMessage(msg, '#1e3a8a', '#eff6ff', '#bfdbfe');
+    });
 
     if (result.error) {
+      hideStatusMessage();
       showFormError(translateSupabaseError(result.error), result.error);
     } else {
+      showStatusMessage('✅ ¡Credenciales validadas con éxito! Redirigiendo a tu granja...', '#065f46', '#ecfdf5', '#a7f3d0');
       updateSubmitButton('Iniciando sesión...');
-      navigateTo('granja');
+      setTimeout(() => navigateTo('granja'), 600);
     }
   } catch (error) {
     console.error('🐷 SignIn error:', error);
+    hideStatusMessage();
     showFormError('Ha ocurrido un error al intentar iniciar sesión. Inténtalo de nuevo.', error.message || error);
   } finally {
     isSubmitting = false;
@@ -683,9 +700,34 @@ function translateSupabaseError(errorMessage) {
 }
 
 /**
+ * Show status message during login / signup.
+ */
+function showStatusMessage(message, color = '#1e3a8a', bgColor = '#eff6ff', borderColor = '#bfdbfe') {
+  const banner = document.getElementById('auth-status-banner');
+  if (banner) {
+    banner.textContent = message;
+    banner.style.color = color;
+    banner.style.backgroundColor = bgColor;
+    banner.style.border = `1px solid ${borderColor}`;
+    banner.style.display = 'block';
+  }
+}
+
+/**
+ * Hide status message.
+ */
+function hideStatusMessage() {
+  const banner = document.getElementById('auth-status-banner');
+  if (banner) {
+    banner.style.display = 'none';
+  }
+}
+
+/**
  * Show form error.
  */
 function showFormError(message, rawError = null) {
+  hideStatusMessage();
   formError = message;
   const errorEl = document.getElementById('form-error');
   if (errorEl) {
