@@ -84,7 +84,7 @@ export function renderAuthView() {
           <div style="display: flex; justify-content: center; margin-bottom: 8px;">
             <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 24px; width: auto; object-fit: contain;" />
           </div>
-          <p class="auth-trust__label">RESPALDADO POR GRANJA VALLE MORALES</p>
+          <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR GRANJA VALLE MORALES</p>
           <div class="auth-trust__icons">
             ${renderIcon('heart', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
