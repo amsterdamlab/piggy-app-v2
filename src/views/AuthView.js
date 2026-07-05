@@ -175,7 +175,7 @@ function renderFormFields() {
         </div>
       </div>
 
-      <div class="input-group">
+      <div class="input-group" style="margin-bottom: 8px;">
         <label class="input-group__label" for="field-referral">¿Tienes un código de invitación? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">🎁</span>
@@ -190,10 +190,10 @@ function renderFormFields() {
           />
           <span id="referral-status" style="font-size:16px; flex-shrink:0; padding-right:8px;"></span>
         </div>
-        <div id="referral-feedback" style="font-size:0.75rem; margin-top:4px; min-height:18px;"></div>
+        <div id="referral-feedback" style="font-size:0.75rem; margin-top:2px;"></div>
       </div>
       <!-- Checkboxes de Términos y Tratamiento de Datos -->
-      <div class="auth-checkboxes" style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+      <div class="auth-checkboxes" style="margin-top: 0; display: flex; flex-direction: column; gap: 10px; text-align: left;">
         <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
           <span>
