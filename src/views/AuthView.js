@@ -111,10 +111,8 @@ export function renderAuthView() {
 
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
-          <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px;">
-            <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="height: 32px; width: auto; object-fit: contain;" />
-            <span style="color: #94a3b8; font-size: 14px; font-weight: bold;">×</span>
-            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 32px; width: auto; object-fit: contain;" />
+          <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 28px; width: auto; object-fit: contain;" />
           </div>
           <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR GRANJA VALLE MORALES</p>
           <div class="auth-trust__icons">
