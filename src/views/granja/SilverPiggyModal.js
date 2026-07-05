@@ -67,7 +67,7 @@ export function showSilverPiggyModal(silverExpiry) {
     modal.id = 'silver-piggy-modal';
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
         z-index: 99999; display: flex; align-items: flex-end;
         justify-content: center;
     `;
@@ -78,8 +78,8 @@ export function showSilverPiggyModal(silverExpiry) {
     modal.innerHTML = `
         <div class="animate-fade-in-up" style="
             background: white; border-radius: 28px 28px 0 0;
-            width: 100%; max-width: 480px; max-height: 92dvh;
-            overflow-y: auto; padding: 0 0 40px 0; position: relative;
+            width: 100%; max-width: 480px; max-height: 88dvh;
+            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px)) 0; position: relative;
         ">
             <!-- Handle -->
             <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin: 12px auto 0;"></div>

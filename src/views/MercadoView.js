@@ -312,7 +312,7 @@ export function showCheckoutModal(item) {
                        "
                        onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
                        onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
-                 />
+                />
            </div>
 
            <!-- Name Suggestions (Pills) -->
@@ -333,7 +333,7 @@ export function showCheckoutModal(item) {
            </div>
            
            <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:12px;">
-                 * Debes darle un nombre para continuar
+                * Debes darle un nombre para continuar
            </div>
       </div>
 
@@ -508,7 +508,7 @@ export function showCheckoutModal(item) {
 
   document.getElementById('checkout-close-btn').addEventListener('click', close);
 
-  // Widget Recargar Wallet
+  // Recargar Wallet
   const recargarBtn = document.getElementById('btn-recargar-checkout');
   recargarBtn.addEventListener('click', async () => {
     const originalText = recargarBtn.innerHTML;
@@ -602,6 +602,7 @@ window.showCategoryInfo = (category) => {
     top: 0; left: 0; width: 100%; height: 100dvh;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index: 100000;
     display: flex;
     align-items: center;
