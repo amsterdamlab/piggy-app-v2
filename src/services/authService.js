@@ -59,8 +59,9 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
  * Sign up with email and password.
  * Terms are already accepted before calling this function.
  */
-export async function signUp({ email, password, fullName, whatsapp }) {
+export async function signUp({ email, password, fullName, whatsapp }, onProgress = () => {}) {
     if (isUsingMockData()) {
+        onProgress('⚙️ Modo demo detectado. Configurando usuario simulado...');
         mockLoggedIn = true;
         mockProfile = {
             ...MOCK_PROFILE,
@@ -80,6 +81,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
         return { user: MOCK_USER, error: null };
     }
 
+    onProgress('🔑 Enviando datos al servidor de seguridad Supabase...');
     const client = getClient();
     const { data, error } = await client.auth.signUp({
         email,
@@ -96,6 +98,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
 
     // Create profile with terms already accepted
     if (data.user) {
+        onProgress('📝 Creando tu perfil en la base de datos de usuarios...');
         const profile = {
             id: data.user.id,
             full_name: fullName,
@@ -112,6 +115,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             console.warn('🐷 Profile upsert error:', profileError.message);
         }
 
+        onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
         // Update AppState immediately
         AppState.set({
             currentUser: data.user,
@@ -126,8 +130,9 @@ export async function signUp({ email, password, fullName, whatsapp }) {
 /**
  * Sign in with email and password.
  */
-export async function signIn({ email, password }) {
+export async function signIn({ email, password }, onProgress = () => {}) {
     if (isUsingMockData()) {
+        onProgress('⚙️ Modo demo detectado. Iniciando sesión simulada...');
         mockLoggedIn = true;
         mockProfile = { ...MOCK_PROFILE, terms_accepted: true, habeas_data_accepted: true };
         AppState.set({
@@ -138,6 +143,7 @@ export async function signIn({ email, password }) {
         return { user: MOCK_USER, error: null };
     }
 
+    onProgress('🔑 Verificando tu correo y contraseña con el sistema de seguridad...');
     const client = getClient();
     const { data, error } = await client.auth.signInWithPassword({ email, password });
 
@@ -145,7 +151,9 @@ export async function signIn({ email, password }) {
 
     // Fetch profile and update state
     if (data.user) {
+        onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
         const profile = await getProfile();
+        onProgress('✅ Perfil verificado. Preparando tu granja agro...');
         AppState.set({
             currentUser: data.user,
             profile,
