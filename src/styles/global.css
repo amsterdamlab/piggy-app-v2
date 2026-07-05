@@ -17,6 +17,8 @@ html {
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
 }
 
@@ -52,15 +54,19 @@ button {
     border: none;
     background: none;
     font-size: inherit;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 input,
 select,
 textarea {
     font-family: inherit;
-    font-size: inherit;
+    font-size: 1rem;
     outline: none;
     border: none;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 ul,

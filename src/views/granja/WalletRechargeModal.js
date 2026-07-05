@@ -77,8 +77,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
   /* ── QUICK AMOUNT PRESETS ── */
-  const PRESETS = [50000, 100000, 200000, 500000];
-  let selectedAmount = 100000;
+  const PRESETS = [200000, 500000, 1000000, 2000000];
+  let selectedAmount = 200000;
 
   /* ─────────────────────────────────────────
      STEP 1 — Amount selector
