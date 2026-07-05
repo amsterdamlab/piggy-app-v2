@@ -16,6 +16,7 @@ export const MOCK_PROFILE = {
     terms_accepted: true,
     habeas_data_accepted: true,
     referral_code: 'ALE582',
+    referral_balance: 30000,
     created_at: '2026-01-15T10:00:00Z',
 };
 
@@ -174,7 +175,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm1',
         title: 'Crea una cuenta nueva',
-        reward: 'Bono consumo x $50.000',
+        reward: 'Bono de consumo por valor de $30.000',
         is_completed: true,
         icon: '🎉',
         cta: null

@@ -27,6 +27,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             terms_accepted: true,
             habeas_data_accepted: true,
             referral_code: generateMockReferralCode(fullName),
+            referral_balance: 30000,
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email },
@@ -50,6 +51,7 @@ export async function signUp({ email, password, fullName, whatsapp }) {
             whatsapp,
             terms_accepted: true,
             habeas_data_accepted: true,
+            referral_balance: 30000,
         };
 
         const { error: profileError } = await client.from('profiles').insert(profile);
@@ -177,7 +179,6 @@ export async function checkSession() {
     }
 
     const client = getClient();
-
     const { data: { session } } = await client.auth.getSession();
 
     if (session?.user) {

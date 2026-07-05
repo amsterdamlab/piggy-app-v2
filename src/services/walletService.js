@@ -5,7 +5,8 @@
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
-import { formatCOP } from './mockData.js';
+import { formatCOP, MOCK_PROFILE } from './mockData.js';
+import { AppState } from '../state.js';
 
 /** Admin WhatsApp number for notifications */
 const ADMIN_WHATSAPP = '573154870448';
@@ -73,7 +74,10 @@ export async function getWalletBalance() {
  * @returns {number} Consumption bonus balance in COP
  */
 export async function getReferralBonusBalance() {
-    if (isUsingMockData()) return 0;
+    if (isUsingMockData()) {
+        const profile = AppState.get('profile') || MOCK_PROFILE;
+        return profile?.referral_balance !== undefined ? profile.referral_balance : 30000;
+    }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
@@ -85,6 +89,47 @@ export async function getReferralBonusBalance() {
         .eq('id', user.id)
         .single();
 
+    return data?.referral_balance || 0;
+}
+
+/**
+ * Ensures the welcome bonus ($30.000) is assigned to the user's referral_balance in DB if not set yet.
+ */
+export async function ensureWelcomeBonusAssigned(userId) {
+    if (isUsingMockData()) {
+        const profile = AppState.get('profile') || { ...MOCK_PROFILE };
+        if (profile && !profile.referral_balance) {
+            profile.referral_balance = 30000;
+            AppState.set({ profile: { ...profile } });
+        }
+        return 30000;
+    }
+
+    const client = getClient();
+    const targetUserId = userId || (await client.auth.getUser()).data.user?.id;
+    if (!targetUserId) return 0;
+
+    const { data } = await client
+        .from('profiles')
+        .select('referral_balance')
+        .eq('id', targetUserId)
+        .single();
+
+    if (!data || !data.referral_balance || data.referral_balance === 0) {
+        const { error } = await client
+            .from('profiles')
+            .update({ referral_balance: 30000 })
+            .eq('id', targetUserId);
+
+        if (!error) {
+            console.log('🐷 Welcome consumption bonus ($30.000) assigned to profile in DB!');
+            const currentProfile = AppState.get('profile');
+            if (currentProfile && currentProfile.id === targetUserId) {
+                AppState.set({ profile: { ...currentProfile, referral_balance: 30000 } });
+            }
+            return 30000;
+        }
+    }
     return data?.referral_balance || 0;
 }
 
