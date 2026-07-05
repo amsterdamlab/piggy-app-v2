@@ -7,6 +7,7 @@
 import { getClient, isUsingMockData } from './supabase.js';
 import { AppState } from '../state.js';
 import { MOCK_MISSIONS } from './mockData.js';
+import { ensureWelcomeBonusAssigned } from './walletService.js';
 
 /* ─── Mission Definitions ─────────────────────
    Source of truth for mission structure (7 missions).
@@ -18,7 +19,7 @@ const MISSION_DEFINITIONS = [
     {
         key: 'm1', sortOrder: 1,
         title: 'Obtén tu Bono de Bienvenida',
-        reward: 'Encuentra tu Bono de Consumo en la Tienda',
+        reward: 'Bono de consumo por valor de $30.000 en Tienda',
         icon: '🎁', cta: '#/gourmet',
         autoType: 'visited_gourmet',
         requires: null,
@@ -224,6 +225,10 @@ export async function getMissions(piggiesOverride = null) {
  * @param {string} missionKey - e.g. 'm1', 'm3', 'm5'
  */
 export async function completeMissionOnVisit(missionKey) {
+    if (missionKey === 'm1') {
+        ensureWelcomeBonusAssigned().catch(err => console.warn('Error assigning welcome bonus:', err));
+    }
+
     // Session guard — only write to DB once per session per key
     if (_sessionVisitedMissions.has(missionKey)) return;
     _sessionVisitedMissions.add(missionKey);

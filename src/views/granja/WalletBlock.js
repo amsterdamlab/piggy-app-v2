@@ -55,10 +55,15 @@ export function renderWalletBanner(firstName, stats) {
                     <div style="font-size:1.8rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
                  </div>
 
-                 <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-bottom:16px;">
+                 <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
                     <span style="font-size:0.75rem; opacity:0.9;">
                        Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
                     </span>
+                    ${stats.referralBonus > 0 ? `
+                    <span style="background: rgba(255, 255, 255, 0.22); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                       🎁 Bono Consumo: ${stats.referralBonusFormatted}
+                    </span>
+                    ` : ''}
                  </div>
 
                  <button id="btn-explorar-cuenta" style="
