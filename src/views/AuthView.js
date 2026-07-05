@@ -80,8 +80,11 @@ export function renderAuthView() {
         </div>
 
         <!-- Trust Badges -->
-        <div class="auth-trust animate-fade-in">
-          <p class="auth-trust__label">RESPALDADO POR GRANJA VILLA MORALES</p>
+        <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
+          <div style="display: flex; justify-content: center; margin-bottom: 8px;">
+            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 24px; width: auto; object-fit: contain;" />
+          </div>
+          <p class="auth-trust__label">RESPALDADO POR GRANJA VALLE MORALES</p>
           <div class="auth-trust__icons">
             ${renderIcon('heart', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
@@ -189,9 +192,8 @@ function renderFormFields() {
         </div>
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:4px; min-height:18px;"></div>
       </div>
-
       <!-- Checkboxes de Términos y Tratamiento de Datos -->
-      <div class="auth-checkboxes" style="margin-top: 24px; display: flex; flex-direction: column; gap: 14px; text-align: left;">
+      <div class="auth-checkboxes" style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px; text-align: left;">
         <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
           <span>
