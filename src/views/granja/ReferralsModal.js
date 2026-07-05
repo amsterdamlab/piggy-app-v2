@@ -25,7 +25,8 @@ export async function loadGreetingReferralCode() {
  */
 export async function showReferralModal() {
   // M3: auto-complete "Invita a un amigo a Piggy" on first referral modal open
-  completeMissionOnVisit('m3');
+  await completeMissionOnVisit('m3');
+  if (window._refreshMissionBanner) window._refreshMissionBanner();
 
   // Remove existing
   const existing = document.getElementById('referral-modal');
@@ -50,7 +51,10 @@ export async function showReferralModal() {
   document.body.appendChild(modal);
 
   // Close handlers
-  const close = () => modal.remove();
+  const close = () => {
+    modal.remove();
+    if (window._refreshMissionBanner) window._refreshMissionBanner();
+  };
   document.getElementById('referral-modal-close').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
@@ -68,10 +72,12 @@ export async function showReferralModal() {
     const pendingCount = stats?.pendingReferrals || 0;
     const currentTier = stats?.currentTier || { amount: 30000, label: '$30.000' };
 
+    // Saldo Comisiones = sum of commission_amount from completed referrals only
     const commissionsEarned = referrals
       .filter(r => r.status === 'completed')
       .reduce((sum, r) => sum + (r.commission_amount || 0), 0);
 
+    // Build referrals list
     let referralsListHTML = '';
     if (referrals.length === 0) {
       referralsListHTML = `
@@ -81,7 +87,7 @@ export async function showReferralModal() {
       `;
     } else {
       referralsListHTML = referrals.map(r => {
-        const statusIcon = r.status === 'completed' ? '?' : r.status === 'pending' ? '?' : '?';
+        const statusIcon = r.status === 'completed' ? '🟢' : r.status === 'pending' ? '🟡' : '🔴';
         const statusLabel = r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
         const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
@@ -104,11 +110,13 @@ export async function showReferralModal() {
       }).join('');
     }
 
+    // Build modal content
     const modalContent = modal.querySelector('.modal');
     modalContent.innerHTML = `
       <div class="modal__handle"></div>
       <button class="bonus-close" id="referral-modal-close-2" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
 
+      <!-- Header -->
       <div style="text-align:center; margin-bottom:20px;">
         <div style="font-size:48px; margin-bottom:8px;">🤝</div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
@@ -117,6 +125,7 @@ export async function showReferralModal() {
         </p>
       </div>
 
+      <!-- Code + Balance -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
         <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;">
           <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu Código</div>
@@ -128,6 +137,7 @@ export async function showReferralModal() {
         </div>
       </div>
 
+      <!-- Stats Row -->
       <div style="display:flex; gap:8px; margin-bottom:20px;">
         <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
           <div style="font-size:1.1rem; font-weight:800; color:#111827;">${completedCount}</div>
@@ -139,6 +149,7 @@ export async function showReferralModal() {
         </div>
       </div>
 
+      <!-- Mis Referidos -->
       <div style="margin-bottom:20px;">
         <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;">Mis Referidos</h4>
         <div style="max-height:160px; overflow-y:auto; border:1px solid #f3f4f6; border-radius:12px; padding:4px 14px;">
@@ -146,6 +157,7 @@ export async function showReferralModal() {
         </div>
       </div>
 
+      <!-- Commission Tiers -->
       <div style="margin-bottom:24px;">
         <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:#374151;">Tabla de Comisiones</h4>
         <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
@@ -175,6 +187,7 @@ export async function showReferralModal() {
         </p>
       </div>
 
+      <!-- Share Button -->
       <button id="btn-modal-share-referral" style="
         width: 100%;
         background: linear-gradient(135deg, #25d366, #128c7e);
@@ -196,8 +209,10 @@ export async function showReferralModal() {
       </button>
     `;
 
+    // Re-attach close
     document.getElementById('referral-modal-close-2')?.addEventListener('click', close);
 
+    // Share button
     document.getElementById('btn-modal-share-referral')?.addEventListener('click', async () => {
       if (referralCode && referralCode !== '---') {
         await shareReferralCode(referralCode);
