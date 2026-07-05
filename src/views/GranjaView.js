@@ -133,9 +133,9 @@ async function loadGranjaData(firstName) {
 
     // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
-      tipData, walletBalance, referralBonus,
-      activeMissions, flashMissions, cycleMissions, stats,
-      transactions,
+        tipData, walletBalance, referralBonus,
+        activeMissions, flashMissions, cycleMissions, stats,
+        transactions,
     ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
@@ -255,7 +255,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         </div>
 
         <!-- Dynamic Mission Banner -->
-        ${missionBanner}
+        <div id="mission-banner-container">
+          ${missionBanner}
+        </div>
 
       </div>
 
@@ -263,6 +265,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
     </div>
   `;
 }
+
+// ... renderGreeting remains the same ...
 
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
@@ -318,6 +322,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 function renderPiggiesList(piggies, baseROI) {
   return `
@@ -376,6 +382,7 @@ function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
+// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
@@ -403,6 +410,9 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
+/**
+ * Attach event listeners.
+ */
 function attachGranjaListeners(hasPiggies, stats, piggyCount) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {

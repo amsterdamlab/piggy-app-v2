@@ -13,6 +13,9 @@ import { getMarketplaceItems } from '../../services/marketplaceService.js';
 import { showCheckoutModal } from '../MercadoView.js';
 import { showFlashMissionModal } from './FlashMissionModal.js';
 import { showCycleMissionModal } from './CycleMissionModal.js';
+import { getActiveMissions } from '../../services/missionsService.js';
+import { getActiveUserFlashMissions, getActiveCycleMissions } from '../../services/flashMissionsService.js';
+import { AppState } from '../../state.js';
 
 /** Active countdown interval for M6 banner */
 let _bannerCountdownInterval = null;
@@ -23,6 +26,33 @@ let _bannerCountdownInterval = null;
    ─────────────────────────────────────────── */
 
 /**
+ * Refresca dinámicamente el banner de misiones en la interfaz sin recargar la página.
+ * Permite cambiar de Misión 3 a Misión 4 instantáneamente al abrir el modal de referidos.
+ */
+export async function refreshMissionBanner() {
+    const container = document.getElementById('mission-banner-container');
+    if (!container) return;
+
+    try {
+        const piggies = AppState.get('piggies') || [];
+        const [activeMissions, flashMissions, cycleMissions] = await Promise.all([
+            getActiveMissions(piggies),
+            getActiveUserFlashMissions(),
+            getActiveCycleMissions()
+        ]);
+
+        window._activeFlashMissions = flashMissions;
+        window._activeCycleMissions = cycleMissions;
+
+        const newBannerHTML = renderPriorityMissionBanner(flashMissions || [], cycleMissions || [], activeMissions || [], piggies.length);
+        container.innerHTML = newBannerHTML;
+        attachMissionListeners();
+    } catch (e) {
+        console.warn('Error al refrescar el banner de misiones:', e);
+    }
+}
+
+/**
  * Main entry point — renders the highest-priority mission banner.
  * Priority: flashMissions > cycleMissions > regularMissions
  * @param {Array} flashMissions  - Active M8/M9 records
@@ -31,6 +61,7 @@ let _bannerCountdownInterval = null;
  * @param {number} piggyCount
  */
 export function renderPriorityMissionBanner(flashMissions, cycleMissions, regularMissions, piggyCount) {
+    window._refreshMissionBanner = refreshMissionBanner;
     if (flashMissions && flashMissions.length > 0) {
         return renderFlashMissionBanner(flashMissions[0]);
     }
@@ -483,16 +514,15 @@ function renderCycleMissionBanner(mission) {
                     ${t.icon} CICLO COMPLETADO · RECOMPENSA EXCLUSIVA
                 </div>
 
-                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">🎉 ¡Tu Piggy terminó su ciclo!</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional</strong></div>
+                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || mission.piggy_label}</div>
+                <div style="font-size:0.82rem; opacity:0.92;">Has ganado el derecho a este Piggy exclusivo con <strong>${roiPct} en Margen Comercial</strong></div>
 
-                <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
                     padding:8px 14px; margin-top:10px; display:inline-flex;
                     align-items:center; gap:8px;">
                     <span>⏳</span>
                     <div>
-                        <div style="font-size:0.6rem; opacity:0.8; text-transform:uppercase; letter-spacing:1px;">Tiempo restante</div>
+                        <div style="font-size:0.6rem; opacity:0.8; text-transform:uppercase; letter-spacing:1px;">Tiempo para reclamar</div>
                         <div id="cycle-banner-countdown-${mission.id}"
                             data-expires-ms="${remaining}"
                             style="font-size:1rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
@@ -503,7 +533,7 @@ function renderCycleMissionBanner(mission) {
 
                 <div style="margin-top:14px;">
                     <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                        Ver mi Recompensa ${t.icon}
+                        Reclamar Recompensa ${t.icon}
                     </span>
                 </div>
 
