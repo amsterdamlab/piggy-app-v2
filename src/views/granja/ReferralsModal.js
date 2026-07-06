@@ -9,7 +9,7 @@ import { completeMissionOnVisit } from '../../services/missionsService.js';
 /**
  * Load the referral code into the greeting badge.
  */
-export async function loadGreetingReferralCode() {
+export function loadGreetingReferralCode() {
   try {
     const code = await getMyReferralCode();
     const codeEl = document.getElementById('greeting-code-value');
@@ -87,7 +87,7 @@ export async function showReferralModal() {
       `;
     } else {
       referralsListHTML = referrals.map(r => {
-        const statusIcon = r.status === 'completed' ? '🟢' : r.status === 'pending' ? '🟡' : '🔴';
+        const statusIcon = r.status === 'completed' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
         const statusLabel = r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
         const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
@@ -125,16 +125,11 @@ export async function showReferralModal() {
         </p>
       </div>
 
-      <!-- Code + Balance -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-        <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu Código</div>
-          <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;">${referralCode}</div>
-        </div>
-        <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;">Saldo Comisiones</div>
-          <div style="font-size:1.2rem; font-weight:800; color:#059669;">${formatReferralBalance(commissionsEarned)}</div>
-        </div>
+      <!-- Code Card -->
+      <div id="referral-code-box" style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:16px; border-radius:14px; text-align:center; cursor:pointer; position:relative; margin-bottom:20px; transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+        <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Tu Código (Toca para copiar)</div>
+        <div style="font-size:1.6rem; font-weight:800; letter-spacing:3px; font-family:monospace; margin-bottom:4px;">${referralCode}</div>
+        <div id="copy-feedback" style="font-size:0.68rem; opacity:0.7;">📋 Click para copiar</div>
       </div>
 
       <!-- Stats Row -->
@@ -218,6 +213,26 @@ export async function showReferralModal() {
         await shareReferralCode(referralCode);
       }
     });
+
+    // Copy to clipboard handler with feedback
+    const codeBox = document.getElementById('referral-code-box');
+    if (codeBox) {
+      codeBox.addEventListener('click', () => {
+        navigator.clipboard.writeText(referralCode).then(() => {
+          const feedback = document.getElementById('copy-feedback');
+          if (feedback) {
+            feedback.innerHTML = '✨ ¡Copiado con éxito!';
+            feedback.style.color = '#a7f3d0';
+            setTimeout(() => {
+              feedback.innerHTML = '📋 Click para copiar';
+              feedback.style.color = '';
+            }, 2000);
+          }
+        }).catch(err => {
+          console.error('Error copying code:', err);
+        });
+      });
+    }
 
   } catch (err) {
     console.error('Error loading referral modal:', err);
