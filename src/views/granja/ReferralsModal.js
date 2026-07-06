@@ -9,7 +9,7 @@ import { completeMissionOnVisit } from '../../services/missionsService.js';
 /**
  * Load the referral code into the greeting badge.
  */
-export function loadGreetingReferralCode() {
+export async function loadGreetingReferralCode() {
   try {
     const code = await getMyReferralCode();
     const codeEl = document.getElementById('greeting-code-value');
