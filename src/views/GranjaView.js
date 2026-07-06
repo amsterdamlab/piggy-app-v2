@@ -25,6 +25,7 @@ import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from 
 import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
 import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
 import { removeBonusModal } from './granja/WelcomeBonusModal.js';
+import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
 
 /* =========================================
    DYNAMIC NOTIFICATIONS
@@ -163,7 +164,7 @@ async function loadGranjaData(firstName) {
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
 
-    attachGranjaListeners(piggies.length > 0, stats, piggies.length);
+    attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
   } catch (error) {
     console.error('Error loading granja data:', error);
     const section = document.getElementById('piggies-section');
@@ -182,7 +183,9 @@ async function loadGranjaData(firstName) {
  * Build the full dashboard with data.
  */
 function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions) {
-  const piggyCount    = piggies.length;
+  const activePiggies    = piggies.filter(p => !p.isComplete);
+  const completedPiggies = piggies.filter(p => p.isComplete);
+  const piggyCount       = piggies.length;
   const missionBanner = renderPriorityMissionBanner(
       flashMissions  || [],
       cycleMissions  || [],
@@ -246,12 +249,12 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         <div class="section animate-fade-in-up" style="animation-delay: 0.2s;">
           <div class="section__header">
             <h3 class="section__title">Mis Piggys</h3>
-            <a href="#/mercado" class="section__link">
-              Ver ofertas ${renderIcon('arrowRight', '', '14')}
-            </a>
+            <button id="btn-ver-completados" class="section__link" style="background:none; border:none; cursor:pointer; font-size:0.85rem; font-weight:700; color:#ec4899; display:flex; align-items:center; gap:4px; padding:0; font-family:inherit;">
+              Completados ${completedPiggies.length > 0 ? `(${completedPiggies.length})` : ''} ${renderIcon('arrowRight', '', '14')}
+            </button>
           </div>
 
-          ${piggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(piggies, stats.baseROI)}
+          ${activePiggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(activePiggies, stats.baseROI)}
         </div>
 
         <!-- Dynamic Mission Banner -->
@@ -325,7 +328,7 @@ function renderEmptyPiggies() {
 
 // ... renderPiggiesList and renderPiggyCard remain the same ...
 
-function renderPiggiesList(piggies, baseROI) {
+export function renderPiggiesList(piggies, baseROI) {
   return `
     <div class="piggies-list">
       ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
@@ -333,7 +336,7 @@ function renderPiggiesList(piggies, baseROI) {
   `;
 }
 
-function renderPiggyCard(piggy, baseROI) {
+export function renderPiggyCard(piggy, baseROI) {
   const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
   const projectedReturn = piggy.investment_amount * (1 + totalROI);
 
@@ -413,7 +416,7 @@ export function renderBottomNav(activeTab) {
 /**
  * Attach event listeners.
  */
-function attachGranjaListeners(hasPiggies, stats, piggyCount) {
+function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
   // Piggy card click
   document.querySelectorAll('.piggy-card').forEach((card) => {
     card.addEventListener('click', () => {
@@ -421,6 +424,15 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount) {
       navigateTo(`piggy/${piggyId}`);
     });
   });
+
+  // Completed piggies modal trigger
+  const btnCompletados = document.getElementById('btn-ver-completados');
+  if (btnCompletados) {
+    btnCompletados.addEventListener('click', () => {
+      const completedPiggies = (piggies || []).filter(p => p.isComplete);
+      showCompletedPiggiesModal(completedPiggies, stats.baseROI);
+    });
+  }
 
   // Mission listeners (delegated to module)
   attachMissionListeners();
