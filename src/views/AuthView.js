@@ -491,6 +491,11 @@ async function handleSubmit(e) {
       return;
     }
 
+    if (!whatsapp) {
+      showFormError('Por favor ingresa tu número de celular (WhatsApp).');
+      return;
+    }
+
     const termsChecked = document.getElementById('check-terms')?.checked;
     const habeasChecked = document.getElementById('check-habeas')?.checked;
 
