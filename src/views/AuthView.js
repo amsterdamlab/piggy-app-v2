@@ -33,8 +33,9 @@ export function renderAuthView() {
       <div class="auth-page__content">
 
         <!-- New Hero Mascot and Title (From Image) -->
-        <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+        <div class="auth-hero animate-fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 32px 0 40px 0;">
           <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
+          <p style="color: #940856; font-size: 0.8rem; font-weight: 800; letter-spacing: 1.5px; margin-top: 8px; text-align: center;">CRIA INTELIGENTE CON RESULTADOS REALES</p>
         </div>
 
         <!-- Auth Tabs / Header -->
@@ -102,8 +103,8 @@ export function renderAuthView() {
 
         <!-- Legal Footer -->
         ${(activeAuthTab === 'register' || activeAuthTab === 'login') ? `
-          <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center;">
-            <p class="auth-legal__text" style="font-size: 0.72rem; color: #003366; line-height: 1.2; margin: 0; font-weight: 400; white-space: nowrap;">
+          <div class="auth-legal animate-fade-in-up" style="margin-top: 8px; text-align: center; width: 100%;">
+            <p class="auth-legal__text" style="font-size: 0.72rem; color: #003366; line-height: 1.2; margin: 0 auto; font-weight: 400; text-align: center; display: block; width: 100%;">
               Al ${activeAuthTab === 'register' ? 'registrarte' : 'ingresar'}, aceptas nuestros Términos y Condiciones
             </p>
           </div>
