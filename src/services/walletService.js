@@ -188,6 +188,121 @@ export async function deductWalletBalance(amount) {
     return { success: true, newBalance: currentBalance - amount };
 }
 
+/* ─── Convert Wallet Balance to Consumption Bonus ─── */
+
+/**
+ * Canje de saldo por Bonos de Consumo:
+ * Debits available wallet balance (dinero) and credits consumption bonus balance (consumo)
+ * via wallet_transactions for full traceability without retaining funds or notifying WhatsApp.
+ * @param {number} amount - Amount in COP to convert
+ * @returns {Promise<{success: boolean, reason?: string}>}
+ */
+export async function convertBalanceToConsumptionBonus(amount) {
+    if (isUsingMockData()) {
+        initMockState();
+        if (mockBalance < amount) {
+            return { success: false, reason: 'insufficient_balance' };
+        }
+        
+        mockBalance -= amount;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+
+        const debitTx = {
+            id: `sim-deb-${Date.now()}`,
+            amount: -amount,
+            type: 'debit',
+            description: 'Canje a Bonos de Consumo (Débito saldo)',
+            wallet_type: 'dinero',
+            created_at: new Date().toISOString()
+        };
+        const creditTx = {
+            id: `sim-cred-${Date.now() + 1}`,
+            amount: amount,
+            type: 'credit',
+            description: 'Bono de Consumo acreditado por canje de saldo',
+            wallet_type: 'consumo',
+            created_at: new Date().toISOString()
+        };
+
+        mockTransactions.unshift(creditTx, debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+
+        const profile = AppState.get('profile') || { ...MOCK_PROFILE };
+        const currentRef = profile.referral_balance || 0;
+        profile.referral_balance = currentRef + amount;
+        profile.wallet_balance = mockBalance;
+        AppState.set({ profile: { ...profile } });
+
+        return { success: true };
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    // Read current balance
+    const { data: profile, error: readError } = await client
+        .from('profiles')
+        .select('wallet_balance, referral_balance')
+        .eq('id', user.id)
+        .single();
+
+    if (readError || !profile) {
+        return { success: false, reason: 'could_not_read_balance' };
+    }
+
+    const currentBalance = profile.wallet_balance || 0;
+    if (currentBalance < amount) {
+        return { success: false, reason: 'insufficient_balance' };
+    }
+
+    // 1. Insert debit transaction in dinero -> DB trigger updates wallet_balance
+    const { error: debitError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: -amount,
+            type: 'debit',
+            description: 'Canje a Bonos de Consumo (Débito saldo)',
+            wallet_type: 'dinero'
+        });
+
+    if (debitError) {
+        console.error('Error debiting balance for consumption conversion:', debitError);
+        return { success: false, reason: debitError.message };
+    }
+
+    // 2. Insert credit transaction in consumo -> DB trigger updates referral_balance
+    const { error: creditError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: amount,
+            type: 'credit',
+            description: 'Bono de Consumo acreditado por canje de saldo',
+            wallet_type: 'consumo'
+        });
+
+    if (creditError) {
+        console.error('Error crediting consumption bonus:', creditError);
+        return { success: false, reason: creditError.message };
+    }
+
+    // Update AppState profile with refreshed balances
+    const { data: updatedProfile } = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+    if (updatedProfile) {
+        const currentAppStateProfile = AppState.get('profile') || {};
+        AppState.set({ profile: { ...currentAppStateProfile, ...updatedProfile } });
+    }
+
+    return { success: true };
+}
+
 /* ─── Recharge Wallet (Wompi Simulation) ─── */
 
 /**

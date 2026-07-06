@@ -5,7 +5,7 @@
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { createWalletRequest, notifyAdminViaWhatsApp } from '../../services/walletService.js';
+import { createWalletRequest, notifyAdminViaWhatsApp, convertBalanceToConsumptionBonus } from '../../services/walletService.js';
 
 /**
  * Unified "Retirar mi Saldo" modal — multi-step flow.
@@ -167,9 +167,9 @@ export function showRetiroSaldoModal(availableAmount) {
           <div id="consumo-amount-error" style="font-size:0.75rem; color:#dc2626; margin-top:6px; display:none; font-weight:600;"></div>
         </div>
         <button id="retiro-confirm-consumo" style="width:100%; margin-top:8px; background:linear-gradient(135deg,#f59e0b,#d97706); color:white; border:none; padding:16px 20px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:0 4px 14px rgba(245,158,11,0.35); transition:opacity 0.2s;">
-          Solicitar Bonos de Consumo vía WhatsApp
+          Canjear a Bonos de Consumo
         </button>
-        <p style="text-align:center; font-size:0.75rem; color:#9ca3af; margin:0;">🥩 Nuestro equipo se comunicará contigo por WhatsApp para coordinar la entrega de tu pedido.</p>
+        <p style="text-align:center; font-size:0.75rem; color:#9ca3af; margin:0;">⚡ El canje se realiza de forma automática e inmediata. El saldo se debitará y pasará a tu disponibilidad de Bonos de Consumo.</p>
       </div>
   `;
 
@@ -260,17 +260,16 @@ export function showRetiroSaldoModal(availableAmount) {
 
       errDiv.style.display = 'none';
       
-      const res = await createWalletRequest('consumption', amount, null);
+      const res = await convertBalanceToConsumptionBonus(amount);
       if (!res.success) {
-        errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
+        errDiv.textContent = res.reason || 'Error al procesar el canje'; 
         errDiv.style.display = 'block';
-        btn.innerText = 'Solicitar Bonos de Consumo vía WhatsApp';
+        btn.innerText = 'Canjear a Bonos de Consumo';
         btn.disabled = false;
         return;
       }
 
-      notifyAdminViaWhatsApp('consumption', amount, userName, userPhone, null, res.requestId);
-      showWalletRequestSuccess('consumption', amount, null, res.requestId);
+      showConsumptionConversionSuccess(amount);
       safeRemove();
     });
   };
@@ -340,4 +339,62 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId) {
   };
   document.getElementById('wallet-success-close').addEventListener('click', closeModal);
   document.getElementById('wallet-success-close-x').addEventListener('click', closeModal);
+}
+
+/**
+ * Show success receipt after automatic conversion to consumption bonus.
+ */
+export function showConsumptionConversionSuccess(amount) {
+  document.body.style.overflow = 'hidden';
+
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100vw';
+  modal.style.height = '100dvh';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
+  modal.style.zIndex = '99999';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '0';
+
+  modal.innerHTML = `
+    <div class="animate-scale-in text-center" style="width:100%; max-width:480px; background:white; border-radius:24px; padding:32px 24px; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+      <button id="consumo-success-close-x" style="background:#f1f5f9; border:none; width:36px; height:36px; border-radius:50%; position:absolute; right:20px; top:20px; font-size:18px; font-weight:700; cursor:pointer; color:#334155; display:flex; align-items:center; justify-content:center;">✕</button>
+      <div style="width:68px; height:68px; background:#fef3c7; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+          <span style="font-size:32px;">🥩</span>
+      </div>
+      <h3 style="margin:0 0 8px; font-size:1.3rem; font-weight:900; color:#0f172a;">¡Canje Exitoso!</h3>
+      <p style="color:#64748b; font-size:0.92rem; margin:0 0 20px; line-height:1.5;">
+        Has canjeado <strong style="color:#d97706;">${formatCOP(amount)}</strong> de tu saldo disponible por <strong>Bonos de Consumo</strong>.
+      </p>
+
+      <div style="background:#fffbeb; border:1px solid #fde68a; padding:16px; border-radius:16px; margin-bottom:20px; text-align:left; font-size:0.88rem; color:#92400e;">
+          <div style="margin-bottom:6px; display:flex; justify-content:space-between;"><strong>Débito Saldo:</strong> <span style="font-weight:800;">-${formatCOP(amount)}</span></div>
+          <div style="display:flex; justify-content:space-between;"><strong>Crédito Bonos:</strong> <span style="font-weight:800; color:#d97706;">+${formatCOP(amount)}</span></div>
+      </div>
+
+      <p style="color:#94a3b8; font-size:0.78rem; margin:0 0 24px; line-height:1.4;">
+        Tus movimientos han quedado registrados automáticamente en el historial de transacciones para tu completa trazabilidad.
+      </p>
+
+      <button id="consumo-success-close" style="width:100%; background:linear-gradient(135deg, #f59e0b, #d97706); border:none; color:white; padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:0 4px 14px rgba(245,158,11,0.35);">Entendido</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const closeModal = () => {
+    modal.remove();
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
+      document.body.style.overflow = '';
+    }
+    window.location.reload();
+  };
+  document.getElementById('consumo-success-close').addEventListener('click', closeModal);
+  document.getElementById('consumo-success-close-x').addEventListener('click', closeModal);
 }
