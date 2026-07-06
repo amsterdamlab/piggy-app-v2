@@ -126,10 +126,9 @@ export async function showReferralModal() {
       </div>
 
       <!-- Code Card -->
-      <div id="referral-code-box" style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:16px; border-radius:14px; text-align:center; cursor:pointer; position:relative; margin-bottom:20px; transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
-        <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Tu Código (Toca para copiar)</div>
-        <div style="font-size:1.6rem; font-weight:800; letter-spacing:3px; font-family:monospace; margin-bottom:4px;">${referralCode}</div>
-        <div id="copy-feedback" style="font-size:0.68rem; opacity:0.7;">📋 Click para copiar</div>
+      <div id="referral-code-box" style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:10px 14px; border-radius:12px; text-align:center; cursor:pointer; position:relative; margin-bottom:20px; transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+        <div id="copy-feedback" style="font-size:0.68rem; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">Tu Código (Toca para copiar)</div>
+        <div style="font-size:1.45rem; font-weight:800; letter-spacing:3px; font-family:monospace; line-height:1.2; margin-top:2px;">${referralCode}</div>
       </div>
 
       <!-- Stats Row -->
@@ -224,7 +223,7 @@ export async function showReferralModal() {
             feedback.innerHTML = '✨ ¡Copiado con éxito!';
             feedback.style.color = '#a7f3d0';
             setTimeout(() => {
-              feedback.innerHTML = '📋 Click para copiar';
+              feedback.innerHTML = 'Tu Código (Toca para copiar)';
               feedback.style.color = '';
             }, 2000);
           }
