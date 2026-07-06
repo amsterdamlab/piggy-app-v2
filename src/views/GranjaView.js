@@ -9,8 +9,6 @@ import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js
 import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
 import { signOut } from '../services/authService.js';
-import { showCheckoutModal } from './MercadoView.js';
-import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
 import { getActiveMissions } from '../services/missionsService.js';
@@ -172,7 +170,7 @@ async function loadGranjaData(firstName) {
       section.innerHTML = `
         <div class="auth-form__error auth-form__error--visible">
           Error al cargar datos: ${error.message}<br/>
-          <pre style="font-size:10px; text-align:left; color:#ff0000; overflow-x:auto;">${error.stack}</pre>
+          <pre style="font-size:10px; text-align:left; color:#ff0000; overflowx:auto;">${error.stack}</pre>
         </div>
       `;
     }
@@ -450,30 +448,11 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
     });
   }
 
-  // Quick Buy Action
+  // Quick Buy Action -> Redirect to Mercado
   const quickBuyBtn = document.getElementById('btn-quick-buy');
   if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', async () => {
-      quickBuyBtn.style.opacity = '0.7';
-      quickBuyBtn.style.pointerEvents = 'none';
-
-      try {
-        const items = await getMarketplaceItems();
-        // Find Standard Initial Piggy (Month 1, Standard)
-        const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
-
-        if (standardPiggy) {
-          showCheckoutModal(standardPiggy);
-        } else {
-          navigateTo('mercado');
-        }
-      } catch (error) {
-        console.error('Quick buy error:', error);
-        navigateTo('mercado');
-      } finally {
-        quickBuyBtn.style.opacity = '1';
-        quickBuyBtn.style.pointerEvents = 'auto';
-      }
+    quickBuyBtn.addEventListener('click', () => {
+      navigateTo('mercado');
     });
   }
 
