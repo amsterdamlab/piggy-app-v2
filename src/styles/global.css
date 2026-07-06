@@ -69,6 +69,14 @@ textarea {
     appearance: none;
 }
 
+/* Restore checkbox appearance to avoid invisible checkboxes on Safari/Chrome */
+input[type="checkbox"] {
+    -webkit-appearance: checkbox !important;
+    appearance: checkbox !important;
+    accent-color: #fb2c74;
+    cursor: pointer;
+}
+
 ul,
 ol {
     list-style: none;
