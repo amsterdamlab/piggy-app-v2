@@ -128,8 +128,8 @@ function renderOfferCards(offers, referralBonus) {
   const container = document.getElementById('gourmet-offers-container');
   if (!container) return;
 
-  // Filter out the weekly banner block entirely from the UI (no longer needed)
-  const displayOffers = offers.filter(o => !o.tag || !o.tag.toUpperCase().includes('OFERTA DE LA SEMANA'));
+  // Display all active offers from database
+  const displayOffers = offers;
 
   if (displayOffers.length === 0) {
     container.innerHTML = `
