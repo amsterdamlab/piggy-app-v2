@@ -32,7 +32,7 @@ export function renderPiggyGourmetView() {
         <div class="animate-fade-in" style="margin-bottom:24px;">
           <h2 style="font-size: var(--text-3xl); font-weight: var(--font-extrabold); color: var(--color-text-primary); margin: 0 0 var(--space-xs) 0;">Tienda</h2>
           <p style="font-size: var(--text-sm); color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin: 0;">
-            Carne fresca directo desde Granja Valle Morales. Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad. Tenemos envío GRATIS en la ciudad de Cali. ¡Haz tu pedido aquí!
+            Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad directo desde Granja Valle Morales. 👌 <strong>¡Haz tu pedido aquí!</strong>.
           </p>
         </div>
 
