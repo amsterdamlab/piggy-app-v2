@@ -405,20 +405,37 @@ function renderGenericBanner(mission) {
 /**
  * Render the banner for an active M8/M9 flash mission.
  * Clicking opens FlashMissionModal.
+ * Supports silver, gold, premium, advanced30, advanced60 with premium cycle-like design.
  * @param {Object} mission - Active user_flash_missions record
  */
 function renderFlashMissionBanner(mission) {
-    const isGold     = mission.mission_key === 'm9' || mission.piggy_type === 'gold';
-    const gradient   = isGold
-        ? 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)'
-        : 'linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%)';
-    const shadow     = isGold ? 'rgba(234,179,8,0.45)' : 'rgba(245,158,11,0.45)';
-    const icon       = isGold ? '🥇' : '⚡';
-    const missionNum = isGold ? '9' : '8';
-    const roiPct     = `+${((mission.extra_roi_bonus || 0) * 100).toFixed(0)}%`;
-    const remaining  = mission.remainingMs || 0;
-    const hours      = String(Math.floor(remaining / 3600000)).padStart(2, '0');
-    const mins       = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0');
+    const typeThemes = {
+        silver:     { gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6d28d9', icon: '🌟', label: 'Silver' },
+        gold:       { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Gold' },
+        premium:    { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎', label: 'Premium' },
+        advanced30: { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Advanced 30' },
+        advanced60: { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Advanced 60' },
+    };
+    const t = typeThemes[mission.piggy_type] || typeThemes.advanced30;
+    const missionTitle = mission.mission_title || 'MISIÓN FLASH';
+    
+    let benefitText = '';
+    if (mission.piggy_type === 'advanced30') {
+        benefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (Inicia en 2do Mes)';
+    } else if (mission.piggy_type === 'advanced60') {
+        benefitText = 'Piggy cuántico con <strong>60 días ahorrados</strong> (Inicia en 3er Mes)';
+    } else {
+        let roiBonus = 0;
+        if (mission.piggy_type === 'silver') roiBonus = 0.01;
+        if (mission.piggy_type === 'gold') roiBonus = 0.02;
+        if (mission.piggy_type === 'premium') roiBonus = 0.03;
+        const roiPct = `+${(roiBonus * 100).toFixed(0)}%`;
+        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${roiPct} en Margen Comercial</strong>`;
+    }
+
+    const remaining = mission.remainingMs || 0;
+    const hours     = String(Math.floor(remaining / 3600000)).padStart(2, '0');
+    const mins      = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0');
 
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
@@ -427,26 +444,21 @@ function renderFlashMissionBanner(mission) {
                 data-cta="open_flash_modal"
                 data-flash-id="${mission.id}"
                 style="
-                    background: ${gradient};
+                    background: ${t.gradient};
                     border-radius: 16px; padding: 20px 24px; color: white;
                     position: relative; overflow: hidden; cursor: pointer;
-                    box-shadow: 0 8px 25px -5px ${shadow};
+                    box-shadow: 0 8px 25px -5px ${t.shadow};
                 ">
 
                 <!-- Flash badge -->
                 <div style="background:rgba(255,255,255,0.18); display:inline-flex; align-items:center; gap:6px;
                     padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700;
                     letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">
-                    ${icon} MISIÓN ${missionNum} · OFERTA FLASH
+                    ${t.icon} ${missionTitle} · OFERTA LIMITADA
                 </div>
 
-                <!-- Urgent badge -->
-                <div style="background:rgba(220,38,38,0.85); display:inline-block; padding:2px 10px;
-                    border-radius:20px; font-size:0.6rem; font-weight:700; margin-left:6px;
-                    letter-spacing:0.5px; margin-bottom:10px;">🔥 LIMITADO</div>
-
-                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || mission.piggy_label}</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Piggy exclusivo con <strong>${roiPct} en Margen Comercial</strong></div>
+                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || '¡Oferta Especial de Granja!'}</div>
+                <div style="font-size:0.82rem; opacity:0.92;">${benefitText}</div>
 
                 <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
@@ -464,8 +476,8 @@ function renderFlashMissionBanner(mission) {
                 </div>
 
                 <div style="margin-top:14px;">
-                    <span style="background:white; color:#b45309; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                        Ver Oferta ${icon}
+                    <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                        Ver Oferta ${t.icon}
                     </span>
                 </div>
 
