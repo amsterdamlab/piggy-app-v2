@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PIGGY APP: CANJE AUTOMÁTICO DE SALDO A BONOS DE CONSUMO & BLINDAJE DE WALLET
--- Instrucciones: Ejecuta este código en el SQL Editor de Supabase para arreglar
--- el bloqueo de seguridad y sanear el saldo de las pruebas anteriores.
+-- Instrucciones: Ejecuta este código en el SQL Editor de Supabase para eliminar
+-- los triggers en conflicto, unificar el cálculo de saldos y sanear las cuentas.
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
@@ -13,12 +13,12 @@ BEGIN
   -- Verificamos si la operación cuenta con el token de autorización de sistema
   IF current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
     
-    -- Si intentan cambiar el saldo de dinero manualmente
+    -- Si intentan cambiar el saldo de dinero manualmente sin pasar por transacciones
     IF NEW.wallet_balance IS DISTINCT FROM OLD.wallet_balance THEN
       RAISE EXCEPTION 'VEEDURIA INTERNA ACTIVA: 🔒 Acceso Denegado. Modificar el saldo directamente destruye la trazabilidad. Inserta un registro en "wallet_transactions" en su lugar.';
     END IF;
 
-    -- Si intentan cambiar el saldo de consumo (referidos/bonos) manually
+    -- Si intentan cambiar el saldo de consumo manually sin pasar por transacciones
     IF NEW.referral_balance IS DISTINCT FROM OLD.referral_balance THEN
       RAISE EXCEPTION 'VEEDURIA INTERNA ACTIVA: 🔒 Acceso Denegado. Modificar el bono de consumo directamente destruye la trazabilidad. Inserta un registro en "wallet_transactions" (tipo consumo) en su lugar.';
     END IF;
@@ -37,52 +37,26 @@ EXECUTE FUNCTION public.prevent_manual_balance_update();
 
 
 -- ------------------------------------------------------------------------------
--- 1. ACTUALIZAR TRIGGER DE SEGURIDAD EN WALLET_TRANSACTIONS
+-- 1. LIMPIEZA DE TRIGGERS EN CONFLICTO (LA CAUSA DE SALDOS DUPLICADOS O RESTADOS)
 -- ------------------------------------------------------------------------------
--- El error ocurría porque el blindaje bloqueaba CUALQUIER crédito positivo (> 0).
--- Modificamos la validación para que el bloqueo SOLO aplique a recargas directas de DINERO,
--- permitiendo que las acreditaciones a BONOS DE CONSUMO (wallet_type = 'consumo') fluyan sin problema.
-CREATE OR REPLACE FUNCTION public.update_wallet_balance_from_transaction()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Bloquear recargas directas arbitrarias de DINERO desde el cliente, EXCEPTO cuando es una operación autorizada por una función interna/RPC o es un crédito a consumo
-  IF NEW.amount > 0 AND auth.role() = 'authenticated' 
-     AND (NEW.wallet_type = 'dinero' OR NEW.wallet_type IS NULL) 
-     AND NEW.type NOT IN ('simulation_recharge') 
-     AND current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
-    RAISE EXCEPTION 'Operación no permitida: No puedes realizar recargas de saldo directas. Usa la pasarela de pagos.';
-  END IF;
-
-  -- 🟢 Autorizamos la transacción internamente para modificar profiles sin ser bloqueados por la Veeduría
-  PERFORM set_config('app.wallet_update_authorized', 'true', true);
-
-  IF NEW.wallet_type = 'consumo' THEN
-    UPDATE public.profiles
-    SET referral_balance = COALESCE(referral_balance, 0) + NEW.amount
-    WHERE id = NEW.user_id;
-  ELSE
-    UPDATE public.profiles
-    SET wallet_balance = COALESCE(wallet_balance, 0) + NEW.amount
-    WHERE id = NEW.user_id;
-  END IF;
-
-  -- 🔴 Removemos la autorización
-  PERFORM set_config('app.wallet_update_authorized', '', true);
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- El error de que a veces sumaba el doble o restaba se debía a la existencia de DOS triggers
+-- compitiendo al mismo tiempo: uno que sumaba montos relativos (+ NEW.amount) y otro que
+-- recalculaba la suma absoluta (SELECT SUM...). Eliminamos el trigger obsoleto y sus funciones
+-- para que exista UNA SOLA FUENTE DE VERDAD.
+DROP TRIGGER IF EXISTS trg_update_wallet_balance ON public.wallet_transactions;
+DROP TRIGGER IF EXISTS update_wallet_balance_from_transaction ON public.wallet_transactions;
+DROP FUNCTION IF EXISTS public.update_wallet_balance_from_transaction() CASCADE;
 
 
 -- ------------------------------------------------------------------------------
--- 2. ACTUALIZAR TRIGGER UNIFICADO (POR SI ESTÁ ACTIVO EN SUPABASE)
+-- 2. UNIFICAR Y BLINDEJAR EL ÚNICO TRIGGER OFICIAL DE CÁLCULO DE SALDOS
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.sync_wallet_balance_to_profile()
 RETURNS TRIGGER AS $$
 DECLARE
   target_user_id uuid;
 BEGIN
-  -- Bloquear recargas directas arbitrarias de DINERO desde el cliente
+  -- Bloquear recargas directas arbitrarias de DINERO desde el cliente no autorizadas
   IF TG_OP = 'INSERT' AND NEW.amount > 0 AND auth.role() = 'authenticated' 
      AND (NEW.wallet_type = 'dinero' OR NEW.wallet_type IS NULL) 
      AND NEW.type NOT IN ('simulation_recharge') 
@@ -99,7 +73,7 @@ BEGIN
   -- 🟢 Autorizamos la actualización internamente para que la Veeduría no la bloquee
   PERFORM set_config('app.wallet_update_authorized', 'true', true);
 
-  -- Actualizamos el saldo calculando la suma total (dinero y consumo separados)
+  -- Actualizamos el saldo calculando la suma total exacta (dinero y consumo separados)
   UPDATE public.profiles 
   SET 
     wallet_balance = (
@@ -120,6 +94,12 @@ BEGIN
   RETURN NULL;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_sync_wallet_balance_to_profile ON public.wallet_transactions;
+CREATE TRIGGER trg_sync_wallet_balance_to_profile
+AFTER INSERT OR UPDATE OR DELETE ON public.wallet_transactions
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_wallet_balance_to_profile();
 
 
 -- ------------------------------------------------------------------------------
@@ -176,32 +156,33 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
 -- ------------------------------------------------------------------------------
--- 4. SANEAMIENTO AUTOMÁTICO DE PRUEBAS ANTERIORES (AUTOCORRECCIÓN)
+-- 4. SANEAMIENTO Y EQUILIBRIO CONTABLE DEFINITIVO (AUTOCORRECCIÓN)
 -- ------------------------------------------------------------------------------
--- Si en tus pruebas anteriores se descontó el saldo de dinero pero falló el crédito en consumo,
--- este bloque detecta esos débitos huérfanos y les crea automáticamente su respectivo crédito
--- en bonos de consumo, devolviendo el equilibrio contable a tu cuenta.
+-- Si en el pasado se asignaron Bonos de Bienvenida ($30.000) directamente en el perfil sin crear
+-- transacciones, cualquier cálculo que use SELECT SUM() los restaba. Este bloque detecta cualquier
+-- diferencia entre perfiles e historial, y genera las transacciones necesarias para que cuadre al 100%.
 DO $$
 DECLARE
   r RECORD;
+  v_diff NUMERIC;
   v_count INTEGER := 0;
 BEGIN
+  -- 4.1. Sanear débitos huérfanos de canjes fallidos de pruebas anteriores
   FOR r IN 
     SELECT wt.user_id, ABS(wt.amount) AS monto, wt.created_at
     FROM public.wallet_transactions wt
     WHERE (wt.description LIKE '%Canje a Bonos de Consumo%' OR wt.description LIKE '%Canje%')
       AND wt.type = 'debit'
-      AND wt.wallet_type = 'dinero'
+      AND (wt.wallet_type = 'dinero' OR wt.wallet_type IS NULL)
       AND NOT EXISTS (
         SELECT 1 FROM public.wallet_transactions wt2
         WHERE wt2.user_id = wt.user_id
           AND wt2.wallet_type = 'consumo'
-          AND wt2.created_at >= (wt.created_at - INTERVAL '2 minutes')
-          AND wt2.created_at <= (wt.created_at + INTERVAL '2 minutes')
+          AND wt2.created_at >= (wt.created_at - INTERVAL '5 minutes')
+          AND wt2.created_at <= (wt.created_at + INTERVAL '5 minutes')
           AND ABS(wt2.amount) = ABS(wt.amount)
       )
   LOOP
-    -- Reautorizar antes del insert porque los triggers anidados limpian el config de sesión al terminar
     PERFORM set_config('app.wallet_update_authorized', 'true', true);
     INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
     VALUES (r.user_id, r.monto, 'credit', 'Bono de Consumo acreditado por canje (Saneamiento prueba anterior)', 'consumo', r.created_at + INTERVAL '1 second');
@@ -210,10 +191,49 @@ BEGIN
     RAISE NOTICE 'Saneado canje huérfano para usuario % por monto %', r.user_id, r.monto;
   END LOOP;
 
-  -- Re-autorizar explícitamente justo antes del UPDATE en profiles por si un trigger anterior limpió el token
+  -- 4.2. Sanear discrepancias de Bonos de Bienvenida o referidos antiguos que no tenían transacción
+  FOR r IN 
+    SELECT p.id AS user_id, COALESCE(p.referral_balance, 0) AS saldo_perfil, COALESCE((
+      SELECT SUM(wt.amount) FROM public.wallet_transactions wt 
+      WHERE wt.user_id = p.id AND wt.wallet_type = 'consumo'
+    ), 0) AS suma_tx
+    FROM public.profiles p
+    WHERE COALESCE(p.referral_balance, 0) > 0
+  LOOP
+    v_diff := r.saldo_perfil - r.suma_tx;
+    IF v_diff > 0 THEN
+      PERFORM set_config('app.wallet_update_authorized', 'true', true);
+      INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
+      VALUES (r.user_id, v_diff, 'credit', 'Bono de Bienvenida / Saldo inicial en bonos (Saneamiento contable)', 'consumo', now() - INTERVAL '15 days');
+      
+      v_count := v_count + 1;
+      RAISE NOTICE 'Saneado saldo inicial de bonos para usuario % por diferencia de %', r.user_id, v_diff;
+    END IF;
+  END LOOP;
+
+  -- 4.3. Sanear discrepancias de saldo de dinero
+  FOR r IN 
+    SELECT p.id AS user_id, COALESCE(p.wallet_balance, 0) AS saldo_perfil, COALESCE((
+      SELECT SUM(wt.amount) FROM public.wallet_transactions wt 
+      WHERE wt.user_id = p.id AND (wt.wallet_type = 'dinero' OR wt.wallet_type IS NULL)
+    ), 0) AS suma_tx
+    FROM public.profiles p
+    WHERE COALESCE(p.wallet_balance, 0) > 0
+  LOOP
+    v_diff := r.saldo_perfil - r.suma_tx;
+    IF v_diff > 0 THEN
+      PERFORM set_config('app.wallet_update_authorized', 'true', true);
+      INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
+      VALUES (r.user_id, v_diff, 'recharge', 'Saldo inicial de dinero (Saneamiento contable)', 'dinero', now() - INTERVAL '15 days');
+      
+      v_count := v_count + 1;
+      RAISE NOTICE 'Saneado saldo inicial de dinero para usuario % por diferencia de %', r.user_id, v_diff;
+    END IF;
+  END LOOP;
+
+  -- 4.4. Resincronizar finalmente todos los perfiles utilizando la ÚNICA fuente de verdad (la suma exacta de transacciones)
   PERFORM set_config('app.wallet_update_authorized', 'true', true);
 
-  -- Forzar la resincronización de los saldos en profiles para todos los usuarios afectados
   UPDATE public.profiles p
   SET 
     wallet_balance = COALESCE((
@@ -223,11 +243,8 @@ BEGIN
     referral_balance = COALESCE((
       SELECT SUM(amount) FROM public.wallet_transactions wt 
       WHERE wt.user_id = p.id AND wt.wallet_type = 'consumo'
-    ), 0)
-  WHERE EXISTS (
-    SELECT 1 FROM public.wallet_transactions wt3 WHERE wt3.user_id = p.id AND wt3.description LIKE '%Canje%'
-  );
+    ), 0);
 
   PERFORM set_config('app.wallet_update_authorized', '', true);
-  RAISE NOTICE 'Proceso de saneamiento finalizado. Total de transacciones restauradas: %', v_count;
+  RAISE NOTICE 'Proceso de saneamiento y unificación contable finalizado exitosamente. Total de ajustes: %', v_count;
 END $$;
