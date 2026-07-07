@@ -6,7 +6,15 @@
 -- 0. Drop deprecated separate table if it exists from previous iterations
 DROP TABLE IF EXISTS public.flash_mission_campaigns CASCADE;
 
--- 1. Create or recreate the consolidated user_flash_missions table
+-- 1. Create the piggy_type ENUM if it does not exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'piggy_type_enum') THEN
+    CREATE TYPE public.piggy_type_enum AS ENUM ('silver', 'gold', 'premium', 'advanced30', 'advanced60');
+  END IF;
+END $$;
+
+-- 2. Create or recreate the consolidated user_flash_missions table
 CREATE TABLE IF NOT EXISTS public.user_flash_missions (
   id                 UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id            UUID REFERENCES public.profiles(id) ON DELETE CASCADE NULL, -- NULL indicates a Global Template
@@ -15,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.user_flash_missions (
   title              TEXT NOT NULL,                                              -- Custom mission title
   description        TEXT,                                                       -- Mission description
   icon               TEXT DEFAULT '⚡',                                          -- Mission icon
-  piggy_type         TEXT NOT NULL CHECK (piggy_type IN ('silver', 'gold', 'premium', 'advanced30', 'advanced60')),
+  piggy_type         public.piggy_type_enum NOT NULL,                            -- Dropdown Enum selection
   price              NUMERIC DEFAULT 1000000,
   duration_hours     INTEGER DEFAULT 72,
   is_active          BOOLEAN DEFAULT FALSE,
@@ -53,10 +61,10 @@ BEGIN
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS extra_roi_bonus;
   EXCEPTION WHEN others THEN END;
   
-  -- Re-apply check constraint on piggy_type
+  -- Convert piggy_type column to enum safely if it was text
   BEGIN
     ALTER TABLE public.user_flash_missions DROP CONSTRAINT IF EXISTS user_flash_missions_piggy_type_check;
-    ALTER TABLE public.user_flash_missions ADD CONSTRAINT user_flash_missions_piggy_type_check CHECK (piggy_type IN ('silver', 'gold', 'premium', 'advanced30', 'advanced60'));
+    ALTER TABLE public.user_flash_missions ALTER COLUMN piggy_type TYPE public.piggy_type_enum USING piggy_type::public.piggy_type_enum;
   EXCEPTION WHEN others THEN END;
 END $$;
 
@@ -191,14 +199,3 @@ DROP TRIGGER IF EXISTS trg_assign_flash_missions_new_user ON public.profiles;
 CREATE TRIGGER trg_assign_flash_missions_new_user
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.assign_active_flash_missions_to_new_user();
-
--- ==============================================================================
--- EXAMPLE USAGE IN SUPABASE SQL EDITOR OR STUDIO:
--- ==============================================================================
--- 1. Create an instant Global Flash Mission for Advanced30 (starts immediately):
--- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active)
--- VALUES (NULL, '¡Acelera tu Crecimiento!', 'Inicia tu cerdito en el 2do mes ahorrando 30 días de espera.', 'advanced30', 1000000, TRUE);
-
--- 2. Create a Scheduled Global Flash Mission for Advanced60 (scheduled for tomorrow at 14:00):
--- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active, scheduled_at)
--- VALUES (NULL, '¡Salto Cuántico 60 Días!', 'Inicia tu cerdito directo en el 3er mes ahorrando 60 días.', 'advanced60', 1500000, TRUE, NOW() + INTERVAL '1 day');
