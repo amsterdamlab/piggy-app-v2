@@ -133,11 +133,11 @@ function renderAllyCard(ally) {
   const address = ally.address || ally.location || 'Calle Principal # 123';
 
   const imageHtml = imageUrl
-    ? `<img src="${imageUrl}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous">`
+    ? `<img src="${imageUrl}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=\\'ally-card__image-placeholder\\'>${ally.name.charAt(0).toUpperCase()}</div>'">`
     : `<div class="ally-card__image-placeholder">${ally.name.charAt(0).toUpperCase()}</div>`;
 
   return `
-    <div class="ally-card card animate-fade-in-up">
+    <div class="ally-card animate-fade-in-up">
       <div class="ally-card__image-container">
         ${imageHtml}
         <div class="ally-card__category-tag">

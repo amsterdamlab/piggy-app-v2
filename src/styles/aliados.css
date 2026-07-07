@@ -1,104 +1,108 @@
 /* ============================================
-   PIGGY APP — Aliados Section Styles
+   PIGGY APP — Aliados View Styles
    ============================================ */
 
 .aliados-page {
-    padding-bottom: var(--space-2xl);
+    background: var(--color-bg);
 }
 
-.aliados-header {
-    margin-bottom: var(--space-lg);
+.aliados-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-extrabold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
 }
 
-.aliados-header__subtitle {
-    color: var(--color-text-muted);
+.aliados-subtitle {
     font-size: var(--text-sm);
-    margin-top: var(--space-2xs);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-lg);
+    line-height: var(--leading-relaxed);
 }
 
-/* ---- Category Filters ---- */
+/* Filters Container & Sliding Menu */
 .aliados-filters {
     display: flex;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     overflow-x: auto;
-    padding-bottom: var(--space-sm);
-    margin-bottom: var(--space-lg);
+    padding: var(--space-xs) var(--space-2xs) var(--space-md) var(--space-2xs);
+    margin-bottom: var(--space-xl);
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* IE/Edge */
+    scroll-behavior: smooth;
 }
 
 .aliados-filters::-webkit-scrollbar {
     display: none;
-    /* Chrome/Safari */
 }
 
-.filter-btn {
-    padding: var(--space-xs) var(--space-md);
+.aliados-filter {
+    padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-full);
     font-size: var(--text-sm);
     font-weight: var(--font-semibold);
-    background-color: var(--color-white);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
     white-space: nowrap;
+    background: var(--color-bg-card);
+    color: var(--color-text-secondary);
+    border: 1.5px solid var(--color-border);
+    transition: all var(--transition-spring);
     cursor: pointer;
-    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
 }
 
-.filter-btn:hover {
+.aliados-filter--active {
+    background: var(--gradient-cta);
+    color: var(--color-white);
+    border-color: transparent;
+    box-shadow: var(--shadow-button);
+    transform: translateY(-2px);
+}
+
+.aliados-filter:not(.aliados-filter--active):hover {
     border-color: var(--color-primary-light);
     color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.filter-btn--active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    border-color: var(--color-primary);
-}
-
-.filter-btn--active:hover {
-    background-color: var(--color-primary-dark);
-    color: var(--color-white);
-}
-
-/* ---- Allies Grid ---- */
-.aliados-grid {
+/* Allies List - Responsive Grid Layout */
+.aliados-list {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--space-lg);
+    align-items: stretch;
 }
 
-@media (min-width: 640px) {
-    .aliados-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ---- Ally Card ---- */
+/* Ally Card - Premium Design */
 .ally-card {
-    background: var(--color-white);
+    padding: 0;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
-    transition: transform var(--transition-base), box-shadow var(--transition-base);
     display: flex;
     flex-direction: column;
+    background: var(--color-bg-card);
+    height: 100%;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
 .ally-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-primary-100);
 }
 
 .ally-card__image-container {
     position: relative;
     width: 100%;
-    height: 180px;
-    background-color: var(--color-bg);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    background-color: var(--color-bg-section);
+    min-height: 180px;
     overflow: hidden;
 }
 
@@ -106,6 +110,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
     transition: transform var(--transition-slow);
 }
 
@@ -119,29 +124,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: white;
-    font-size: 48px;
+    background: var(--gradient-offer);
+    color: var(--color-white);
+    font-size: var(--text-4xl);
     font-weight: var(--font-extrabold);
 }
 
 .ally-card__category-tag {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    padding: 6px 12px;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: var(--space-2xs) var(--space-sm);
     border-radius: var(--radius-full);
     font-size: var(--text-xs);
     font-weight: var(--font-bold);
     color: var(--color-primary-dark);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2xs);
     box-shadow: var(--shadow-sm);
-    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    z-index: 2;
 }
 
 .ally-card__tag-icon {
@@ -150,96 +156,94 @@
 
 .ally-card__content {
     padding: var(--space-lg);
-    flex: 1;
     display: flex;
     flex-direction: column;
-}
-
-.ally-card__header {
-    margin-bottom: var(--space-sm);
+    flex: 1;
+    gap: var(--space-sm);
 }
 
 .ally-card__name {
-    font-size: var(--text-lg);
-    font-weight: var(--font-bold);
+    font-size: var(--text-xl);
+    font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
+    margin-bottom: 2px;
+    line-height: var(--leading-tight);
+}
+
+.ally-card__specialty {
+    font-size: var(--text-sm);
+    color: var(--color-primary-dark);
+    font-weight: var(--font-semibold);
+    display: block;
     margin-bottom: var(--space-2xs);
 }
 
-.ally-card__location {
+/* Contact Lines */
+.ally-card__contact-line {
     font-size: var(--text-xs);
-    color: var(--color-text-muted);
+    color: var(--color-text-secondary);
+    margin: 0;
+    padding: 0;
+    line-height: var(--leading-normal);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-2xs);
 }
 
 .ally-card__description {
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
     line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-md);
-    flex: 1;
+    margin: var(--space-2xs) 0 var(--space-sm) 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* ---- Benefit Box ---- */
-.ally-card__benefit-box {
-    background: linear-gradient(135deg, var(--color-primary-light), rgba(16, 185, 129, 0.1));
-    border: 1px dashed var(--color-primary);
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
-    margin-bottom: var(--space-md);
+.ally-card__benefit {
+    background: var(--color-primary-50);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    border: 1px solid var(--color-primary-100);
+    margin-top: auto;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.ally-card__benefit-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: var(--font-extrabold);
-    color: var(--color-primary-dark);
-    margin-bottom: 2px;
+.ally-card:hover .ally-card__benefit {
+    background: var(--color-primary-100);
+    border-color: var(--color-primary-light);
+}
+
+.ally-card__benefit-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: var(--gradient-cta);
+    color: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-bold);
+    font-size: var(--text-lg);
+    flex-shrink: 0;
+    box-shadow: var(--shadow-card);
+}
+
+.ally-card__benefit-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .ally-card__benefit-text {
     font-size: var(--text-sm);
-    font-weight: var(--font-bold);
+    font-weight: var(--font-extrabold);
     color: var(--color-primary-dark);
-}
-
-/* ---- Footer Actions ---- */
-.ally-card__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--color-border);
-}
-
-.ally-card__address {
-    font-size: var(--text-xs);
-    color: var(--color-text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-}
-
-.ally-card__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: var(--space-xs) var(--space-md);
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    border-radius: var(--radius-full);
-    font-size: var(--text-xs);
-    font-weight: var(--font-bold);
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.ally-card__btn:hover {
-    background-color: var(--color-primary-dark);
-    transform: scale(1.02);
+    line-height: var(--leading-tight);
 }
