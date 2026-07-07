@@ -1,14 +1,12 @@
 -- =============================================
--- FIX: Referral Commission on First Purchase
+-- FIX: Referral Commission on First Purchase & Audit Log
 -- Run this in Supabase SQL Editor
 -- =============================================
--- Problem: process_referral_on_purchase may not exist or has flawed 
--- "first purchase" detection logic. This script recreates it properly.
 
 -- ─── 1. Drop old version to avoid conflicts ───
 DROP FUNCTION IF EXISTS process_referral_on_purchase(UUID);
 
--- ─── 2. Recreate with robust first-purchase logic ───
+-- ─── 2. Recreate with robust first-purchase and audit logging logic ───
 CREATE OR REPLACE FUNCTION process_referral_on_purchase(p_user_id UUID)
 RETURNS JSONB AS $$
 DECLARE
@@ -17,6 +15,7 @@ DECLARE
   v_commission INTEGER;
   v_tier VARCHAR(10);
   v_piggy_count INTEGER;
+  v_referred_name VARCHAR(255);
 BEGIN
   -- Count how many piggies the user has (including the one just inserted)
   SELECT COUNT(*) INTO v_piggy_count
@@ -62,10 +61,20 @@ BEGIN
       completed_at = now()
   WHERE id = v_referral.id;
 
-  -- Credit the referrer's balance
-  UPDATE profiles
-  SET referral_balance = COALESCE(referral_balance, 0) + v_commission
-  WHERE id = v_referral.referrer_id;
+  -- Get referred user's name
+  SELECT COALESCE(full_name, 'Usuario Referido') INTO v_referred_name
+  FROM profiles
+  WHERE id = p_user_id;
+
+  -- Credit the referrer's balance via wallet_transactions (trigger will update profiles.referral_balance automatically)
+  INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type)
+  VALUES (
+    v_referral.referrer_id,
+    v_commission,
+    'credit',
+    'Comisión de Referido: Primera compra de ' || v_referred_name,
+    'consumo'
+  );
 
   RETURN jsonb_build_object(
     'triggered', true,
@@ -80,77 +89,92 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION process_referral_on_purchase TO authenticated;
 GRANT EXECUTE ON FUNCTION process_referral_on_purchase TO service_role;
 
--- ─── 4. Also ensure validate_referral_code and link_referral have grants ───
-GRANT EXECUTE ON FUNCTION validate_referral_code TO authenticated;
-GRANT EXECUTE ON FUNCTION validate_referral_code TO service_role;
-GRANT EXECUTE ON FUNCTION link_referral TO authenticated;
-GRANT EXECUTE ON FUNCTION link_referral TO service_role;
-
--- ─── 5. Verification: check pending referrals that should have been completed ───
--- This retroactively fixes any referrals that were missed
--- It finds users who have piggies AND a pending referral, meaning the 
--- commission was never triggered.
+-- ─── 4. Retroactive Audit Log Fix for Completed Referrals without Transactions ───
+-- This script runs a check across all completed referrals and creates any missing 
+-- wallet_transactions logs for the referrers, temporarily disabling the trigger 
+-- to prevent double-crediting of the referral_balance.
 DO $$
 DECLARE
-  v_record RECORD;
-  v_completed_count INTEGER;
-  v_commission INTEGER;
-  v_tier VARCHAR(10);
+  v_referrer RECORD;
+  v_completed_referrals_count INTEGER;
+  v_logged_transactions_count INTEGER;
+  v_missing_transactions_count INTEGER;
+  v_referred_user RECORD;
 BEGIN
-  FOR v_record IN 
-    SELECT r.id AS referral_id, r.referrer_id, r.referred_id
-    FROM referrals r
-    WHERE r.status = 'pending'
-    AND EXISTS (
-      SELECT 1 FROM piggies p WHERE p.user_id = r.referred_id
-    )
-  LOOP
-    -- Determine commission tier for this referrer
-    SELECT COUNT(*) INTO v_completed_count
-    FROM referrals
-    WHERE referrer_id = v_record.referrer_id AND status = 'completed';
+  -- Disable trigger to prevent double-crediting balance
+  ALTER TABLE public.wallet_transactions DISABLE TRIGGER trg_update_wallet_balance;
 
-    IF v_completed_count < 5 THEN
-      v_commission := 30000;
-      v_tier := 'tier_1';
-    ELSIF v_completed_count < 15 THEN
-      v_commission := 50000;
-      v_tier := 'tier_2';
-    ELSE
-      v_commission := 80000;
-      v_tier := 'tier_3';
+  -- Loop through all referrers who have completed referrals
+  FOR v_referrer IN 
+    SELECT DISTINCT r.referrer_id 
+    FROM public.referrals r
+    WHERE r.status = 'completed'
+  Loop
+    -- Get count of completed referrals
+    SELECT COUNT(*) INTO v_completed_referrals_count
+    FROM public.referrals
+    WHERE referrer_id = v_referrer.referrer_id AND status = 'completed';
+
+    -- Get count of logged commission transactions
+    SELECT COUNT(*) INTO v_logged_transactions_count
+    FROM public.wallet_transactions
+    WHERE user_id = v_referrer.referrer_id 
+      AND wallet_type = 'consumo' 
+      AND type = 'credit'
+      AND (description LIKE 'Comisión de Referido%' OR description LIKE '%comisión%referido%');
+
+    -- Calculate how many logs are missing
+    v_missing_transactions_count := v_completed_referrals_count - v_logged_transactions_count;
+
+    IF v_missing_transactions_count > 0 THEN
+      RAISE NOTICE 'Referrer % has % completed referrals but only % logged transactions. Logging % missing transactions...',
+        v_referrer.referrer_id, v_completed_referrals_count, v_logged_transactions_count, v_missing_transactions_count;
+
+      -- Find the completed referrals and check name-based existence
+      FOR v_referred_user IN 
+        SELECT r.referred_id, r.commission_amount, p.full_name, r.completed_at
+        FROM public.referrals r
+        LEFT JOIN public.profiles p ON r.referred_id = p.id
+        WHERE r.referrer_id = v_referrer.referrer_id AND r.status = 'completed'
+        ORDER BY r.completed_at ASC
+      LOOP
+        IF NOT EXISTS (
+          SELECT 1 
+          FROM public.wallet_transactions 
+          WHERE user_id = v_referrer.referrer_id 
+            AND wallet_type = 'consumo'
+            AND description LIKE '%' || COALESCE(v_referred_user.full_name, 'Usuario Referido') || '%'
+        ) AND v_missing_transactions_count > 0 THEN
+          -- Insert the missing transaction log
+          INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
+          VALUES (
+            v_referrer.referrer_id,
+            COALESCE(v_referred_user.commission_amount, 30000),
+            'credit',
+            'Comisión de Referido: Primera compra de ' || COALESCE(v_referred_user.full_name, 'Usuario Referido'),
+            'consumo',
+            COALESCE(v_referred_user.completed_at, now())
+          );
+          v_missing_transactions_count := v_missing_transactions_count - 1;
+        END IF;
+      END LOOP;
+
+      -- If there are still missing transactions, insert generic ones
+      WHILE v_missing_transactions_count > 0 LOOP
+        INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type)
+        VALUES (
+          v_referrer.referrer_id,
+          30000,
+          'credit',
+          'Comisión de Referido (Ajuste de Trazabilidad)',
+          'consumo'
+        );
+        v_missing_transactions_count := v_missing_transactions_count - 1;
+      END LOOP;
+
     END IF;
-
-    -- Complete the referral
-    UPDATE referrals
-    SET status = 'completed',
-        commission_amount = v_commission,
-        commission_tier = v_tier,
-        completed_at = now()
-    WHERE id = v_record.referral_id;
-
-    -- Credit the referrer
-    UPDATE profiles
-    SET referral_balance = COALESCE(referral_balance, 0) + v_commission
-    WHERE id = v_record.referrer_id;
-
-    RAISE NOTICE 'Fixed referral % -> referrer % credited %', 
-      v_record.referral_id, v_record.referrer_id, v_commission;
   END LOOP;
-END $$;
 
--- ─── 6. Final verification query ───
-SELECT 
-  r.id,
-  r.referrer_id,
-  r.referred_id,
-  r.status,
-  r.commission_amount,
-  r.commission_tier,
-  p_referrer.full_name AS referrer_name,
-  p_referred.full_name AS referred_name,
-  p_referrer.referral_balance AS referrer_balance
-FROM referrals r
-LEFT JOIN profiles p_referrer ON r.referrer_id = p_referrer.id
-LEFT JOIN profiles p_referred ON r.referred_id = p_referred.id
-ORDER BY r.created_at DESC;
+  -- Re-enable trigger
+  ALTER TABLE public.wallet_transactions ENABLE TRIGGER trg_update_wallet_balance;
+END $$;
