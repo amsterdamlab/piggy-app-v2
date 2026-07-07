@@ -1,15 +1,23 @@
 -- ==============================================================================
 -- PIGGY APP: CANJE AUTOMÁTICO DE SALDO A BONOS DE CONSUMO & BLINDAJE DE WALLET
--- Instrucciones: Ejecuta este código en el SQL Editor de Supabase
+-- Instrucciones: Ejecuta este código en el SQL Editor de Supabase para arreglar
+-- el bloqueo de seguridad y sanear el saldo de las pruebas anteriores.
 -- ==============================================================================
 
+-- ------------------------------------------------------------------------------
 -- 1. ACTUALIZAR TRIGGER DE SEGURIDAD EN WALLET_TRANSACTIONS
--- Modificamos la validación para permitir transacciones que cuenten con la autorización interna de la app.
+-- ------------------------------------------------------------------------------
+-- El error ocurría porque el blindaje bloqueaba CUALQUIER crédito positivo (> 0).
+-- Modificamos la validación para que el bloqueo SOLO aplique a recargas directas de DINERO,
+-- permitiendo que las acreditaciones a BONOS DE CONSUMO (wallet_type = 'consumo') fluyan sin problema.
 CREATE OR REPLACE FUNCTION public.update_wallet_balance_from_transaction()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- Bloquear recargas directas arbitrarias desde el cliente, EXCEPTO cuando es una operación autorizada por una función interna/RPC
-  IF NEW.amount > 0 AND auth.role() = 'authenticated' AND current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
+  -- Bloquear recargas directas arbitrarias de DINERO desde el cliente, EXCEPTO cuando es una operación autorizada por una función interna/RPC o es un crédito a consumo
+  IF NEW.amount > 0 AND auth.role() = 'authenticated' 
+     AND (NEW.wallet_type = 'dinero' OR NEW.wallet_type IS NULL) 
+     AND NEW.type NOT IN ('simulation_recharge') 
+     AND current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
     RAISE EXCEPTION 'Operación no permitida: No puedes realizar recargas de saldo directas. Usa la pasarela de pagos.';
   END IF;
 
@@ -34,14 +42,19 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
+-- ------------------------------------------------------------------------------
 -- 2. ACTUALIZAR TRIGGER UNIFICADO (POR SI ESTÁ ACTIVO EN SUPABASE)
+-- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.sync_wallet_balance_to_profile()
 RETURNS TRIGGER AS $$
 DECLARE
   target_user_id uuid;
 BEGIN
-  -- Bloquear recargas directas arbitrarias desde el cliente
-  IF TG_OP = 'INSERT' AND NEW.amount > 0 AND auth.role() = 'authenticated' AND current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
+  -- Bloquear recargas directas arbitrarias de DINERO desde el cliente
+  IF TG_OP = 'INSERT' AND NEW.amount > 0 AND auth.role() = 'authenticated' 
+     AND (NEW.wallet_type = 'dinero' OR NEW.wallet_type IS NULL) 
+     AND NEW.type NOT IN ('simulation_recharge') 
+     AND current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
     RAISE EXCEPTION 'Operación no permitida: No puedes realizar recargas de saldo directas. Usa la pasarela de pagos.';
   END IF;
 
@@ -77,7 +90,9 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
+-- ------------------------------------------------------------------------------
 -- 3. CREAR PROCEDIMIENTO RPC ATÓMICO PARA EL CANJE DE BONOS DE CONSUMO
+-- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.convert_balance_to_consumption_bonus(p_amount NUMERIC)
 RETURNS JSONB AS $$
 DECLARE
@@ -126,3 +141,58 @@ EXCEPTION WHEN OTHERS THEN
   RETURN jsonb_build_object('success', false, 'reason', SQLERRM);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- ------------------------------------------------------------------------------
+-- 4. SANEAMIENTO AUTOMÁTICO DE PRUEBAS ANTERIORES (AUTOCORRECCIÓN)
+-- ------------------------------------------------------------------------------
+-- Si en tus pruebas anteriores se descontó el saldo de dinero pero falló el crédito en consumo,
+-- este bloque detecta esos débitos huérfanos y les crea automáticamente su respectivo crédito
+-- en bonos de consumo, devolviendo el equilibrio contable a tu cuenta.
+DO $$
+DECLARE
+  r RECORD;
+  v_count INTEGER := 0;
+BEGIN
+  PERFORM set_config('app.wallet_update_authorized', 'true', true);
+
+  FOR r IN 
+    SELECT wt.user_id, ABS(wt.amount) AS monto, wt.created_at
+    FROM public.wallet_transactions wt
+    WHERE (wt.description LIKE '%Canje a Bonos de Consumo%' OR wt.description LIKE '%Canje%')
+      AND wt.type = 'debit'
+      AND wt.wallet_type = 'dinero'
+      AND NOT EXISTS (
+        SELECT 1 FROM public.wallet_transactions wt2
+        WHERE wt2.user_id = wt.user_id
+          AND wt2.wallet_type = 'consumo'
+          AND wt2.created_at >= (wt.created_at - INTERVAL '2 minutes')
+          AND wt2.created_at <= (wt.created_at + INTERVAL '2 minutes')
+          AND ABS(wt2.amount) = ABS(wt.amount)
+      )
+  LOOP
+    INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
+    VALUES (r.user_id, r.monto, 'credit', 'Bono de Consumo acreditado por canje (Saneamiento prueba anterior)', 'consumo', r.created_at + INTERVAL '1 second');
+    
+    v_count := v_count + 1;
+    RAISE NOTICE 'Saneado canje huérfano para usuario % por monto %', r.user_id, r.monto;
+  END LOOP;
+
+  -- Forzar la resincronización de los saldos en profiles para todos los usuarios afectados
+  UPDATE public.profiles p
+  SET 
+    wallet_balance = COALESCE((
+      SELECT SUM(amount) FROM public.wallet_transactions wt 
+      WHERE wt.user_id = p.id AND (wt.wallet_type = 'dinero' OR wt.wallet_type IS NULL)
+    ), 0),
+    referral_balance = COALESCE((
+      SELECT SUM(amount) FROM public.wallet_transactions wt 
+      WHERE wt.user_id = p.id AND wt.wallet_type = 'consumo'
+    ), 0)
+  WHERE EXISTS (
+    SELECT 1 FROM public.wallet_transactions wt3 WHERE wt3.user_id = p.id AND wt3.description LIKE '%Canje%'
+  );
+
+  PERFORM set_config('app.wallet_update_authorized', '', true);
+  RAISE NOTICE 'Proceso de saneamiento finalizado. Total de transacciones restauradas: %', v_count;
+END $$;
