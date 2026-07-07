@@ -312,7 +312,7 @@ export function showCheckoutModal(item) {
                        "
                        onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
                        onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
-                />
+                 />
            </div>
 
            <!-- Name Suggestions (Pills) -->
@@ -333,7 +333,7 @@ export function showCheckoutModal(item) {
            </div>
            
            <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:12px;">
-                * Debes darle un nombre para continuar
+                 * Debes darle un nombre para continuar
            </div>
       </div>
 
@@ -417,10 +417,11 @@ export function showCheckoutModal(item) {
           opacity: 0.5;
           pointer-events: none;
         ">
-          Confirmar Compra con mi Wallet
+          ${renderIcon('pigSide', '', '20')}
+          Confirmar Compra
         </button>
       </div>
-
+ 
       <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 32px; padding-bottom: 20px; display: flex; justify-content: center;">
          <div class="secure-badge" style="display: flex; gap: 16px; color: var(--color-text-tertiary); font-size: 0.8rem;">
             <span>&#128274; Pagos seguros</span>
@@ -527,7 +528,7 @@ export function showCheckoutModal(item) {
   // Confirm Purchase
   confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
-    
+     
     // Check name validation on click
     if (customName.length < 3) {
       errorMsg.style.opacity = '1';
@@ -563,7 +564,7 @@ export function showCheckoutModal(item) {
     } catch (error) {
       console.error(error);
       alert('Error en la transaccion: ' + error.message);
-      confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
+      confirmBtn.innerHTML = `${renderIcon('pigSide', '', '20')} Confirmar Compra`;
       confirmBtn.style.pointerEvents = 'auto';
     }
   });

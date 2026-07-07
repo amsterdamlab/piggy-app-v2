@@ -215,7 +215,8 @@ function showCheckoutModal(piggyName) {
           box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
           opacity:0.5; pointer-events:none;
         ">
-          Confirmar Compra con mi Wallet
+          ${renderIcon('pigSide', '', '20')}
+          Confirmar Compra
         </button>
       </div>
     </div>
@@ -284,7 +285,7 @@ function showCheckoutModal(piggyName) {
     } catch (error) {
       console.error(error);
       alert('Error en la transacci\u00F3n: ' + error.message);
-      confirmBtn.innerHTML = 'Confirmar Compra con mi Wallet';
+      confirmBtn.innerHTML = `${renderIcon('pigSide', '', '20')} Confirmar Compra`;
       confirmBtn.style.pointerEvents = 'auto';
     }
   });
