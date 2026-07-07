@@ -28,7 +28,7 @@ const MISSION_DEFINITIONS = [
         key: 'm2', sortOrder: 2,
         title: 'Compra tu primer Piggy',
         reward: 'Aprende a recargar tu billetera',
-        icon: '🐷', cta: 'open_buy_piggy',
+        icon: '🐷', cta: '#/mercado',
         autoType: 'first_piggy',
         requires: 'm1',
     },
