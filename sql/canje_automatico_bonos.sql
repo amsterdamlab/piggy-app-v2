@@ -5,6 +5,38 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
+-- 0. ACTUALIZAR REGLA DE VEEDURÍA INTERNA (BLINDAJE DE PROFILES)
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.prevent_manual_balance_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Verificamos si la operación cuenta con el token de autorización de sistema
+  IF current_setting('app.wallet_update_authorized', true) IS DISTINCT FROM 'true' THEN
+    
+    -- Si intentan cambiar el saldo de dinero manualmente
+    IF NEW.wallet_balance IS DISTINCT FROM OLD.wallet_balance THEN
+      RAISE EXCEPTION 'VEEDURIA INTERNA ACTIVA: 🔒 Acceso Denegado. Modificar el saldo directamente destruye la trazabilidad. Inserta un registro en "wallet_transactions" en su lugar.';
+    END IF;
+
+    -- Si intentan cambiar el saldo de consumo (referidos/bonos) manually
+    IF NEW.referral_balance IS DISTINCT FROM OLD.referral_balance THEN
+      RAISE EXCEPTION 'VEEDURIA INTERNA ACTIVA: 🔒 Acceso Denegado. Modificar el bono de consumo directamente destruye la trazabilidad. Inserta un registro en "wallet_transactions" (tipo consumo) en su lugar.';
+    END IF;
+
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_prevent_manual_balance_update ON public.profiles;
+CREATE TRIGGER trg_prevent_manual_balance_update
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.prevent_manual_balance_update();
+
+
+-- ------------------------------------------------------------------------------
 -- 1. ACTUALIZAR TRIGGER DE SEGURIDAD EN WALLET_TRANSACTIONS
 -- ------------------------------------------------------------------------------
 -- El error ocurría porque el blindaje bloqueaba CUALQUIER crédito positivo (> 0).
@@ -154,8 +186,6 @@ DECLARE
   r RECORD;
   v_count INTEGER := 0;
 BEGIN
-  PERFORM set_config('app.wallet_update_authorized', 'true', true);
-
   FOR r IN 
     SELECT wt.user_id, ABS(wt.amount) AS monto, wt.created_at
     FROM public.wallet_transactions wt
@@ -171,12 +201,17 @@ BEGIN
           AND ABS(wt2.amount) = ABS(wt.amount)
       )
   LOOP
+    -- Reautorizar antes del insert porque los triggers anidados limpian el config de sesión al terminar
+    PERFORM set_config('app.wallet_update_authorized', 'true', true);
     INSERT INTO public.wallet_transactions (user_id, amount, type, description, wallet_type, created_at)
     VALUES (r.user_id, r.monto, 'credit', 'Bono de Consumo acreditado por canje (Saneamiento prueba anterior)', 'consumo', r.created_at + INTERVAL '1 second');
     
     v_count := v_count + 1;
     RAISE NOTICE 'Saneado canje huérfano para usuario % por monto %', r.user_id, r.monto;
   END LOOP;
+
+  -- Re-autorizar explícitamente justo antes del UPDATE en profiles por si un trigger anterior limpió el token
+  PERFORM set_config('app.wallet_update_authorized', 'true', true);
 
   -- Forzar la resincronización de los saldos en profiles para todos los usuarios afectados
   UPDATE public.profiles p
