@@ -131,18 +131,6 @@ export async function showReferralModal() {
         <div style="font-size:1.45rem; font-weight:800; letter-spacing:3px; font-family:monospace; line-height:1.2; margin-top:2px;">${referralCode}</div>
       </div>
 
-      <!-- Stats Row -->
-      <div style="display:flex; gap:8px; margin-bottom:20px;">
-        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
-          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${completedCount}</div>
-          <div style="font-size:0.65rem; color:#6b7280;">Completados</div>
-        </div>
-        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
-          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${pendingCount}</div>
-          <div style="font-size:0.65rem; color:#6b7280;">Pendientes</div>
-        </div>
-      </div>
-
       <!-- Mis Referidos -->
       <div style="margin-bottom:20px;">
         <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;">Mis Referidos</h4>
