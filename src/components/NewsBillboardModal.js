@@ -31,7 +31,9 @@ export function showNewsBillboardModal(slides) {
   modal.style.width = '100dvw';
   modal.style.height = '100dvh';
   modal.style.zIndex = '999999';
-  modal.style.background = '#000000';
+  modal.style.background = 'rgba(0, 0, 0, 0.75)';
+  modal.style.backdropFilter = 'blur(6px)';
+  modal.style.webkitBackdropFilter = 'blur(6px)';
   modal.style.display = 'flex';
   modal.style.alignItems = 'center';
   modal.style.justifyContent = 'center';
@@ -41,9 +43,14 @@ export function showNewsBillboardModal(slides) {
   styleEl.textContent = `
     .news-slider {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 90%;
+      height: 90%;
+      max-width: 960px;
+      max-height: 85dvh;
+      border-radius: 5px;
       overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      background: #000000;
     }
     .news-slides-container {
       display: flex;
@@ -67,15 +74,15 @@ export function showNewsBillboardModal(slides) {
     }
     .news-close-btn {
       position: absolute;
-      top: 24px;
-      right: 24px;
-      width: 44px;
-      height: 44px;
+      top: 16px;
+      right: 16px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.6);
       border: 1.5px solid rgba(255, 255, 255, 0.4);
       color: #ffffff;
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 300;
       cursor: pointer;
       display: flex;
@@ -93,7 +100,7 @@ export function showNewsBillboardModal(slides) {
     }
     .news-dots {
       position: absolute;
-      bottom: 30px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;

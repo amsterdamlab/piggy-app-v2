@@ -38,7 +38,7 @@ export async function getActiveNewsSlides() {
 
     const client = getClient();
     if (!client) {
-        return MOCK_SLIDES;
+        return [];
     }
 
     try {
@@ -49,13 +49,13 @@ export async function getActiveNewsSlides() {
             .order('sort_order', { ascending: true });
 
         if (error) {
-            console.warn('⚠️ getActiveNewsSlides database read error, falling back to mock slides:', error.message);
-            return MOCK_SLIDES;
+            console.warn('⚠️ getActiveNewsSlides database read error:', error.message);
+            return [];
         }
 
-        return data && data.length > 0 ? data : MOCK_SLIDES;
+        return data || [];
     } catch (err) {
         console.warn('⚠️ getActiveNewsSlides error:', err);
-        return MOCK_SLIDES;
+        return [];
     }
 }
