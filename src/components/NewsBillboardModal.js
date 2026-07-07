@@ -1,13 +1,16 @@
 /* ============================================
    PIGGY APP — News Billboard Modal Component
    Displays full-screen image carousel for news
+   with action url redirection support
    ============================================ */
 
 import { AppState } from '../state.js';
+import { navigateTo } from '../router.js';
 
 /**
  * Show the news billboard popup with a 5-second auto-sliding image carousel.
- * @param {Array<{id: string, image_url: string}>} slides - Array of news slides to show
+ * Supports action redirection when clicking a slide.
+ * @param {Array<{id: string, image_url: string, action_url: string|null}>} slides - Array of news slides to show
  */
 export function showNewsBillboardModal(slides) {
   if (!slides || slides.length === 0) return;
@@ -55,6 +58,7 @@ export function showNewsBillboardModal(slides) {
       align-items: center;
       justify-content: center;
       background: #000000;
+      position: relative;
     }
     .news-slide img {
       width: 100%;
@@ -116,11 +120,15 @@ export function showNewsBillboardModal(slides) {
   document.head.appendChild(styleEl);
 
   // Generate slides content
-  const slidesHtml = slides.map(slide => `
-    <div class="news-slide">
-      <img src="${slide.image_url}" alt="Noticia Piggy" onerror="this.onerror=null;this.src='pig2.jpg';">
-    </div>
-  `).join('');
+  const slidesHtml = slides.map(slide => {
+    const cursor = slide.action_url ? 'pointer' : 'default';
+    const ctaAttr = slide.action_url ? `data-action-url="${slide.action_url}"` : '';
+    return `
+      <div class="news-slide" ${ctaAttr} style="cursor: ${cursor};">
+        <img src="${slide.image_url}" alt="Noticia Piggy" onerror="this.onerror=null;this.src='pig2.jpg';">
+      </div>
+    `;
+  }).join('');
 
   // Generate dots indicators (only if there are multiple slides)
   const showDots = slides.length > 1;
@@ -186,6 +194,27 @@ export function showNewsBillboardModal(slides) {
 
   // Event Listeners
   modal.querySelector('#news-close-btn').addEventListener('click', closeModal);
+
+  // Slide click handler (redirection)
+  modal.querySelectorAll('.news-slide').forEach(slideEl => {
+    slideEl.addEventListener('click', (e) => {
+      // Prevent click triggering if clicking the close button or dots indicators
+      if (e.target.closest('#news-close-btn') || e.target.closest('.news-dots')) {
+        return;
+      }
+      
+      const url = slideEl.dataset.actionUrl;
+      if (!url) return;
+
+      closeModal(); // Close modal on action
+
+      if (url.startsWith('#/')) {
+        navigateTo(url.replace('#/', ''));
+      } else {
+        window.open(url, '_blank');
+      }
+    });
+  });
 
   if (showDots) {
     dots.forEach(dot => {
