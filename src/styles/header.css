@@ -55,7 +55,7 @@
     width: 40px;
     height: 40px;
     border-radius: var(--radius-full);
-    color: var(--color-danger);
+    color: var(--color-primary);
     background: transparent;
     border: none;
     cursor: pointer;
@@ -63,7 +63,7 @@
 }
 
 .top-nav__logout:hover {
-    color: #c53030; /* slightly darker red on hover */
+    color: var(--color-primary-dark);
     transform: translateY(-1px) scale(1.08);
 }
 

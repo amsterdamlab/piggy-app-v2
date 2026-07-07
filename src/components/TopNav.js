@@ -40,7 +40,7 @@ export function renderTopNav() {
                 <img src="/piggyapp_logo1.png" alt="Piggy App" style="height:60px; width:auto; object-fit:contain; display:block;" />
             </div>
             <button class="top-nav__logout" id="global-logout" aria-label="Cerrar sesión">
-                ${renderIcon('logout', '', '20')}
+                ${renderIcon('logout', '', '22')}
             </button>
         </div>
     `;
