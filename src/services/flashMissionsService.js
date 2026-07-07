@@ -28,8 +28,8 @@ function computeExpiry(activatedAt, durationHours) {
 /* ─── M8 / M9: User Flash Missions ────────── */
 
 /**
- * Get active flash missions (M8/M9) for the current user.
- * Filters: is_active=TRUE, is_purchased=FALSE, within 72h window.
+ * Get active flash missions for the current user.
+ * Filters: is_active=TRUE, is_purchased=FALSE, within duration window, and scheduled_at <= NOW().
  * Orders by activated_at DESC (most recent first).
  * @returns {Promise<Array>}
  */
@@ -53,20 +53,32 @@ export async function getActiveUserFlashMissions() {
         return [];
     }
 
-    // Filter out expired missions and inject computed expiry info
+    const nowMs = Date.now();
+
+    // Filter out scheduled future missions, expired missions, and inject computed expiry info
     return (data || [])
         .map(m => {
-            if (!m.activated_at) return null;
-            const expiry = computeExpiry(m.activated_at, m.duration_hours || 72);
+            // Check scheduled_at: if it exists and is in the future, hide it for now
+            if (m.scheduled_at) {
+                const scheduledMs = new Date(m.scheduled_at).getTime();
+                if (scheduledMs > nowMs) return null;
+            }
+
+            const activationTime = m.activated_at || m.scheduled_at || m.created_at;
+            if (!activationTime) return null;
+
+            const expiry = computeExpiry(activationTime, m.duration_hours || 72);
             if (expiry.expired) return null;
+
             return { ...m, expiresAt: expiry.expiresAt, remainingMs: expiry.remainingMs };
         })
         .filter(Boolean);
 }
 
 /**
- * Purchase a flash mission piggy (M8 or M9).
+ * Purchase a flash mission piggy.
  * Creates the exclusive piggy in piggies table and marks the mission as purchased.
+ * Supports advanced30 (saves 30 days) and advanced60 (saves 60 days).
  * @param {string} missionId - ID of the user_flash_missions row
  * @param {string} piggyName - Custom name given by user
  * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}
@@ -89,14 +101,51 @@ export async function buyFlashMission(missionId, piggyName) {
     if (mError || !mission) return { success: false, error: 'Misión no encontrada' };
     if (mission.is_purchased) return { success: false, error: 'Ya fue comprada' };
 
-    // Verify not expired
-    const expiry = computeExpiry(mission.activated_at, mission.duration_hours || 72);
+    // Verify not expired and scheduled_at has passed
+    if (mission.scheduled_at && new Date(mission.scheduled_at).getTime() > Date.now()) {
+        return { success: false, error: 'Esta misión aún no está disponible' };
+    }
+
+    const activationTime = mission.activated_at || mission.scheduled_at || mission.created_at;
+    const expiry = computeExpiry(activationTime, mission.duration_hours || 72);
     if (expiry.expired) return { success: false, error: 'La oferta ha expirado' };
 
     const profile = AppState.get('profile');
+
+    // Default label fallback if piggyName is missing
+    const defaultLabels = {
+        silver: 'Piggy Silver',
+        gold: 'Piggy Gold',
+        premium: 'Piggy Premium',
+        advanced30: 'Piggy Advanced (30d)',
+        advanced60: 'Piggy Advanced (60d)',
+    };
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
-        : mission.piggy_label;
+        : (defaultLabels[mission.piggy_type] || mission.title || 'Piggy Flash');
+
+    // Calculate category, extra ROI bonus and duration based on piggy_type
+    let category = mission.piggy_type;
+    let extraRoiBonus = 0;
+    let daysRemaining = 143; // Standard cycle duration
+
+    if (mission.piggy_type === 'advanced30') {
+        category = 'advanced';
+        extraRoiBonus = 0;
+        daysRemaining = 113; // Saves 30 days (starts at 2nd month)
+    } else if (mission.piggy_type === 'advanced60') {
+        category = 'advanced';
+        extraRoiBonus = 0;
+        daysRemaining = 83;  // Saves 60 days (starts at 3rd month)
+    } else if (mission.piggy_type === 'silver') {
+        extraRoiBonus = 0.01;
+    } else if (mission.piggy_type === 'gold') {
+        extraRoiBonus = 0.02;
+    } else if (mission.piggy_type === 'premium') {
+        extraRoiBonus = 0.03;
+    }
+
+    const endDate = new Date(Date.now() + (daysRemaining * 24 * 3600000)).toISOString();
 
     // Create the exclusive piggy
     const { data: newPiggy, error: piggyError } = await client
@@ -107,11 +156,11 @@ export async function buyFlashMission(missionId, piggyName) {
             full_name:         profile?.full_name || '',
             investment_amount: mission.price || 1000000,
             status:            'engorde',
-            extra_roi_bonus:   mission.extra_roi_bonus || 0,
-            category:          mission.piggy_type,
+            extra_roi_bonus:   extraRoiBonus,
+            category:          category,
             current_weight:    15.0,
             purchase_date:     new Date().toISOString(),
-            end_date:          new Date(Date.now() + (143 * 24 * 3600000)).toISOString(),
+            end_date:          endDate,
         })
         .select()
         .single();
