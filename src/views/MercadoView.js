@@ -114,6 +114,17 @@ function renderItems(items) {
       showCheckoutModal(item);
     });
   });
+
+  // Attach ribbon click listeners programmatically
+  container.querySelectorAll('.js-ribbon').forEach(ribbon => {
+    ribbon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const category = ribbon.getAttribute('data-category');
+      if (category && window.showCategoryInfo) {
+        window.showCategoryInfo(category);
+      }
+    });
+  });
 }
 
 /**
@@ -139,8 +150,8 @@ function renderProductCard(item) {
   return `
     <div class="mcard animate-fade-in-up">
       ${item.category && item.category !== 'standard' ? `
-        <div class="mcard__ribbon mcard__ribbon--${item.category}" style="pointer-events: auto; cursor: pointer;" onclick="event.stopPropagation(); window.showCategoryInfo('${item.category}')">
-          <span>${item.category === 'advanced' ? 'Advanced' : item.category} ⓘ</span>
+        <div class="mcard__ribbon mcard__ribbon--${item.category} js-ribbon" data-category="${item.category}" style="pointer-events: auto; cursor: pointer;">
+          <span style="pointer-events: auto;">${item.category === 'advanced' ? 'Advanced' : item.category} ⓘ</span>
         </div>
       ` : ''}
       ${isAdvanced ? `<span class="mcard__time-badge">⚡ Ahorra ${daysSaved} días</span>` : ''}
@@ -430,11 +441,11 @@ export function showCheckoutModal(item) {
       </div>
     </div>
   `;
-
+ 
   document.body.appendChild(modal);
-
+ 
   // --- Logic ---
-
+ 
   const input = document.getElementById('piggy-custom-name');
   const walletSection = document.getElementById('wallet-checkout-section');
   const balanceDisplay = document.getElementById('wallet-balance-display');
@@ -442,9 +453,9 @@ export function showCheckoutModal(item) {
   const confirmBtn = document.getElementById('btn-confirm-purchase');
   const errorMsg = document.getElementById('name-error');
   const ADMIN_WHATSAPP = '573154870448';
-
+ 
   let currentBalance = 0;
-
+ 
   // Load wallet balance
   getWalletBalance().then(balance => {
     currentBalance = balance;
@@ -454,19 +465,19 @@ export function showCheckoutModal(item) {
     balanceDisplay.textContent = '$0';
     updatePurchaseState(input.value.trim());
   });
-
+ 
   // Helper: update button states based on name + balance
   const updatePurchaseState = (nameVal) => {
     const nameValid = nameVal.length >= 3;
     const hasFunds = currentBalance >= item.price;
-
+ 
     // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
     walletSection.style.opacity = '1';
     walletSection.style.pointerEvents = 'auto';
-
+ 
     // Show/hide insufficient funds notice
     insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
-
+ 
     // Enable confirm button directly if they have sufficient funds
     if (hasFunds) {
       confirmBtn.style.opacity = '1';
@@ -475,7 +486,7 @@ export function showCheckoutModal(item) {
       confirmBtn.style.opacity = '0.5';
       confirmBtn.style.pointerEvents = 'none';
     }
-
+ 
     // Name validation feedback
     if (nameValid) {
       errorMsg.style.opacity = '0';
@@ -489,26 +500,26 @@ export function showCheckoutModal(item) {
       input.style.borderColor = '#fce7f3';
     }
   };
-
+ 
   // Input listener
   input.addEventListener('input', () => updatePurchaseState(input.value.trim()));
-
+ 
   // Suggestion Pills
   window.selectPiggyName = (name) => {
     input.value = name;
     updatePurchaseState(name);
     input.focus();
   };
-
+ 
   // Close Logic
   const close = () => {
     document.body.style.overflow = '';
     delete window.selectPiggyName;
     modal.remove();
   };
-
+ 
   document.getElementById('checkout-close-btn').addEventListener('click', close);
-
+ 
   // Recargar Wallet
   const recargarBtn = document.getElementById('btn-recargar-checkout');
   recargarBtn.addEventListener('click', async () => {
@@ -524,7 +535,7 @@ export function showCheckoutModal(item) {
       recargarBtn.style.pointerEvents = 'auto';
     }
   });
-
+ 
   // Confirm Purchase
   confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
@@ -537,13 +548,13 @@ export function showCheckoutModal(item) {
       input.focus();
       return;
     }
-
+ 
     if (currentBalance < item.price) return;
-
+ 
     // Visual feedback
     confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
     confirmBtn.style.pointerEvents = 'none';
-
+ 
     try {
       // ── CRÍTICO: Descontar wallet PRIMERO antes de llamar el RPC ──
       // El RPC buy_piggy maneja stock y creación del piggy pero NO descuenta wallet.
@@ -555,10 +566,10 @@ export function showCheckoutModal(item) {
             : 'No se pudo procesar el pago. Intenta de nuevo.'
         );
       }
-
+ 
       // Wallet descontada ✅ — ahora crear el piggy
       await buyMarketplaceItem(item, customName);
-
+ 
       close();
       navigateTo('granja');
     } catch (error) {
@@ -569,3 +580,106 @@ export function showCheckoutModal(item) {
     }
   });
 }
+
+/**
+ * Show premium, gold, silver, advanced category explanations in a custom popup modal.
+ */
+window.showCategoryInfo = (category) => {
+  const existing = document.getElementById('category-info-popup');
+  if (existing) existing.remove();
+
+  const infoTexts = {
+    premium: 'Incluye un extra en comision (+3%) debido a la venta del cerdo en un mercado exclusivo.',
+    gold: 'Incluye un extra en comision (+2%) debido a la venta del cerdo en un mercado exclusivo.',
+    silver: 'Incluye un extra en comision (+1%) debido a la venta del cerdo en un mercado exclusivo.',
+    advanced: 'Cerdo de engorde avanzado en tiempo para comercialización temprana.'
+  };
+
+  const text = infoTexts[category.toLowerCase()] || '';
+  if (!text) return;
+
+  const colors = {
+    premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
+    gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
+    silver: { bg: 'linear-gradient(135deg, #BDC3C7, #7F8C8D)', color: '#FFF' },
+    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' }
+  };
+
+  const theme = colors[category.toLowerCase()] || { bg: 'var(--color-primary)', color: '#FFF' };
+
+  const popup = document.createElement('div');
+  popup.id = 'category-info-popup';
+  popup.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100dvh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  `;
+
+  const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
+
+  popup.innerHTML = `
+    <div class="animate-scale-in" style="
+      background: white;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 340px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    ">
+      <div style="
+        background: ${theme.bg};
+        color: ${theme.color};
+        width: 100%;
+        padding: 20px 24px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 1.15rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      ">
+        Categoría ${capitalizedCat}
+      </div>
+
+      <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
+        ${text}
+      </div>
+
+      <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
+        <button id="btn-close-cat-popup" style="
+          width: 100%;
+          background: #f3f4f6;
+          color: #1f2937;
+          border: none;
+          padding: 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+          Entendido
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  const close = () => popup.remove();
+  document.getElementById('btn-close-cat-popup').addEventListener('click', close);
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) close();
+  });
+};
