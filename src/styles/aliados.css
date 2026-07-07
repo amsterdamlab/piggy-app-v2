@@ -204,27 +204,27 @@
 }
 
 .ally-card__benefit {
-    background: var(--color-primary-50);
+    background: var(--color-success-light, #E8F5E9);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    border: 1px solid var(--color-primary-100);
+    border: 1px solid rgba(76, 175, 80, 0.25);
     margin-top: auto;
     transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
 .ally-card:hover .ally-card__benefit {
-    background: var(--color-primary-100);
-    border-color: var(--color-primary-light);
+    background: #C8E6C9;
+    border-color: rgba(76, 175, 80, 0.4);
 }
 
 .ally-card__benefit-icon {
     width: 44px;
     height: 44px;
     border-radius: var(--radius-full);
-    background: var(--gradient-cta);
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
     color: var(--color-white);
     display: flex;
     align-items: center;
@@ -232,7 +232,7 @@
     font-weight: var(--font-bold);
     font-size: var(--text-lg);
     flex-shrink: 0;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.2);
 }
 
 .ally-card__benefit-info {
@@ -244,6 +244,6 @@
 .ally-card__benefit-text {
     font-size: var(--text-sm);
     font-weight: var(--font-extrabold);
-    color: var(--color-primary-dark);
+    color: #1B5E20;
     line-height: var(--leading-tight);
 }

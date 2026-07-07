@@ -132,6 +132,13 @@ function renderAllyCard(ally) {
   const phone = ally.phone || '300 123 4567';
   const address = ally.address || ally.location || 'Calle Principal # 123';
 
+  const rawPhone = ally.phone || '3001234567';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+    cleanPhone = '57' + cleanPhone;
+  }
+  const waLink = `https://wa.me/${cleanPhone}`;
+
   const imageHtml = imageUrl
     ? `<img src="${imageUrl}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=\\'ally-card__image-placeholder\\'>${ally.name.charAt(0).toUpperCase()}</div>'">`
     : `<div class="ally-card__image-placeholder">${ally.name.charAt(0).toUpperCase()}</div>`;
@@ -150,7 +157,28 @@ function renderAllyCard(ally) {
         <h3 class="ally-card__name">${ally.name}</h3>
         <span class="ally-card__specialty">${specialty}</span>
 
-        <p class="ally-card__contact-line">📞 ${phone}</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); flex-wrap: wrap; margin-bottom: 2px;">
+          <p class="ally-card__contact-line" style="margin: 0;">📞 ${phone}</p>
+          <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="ally-card__wa-btn" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #25D366;
+            color: white;
+            padding: 5px 12px;
+            border-radius: var(--radius-sm, 8px);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+            transition: background var(--transition-fast), transform var(--transition-fast);
+          " onmouseover="this.style.background='#20ba5a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#25D366'; this.style.transform='translateY(0)'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: block;">
+              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.993L2 22l5.13-1.35c1.472.8 3.128 1.22 4.878 1.22h.004c5.505 0 9.989-4.478 9.99-9.984A9.97 9.97 0 0 0 12.012 2zm4.72 13.916c-.26.732-1.272 1.332-1.748 1.378-.456.046-.9.23-2.9-.575-2.4-1-3.924-3.44-4.044-3.602-.12-.162-1.02-1.357-1.02-2.588s.642-1.848.87-2.083c.228-.236.498-.295.666-.295.168 0 .336.002.48.01.149.007.348-.056.545.422.203.49.696 1.706.756 1.83.06.123.1.266.018.432-.08.167-.123.272-.246.417-.122.145-.257.324-.366.435-.12.122-.246.255-.106.495.14.24.62 1.025 1.333 1.66.917.818 1.693 1.07 1.933 1.19.24.12.38.1.522-.065.14-.167.62-.725.786-.973.167-.247.33-.207.558-.122.228.085 1.446.683 1.692.807.247.123.412.185.472.29.06.103.06.6-.2 1.332z"/>
+            </svg>
+            Contactar
+          </a>
+        </div>
         <p class="ally-card__contact-line">📍 ${address}</p>
 
         <p class="ally-card__description">${description}</p>
