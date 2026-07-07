@@ -585,16 +585,6 @@ export function attachMissionListeners() {
         const flashId  = missionBanner.dataset.flashId;
         const cycleId  = missionBanner.dataset.cycleId;
 
-        // Auto-complete Mission 2 when the user clicks the banner CTA to go to Mercado
-        if (mId === 'm2') {
-            try {
-                const { completeMissionOnVisit } = await import('../../services/missionsService.js');
-                await completeMissionOnVisit('m2');
-            } catch (err) {
-                console.warn('Error completing mission 2:', err);
-            }
-        }
-
         // ── Flash Mission (M8/M9): open FlashMissionModal
         if (ctaUrl === 'open_flash_modal' && flashId) {
             // Retrieve the full mission object stored on the banner's parent (set in GranjaView)

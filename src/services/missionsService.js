@@ -28,7 +28,7 @@ const MISSION_DEFINITIONS = [
         key: 'm2', sortOrder: 2,
         title: 'Compra tu primer Piggy',
         reward: 'Aprende a recargar tu billetera',
-        icon: '🐷', cta: '#/mercado',
+        icon: '🐷', cta: 'open_buy_piggy',
         autoType: 'first_piggy',
         requires: 'm1',
     },
@@ -93,7 +93,7 @@ function buildAutoCompletionMap(piggies, profile) {
 
     return {
         m1: visitedSections.gourmet   || false, // visited /gourmet
-        m2: visitedSections.mercado   || piggies.length >= 1 || false, // visited mercado / bought 1st piggy
+        m2: piggies.length >= 1,                 // bought 1st piggy
         m3: visitedSections.referidos || false, // visited referidos modal
         m4: piggies.length >= 2,                 // bought 2nd piggy
         m5: visitedSections.aliados   || false, // visited /aliados
@@ -231,7 +231,7 @@ export async function completeMissionOnVisit(missionKey) {
 
     // Persist section visit in AppState immediately so buildAutoCompletionMap always sees it
     const visitedSections = AppState.get('visitedSections') || {};
-    const sectionMap = { m1: 'gourmet', m2: 'mercado', m3: 'referidos', m5: 'aliados' };
+    const sectionMap = { m1: 'gourmet', m3: 'referidos', m5: 'aliados' };
     if (sectionMap[missionKey]) {
         if (!visitedSections[sectionMap[missionKey]]) {
             visitedSections[sectionMap[missionKey]] = true;
