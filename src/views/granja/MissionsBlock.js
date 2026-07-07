@@ -514,15 +514,16 @@ function renderCycleMissionBanner(mission) {
                     ${t.icon} CICLO COMPLETADO · RECOMPENSA EXCLUSIVA
                 </div>
 
-                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || mission.piggy_label}</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Has ganado el derecho a este Piggy exclusivo con <strong>${roiPct} en Margen Comercial</strong></div>
+                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">🎉 ¡Tu Piggy terminó su ciclo!</div>
+                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional</strong></div>
 
+                <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
                     padding:8px 14px; margin-top:10px; display:inline-flex;
                     align-items:center; gap:8px;">
                     <span>⏳</span>
                     <div>
-                        <div style="font-size:0.6rem; opacity:0.8; text-transform:uppercase; letter-spacing:1px;">Tiempo para reclamar</div>
+                        <div style="font-size:0.6rem; opacity:0.8; text-transform:uppercase; letter-spacing:1px;">Tiempo restante</div>
                         <div id="cycle-banner-countdown-${mission.id}"
                             data-expires-ms="${remaining}"
                             style="font-size:1rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
@@ -533,7 +534,7 @@ function renderCycleMissionBanner(mission) {
 
                 <div style="margin-top:14px;">
                     <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                        Reclamar Recompensa ${t.icon}
+                        Ver mi Recompensa ${t.icon}
                     </span>
                 </div>
 
@@ -583,6 +584,16 @@ export function attachMissionListeners() {
         const sExpiry  = missionBanner.dataset.silverExpiry;
         const flashId  = missionBanner.dataset.flashId;
         const cycleId  = missionBanner.dataset.cycleId;
+
+        // Auto-complete Mission 2 when the user clicks the banner CTA to go to Mercado
+        if (mId === 'm2') {
+            try {
+                const { completeMissionOnVisit } = await import('../../services/missionsService.js');
+                await completeMissionOnVisit('m2');
+            } catch (err) {
+                console.warn('Error completing mission 2:', err);
+            }
+        }
 
         // ── Flash Mission (M8/M9): open FlashMissionModal
         if (ctaUrl === 'open_flash_modal' && flashId) {
