@@ -215,7 +215,7 @@ function showCheckoutModal(piggyName) {
           box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
           opacity:0.5; pointer-events:none;
         ">
-          ${renderIcon('pigSide', '', '20')}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
           Confirmar Compra
         </button>
       </div>
@@ -285,7 +285,7 @@ function showCheckoutModal(piggyName) {
     } catch (error) {
       console.error(error);
       alert('Error en la transacci\u00F3n: ' + error.message);
-      confirmBtn.innerHTML = `${renderIcon('pigSide', '', '20')} Confirmar Compra`;
+      confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>Confirmar Compra`;
       confirmBtn.style.pointerEvents = 'auto';
     }
   });
