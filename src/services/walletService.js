@@ -240,55 +240,21 @@ export async function convertBalanceToConsumptionBonus(amount) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
 
-    // Read current balance
-    const { data: profile, error: readError } = await client
-        .from('profiles')
-        .select('wallet_balance, referral_balance')
-        .eq('id', user.id)
-        .single();
+    // Ejecutamos el procedimiento RPC en base de datos de forma atómica y con autorización interna
+    const { data, error } = await client.rpc('convert_balance_to_consumption_bonus', {
+        p_amount: amount
+    });
 
-    if (readError || !profile) {
-        return { success: false, reason: 'could_not_read_balance' };
+    if (error) {
+        console.error('Error calling convert_balance_to_consumption_bonus RPC:', error);
+        return { success: false, reason: error.message };
     }
 
-    const currentBalance = profile.wallet_balance || 0;
-    if (currentBalance < amount) {
-        return { success: false, reason: 'insufficient_balance' };
+    if (!data || !data.success) {
+        return { success: false, reason: data?.reason || 'No se pudo realizar el canje en base de datos.' };
     }
 
-    // 1. Insert debit transaction in dinero -> DB trigger updates wallet_balance
-    const { error: debitError } = await client
-        .from('wallet_transactions')
-        .insert({
-            user_id: user.id,
-            amount: -amount,
-            type: 'debit',
-            description: 'Canje a Bonos de Consumo (Débito saldo)',
-            wallet_type: 'dinero'
-        });
-
-    if (debitError) {
-        console.error('Error debiting balance for consumption conversion:', debitError);
-        return { success: false, reason: debitError.message };
-    }
-
-    // 2. Insert credit transaction in consumo -> DB trigger updates referral_balance
-    const { error: creditError } = await client
-        .from('wallet_transactions')
-        .insert({
-            user_id: user.id,
-            amount: amount,
-            type: 'credit',
-            description: 'Bono de Consumo acreditado por canje de saldo',
-            wallet_type: 'consumo'
-        });
-
-    if (creditError) {
-        console.error('Error crediting consumption bonus:', creditError);
-        return { success: false, reason: creditError.message };
-    }
-
-    // Update AppState profile with refreshed balances
+    // Actualizar AppState con los saldos sincronizados por los triggers
     const { data: updatedProfile } = await client
         .from('profiles')
         .select('*')
