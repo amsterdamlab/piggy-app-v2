@@ -100,16 +100,24 @@ DECLARE
   v_logged_transactions_count INTEGER;
   v_missing_transactions_count INTEGER;
   v_referred_user RECORD;
+  v_trigger_disabled BOOLEAN := false;
 BEGIN
-  -- Disable trigger to prevent double-crediting balance
-  ALTER TABLE public.wallet_transactions DISABLE TRIGGER trg_update_wallet_balance;
+  -- Safely try to disable the trigger to prevent double-crediting balance
+  BEGIN
+    ALTER TABLE public.wallet_transactions DISABLE TRIGGER trg_update_wallet_balance;
+    v_trigger_disabled := true;
+    RAISE NOTICE 'Trigger trg_update_wallet_balance disabled successfully.';
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE NOTICE 'Trigger trg_update_wallet_balance not found or could not be disabled. Proceeding anyway...';
+  END;
 
   -- Loop through all referrers who have completed referrals
   FOR v_referrer IN 
     SELECT DISTINCT r.referrer_id 
     FROM public.referrals r
     WHERE r.status = 'completed'
-  Loop
+  LOOP
     -- Get count of completed referrals
     SELECT COUNT(*) INTO v_completed_referrals_count
     FROM public.referrals
@@ -175,6 +183,14 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Re-enable trigger
-  ALTER TABLE public.wallet_transactions ENABLE TRIGGER trg_update_wallet_balance;
+  -- Re-enable trigger if it was disabled
+  IF v_trigger_disabled THEN
+    BEGIN
+      ALTER TABLE public.wallet_transactions ENABLE TRIGGER trg_update_wallet_balance;
+      RAISE NOTICE 'Trigger trg_update_wallet_balance re-enabled successfully.';
+    EXCEPTION
+      WHEN OTHERS THEN
+        RAISE NOTICE 'Could not re-enable trigger trg_update_wallet_balance.';
+    END;
+  END IF;
 END $$;
