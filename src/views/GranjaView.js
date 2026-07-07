@@ -26,6 +26,10 @@ import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsM
 import { removeBonusModal } from './granja/WelcomeBonusModal.js';
 import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
 
+/* ── News Billboard Imports ── */
+import { getActiveNewsSlides } from '../services/newsService.js';
+import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
+
 /* =========================================
    DYNAMIC NOTIFICATIONS
    Fetched from Supabase dynamic_tips table.
@@ -135,7 +139,7 @@ async function loadGranjaData(firstName) {
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
-        transactions,
+        transactions, newsSlides,
     ] = await Promise.all([
       getRandomTip(),
       getWalletBalance(),
@@ -145,6 +149,7 @@ async function loadGranjaData(firstName) {
       getActiveCycleMissions(),
       getDashboardStats(piggies),
       getWalletTransactions(),
+      getActiveNewsSlides(),
     ]);
 
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
@@ -162,6 +167,9 @@ async function loadGranjaData(firstName) {
 
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
+
+    // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
+    showNewsBillboardModal(newsSlides);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
   } catch (error) {
