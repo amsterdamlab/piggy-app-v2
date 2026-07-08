@@ -297,10 +297,10 @@ function renderGreeting(firstName) {
         align-items: center;
         background: linear-gradient(135deg, #7c3aed, #5b21b6);
         color: white;
-        padding: 6px 14px;
-        border-radius: 12px;
+        padding: 5px 12px;
+        border-radius: 10px;
         cursor: pointer;
-        font-size: 0.8rem;
+        font-size: 0.68rem;
         font-weight: 700;
         box-shadow: 0 4px 12px rgba(124,58,237,0.3);
         transition: transform 0.2s, box-shadow 0.2s;
