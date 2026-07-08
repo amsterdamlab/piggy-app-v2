@@ -258,13 +258,10 @@ function enrichPiggyData(piggy) {
         imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
     }
 
-    // Ensure it uses the GitHub Raw URL directly as requested by the user
-    // This bypasses any Vercel caching/asset serving issues and forces images to load
-    if (imageUrl && !imageUrl.startsWith('http')) {
-        if (imageUrl.startsWith('/')) {
-            imageUrl = imageUrl.slice(1);
-        }
-        imageUrl = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imageUrl}`;
+    // Ensure it uses local absolute paths (/assets/piggies/...) to load directly from Vercel/localhost
+    // This resolves rate-limiting and loading latency errors from GitHub Raw
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+        imageUrl = '/' + imageUrl;
     }
 
     console.log("🐷 [enrichPiggyData] Piggy:", {

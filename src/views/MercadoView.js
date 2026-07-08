@@ -150,12 +150,9 @@ function renderProductCard(item) {
   const daysSaved = item.cycleTotalDays - daysRemaining;
   const photoNum = getMarketplacePhotoNumber(item.id);
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  let imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
-  if (imgSrc && !imgSrc.startsWith('http')) {
-    if (imgSrc.startsWith('/')) {
-      imgSrc = imgSrc.slice(1);
-    }
-    imgSrc = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imgSrc}`;
+  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
+    imgSrc = '/' + imgSrc;
   }
 
   return `
