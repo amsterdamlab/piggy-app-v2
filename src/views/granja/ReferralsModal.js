@@ -39,7 +39,7 @@ export async function showReferralModal() {
 
   // Show loading state first
   modal.innerHTML = `
-    <div class="modal animate-scale-in" style="max-width:420px; max-height:90vh; overflow-y:auto;">
+    <div class="modal animate-scale-in" style="position: relative; max-width:420px; max-height:90vh; overflow-y:auto;">
       <div class="modal__handle"></div>
       <button class="bonus-close" id="referral-modal-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
       <div class="loading-container" style="padding:40px 0;">
