@@ -305,9 +305,9 @@ function renderGreeting(firstName) {
         box-shadow: 0 4px 12px rgba(124,58,237,0.3);
         transition: transform 0.2s, box-shadow 0.2s;
         white-space: nowrap;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
       " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(124,58,237,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124,58,237,0.3)'">
-        <span id="greeting-code-value">···</span>
+        <span>REFERIDOS</span>
       </div>
     </div>
   `;
@@ -467,9 +467,6 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
 
   // Wallet listeners (delegated to module)
   attachWalletListeners(stats);
-
-  // Referral code + modal (delegated to module)
-  loadGreetingReferralCode();
 
   // Greeting referral code click → open referral modal
   document.getElementById('greeting-referral-code')?.addEventListener('click', () => {
