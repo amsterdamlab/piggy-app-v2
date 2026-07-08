@@ -127,9 +127,9 @@ export function showFlashMissionModal(mission) {
         if (mission.piggy_type === 'silver') extraPct = '+1%';
         if (mission.piggy_type === 'gold') extraPct = '+2%';
         if (mission.piggy_type === 'premium') extraPct = '+3%';
-        benefitTitle = `${extraPct} en Margen Comercial`;
+        benefitTitle = `${extraPct} en Comisión Comercial`;
         benefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
-        descriptionText = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
+        descriptionText = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Comisión Comercial.`;
     }
 
     const suggestedNames = {

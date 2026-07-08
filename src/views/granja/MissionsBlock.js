@@ -186,6 +186,8 @@ function renderM2Banner(mission) {
     `;
 }
 
+// ... renderM3Banner, renderM4Banner, etc. remain unchanged ...
+
 function renderM3Banner(mission) {
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
@@ -227,7 +229,7 @@ function renderM4Banner(mission) {
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">📈 MISIÓN 4</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">&#9889; Desbloquea <strong>+1% en Margen Comercial</strong> para toda tu granja</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">&#9889; Desbloquea <strong>+1% en Comisión Comercial</strong> para toda tu granja</div>
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
                             Ir a Mercado →
@@ -268,11 +270,7 @@ function renderM5Banner(mission) {
 }
 
 function renderM6Banner(mission) {
-    // Check if the 72h Silver offer is still active
-    const withinWindow = mission.silverExpiry
-        ? (Date.now() < new Date(mission.silverExpiry).getTime())
-        : false;
-
+    const withinWindow = mission.silverExpiry ? (Date.now() < new Date(mission.silverExpiry).getTime()) : false;
     if (withinWindow) {
         const remaining = formatRemainingTime(mission.silverExpiry);
         return `
@@ -288,7 +286,7 @@ function renderM6Banner(mission) {
                             border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                             text-transform:uppercase; margin-bottom:10px;">🌟 MISIÓN 6 · OFERTA EXCLUSIVA</div>
                         <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">¡Tu Piggy Silver te espera!</div>
-                        <div style="font-size:0.82rem; opacity:0.9;">Oferta única con <strong>+1% en Margen Comercial</strong>. Disponible por tiempo limitado.</div>
+                        <div style="font-size:0.82rem; opacity:0.9;">Oferta única con <strong>+1% en Comisión Comercial</strong>. Disponible por tiempo limitado.</div>
 
                         <!-- Countdown -->
                         <div style="
@@ -317,7 +315,6 @@ function renderM6Banner(mission) {
         `;
     }
 
-    // Offer has expired — show regular "go to Mercado" banner
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
             <div class="banner banner--interactive" id="mission-banner" data-mission="m6" data-cta="#/mercado" style="
@@ -429,8 +426,8 @@ function renderFlashMissionBanner(mission) {
         if (mission.piggy_type === 'silver') roiBonus = 0.01;
         if (mission.piggy_type === 'gold') roiBonus = 0.02;
         if (mission.piggy_type === 'premium') roiBonus = 0.03;
-        const roiPct = `+${(roiBonus * 100).toFixed(0)}%`;
-        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${roiPct} en Margen Comercial</strong>`;
+        let extraPct = `+${(roiBonus * 100).toFixed(0)}%`;
+        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Comisión Comercial</strong>`;
     }
 
     const remaining = mission.remainingMs || 0;

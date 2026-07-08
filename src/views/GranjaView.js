@@ -383,7 +383,7 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold">${piggy.currentWeight} kg</div>
         </div>
         <div>
-          <div class="text-xs text-muted">Margen Comercial Estimado</div>
+          <div class="text-xs text-muted">Comisión Comercial Estimada</div>
           <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
           ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye comisión +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
         </div>
