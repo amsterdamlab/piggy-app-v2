@@ -323,7 +323,7 @@ export function showCheckoutModal(item) {
                        "
                        onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
                        onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
-                 />
+                />
            </div>
 
            <!-- Name Suggestions (Pills) -->
@@ -344,7 +344,7 @@ export function showCheckoutModal(item) {
            </div>
            
            <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:12px;">
-                 * Debes darle un nombre para continuar
+                * Debes darle un nombre para continuar
            </div>
       </div>
 
@@ -580,33 +580,33 @@ export function showCheckoutModal(item) {
     }
   });
 }
-
+ 
 /**
  * Show premium, gold, silver, advanced category explanations in a custom popup modal.
  */
 window.showCategoryInfo = (category) => {
   const existing = document.getElementById('category-info-popup');
   if (existing) existing.remove();
-
+ 
   const infoTexts = {
-    premium: 'Incluye un extra en comision (+3%) debido a la venta del cerdo en un mercado exclusivo.',
-    gold: 'Incluye un extra en comision (+2%) debido a la venta del cerdo en un mercado exclusivo.',
-    silver: 'Incluye un extra en comision (+1%) debido a la venta del cerdo en un mercado exclusivo.',
-    advanced: 'Cerdo de engorde avanzado en tiempo para comercialización temprana.'
+    premium: 'Incluye un extra en comisión (+3%) debido a la venta del cerdo en un mercado exclusivo.',
+    gold: 'Incluye un extra en comisión (+2%) debido a la venta del cerdo en un mercado exclusivo.',
+    silver: 'Incluye un extra en comisión (+1%) debido a la venta del cerdo en un mercado exclusivo.',
+    advanced: 'Este cerdito está en etapa avanzada, lo que te ayuda a ahorrar tiempo de engorde. Si eres de los que no les gusta esperar tanto, este cerdito será tu mejor aliado.'
   };
-
+ 
   const text = infoTexts[category.toLowerCase()] || '';
   if (!text) return;
-
+ 
   const colors = {
     premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
     gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
     silver: { bg: 'linear-gradient(135deg, #BDC3C7, #7F8C8D)', color: '#FFF' },
     advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' }
   };
-
+ 
   const theme = colors[category.toLowerCase()] || { bg: 'var(--color-primary)', color: '#FFF' };
-
+ 
   const popup = document.createElement('div');
   popup.id = 'category-info-popup';
   popup.style.cssText = `
@@ -622,9 +622,9 @@ window.showCategoryInfo = (category) => {
     padding: 20px;
     box-sizing: border-box;
   `;
-
+ 
   const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
-
+ 
   popup.innerHTML = `
     <div class="animate-scale-in" style="
       background: white;
@@ -651,11 +651,11 @@ window.showCategoryInfo = (category) => {
       ">
         Categoría ${capitalizedCat}
       </div>
-
+ 
       <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
         ${text}
       </div>
-
+ 
       <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
         <button id="btn-close-cat-popup" style="
           width: 100%;
@@ -674,9 +674,9 @@ window.showCategoryInfo = (category) => {
       </div>
     </div>
   `;
-
+ 
   document.body.appendChild(popup);
-
+ 
   const close = () => popup.remove();
   document.getElementById('btn-close-cat-popup').addEventListener('click', close);
   popup.addEventListener('click', (e) => {
