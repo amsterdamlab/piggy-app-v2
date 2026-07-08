@@ -31,15 +31,15 @@ function formatCountdown(remainingMs) {
  */
 function getTypeTheme(piggyType) {
     const themes = {
-        advanced: {
-            gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%)',
-            shadow:   'rgba(245,158,11,0.5)',
-            color:    '#d97706',
-            btnGrad:  'linear-gradient(135deg, #f59e0b, #d97706)',
-            btnShadow:'rgba(245,158,11,0.4)',
-            icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · MISIÓN 8',
-            bonusIcon:'📈',
+        silver: {
+            gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6d28d9',
+            btnGrad:  'linear-gradient(135deg, #6366f1, #8b5cf6)',
+            btnShadow:'rgba(139,92,246,0.3)',
+            icon:     '🌟',
+            badge:    '🌟 OFERTA FLASH · SILVER',
+            bonusIcon:'⭐',
         },
         gold: {
             gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
@@ -48,11 +48,41 @@ function getTypeTheme(piggyType) {
             btnGrad:  'linear-gradient(135deg, #eab308, #ca8a04)',
             btnShadow:'rgba(234,179,8,0.4)',
             icon:     '🥇',
-            badge:    '🥇 OFERTA FLASH · MISIÓN 9',
+            badge:    '🥇 OFERTA FLASH · GOLD',
             bonusIcon:'🏆',
         },
+        premium: {
+            gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)',
+            shadow:   'rgba(236,72,153,0.45)',
+            color:    '#db2777',
+            btnGrad:  'linear-gradient(135deg, #ec4899, #db2777)',
+            btnShadow:'rgba(236,72,153,0.3)',
+            icon:     '💎',
+            badge:    '💎 OFERTA FLASH · PREMIUM',
+            bonusIcon:'💎',
+        },
+        advanced30: {
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · ADVANCED 30',
+            bonusIcon:'📈',
+        },
+        advanced60: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · ADVANCED 60',
+            bonusIcon:'🚀',
+        },
     };
-    return themes[piggyType] || themes['advanced'];
+    return themes[piggyType] || themes['advanced30'];
 }
 
 /**
@@ -68,15 +98,48 @@ export function showFlashMissionModal(mission) {
     if (!mission) return;
 
     const theme     = getTypeTheme(mission.piggy_type);
-    const roiPct    = `+${((mission.extra_roi_bonus || 0) * 100).toFixed(0)}%`;
     const priceStr  = formatCOP(mission.price || 1000000);
     let   remaining = mission.remainingMs || 0;
 
-    const suggestedNames = {
-        advanced: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
-        gold:     ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
+    const piggyLabels = {
+        silver:     'Piggy Silver',
+        gold:       'Piggy Gold',
+        premium:    'Piggy Premium',
+        advanced30: 'Piggy Advanced (30d)',
+        advanced60: 'Piggy Advanced (60d)',
     };
-    const names = (suggestedNames[mission.piggy_type] || suggestedNames.advanced)
+    const piggyLabel = piggyLabels[mission.piggy_type] || 'Piggy Flash';
+
+    let benefitTitle = '';
+    let benefitSub   = '';
+    let descriptionText = '';
+
+    if (mission.piggy_type === 'advanced30') {
+        benefitTitle = 'Reducción de 30 días de espera';
+        benefitSub   = 'Inicia tu cerdito en el 2do mes ahorrando tiempo.';
+        descriptionText = 'Piggy acelerado con 30 días de crecimiento incluidos.';
+    } else if (mission.piggy_type === 'advanced60') {
+        benefitTitle = 'Reducción de 60 días de espera';
+        benefitSub   = 'Inicia tu cerdito en el 3er mes ahorrando tiempo.';
+        descriptionText = 'Piggy acelerado con 60 días de crecimiento incluidos.';
+    } else {
+        let extraPct = '0%';
+        if (mission.piggy_type === 'silver') extraPct = '+1%';
+        if (mission.piggy_type === 'gold') extraPct = '+2%';
+        if (mission.piggy_type === 'premium') extraPct = '+3%';
+        benefitTitle = `${extraPct} en Margen Comercial`;
+        benefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
+        descriptionText = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
+    }
+
+    const suggestedNames = {
+        advanced30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        advanced60: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        silver:     ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
+        gold:       ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
+        premium:    ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
+    };
+    const names = (suggestedNames[mission.piggy_type] || suggestedNames.advanced30)
         .sort(() => 0.5 - Math.random()).slice(0, 4);
 
     document.body.style.overflow = 'hidden';
@@ -126,10 +189,9 @@ export function showFlashMissionModal(mission) {
 
                 <!-- Icon + Name -->
                 <div style="font-size:56px; margin-bottom:8px;">${theme.icon}</div>
-                <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${mission.piggy_label}</h2>
+                <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${piggyLabel}</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.92; line-height:1.4;">
-                    Piggy exclusivo de oferta flash.<br>
-                    <strong>${roiPct} adicional</strong> en tu Margen Comercial.
+                    ${descriptionText}
                 </p>
 
                 <!-- Countdown -->
@@ -162,15 +224,15 @@ export function showFlashMissionModal(mission) {
                 ">
                     <span style="font-size:22px;">${theme.bonusIcon}</span>
                     <div>
-                        <div style="font-weight:700; color:#92400e; font-size:0.85rem;">Beneficio exclusivo incluido</div>
-                        <div style="font-size:0.75rem; color:#b45309;">${roiPct} adicional sobre tu ROI base de granja.</div>
+                        <div style="font-weight:700; color:#92400e; font-size:0.85rem;">${benefitTitle}</div>
+                        <div style="font-size:0.75rem; color:#b45309;">${benefitSub}</div>
                     </div>
                 </div>
 
                 <!-- Name Input -->
                 <div style="margin-bottom: 16px;">
                     <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
-                        Ponle un nombre a tu ${mission.piggy_label}
+                        Ponle un nombre a tu ${piggyLabel}
                     </label>
                     <input type="text" id="flash-piggy-name"
                         placeholder="Nombre del piggy..."
@@ -227,7 +289,7 @@ export function showFlashMissionModal(mission) {
 
                     <!-- Price Row -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 4px; margin-bottom:12px;">
-                        <span style="font-size:0.85rem; color:#6b7280;">Precio ${mission.piggy_label}</span>
+                        <span style="font-size:0.85rem; color:#6b7280;">Precio ${piggyLabel}</span>
                         <span style="font-size:1.1rem; font-weight:800; color:${theme.color};">${priceStr}</span>
                     </div>
 
@@ -240,7 +302,7 @@ export function showFlashMissionModal(mission) {
                         opacity: 0.5; pointer-events: none;
                         display: flex; align-items: center; justify-content: center; gap: 8px;
                     ">
-                        ${theme.icon} Comprar ${mission.piggy_label}
+                        ${theme.icon} Comprar ${piggyLabel}
                     </button>
                 </div>
 
@@ -354,7 +416,7 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${mission.piggy_label}`;
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });
