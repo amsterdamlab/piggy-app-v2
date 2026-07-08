@@ -125,6 +125,17 @@ function renderItems(items) {
       }
     });
   });
+
+  // Attach image click listeners for category info
+  container.querySelectorAll('.js-img-category').forEach(imgWrap => {
+    imgWrap.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const category = imgWrap.getAttribute('data-category');
+      if (category && window.showCategoryInfo) {
+        window.showCategoryInfo(category);
+      }
+    });
+  });
 }
 
 /**
@@ -158,7 +169,8 @@ function renderProductCard(item) {
 
       <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
-        <div class="mcard__img-wrap">
+        <div class="mcard__img-wrap ${item.category && item.category !== 'standard' ? 'js-img-category' : ''}"
+             ${item.category && item.category !== 'standard' ? `data-category="${item.category}" style="cursor: pointer;"` : ''}>
           <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         
@@ -589,10 +601,10 @@ window.showCategoryInfo = (category) => {
   if (existing) existing.remove();
  
   const infoTexts = {
-    premium: 'Incluye un extra en comisión (+3%) debido a la venta del cerdo en un mercado exclusivo.',
-    gold: 'Incluye un extra en comisión (+2%) debido a la venta del cerdo en un mercado exclusivo.',
-    silver: 'Incluye un extra en comisión (+1%) debido a la venta del cerdo en un mercado exclusivo.',
-    advanced: 'Este cerdito está en etapa avanzada, lo que te ayuda a ahorrar tiempo de engorde. Si eres de los que no les gusta esperar tanto, este cerdito será tu mejor aliado.'
+    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en un mercado exclusivo.',
+    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en un mercado exclusivo.',
+    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en un mercado exclusivo.',
+    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito será tu mejor aliado.'
   };
  
   const text = infoTexts[category.toLowerCase()] || '';
