@@ -69,7 +69,7 @@ async function loadPiggyDetail(piggyId) {
 
           <!-- Piggy hero -->
           <div class="piggy-detail__hero animate-scale-in">
-            <div class="piggy-detail__avatar" style="overflow: hidden; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; background: #fff;">
+            <div class="piggy-detail__avatar" style="overflow: hidden; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; border: 4px solid #ffffff; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);">
               <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
@@ -144,7 +144,7 @@ async function loadPiggyDetail(piggyId) {
               <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                 <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Completado</h3>
                 <p style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-md);">
-                  Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
+                  Tu piggy ya ha completado su cycle, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
                 </p>
                 <button class="btn btn--primary btn--block" id="btn-ver-wallet" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">
                   Ver Cuenta Agroproductiva
