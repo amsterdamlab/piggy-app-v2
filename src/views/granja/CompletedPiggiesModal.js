@@ -34,7 +34,7 @@ export function showCompletedPiggiesModal(completedPiggies, baseROI) {
   modal.style.padding = '0';
 
   modal.innerHTML = `
-    <div class="animate-scale-in" style="width: 100%; max-width: 620px; height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; background: #f8fafc; overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+    <div class="animate-scale-in" style="width: 100%; max-width: 620px; height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; background: var(--color-bg, #FDF2F5); overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
       <!-- Sticky Professional Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; background: white; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
          <div style="display: flex; align-items: center; gap: 14px;">
@@ -52,11 +52,11 @@ export function showCompletedPiggiesModal(completedPiggies, baseROI) {
       <!-- Content (Scrollable List of Cards) -->
       <div style="flex: 1; overflow-y: auto; padding: 24px 20px; -webkit-overflow-scrolling: touch;">
          ${(completedPiggies || []).length === 0 ? `
-            <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 18px; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-              <span style="font-size: 40px; display: block; margin-bottom: 12px;">🐷</span>
-              Aún no tienes Piggys con ciclo finalizado.<br/>
-              <span style="font-size: 0.82rem; color: #94a3b8; display: block; margin-top: 6px;">¡Sigue cuidando tu granja para que tus cerditos de engorde terminen su ciclo!</span>
-            </div>
+           <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 18px; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+             <span style="font-size: 40px; display: block; margin-bottom: 12px;">🐷</span>
+             Aún no tienes Piggys con ciclo finalizado.<br/>
+             <span style="font-size: 0.82rem; color: #94a3b8; display: block; margin-top: 6px;">¡Sigue cuidando tu granja para que tus cerditos de engorde terminen su ciclo!</span>
+           </div>
          ` : renderPiggiesList(completedPiggies, baseROI)}
       </div>
     </div>
