@@ -4,12 +4,11 @@
    ============================================ */
 
 import { renderIcon } from '../icons.js';
-import { getProfile } from '../services/authService.js';
+import { getProfile, signOut } from '../services/authService.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
 import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
-import { signOut } from '../services/authService.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
 import { getActiveMissions } from '../services/missionsService.js';
@@ -23,6 +22,7 @@ import {
 import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
 import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
 import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
+import { showSupportModal, HEADSET_ICON_SVG } from './granja/SupportModal.js';
 import { removeBonusModal } from './granja/WelcomeBonusModal.js';
 import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
 
@@ -133,7 +133,7 @@ async function loadGranjaData(firstName) {
     // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
     await detectAndCreateCycleMissions(piggies);
 
-    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
+    // ── Paso 3: cargar el resto de datos en paralelo ──────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
@@ -162,7 +162,6 @@ async function loadGranjaData(firstName) {
     stats.saldoDisponible        = walletBalance;
     stats.saldoDisponibleFormatted = formatCOP(walletBalance);
     stats.transactions           = transactions;
-    stats.newsSlides             = newsSlides;
 
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
@@ -210,6 +209,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         ${notification}
 
         ${renderWalletBanner(firstName, stats)}
+
+
 
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
@@ -273,8 +274,34 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
   `;
 }
 
+// ... renderGreeting remains the same ...
+
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
+
+  // Gift icon (stroke style, consistent with bottom nav)
+  const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <rect x="3" y="8" width="18" height="4" rx="1"/>
+    <path d="M12 8v13"/>
+    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
+    <path d="M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 8 12 8"/>
+    <path d="M16.5 8a2.5 2.5 0 0 0 0-5C15 3 12 8 12 8"/>
+  </svg>`;
+
+  // Headset icon (stroke style)
+  const headsetIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
+    <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
+  </svg>`;
+
+  // Logout icon (stroke style)
+  const logoutIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>`;
+
   return `
     <div class="granja-greeting animate-fade-in" style="display:flex; align-items:center; justify-content:space-between;">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -287,22 +314,18 @@ function renderGreeting(firstName) {
           <span class="granja-greeting__name">Hola, ${firstName}</span>
         </div>
       </div>
-      <div id="greeting-referral-code" style="
-        display: flex;
-        align-items: center;
-        background: linear-gradient(135deg, #7c3aed, #5b21b6);
-        color: white;
-        padding: 5px 12px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 0.68rem;
-        font-weight: 700;
-        box-shadow: 0 4px 12px rgba(124,58,237,0.3);
-        transition: transform 0.2s, box-shadow 0.2s;
-        white-space: nowrap;
-        letter-spacing: 1px;
-      " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(124,58,237,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(124,58,237,0.3)'">
-        <span>REFERIDOS</span>
+
+      <!-- Action Buttons: Referidos | Soporte | Salir -->
+      <div class="greeting-actions">
+        <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
+          ${giftIconSVG}
+        </button>
+        <button class="greeting-action-btn" id="btn-greeting-support" aria-label="Atención al Cliente" title="Soporte">
+          ${headsetIconSVG}
+        </button>
+        <button class="greeting-action-btn greeting-action-btn--danger" id="btn-greeting-logout" aria-label="Cerrar sesión" title="Salir">
+          ${logoutIconSVG}
+        </button>
       </div>
     </div>
   `;
@@ -327,6 +350,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 export function renderPiggiesList(piggies, baseROI) {
   return `
@@ -385,6 +410,7 @@ export function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
+// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
@@ -460,8 +486,19 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
   // Wallet listeners (delegated to module)
   attachWalletListeners(stats);
 
-  // Greeting referral code click → open referral modal
-  document.getElementById('greeting-referral-code')?.addEventListener('click', () => {
+  // Greeting action buttons
+  document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
     showReferralModal();
+  });
+
+  document.getElementById('btn-greeting-support')?.addEventListener('click', () => {
+    showSupportModal();
+  });
+
+  document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
+    if (confirm('¿Cerrar sesión?')) {
+      await signOut();
+      navigateTo('auth');
+    }
   });
 }
