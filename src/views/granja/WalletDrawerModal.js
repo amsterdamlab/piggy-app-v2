@@ -71,7 +71,7 @@ export function showWalletDrawer(firstName, stats) {
             <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px; font-weight:600;">Saldo Disponible</div>
             <div style="font-size:2.4rem; font-weight:850; letter-spacing:-0.5px; line-height:1; margin-bottom:10px;" data-wallet-balance>${stats.saldoDisponibleFormatted}</div>
             <div style="font-size:0.82rem; opacity:0.95;">
-               Margen Comercial: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
+               Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
             </div>
          </div>
 
@@ -91,8 +91,8 @@ export function showWalletDrawer(firstName, stats) {
          ${stats.referralBonus > 0 ? `
          <div style="background:#fffbeb; border:1px solid #fde68a; padding:14px 16px; border-radius:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
             <div>
-              <div style="font-size:0.75rem; color:#b45309; margin-bottom:2px; font-weight:700;">🎁 Bonos de Consumo</div>
-              <div style="font-size:1.1rem; font-weight:800; color:#92400e;">${stats.referralBonusFormatted}</div>
+               <div style="font-size:0.75rem; color:#b45309; margin-bottom:2px; font-weight:700;">🎁 Bonos de Consumo</div>
+               <div style="font-size:1.1rem; font-weight:800; color:#92400e;">${stats.referralBonusFormatted}</div>
             </div>
             <button id="btn-canjear-carne-drawer" style="
               background: #d97706;
