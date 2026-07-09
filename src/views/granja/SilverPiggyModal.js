@@ -246,8 +246,8 @@ export function showSilverPiggyModal(silverExpiry) {
                     <!-- Confirm Button -->
                     <button id="silver-confirm-btn" style="
                         width: 100%; background: linear-gradient(135deg, #6366f1, #4f46e5);
-                        color: white; border: none; padding: 15px;
-                        border-radius: 14px; font-weight: 700; font-size: 1rem; cursor: pointer;
+                        color: white; border: none; padding: 14px 20px;
+                        border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
                         box-shadow: 0 6px 20px -4px rgba(99,102,241,0.4); transition: all 0.2s;
                         opacity: 0.5; pointer-events: none; display: flex;
                         align-items: center; justify-content: center; gap: 8px;
