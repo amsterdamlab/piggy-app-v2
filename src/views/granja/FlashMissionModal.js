@@ -291,7 +291,7 @@ export function showFlashMissionModal(mission) {
                     <!-- Recharge Button -->
                     <button id="flash-recharge-btn" style="
                         width: 100%;
-                        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                        background: linear-gradient(135deg, #7c3aed, #5b21b6);
                         color: white;
                         border: none;
                         padding: 14px 20px;
@@ -304,7 +304,7 @@ export function showFlashMissionModal(mission) {
                         justify-content: center;
                         gap: 8px;
                         margin-bottom: 12px;
-                        box-shadow: 0 4px 15px rgba(234, 88, 12, 0.25);
+                        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
                         transition: all 0.2s;
                     ">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
