@@ -626,3 +626,15 @@
     background: var(--color-border);
     margin: var(--space-lg) 0;
 }
+
+/* Loader Logo Animation */
+@keyframes pulse-logo {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}

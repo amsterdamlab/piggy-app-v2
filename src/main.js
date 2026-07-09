@@ -98,7 +98,13 @@ function showLoadingScreen() {
       gap: 16px;
       color: var(--color-primary);
     ">
-      <div style="font-size: 48px;">🐷</div>
+      <img src="/piggy-loading-logo.png" style="
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        animation: pulse-logo 2s infinite ease-in-out;
+        margin-bottom: 8px;
+      " alt="Piggy App" onerror="this.onerror=null; this.src='pig2.jpg';" />
       <div class="spinner"></div>
       <div style="
         font-size: var(--text-sm);

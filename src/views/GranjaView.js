@@ -28,6 +28,7 @@ import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
 
 /* ── News Billboard Imports ── */
 import { getActiveNewsSlides } from '../services/newsService.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
 import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
 
 /* =========================================
@@ -107,10 +108,7 @@ function buildGranjaShell(firstName) {
 
         <!-- Piggies section skeleton -->
         <div class="section" id="piggies-section">
-          <div class="loading-container">
-            <div class="spinner"></div>
-            <span>Cargando tu granja...</span>
-          </div>
+          ${renderPiggyLoader('Cargando tu granja...')}
         </div>
       </div>
 
@@ -164,6 +162,7 @@ async function loadGranjaData(firstName) {
     stats.saldoDisponible        = walletBalance;
     stats.saldoDisponibleFormatted = formatCOP(walletBalance);
     stats.transactions           = transactions;
+    stats.newsSlides             = newsSlides;
 
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
@@ -211,8 +210,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         ${notification}
 
         ${renderWalletBanner(firstName, stats)}
-
-
 
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
@@ -276,8 +273,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
   `;
 }
 
-// ... renderGreeting remains the same ...
-
 function renderGreeting(firstName) {
   const initial = firstName.charAt(0).toUpperCase();
   return `
@@ -332,8 +327,6 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
-
-// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 export function renderPiggiesList(piggies, baseROI) {
   return `
@@ -392,7 +385,6 @@ export function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
-// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
