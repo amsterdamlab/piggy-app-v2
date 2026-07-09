@@ -264,15 +264,20 @@ export function showCheckoutModal(item) {
         <button class="checkout-close" id="checkout-close-btn" style="
             border: none; 
             cursor: pointer; 
-            padding: 8px; 
+            width: 36px; 
+            height: 36px; 
             border-radius: 50%; 
             display: flex; 
             align-items: center; 
             justify-content: center;
-            background: #fef2f2;
-            color: #ef4444;
-            transition: all 0.2s;">
-            ${renderIcon('close', '', '20')}
+            background: #f1f5f9;
+            color: #334155;
+            font-size: 16px;
+            font-weight: 700;
+            transition: all 0.2s;"
+            onmouseover="this.style.background='#e2e8f0'"
+            onmouseout="this.style.background='#f1f5f9'">
+            ✕
         </button>
     </div>
     
