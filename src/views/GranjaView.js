@@ -304,15 +304,13 @@ function renderGreeting(firstName) {
 
   return `
     <div class="granja-greeting animate-fade-in" style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; align-items:flex-start; gap:12px;">
-        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-          <span class="granja-greeting__welcome" style="align-self:flex-start;">¡Bienvenido!</span>
-          <div class="granja-greeting__avatar" style="flex-shrink:0; overflow:hidden;">
-            <span class="granja-greeting__initial">${initial}</span>
-            <span class="granja-greeting__online"></span>
-          </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="granja-greeting__avatar">
+          <span class="granja-greeting__initial">${initial}</span>
+          <span class="granja-greeting__online"></span>
         </div>
-        <div class="granja-greeting__text" style="align-self:flex-end; padding-bottom:4px;">
+        <div class="granja-greeting__text">
+          <span class="granja-greeting__welcome">¡Bienvenido!</span>
           <span class="granja-greeting__name">${firstName}</span>
         </div>
       </div>
