@@ -10,6 +10,7 @@ import { getWalletBalance } from '../../services/walletService.js';
 import { formatCOP } from '../../services/mockData.js';
 import { deductWalletBalance } from '../../services/walletService.js';
 import { buyFlashMission } from '../../services/flashMissionsService.js';
+import { openWalletDrawer } from './WalletBlock.js';
 
 /** Active countdown interval — cleaned up on modal close */
 let _flashCountdownInterval = null;
@@ -284,8 +285,31 @@ export function showFlashMissionModal(mission) {
                         padding:10px 14px; font-size:0.8rem; color:#dc2626; text-align:center;
                         margin-bottom:10px; display:none;
                     ">
-                        Saldo insuficiente. Recarga tu Wallet para continuar.
+                        Saldo insuficiente. Recarga tu Cuenta Agro para continuar.
                     </div>
+
+                    <!-- Recharge Button -->
+                    <button id="flash-recharge-btn" style="
+                        width: 100%;
+                        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                        color: white;
+                        border: none;
+                        padding: 14px 20px;
+                        border-radius: 12px;
+                        font-weight: 700;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        margin-bottom: 12px;
+                        box-shadow: 0 4px 15px rgba(234, 88, 12, 0.25);
+                        transition: all 0.2s;
+                    ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        Recargar mi Cuenta
+                    </button>
 
                     <!-- Price Row -->
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 4px; margin-bottom:12px;">
@@ -342,7 +366,13 @@ export function showFlashMissionModal(mission) {
 
         walletSection.style.opacity       = nameOk ? '1'    : '0.5';
         walletSection.style.pointerEvents = nameOk ? 'auto' : 'none';
-        insufficient.style.display        = (nameOk && !fundsOk) ? 'block' : 'none';
+        
+        const showRecharge = nameOk && !fundsOk;
+        insufficient.style.display = showRecharge ? 'block' : 'none';
+        const rechargeBtn = document.getElementById('flash-recharge-btn');
+        if (rechargeBtn) {
+            rechargeBtn.style.display = showRecharge ? 'flex' : 'none';
+        }
 
         const canBuy = nameOk && fundsOk;
         confirmBtn.style.opacity       = canBuy ? '1'    : '0.5';
@@ -382,6 +412,24 @@ export function showFlashMissionModal(mission) {
     document.getElementById('flash-modal-close').addEventListener('click', close);
     modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
+    // Recharge Wallet click
+    const rechargeBtn = document.getElementById('flash-recharge-btn');
+    if (rechargeBtn) {
+        rechargeBtn.addEventListener('click', async () => {
+            const originalText = rechargeBtn.innerHTML;
+            rechargeBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+            rechargeBtn.style.pointerEvents = 'none';
+            try {
+                await openWalletDrawer(true);
+                close();
+            } catch (e) {
+                console.error('Error opening wallet from flash mission:', e);
+                rechargeBtn.innerHTML = originalText;
+                rechargeBtn.style.pointerEvents = 'auto';
+            }
+        });
+    }
+
     // Confirm Purchase
     confirmBtn.addEventListener('click', async () => {
         const customName = nameInput.value.trim();
@@ -416,7 +464,7 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${mission.piggy_label}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });
