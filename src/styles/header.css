@@ -1,77 +1,60 @@
 /* ============================================
-   PIGGY APP — Top Navigation Styles
+   PIGGY APP — Header / Top Navigation Styles
+   TopNav is now hidden; greeting action buttons
+   live inside GranjaView.
    ============================================ */
 
+/* ── TopNav: hidden globally ───────────────── */
 .top-nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    width: 100%;
-    height: var(--header-height, 64px);
-    background-color: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--color-border);
+    display: none !important;
+}
+
+/* ── Greeting Action Buttons ───────────────── */
+.greeting-actions {
     display: flex;
     align-items: center;
-    padding: 0 var(--space-lg);
+    gap: 6px;
 }
 
-.top-nav__content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.top-nav__logo {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    cursor: pointer;
-    transition: opacity var(--transition-fast);
-    padding: 0 4px;
-}
-
-.top-nav__logo:active {
-    opacity: 0.75;
-}
-
-.top-nav__logo-icon {
-    font-size: 24px;
-}
-
-.top-nav__logo-text {
-    font-weight: var(--font-extrabold);
-    font-size: var(--text-md);
-    color: var(--color-primary);
-    letter-spacing: -0.5px;
-}
-
-.top-nav__logout {
+.greeting-action-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    color: var(--color-primary);
-    background: transparent;
-    border: none;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full, 50%);
+    border: 1.5px solid var(--color-border, #e5e7eb);
+    background: var(--color-bg, #ffffff);
+    color: var(--color-text-secondary, #6b7280);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all var(--transition-fast, 0.15s);
+    padding: 0;
+    flex-shrink: 0;
 }
 
-.top-nav__logout:hover {
-    color: var(--color-primary-dark);
-    transform: translateY(-1px) scale(1.08);
+.greeting-action-btn:hover {
+    color: var(--color-primary, #ec4899);
+    border-color: var(--color-primary, #ec4899);
+    background: rgba(236, 72, 153, 0.05);
+    transform: translateY(-1px);
 }
 
-.top-nav__logout:active {
-    transform: translateY(0) scale(0.95);
+.greeting-action-btn:active {
+    transform: translateY(0) scale(0.94);
 }
 
-/* Adjust page content to account for sticky header */
+.greeting-action-btn--danger {
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+.greeting-action-btn--danger:hover {
+    color: #dc2626;
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+/* ── Adjust page content — no more header offset ── */
 .page {
     flex-grow: 1;
 }

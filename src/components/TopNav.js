@@ -1,6 +1,8 @@
 /* ============================================
    PIGGY APP — Top Navigation Component
    Universal header with logout functionality
+   NOTE: TopNav is now hidden — controls moved
+   to GranjaView greeting action bar.
    ============================================ */
 
 import { renderIcon } from '../icons.js';
@@ -10,48 +12,16 @@ import { AppState } from '../state.js';
 
 /**
  * Render the TopNav component.
- * It inserts itself into the app container if not present.
+ * Now hidden — the greeting in GranjaView handles all actions.
+ * We keep the function signature intact to avoid breaking the
+ * AppState subscriber in main.js.
  */
 export function renderTopNav() {
     const headerRoot = document.getElementById('header-root');
     if (!headerRoot) return;
 
-    // Check if TopNav already exists
-    let topNav = document.getElementById('top-nav');
-
-    if (!topNav) {
-        topNav = document.createElement('div');
-        topNav.id = 'top-nav';
-        topNav.className = 'top-nav animate-fade-in';
-        headerRoot.appendChild(topNav);
-    }
-
-    const isAuthenticated = AppState.get('isAuthenticated');
-
-    if (!isAuthenticated) {
-        topNav.style.display = 'none';
-        return;
-    }
-
-    topNav.style.display = 'flex';
-    topNav.innerHTML = `
-        <div class="top-nav__content">
-            <div class="top-nav__logo" onclick="location.hash='#/granja'">
-                <img src="/piggyapp_logo1.png" alt="Piggy App" style="height:60px; width:auto; object-fit:contain; display:block;" />
-            </div>
-            <button class="top-nav__logout" id="global-logout" aria-label="Cerrar sesión">
-                ${renderIcon('logout', '', '22')}
-            </button>
-        </div>
-    `;
-
-    // Attach listener
-    document.getElementById('global-logout')?.addEventListener('click', async () => {
-        if (confirm('¿Cerrar sesión?')) {
-            await signOut();
-            navigateTo('auth');
-        }
-    });
+    // Clear any previous content — we no longer render a visible nav
+    headerRoot.innerHTML = '';
 }
 
 /**
@@ -61,5 +31,10 @@ export function removeTopNav() {
     const topNav = document.getElementById('top-nav');
     if (topNav) {
         topNav.remove();
+    }
+    // Also clear the header root to be thorough
+    const headerRoot = document.getElementById('header-root');
+    if (headerRoot) {
+        headerRoot.innerHTML = '';
     }
 }
