@@ -6,6 +6,7 @@ import { renderIcon } from '../icons.js';
 import { renderBottomNav } from './GranjaView.js';
 import { getAllies, getAllyCategories } from '../services/alliesService.js';
 import { completeMissionOnVisit } from '../services/missionsService.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
 
 let activeCategory = null;
 
@@ -26,10 +27,7 @@ export function renderAliadosView() {
 
         <div id="aliados-filters" class="aliados-filters animate-fade-in-up"></div>
         <div id="aliados-content">
-          <div class="loading-container">
-            <div class="spinner"></div>
-            <span>Cargando aliados...</span>
-          </div>
+          ${renderPiggyLoader('Cargando aliados...')}
         </div>
       </div>
       ${renderBottomNav('aliados')}
@@ -195,6 +193,7 @@ function renderAllyCard(ally) {
     </div>
   `;
 }
+
 
 /**
  * Provide a fallback Unsplash image based on ally category.

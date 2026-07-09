@@ -11,6 +11,7 @@ import { buyMarketplaceItem } from '../services/piggiesService.js';
 import { getWalletBalance, formatCOP, deductWalletBalance } from '../services/walletService.js';
 import { AppState } from '../state.js';
 import { openWalletRechargeInfo, openWalletDrawer } from './granja/WalletBlock.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
 
 /** In-memory cache */
 let cachedItems = [];
@@ -45,10 +46,7 @@ export function renderMercadoView() {
 
         <!-- Products List -->
         <div id="mercado-content">
-          <div class="loading-container">
-            <div class="spinner"></div>
-            <span>Cargando el mercado...</span>
-          </div>
+          ${renderPiggyLoader('Cargando el mercado...')}
         </div>
 
       </div>

@@ -9,6 +9,7 @@ import { getPiggyById, calculateBaseROI, formatCOP, formatPercentage, getDaysRem
 import { getUserPiggies } from '../services/piggiesService.js';
 import { getRouteParam, navigateTo } from '../router.js';
 import { openWalletDrawer } from './granja/WalletBlock.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
 
 /**
  * Render the Piggy Detail view.
@@ -20,10 +21,7 @@ export function renderPiggyDetailView() {
   app.innerHTML = `
     <div class="page piggy-detail-page">
       <div class="page__content">
-        <div class="loading-container">
-          <div class="spinner"></div>
-          <span>Cargando detalles...</span>
-        </div>
+        ${renderPiggyLoader('Cargando detalles...')}
       </div>
     </div>
   `;
@@ -144,7 +142,7 @@ async function loadPiggyDetail(piggyId) {
               <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2); text-align: center;">
                 <h3 class="section__title" style="color: #059669; margin-bottom: var(--space-sm);">✓ Completado</h3>
                 <p style="color: var(--text-color); font-size: 0.95rem; line-height: 1.5; margin-bottom: var(--space-md);">
-                  Tu piggy ya ha completado su cycle, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
+                  Tu piggy ya ha completado su ciclo, a partir de este momento verás reflejadas tus comisiones en tu <strong>Cuenta Agroproductiva</strong>.
                 </p>
                 <button class="btn btn--primary btn--block" id="btn-ver-wallet" style="background: linear-gradient(135deg, #10B981, #059669); color: white;">
                   Ver Cuenta Agroproductiva
