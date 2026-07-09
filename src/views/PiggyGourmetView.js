@@ -15,6 +15,7 @@ import {
 } from '../services/gourmetService.js';
 import { getReferralBonusBalance, createWalletRequest } from '../services/walletService.js';
 import { completeMissionOnVisit } from '../services/missionsService.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
 
 /* ─── Main Render ─── */
 
@@ -25,7 +26,7 @@ export function renderPiggyGourmetView() {
   completeMissionOnVisit('m1');
 
   app.innerHTML = `
-    <div class="page page--with-nav">
+    <div class="page page--with-nav gourmet-page">
       <div class="page__content">
 
         <!-- Title & Subtitle (Standardized size matching other sections) -->
@@ -41,10 +42,7 @@ export function renderPiggyGourmetView() {
 
         <!-- Offer Cards Container -->
         <div id="gourmet-offers-container" style="display:flex; flex-direction:column; gap:20px; margin-bottom:24px;">
-          <div class="loading-container">
-            <div class="spinner"></div>
-            <span>Cargando ofertas...</span>
-          </div>
+          ${renderPiggyLoader('Cargando ofertas...')}
         </div>
 
         <!-- Info Footer -->
@@ -82,9 +80,11 @@ export function renderPiggyGourmetView() {
 
 async function loadGourmetOffers() {
   try {
+    // A 600ms delay ensures the premium logo loader is visible for a smooth UX transition
     const [offers, referralBonus] = await Promise.all([
       getGourmetOffers(),
-      getReferralBonusBalance()
+      getReferralBonusBalance(),
+      new Promise(resolve => setTimeout(resolve, 600))
     ]);
 
     // Render dynamic bonus banner if user has balance
