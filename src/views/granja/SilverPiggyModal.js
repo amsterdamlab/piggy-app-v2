@@ -292,7 +292,7 @@ export function showSilverPiggyModal(silverExpiry) {
         walletSection.style.opacity     = nameOk ? '1'    : '0.5';
         walletSection.style.pointerEvents = nameOk ? 'auto' : 'none';
         
-        const showRecharge = nameOk && !fundsOk;
+        const showRecharge = !fundsOk;
         insufficient.style.display      = showRecharge ? 'block' : 'none';
         const rechargeBtn = document.getElementById('silver-recharge-btn');
         if (rechargeBtn) {

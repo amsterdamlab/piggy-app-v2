@@ -428,10 +428,10 @@ export function showCheckoutModal(item) {
           background: linear-gradient(135deg, #ec4899, #db2777);
           color: white;
           border: none;
-          padding: 15px 20px;
+          padding: 14px 20px;
           border-radius: 12px;
           font-weight: 700;
-          font-size: 1rem;
+          font-size: 0.95rem;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -466,6 +466,7 @@ export function showCheckoutModal(item) {
   const insufficientNotice = document.getElementById('insufficient-funds-notice');
   const confirmBtn = document.getElementById('btn-confirm-purchase');
   const errorMsg = document.getElementById('name-error');
+  const recargarBtn = document.getElementById('btn-recargar-checkout');
   const ADMIN_WHATSAPP = '573154870448';
  
   let currentBalance = 0;
@@ -489,8 +490,9 @@ export function showCheckoutModal(item) {
     walletSection.style.opacity = '1';
     walletSection.style.pointerEvents = 'auto';
  
-    // Show/hide insufficient funds notice
+    // Show/hide insufficient funds notice and recharge button
     insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
+    recargarBtn.style.display = !hasFunds ? 'flex' : 'none';
  
     // Enable confirm button directly if they have sufficient funds
     if (hasFunds) {
@@ -535,7 +537,6 @@ export function showCheckoutModal(item) {
   document.getElementById('checkout-close-btn').addEventListener('click', close);
  
   // Recargar Wallet
-  const recargarBtn = document.getElementById('btn-recargar-checkout');
   recargarBtn.addEventListener('click', async () => {
     const originalText = recargarBtn.innerHTML;
     recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
