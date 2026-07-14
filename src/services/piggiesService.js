@@ -55,8 +55,8 @@ export async function getUserPiggies() {
 
 /**
  * Identify piggies that have passed their end_date and mark them as complete.
- * The DB trigger `handle_piggy_completion` will automatically calculate ROI 
- * and credit the wallet.
+ * Calls the secure database RPC `mark_expired_piggies` to handle status changes
+ * safely and securely on the server side.
  * @param {string} userId 
  */
 export async function markExpiredPiggies(userId) {
@@ -64,35 +64,13 @@ export async function markExpiredPiggies(userId) {
 
     const client = getClient();
     
-    // Find piggies that are still "engorde" but end_date has passed
-    const { data: expiredPiggies, error: fetchError } = await client
-        .from('piggies')
-        .select('id, end_date')
-        .eq('user_id', userId)
-        .eq('status', 'engorde')
-        .lte('end_date', new Date().toISOString());
+    const { error } = await client.rpc('mark_expired_piggies', { p_user_id: userId });
 
-    if (fetchError) {
-        console.warn('Error fetching expired piggies:', fetchError);
-        return;
+    if (error) {
+        console.warn('Error marking expired piggies:', error);
+    } else {
+        console.log('✅ Checked and marked expired piggies successfully in DB.');
     }
-
-    if (!expiredPiggies || expiredPiggies.length === 0) return;
-
-    // Mark them as "completado"
-    // Using Promise.all since we might need to update multiple
-    await Promise.all(expiredPiggies.map(async (piggy) => {
-        const { error: updateError } = await client
-            .from('piggies')
-            .update({ status: 'completado' })
-            .eq('id', piggy.id);
-
-        if (updateError) {
-            console.warn(`Error updating expired piggy ${piggy.id}:`, updateError);
-        } else {
-            console.log(`✅ Piggy ${piggy.id} cycle completed. Trigger handled wallet credit.`);
-        }
-    }));
 }
 
 /**
