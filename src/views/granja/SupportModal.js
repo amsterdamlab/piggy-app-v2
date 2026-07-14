@@ -71,7 +71,7 @@ export function showSupportModal() {
 
       <!-- Subtitle -->
       <p style="margin:0 0 28px 0; font-size:0.88rem; color:#6b7280; text-align:center; line-height:1.5;">
-        Clara responde al instante — dudas, transferencias, estado de tu cuenta y más.
+        Mariana, nuestra asesora virtual responde al instante — dudas, transferencias, estado de tu cuenta y más.
       </p>
 
       <!-- Action Rows -->
@@ -81,7 +81,7 @@ export function showSupportModal() {
         overflow: hidden;
         margin-bottom: 28px;
       ">
-        <!-- Row 1: Habla con Clara IA -->
+        <!-- Row 1: Habla con MarIAna -->
         <button id="btn-support-talk" style="
           width: 100%;
           background: white;
@@ -94,14 +94,14 @@ export function showSupportModal() {
           transition: background 0.15s;
           font-family: inherit;
         " onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-          <span style="font-size:0.95rem; font-weight:600; color:#111827;">Habla con Clara IA</span>
+          <span style="font-size:0.95rem; font-weight:600; color:#111827;">Habla con MarIAna</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
         <!-- Divider -->
         <div style="height:1px; background:#f3f4f6; margin:0 16px;"></div>
 
-        <!-- Row 2: ¿Qué puede hacer Clara? -->
+        <!-- Row 2: Conectame con un Asesor -->
         <button id="btn-support-info" style="
           width: 100%;
           background: white;
@@ -114,14 +114,14 @@ export function showSupportModal() {
           transition: background 0.15s;
           font-family: inherit;
         " onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-          <span style="font-size:0.95rem; font-weight:600; color:#111827;">¿Qué puede hacer Clara?</span>
+          <span style="font-size:0.95rem; font-weight:600; color:#111827;">Conectame con un Asesor</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
 
       <!-- Entity Footer -->
       <p style="margin:0; font-size:0.72rem; color:#9ca3af; text-align:center; line-height:1.4;">
-        Nuestro centro de atención está operado bajo la entidad <strong style="color:#6b7280;">Granja Valle Morales SAS</strong>
+        Nuestro centro de atención en Piggy App está operado bajo la marca <strong style="color:#6b7280;">Granja Valle Morales SAS</strong>
       </p>
     </div>
   `;
@@ -133,15 +133,15 @@ export function showSupportModal() {
   document.getElementById('support-modal-close').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  // Action: Habla con Clara IA → WhatsApp
+  // Action: Habla con MarIAna → WhatsApp
   document.getElementById('btn-support-talk')?.addEventListener('click', () => {
-    const link = buildWhatsAppLink('Hola Clara \ud83d\udc4b, necesito ayuda con mi cuenta en Piggy App.');
+    const link = buildWhatsAppLink('¡Hola Mariana 👋! Ayudame con algo por favor...');
     window.open(link, '_blank');
   });
 
-  // Action: ¿Qué puede hacer Clara? → WhatsApp
+  // Action: Conectame con un Asesor → WhatsApp
   document.getElementById('btn-support-info')?.addEventListener('click', () => {
-    const link = buildWhatsAppLink('Hola Clara, \u00bfqu\u00e9 servicios puedes ofrecerme en Piggy App?');
+    const link = buildWhatsAppLink('Hola! Estoy buscando un asesor...');
     window.open(link, '_blank');
   });
 }
