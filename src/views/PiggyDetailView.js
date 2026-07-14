@@ -120,7 +120,7 @@ async function loadPiggyDetail(piggyId) {
               </div>
               <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">Fecha Cierre de Ciclo</span>
-                <span class="font-semibold">${new Date(piggy.end_date).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <span class="font-semibold">${new Date(piggy.end_date).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '-')}</span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
