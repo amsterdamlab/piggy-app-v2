@@ -225,8 +225,8 @@ export function showCheckoutModal(item) {
   modal.style.top = '0';
   modal.style.left = '0';
   modal.style.width = '100%';
-  modal.style.height = '100dvh'; // Dynamic viewport height
-  modal.style.backgroundColor = '#ffffff'; // Solid background
+  modal.style.height = '100dvh';
+  modal.style.backgroundColor = 'var(--color-bg, #FDF2F5)'; // Light pink background matching app theme
   modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
@@ -248,39 +248,35 @@ export function showCheckoutModal(item) {
   const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 4);
 
   modal.innerHTML = `
-    <!-- Checkout Header -->
-    <div class="checkout-header" style="
-        padding: 16px 20px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: space-between; 
-        background: var(--color-bg); 
-        border-bottom: 1px solid var(--color-border);
-        position: sticky; top: 0; z-index: 10;">
-        
-        <h3 class="modal-title" style="margin:0; font-size: 1.25rem;">Pasarela de Pago</h3>
-        <button class="checkout-close" id="checkout-close-btn" style="
-            border: none; 
-            cursor: pointer; 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            background: #f1f5f9;
-            color: #334155;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.2s;"
-            onmouseover="this.style.background='#e2e8f0'"
-            onmouseout="this.style.background='#f1f5f9'">
-            ✕
-        </button>
+    <!-- Checkout Header matching Ciclos Completados structure -->
+    <div style="padding: 24px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+          <h2 style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Pasarela de Pago</h2>
+          <button id="checkout-close-btn" style="
+              border: none; 
+              cursor: pointer; 
+              width: 36px; 
+              height: 36px; 
+              border-radius: 50%; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              background: rgba(255, 255, 255, 0.85);
+              border: 1px solid #f1f5f9;
+              color: #64748b;
+              font-size: 16px;
+              font-weight: 700;
+              transition: all 0.2s;"
+              onmouseover="this.style.background='white'; this.style.color='#0f172a';"
+              onmouseout="this.style.background='rgba(255, 255, 255, 0.85)'; this.style.color='#64748b'">
+              ✕
+          </button>
+        </div>
+        <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
     </div>
     
     <!-- Checklist Body -->
-    <div class="checkout-body" style="padding: 24px 20px; flex: 1; display: flex; flex-direction: column; align-items: center;">
+    <div class="checkout-body" style="padding: 24px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
       
       <!-- Summary Card -->
       <div class="checkout-summary" style="
@@ -444,20 +440,26 @@ export function showCheckoutModal(item) {
           Confirmar Compra
         </button>
       </div>
- 
+
       <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 32px; padding-bottom: 20px; display: flex; justify-content: center;">
-         <div class="secure-badge" style="display: flex; gap: 16px; color: var(--color-text-tertiary); font-size: 0.8rem;">
-            <span>&#128274; Pagos seguros</span>
-            <span>&#128737; Cifrado SSL</span>
+         <div class="secure-badge" style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.78rem; font-weight: 600; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Pagos seguros
+            </span>
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Cifrado SSL
+            </span>
          </div>
       </div>
     </div>
   `;
- 
+
   document.body.appendChild(modal);
- 
+
   // --- Logic ---
- 
+
   const input = document.getElementById('piggy-custom-name');
   const walletSection = document.getElementById('wallet-checkout-section');
   const balanceDisplay = document.getElementById('wallet-balance-display');
@@ -466,9 +468,9 @@ export function showCheckoutModal(item) {
   const errorMsg = document.getElementById('name-error');
   const recargarBtn = document.getElementById('btn-recargar-checkout');
   const ADMIN_WHATSAPP = '573154870448';
- 
+
   let currentBalance = 0;
- 
+
   // Load wallet balance
   getWalletBalance().then(balance => {
     currentBalance = balance;
@@ -478,20 +480,20 @@ export function showCheckoutModal(item) {
     balanceDisplay.textContent = '$0';
     updatePurchaseState(input.value.trim());
   });
- 
+
   // Helper: update button states based on name + balance
   const updatePurchaseState = (nameVal) => {
     const nameValid = nameVal.length >= 3;
     const hasFunds = currentBalance >= item.price;
- 
+
     // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
     walletSection.style.opacity = '1';
     walletSection.style.pointerEvents = 'auto';
- 
+
     // Show/hide insufficient funds notice and recharge button
     insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
     recargarBtn.style.display = !hasFunds ? 'flex' : 'none';
- 
+
     // Enable confirm button directly if they have sufficient funds
     if (hasFunds) {
       confirmBtn.style.opacity = '1';
@@ -500,7 +502,7 @@ export function showCheckoutModal(item) {
       confirmBtn.style.opacity = '0.5';
       confirmBtn.style.pointerEvents = 'none';
     }
- 
+
     // Name validation feedback
     if (nameValid) {
       errorMsg.style.opacity = '0';
@@ -514,26 +516,26 @@ export function showCheckoutModal(item) {
       input.style.borderColor = '#fce7f3';
     }
   };
- 
+
   // Input listener
   input.addEventListener('input', () => updatePurchaseState(input.value.trim()));
- 
+
   // Suggestion Pills
   window.selectPiggyName = (name) => {
     input.value = name;
     updatePurchaseState(name);
     input.focus();
   };
- 
+
   // Close Logic
   const close = () => {
     document.body.style.overflow = '';
     delete window.selectPiggyName;
     modal.remove();
   };
- 
+
   document.getElementById('checkout-close-btn').addEventListener('click', close);
- 
+
   // Recargar Wallet
   recargarBtn.addEventListener('click', async () => {
     const originalText = recargarBtn.innerHTML;
@@ -548,7 +550,7 @@ export function showCheckoutModal(item) {
       recargarBtn.style.pointerEvents = 'auto';
     }
   });
- 
+
   // Confirm Purchase
   confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
@@ -561,13 +563,13 @@ export function showCheckoutModal(item) {
       input.focus();
       return;
     }
- 
+
     if (currentBalance < item.price) return;
- 
+
     // Visual feedback
     confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
     confirmBtn.style.pointerEvents = 'none';
- 
+
     try {
       // ── CRÍTICO: Descontar wallet PRIMERO antes de llamar el RPC ──
       // El RPC buy_piggy maneja stock y creación del piggy pero NO descuenta wallet.
@@ -579,10 +581,10 @@ export function showCheckoutModal(item) {
             : 'No se pudo procesar el pago. Intenta de nuevo.'
         );
       }
- 
+
       // Wallet descontada ✅ — ahora crear el piggy
       await buyMarketplaceItem(item, customName);
- 
+
       close();
       navigateTo('granja');
     } catch (error) {
@@ -593,33 +595,33 @@ export function showCheckoutModal(item) {
     }
   });
 }
- 
+
 /**
  * Show premium, gold, silver, advanced category explanations in a custom popup modal.
  */
 window.showCategoryInfo = (category) => {
   const existing = document.getElementById('category-info-popup');
   if (existing) existing.remove();
- 
+
   const infoTexts = {
     premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en un mercado exclusivo.',
     gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en un mercado exclusivo.',
     silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en un mercado exclusivo.',
     advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito será tu mejor aliado.'
   };
- 
+
   const text = infoTexts[category.toLowerCase()] || '';
   if (!text) return;
- 
+
   const colors = {
     premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
     gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
     silver: { bg: 'linear-gradient(135deg, #BDC3C7, #7F8C8D)', color: '#FFF' },
     advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' }
   };
- 
+
   const theme = colors[category.toLowerCase()] || { bg: 'var(--color-primary)', color: '#FFF' };
- 
+
   const popup = document.createElement('div');
   popup.id = 'category-info-popup';
   popup.style.cssText = `
@@ -635,9 +637,9 @@ window.showCategoryInfo = (category) => {
     padding: 20px;
     box-sizing: border-box;
   `;
- 
+
   const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
- 
+
   popup.innerHTML = `
     <div class="animate-scale-in" style="
       background: white;
@@ -664,11 +666,11 @@ window.showCategoryInfo = (category) => {
       ">
         Categoría ${capitalizedCat}
       </div>
- 
+
       <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
         ${text}
       </div>
- 
+
       <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
         <button id="btn-close-cat-popup" style="
           width: 100%;
@@ -687,9 +689,9 @@ window.showCategoryInfo = (category) => {
       </div>
     </div>
   `;
- 
+
   document.body.appendChild(popup);
- 
+
   const close = () => popup.remove();
   document.getElementById('btn-close-cat-popup').addEventListener('click', close);
   popup.addEventListener('click', (e) => {
