@@ -55,6 +55,9 @@ export const AppState = createStore({
     // Legal
     showLegalModal: false,
 
+    // Onboarding post-Google
+    showWhatsAppModal: false,
+
     // Data
     piggies: [],
     marketplaceItems: [],
