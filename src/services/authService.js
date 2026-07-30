@@ -13,6 +13,39 @@ let mockLoggedIn = false;
 let mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted: false };
 
 /**
+ * Sign in / Sign up with Google OAuth.
+ */
+export async function signInWithGoogle() {
+    if (isUsingMockData()) {
+        mockLoggedIn = true;
+        mockProfile = {
+            ...MOCK_PROFILE,
+            full_name: 'Usuario Google',
+            email: 'google.user@example.com',
+            terms_accepted: true,
+            habeas_data_accepted: true,
+            referral_balance: 30000,
+        };
+        AppState.set({
+            currentUser: { ...MOCK_USER, email: 'google.user@example.com' },
+            profile: { ...mockProfile },
+            isAuthenticated: true,
+        });
+        return { error: null };
+    }
+
+    const client = getClient();
+    const { error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin
+        }
+    });
+
+    return { error: error?.message || null };
+}
+
+/**
  * Helper de resiliencia: Verifica o crea en public.profiles el registro del usuario.
  * Resuelve el problema donde un usuario existe en auth.users (puede hacer login) pero
  * no tiene fila en public.profiles debido a fallos de RLS o triggers en el registro inicial.
