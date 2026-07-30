@@ -266,8 +266,35 @@ export function showCheckoutModal(item) {
           box-shadow: 0 10px 24px rgba(236, 72, 153, 0.6);
         }
       }
+      @keyframes shineSweep7s {
+        0%, 75% {
+          left: -120%;
+        }
+        88%, 100% {
+          left: 220%;
+        }
+      }
       .btn-pulse-glow-7s {
+        position: relative !important;
+        overflow: hidden !important;
         animation: pulseGlow7s 7s infinite ease-in-out !important;
+      }
+      .btn-pulse-glow-7s::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -120%;
+        width: 60%;
+        height: 200%;
+        background: linear-gradient(
+          90deg, 
+          rgba(255, 255, 255, 0) 0%, 
+          rgba(255, 255, 255, 0.55) 50%, 
+          rgba(255, 255, 255, 0) 100%
+        );
+        transform: rotate(25deg);
+        animation: shineSweep7s 7s infinite ease-in-out;
+        pointer-events: none;
       }
     </style>
 
@@ -298,19 +325,23 @@ export function showCheckoutModal(item) {
     <!-- Checklist Body -->
     <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
       
-      <!-- Summary Section (Clean without background box or white frame) -->
+      <!-- Summary Section (Integrated with light pink background) -->
       <div class="checkout-summary" style="
           width: 100%; 
           max-width: 400px; 
           text-align: center; 
+          background: transparent;
+          padding: 0;
           margin-bottom: 20px;">
           
           <div style="
-              width: 72px; 
-              height: 72px; 
+              width: 76px; 
+              height: 76px; 
               margin: 0 auto 12px; 
               border-radius: 50%; 
-              overflow: hidden;">
+              overflow: hidden;
+              border: 3px solid white;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
               <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
           </div>
           
@@ -347,13 +378,13 @@ export function showCheckoutModal(item) {
                 />
            </div>
 
-           <!-- Name Suggestions (3 White Pills with Intense Pink Border) -->
+           <!-- Name Suggestions (3 White Pills with 1px Intense Pink Border) -->
            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                ${shuffled.map(name => `
                   <button class="name-pill" style="
                       background: white; 
                       color: #db2777; 
-                      border: 2px solid #ec4899; 
+                      border: 1px solid #ec4899; 
                       padding: 7px 16px; 
                       border-radius: 20px; 
                       font-size: 0.85rem; 
@@ -433,7 +464,7 @@ export function showCheckoutModal(item) {
           Saldo insuficiente. Recarga tu Cuenta para continuar.
         </div>
 
-        <!-- Confirm Purchase Button (with 7s pulse & glow animation) -->
+        <!-- Confirm Purchase Button (with 7s pulse & glow & shine animation) -->
         <button id="btn-confirm-purchase" class="btn-pulse-glow-7s" style="
           width: 100%;
           background: linear-gradient(135deg, #ec4899, #db2777);
