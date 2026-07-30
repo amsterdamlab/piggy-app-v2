@@ -247,6 +247,30 @@ export function showCheckoutModal(item) {
   const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 3);
 
   modal.innerHTML = `
+    <style>
+      @keyframes pulseGlow7s {
+        0%, 78%, 100% {
+          transform: scale(1);
+          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
+        }
+        83% {
+          transform: scale(1.03);
+          box-shadow: 0 12px 28px rgba(236, 72, 153, 0.7), 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+        88% {
+          transform: scale(0.99);
+          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
+        }
+        93% {
+          transform: scale(1.02);
+          box-shadow: 0 10px 24px rgba(236, 72, 153, 0.6);
+        }
+      }
+      .btn-pulse-glow-7s {
+        animation: pulseGlow7s 7s infinite ease-in-out !important;
+      }
+    </style>
+
     <!-- Checkout Header matching Ciclos Completados structure -->
     <div style="padding: 20px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
@@ -274,7 +298,7 @@ export function showCheckoutModal(item) {
     <!-- Checklist Body -->
     <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
       
-      <!-- Summary Section (Clean without background box) -->
+      <!-- Summary Section (Clean without background box or white frame) -->
       <div class="checkout-summary" style="
           width: 100%; 
           max-width: 400px; 
@@ -286,9 +310,7 @@ export function showCheckoutModal(item) {
               height: 72px; 
               margin: 0 auto 12px; 
               border-radius: 50%; 
-              overflow: hidden; 
-              border: 3px solid white; 
-              box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+              overflow: hidden;">
               <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
           </div>
           
@@ -325,23 +347,23 @@ export function showCheckoutModal(item) {
                 />
            </div>
 
-           <!-- Name Suggestions (3 White Pills) -->
+           <!-- Name Suggestions (3 White Pills with Intense Pink Border) -->
            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                ${shuffled.map(name => `
                   <button class="name-pill" style="
                       background: white; 
-                      color: #475569; 
-                      border: 1px solid #e2e8f0; 
+                      color: #db2777; 
+                      border: 2px solid #ec4899; 
                       padding: 7px 16px; 
                       border-radius: 20px; 
                       font-size: 0.85rem; 
-                      font-weight: 600; 
+                      font-weight: 700; 
                       cursor: pointer;
-                      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+                      box-shadow: 0 2px 6px rgba(236, 72, 153, 0.08);
                       transition: all 0.2s;
                   " 
-                  onmouseover="this.style.borderColor='var(--color-primary, #ec4899)'; this.style.color='var(--color-primary, #ec4899)';"
-                  onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#475569';"
+                  onmouseover="this.style.background='#fdf2f8'; this.style.transform='translateY(-1px)';"
+                  onmouseout="this.style.background='white'; this.style.transform='translateY(0)';"
                   onclick="selectPiggyName('${name}')">${name}</button>
                `).join('')}
            </div>
@@ -411,8 +433,8 @@ export function showCheckoutModal(item) {
           Saldo insuficiente. Recarga tu Cuenta para continuar.
         </div>
 
-        <!-- Confirm Purchase Button -->
-        <button id="btn-confirm-purchase" style="
+        <!-- Confirm Purchase Button (with 7s pulse & glow animation) -->
+        <button id="btn-confirm-purchase" class="btn-pulse-glow-7s" style="
           width: 100%;
           background: linear-gradient(135deg, #ec4899, #db2777);
           color: white;
@@ -678,7 +700,7 @@ window.showCategoryInfo = (category) => {
           font-size: 0.9rem;
           cursor: pointer;
           transition: background 0.2s;
-        " onmouseover="this.style.background='#e5e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
           Entendido
         </button>
       </div>
