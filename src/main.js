@@ -33,6 +33,7 @@ import { renderReferidosView } from './views/ReferidosView.js';
 // Components
 import { renderTopNav, removeTopNav } from './components/TopNav.js';
 import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
+import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppModal.js';
 
 /**
  * Boot the application.
@@ -71,6 +72,14 @@ async function boot() {
     }
     if (!state.showLegalModal && previous.showLegalModal) {
       removeLegalModal();
+    }
+
+    // WhatsApp onboarding modal (post Google login)
+    if (state.showWhatsAppModal && !previous.showWhatsAppModal) {
+      renderWhatsAppModal();
+    }
+    if (!state.showWhatsAppModal && previous.showWhatsAppModal) {
+      removeWhatsAppModal();
     }
   });
 
