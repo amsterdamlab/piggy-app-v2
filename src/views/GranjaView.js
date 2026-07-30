@@ -133,7 +133,7 @@ async function loadGranjaData(firstName) {
     // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
     await detectAndCreateCycleMissions(piggies);
 
-    // ── Paso 3: cargar el resto de datos en paralelo ──────────────
+    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
@@ -210,11 +210,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
 
         ${renderWalletBanner(firstName, stats)}
 
-
-
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
-          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 12px;">
+          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
             <button id="btn-quick-buy" style="
                 background: #ec4899; 
                 color: white; 
