@@ -33,16 +33,7 @@ export function renderWalletBanner(firstName, stats) {
               overflow: hidden;
               box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
            ">
-              <!-- Organic Pattern Background -->
-              <div style="
-                  position: absolute; 
-                  top: 0; left: 0; right: 0; bottom: 0; 
-                  opacity: 0.05; 
-                  background-image: url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'%3E%3Ctext x=\\'0\\' y=\\'40\\' font-size=\\'30\\'%3E🐷%3C/text%3E%3C/svg%3E');
-                  pointer-events: none;
-              "></div>
-
-              <!-- Decorative Piggy Icon -->
+              <!-- Decorative Wallet Icon (Line Style) -->
               <div style="position: absolute; bottom: -10px; right: -10px; opacity: 0.12; transform: rotate(-15deg); color:white;">
                  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
               </div>
