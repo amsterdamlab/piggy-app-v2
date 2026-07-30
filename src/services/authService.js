@@ -271,22 +271,41 @@ export async function checkSession() {
 
     if (session?.user) {
         const profile = await getProfile();
+        const isGoogleUser = session.user.app_metadata?.provider === 'google';
+        const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
+
         AppState.set({
             currentUser: session.user,
             profile,
             isAuthenticated: true,
             authLoading: false,
             showLegalModal: profile && !profile.terms_accepted,
+            showWhatsAppModal: needsWhatsApp,
         });
     } else {
         AppState.set({ authLoading: false });
     }
 
-    // Escuchar cambios de estado para restablecimiento de contraseña
+    // Escuchar cambios de estado (recuperación de contraseña y login via OAuth redirect)
     client.auth.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
             console.log('🐷 PASSWORD_RECOVERY event caught!');
             AppState.set({ isResettingPassword: true });
+        }
+
+        // Detectar cuando el usuario regresa del redirect de Google OAuth
+        if (event === 'SIGNED_IN' && session?.user) {
+            const isGoogleUser = session.user.app_metadata?.provider === 'google';
+            if (isGoogleUser) {
+                const profile = await getProfile();
+                const needsWhatsApp = !profile?.whatsapp;
+                AppState.set({
+                    currentUser: session.user,
+                    profile,
+                    isAuthenticated: true,
+                    showWhatsAppModal: needsWhatsApp,
+                });
+            }
         }
     });
 }
