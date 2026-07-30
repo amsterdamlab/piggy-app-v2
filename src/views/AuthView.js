@@ -381,7 +381,7 @@ function attachAuthListeners() {
       showStatusMessage('🔄 Conectando con Google...', '#1e3a8a', '#eff6ff', '#bfdbfe');
       const res = await signInWithGoogle();
       if (res.error) {
-        showFormError(res.error);
+        showFormError(translateSupabaseError(res.error));
       }
     } catch (err) {
       console.error('Google Auth Error:', err);
@@ -757,6 +757,7 @@ function translateSupabaseError(errorMessage) {
     'Password should be at least 6 characters': 'Tu contraseña debe tener al menos 6 caracteres.',
     'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
     'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
+    'Unsupported provider: provider is not enabled': 'El inicio de sesión con Google aún no se ha activado en el panel de Supabase.',
   };
 
   return translations[errorMessage] || errorMessage;
