@@ -46,8 +46,8 @@ export function showWalletDrawer(firstName, stats) {
          <button id="btn-back-wallet-drawer" style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.9rem; font-weight: 600; font-family: inherit; margin-bottom: 18px; transition: color 0.2s;" onmouseover="this.style.color='var(--color-primary, #E91E63)'" onmouseout="this.style.color='#64748b'">
            ← Volver a la Granja
          </button>
-         <h2 style="margin: 0 0 6px 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Cuenta Agro</h2>
-         <p style="margin: 0 0 18px 0; font-size: 0.92rem; color: #475569; line-height: 1.4;">Gestión e historial transaccional de tu granja.</p>
+         <h2 style="margin: 0 0 6px 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Tu Cuenta Agro</h2>
+         <p style="margin: 0 0 18px 0; font-size: 0.92rem; color: #475569; line-height: 1.4;">Gestión e historial transaccional.</p>
          <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
       </div>
 
@@ -85,22 +85,35 @@ export function showWalletDrawer(firstName, stats) {
 
          <!-- Bonos de Consumo -->
          ${stats.referralBonus > 0 ? `
-         <div style="background:#fffbeb; border:1px solid #fde68a; padding:14px 16px; border-radius:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
-            <div>
-              <div style="font-size:0.75rem; color:#b45309; margin-bottom:2px; font-weight:700;">🎁 Bonos de Consumo</div>
-              <div style="font-size:1.1rem; font-weight:800; color:#92400e;">${stats.referralBonusFormatted}</div>
+         <div style="
+            background: #F3E8FF;
+            border: 1px solid #E9D5FF;
+            padding: 16px 18px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+         ">
+            <div style="display: flex; align-items: center; gap: 8px; color: #7C3AED; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M19 12H5"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A2.5 2.5 0 0 1 12 5.5A2.5 2.5 0 0 1 16.5 3a2.5 2.5 0 0 1 0 5"/></svg>
+              <span>BONOS DE CONSUMO</span>
             </div>
-            <button id="btn-canjear-carne-drawer" style="
-              background: #d97706;
-              border: none;
-              color: white;
-              font-size: 0.75rem;
-              font-weight: 700;
-              padding: 8px 14px;
-              border-radius: 10px;
-              cursor: pointer;
-              box-shadow: 0 4px 10px rgba(217,119,6,0.25);
-            ">Canjear por carne</button>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="font-size: 1.45rem; font-weight: 800; color: #1E1B4B; line-height: 1;">${stats.referralBonusFormatted}</div>
+              <button id="btn-canjear-carne-drawer" style="
+                background: #7C3AED;
+                border: none;
+                color: white;
+                font-size: 0.78rem;
+                font-weight: 700;
+                padding: 8px 16px;
+                border-radius: 10px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+                transition: opacity 0.2s;
+              " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Canjear por Carne</button>
+            </div>
          </div>
          ` : ''}
 
@@ -170,7 +183,9 @@ export function showWalletDrawer(firstName, stats) {
                   const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
                   const badgeColor = isDebit ? '#dc2626' : '#059669';
                   const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
-                  const accountType = isConsumo ? '🥩' : '🔔';
+                  const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+                  const meatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
+                  const accountType = isConsumo ? meatIcon : bellIcon;
                   const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                   });
@@ -195,8 +210,9 @@ export function showWalletDrawer(firstName, stats) {
          </div>
 
          <!-- Footer note -->
-         <div style="text-align:center; color:#94a3b8; font-size:0.75rem; margin-top: 10px; padding-bottom: 10px;">
-             🔒 Cuentas Agro seguras y cifradas bajo protocolos SSL
+         <div style="text-align:center; color:#94a3b8; font-size:0.75rem; margin-top: 10px; padding-bottom: 10px; display:flex; align-items:center; justify-content:center; gap:5px;">
+             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+             <span>Cuentas Agro seguras y cifradas bajo protocolos SSL</span>
          </div>
       </div>
     </div>
@@ -241,7 +257,7 @@ export function showWalletDrawer(firstName, stats) {
 /**
  * Load wallet data autonomously and show the Wallet Drawer.
  */
-export async function openWalletDrawer(autoOpenRecharge = false) {
+export function openWalletDrawer(autoOpenRecharge = false) {
   try {
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
