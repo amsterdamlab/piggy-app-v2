@@ -50,16 +50,24 @@ export function renderPiggyGourmetView() {
           <div style="
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
-            border-radius: 14px;
-            padding: 16px 20px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            border-radius: 16px;
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
           ">
-            <div style="font-size:24px; flex-shrink:0; margin-top:2px;">🚚</div>
-            <div>
-              <div style="font-weight:700; color:#166534; font-size:0.85rem; margin-bottom:4px;">Información de entregas</div>
-              <div style="font-size:0.78rem; color:#15803d; line-height:1.5;">
+            <!-- Decorative Truck Line SVG Watermark (Bottom Right) -->
+            <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
+               <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                 <rect x="1" y="3" width="15" height="13" rx="1"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                 <circle cx="5.5" cy="18.5" r="2.5"/>
+                 <circle cx="18.5" cy="18.5" r="2.5"/>
+               </svg>
+            </div>
+
+            <div style="position: relative; z-index: 2;">
+              <div style="font-weight: 700; color: #166534; font-size: 0.88rem; margin-bottom: 6px;">Información de entregas</div>
+              <div style="font-size: 0.78rem; color: #15803d; line-height: 1.5;">
                 <strong>Cali:</strong> Domicilio gratis en zona urbana.<br/>
                 <strong>Otros municipios:</strong> Costo de envío según ubicación y peso.
               </div>
