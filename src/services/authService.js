@@ -34,12 +34,17 @@ export async function signInWithGoogle() {
         return { error: null };
     }
 
+    // Always redirect to the production URL to avoid localhost redirects after Google OAuth.
+    // In local development the Supabase Site URL must also match.
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const redirectTo = isLocalhost
+        ? window.location.origin
+        : 'https://piggy-app-v2.vercel.app';
+
     const client = getClient();
     const { error } = await client.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-            redirectTo: window.location.origin
-        }
+        options: { redirectTo }
     });
 
     return { error: error?.message || null };
