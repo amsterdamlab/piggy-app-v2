@@ -399,9 +399,10 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold">${piggy.currentWeight} kg</div>
         </div>
         <div>
-          <div class="text-xs text-muted">Comisión Comercial Estimada</div>
-          <div class="font-semibold text-primary">${formatCOP(projectedReturn)}</div>
-          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning);">Incluye comisión +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
+          <div class="font-semibold text-primary" style="font-size:0.9rem;">
+            <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">CC:</span> ${formatCOP(projectedReturn)}
+          </div>
+          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Incluye comisión +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
@@ -429,7 +430,7 @@ export function renderBottomNav(activeTab) {
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
-        <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('people, '', '24')}</span>
         <span>Aliados</span>
       </a>
     </nav>
