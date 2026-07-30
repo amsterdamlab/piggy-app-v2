@@ -241,13 +241,15 @@ export function showWalletDrawer(firstName, stats) {
 /**
  * Load wallet data autonomously and show the Wallet Drawer.
  */
-export function openWalletDrawer(autoOpenRecharge = false) {
+export async function openWalletDrawer(autoOpenRecharge = false) {
   try {
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
-    // Load piggies to calculate stats accurately
-    const piggies = AppState.get('piggies') || await getUserPiggies();
+    let piggies = AppState.get('piggies');
+    if (!piggies) {
+      piggies = await getUserPiggies();
+    }
     const piggiesList = Array.isArray(piggies) ? piggies : [];
     
     const [balance, referral, stats, transactions] = await Promise.all([
