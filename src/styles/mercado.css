@@ -272,9 +272,9 @@
 /* ---- Checkout Modal Styles (reused mostly, but good to ensure) ---- */
 .checkout-summary {
     text-align: center;
-    background: #f9f9f9;
-    padding: 10px;
-    border-radius: 8px;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
     margin-bottom: 20px;
 }
 
