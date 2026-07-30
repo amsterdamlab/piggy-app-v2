@@ -41,18 +41,14 @@ export function showWalletDrawer(firstName, stats) {
 
   modal.innerHTML = `
     <div class="animate-scale-in" style="width:100%; max-width:520px; height:100dvh; max-height:100dvh; background:white; display:flex; flex-direction:column; overflow:hidden; position:relative; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
-      <!-- Sticky Professional Header -->
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#10B981,#059669); display:flex; align-items:center; justify-content:center; color:white;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-          </div>
-          <div>
-            <div style="font-weight:800; font-size:1.1rem; color:#0f172a; line-height:1.2;">Cuenta Agro de ${firstName}</div>
-            <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Gestión e historial transaccional</div>
-          </div>
-        </div>
-        <button id="wallet-drawer-close" style="background:#f1f5f9; border:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#334155; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+      <!-- Header matching design structure (White Background) -->
+      <div style="padding: 24px 24px 0 24px; background: white; flex-shrink: 0;">
+         <button id="btn-back-wallet-drawer" style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.9rem; font-weight: 600; font-family: inherit; margin-bottom: 18px; transition: color 0.2s;" onmouseover="this.style.color='var(--color-primary, #E91E63)'" onmouseout="this.style.color='#64748b'">
+           ← Volver a la Granja
+         </button>
+         <h2 style="margin: 0 0 6px 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Cuenta Agro</h2>
+         <p style="margin: 0 0 18px 0; font-size: 0.92rem; color: #475569; line-height: 1.4;">Gestión e historial transaccional de tu granja.</p>
+         <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
       </div>
 
       <!-- Scrollable Body Content -->
@@ -91,8 +87,8 @@ export function showWalletDrawer(firstName, stats) {
          ${stats.referralBonus > 0 ? `
          <div style="background:#fffbeb; border:1px solid #fde68a; padding:14px 16px; border-radius:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
             <div>
-               <div style="font-size:0.75rem; color:#b45309; margin-bottom:2px; font-weight:700;">🎁 Bonos de Consumo</div>
-               <div style="font-size:1.1rem; font-weight:800; color:#92400e;">${stats.referralBonusFormatted}</div>
+              <div style="font-size:0.75rem; color:#b45309; margin-bottom:2px; font-weight:700;">🎁 Bonos de Consumo</div>
+              <div style="font-size:1.1rem; font-weight:800; color:#92400e;">${stats.referralBonusFormatted}</div>
             </div>
             <button id="btn-canjear-carne-drawer" style="
               background: #d97706;
@@ -215,7 +211,7 @@ export function showWalletDrawer(firstName, stats) {
       document.body.style.overflow = '';
     }
   };
-  document.getElementById('wallet-drawer-close').addEventListener('click', close);
+  document.getElementById('btn-back-wallet-drawer').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
   // Recharge trigger
@@ -245,7 +241,7 @@ export function showWalletDrawer(firstName, stats) {
 /**
  * Load wallet data autonomously and show the Wallet Drawer.
  */
-export async function openWalletDrawer(autoOpenRecharge = false) {
+export function openWalletDrawer(autoOpenRecharge = false) {
   try {
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
