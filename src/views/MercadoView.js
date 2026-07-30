@@ -242,33 +242,29 @@ export function showCheckoutModal(item) {
     imgSrc = `https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/refs/heads/main/public/${imgSrc}`;
   }
 
-  // Random names for suggestions
+  // Random names for suggestions (pick 3)
   const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
-  // Shuffle and pick 4
-  const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 4);
+  const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 3);
 
   modal.innerHTML = `
     <!-- Checkout Header matching Ciclos Completados structure -->
-    <div style="padding: 24px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+    <div style="padding: 20px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
           <h2 style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Pasarela de Pago</h2>
           <button id="checkout-close-btn" style="
+              background: none; 
               border: none; 
               cursor: pointer; 
-              width: 36px; 
-              height: 36px; 
-              border-radius: 50%; 
+              color: #64748b; 
+              font-size: 1.3rem; 
+              font-weight: 600; 
+              padding: 4px; 
               display: flex; 
               align-items: center; 
-              justify-content: center;
-              background: rgba(255, 255, 255, 0.85);
-              border: 1px solid #f1f5f9;
-              color: #64748b;
-              font-size: 16px;
-              font-weight: 700;
-              transition: all 0.2s;"
-              onmouseover="this.style.background='white'; this.style.color='#0f172a';"
-              onmouseout="this.style.background='rgba(255, 255, 255, 0.85)'; this.style.color='#64748b'">
+              justify-content: center; 
+              transition: color 0.2s;"
+              onmouseover="this.style.color='#0f172a';"
+              onmouseout="this.style.color='#64748b'">
               ✕
           </button>
         </div>
@@ -276,51 +272,46 @@ export function showCheckoutModal(item) {
     </div>
     
     <!-- Checklist Body -->
-    <div class="checkout-body" style="padding: 24px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
+    <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
       
-      <!-- Summary Card -->
+      <!-- Summary Section (Clean without background box) -->
       <div class="checkout-summary" style="
           width: 100%; 
           max-width: 400px; 
           text-align: center; 
-          background: #FFF0F5; 
-          padding: 24px; 
-          border-radius: 16px; 
-          margin-bottom: 32px;
-          border: 1px solid rgba(236, 72, 153, 0.1);
-          box-shadow: 0 8px 20px rgba(236, 72, 153, 0.05);">
+          margin-bottom: 20px;">
           
           <div style="
-              width: 80px; 
-              height: 80px; 
-              margin: 0 auto 16px; 
+              width: 72px; 
+              height: 72px; 
+              margin: 0 auto 12px; 
               border-radius: 50%; 
               overflow: hidden; 
               border: 3px solid white; 
-              box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+              box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
               <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
           </div>
           
-          <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px;">¡Compra tu Piggy!</h2>
-          <p style="font-size: 1rem; color: var(--color-text-secondary); line-height: 1.4;">
-            Un nuevo integrante para que tu granja siga creciendo desde <br>
-            <span style="font-size: 1.5rem; font-weight: 900; color: var(--color-primary); display:block; margin-top:4px;">${item.priceFormatted}</span>
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em;">¡Compra tu Piggy!</h2>
+          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
+            Un nuevo integrante para que tu granja siga creciendo desde
           </p>
+          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${item.priceFormatted}</div>
       </div>
 
       <!-- Custom Name Input Section -->
-      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 40px; text-align: center;">
+      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 24px; text-align: center;">
            
-           <div style="margin-bottom: 20px;">
+           <div style="margin-bottom: 12px;">
                 <input type="text" id="piggy-custom-name" 
                        placeholder="Ponle un nombre a tu Piggy"
                        autocomplete="off"
                        style="
                            width: 100%;
-                           padding: 16px;
-                           border: 2px solid #fce7f3; /* Pink-100 */
-                           border-radius: 16px;
-                           font-size: 1.1rem;
+                           padding: 14px 16px;
+                           border: 2px solid #fce7f3;
+                           border-radius: 14px;
+                           font-size: 1rem;
                            font-weight: 600;
                            color: var(--color-text-primary);
                            outline: none;
@@ -334,24 +325,28 @@ export function showCheckoutModal(item) {
                 />
            </div>
 
-           <!-- Name Suggestions (Pills) -->
-           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+           <!-- Name Suggestions (3 White Pills) -->
+           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                ${shuffled.map(name => `
                   <button class="name-pill" style="
-                      background: #fdf2f8; 
-                      color: #db2777; 
-                      border: 1px solid #fce7f3; 
-                      padding: 8px 16px; 
+                      background: white; 
+                      color: #475569; 
+                      border: 1px solid #e2e8f0; 
+                      padding: 7px 16px; 
                       border-radius: 20px; 
-                      font-size: 0.9rem; 
+                      font-size: 0.85rem; 
                       font-weight: 600; 
                       cursor: pointer;
-                      transition: transform 0.1s;
-                  " onclick="selectPiggyName('${name}')">${name}</button>
+                      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+                      transition: all 0.2s;
+                  " 
+                  onmouseover="this.style.borderColor='var(--color-primary, #ec4899)'; this.style.color='var(--color-primary, #ec4899)';"
+                  onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#475569';"
+                  onclick="selectPiggyName('${name}')">${name}</button>
                `).join('')}
            </div>
            
-           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:12px;">
+           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:8px;">
                 * Debes darle un nombre para continuar
            </div>
       </div>
@@ -363,14 +358,14 @@ export function showCheckoutModal(item) {
         <div style="
           background: linear-gradient(135deg, #10B981 0%, #059669 100%);
           border-radius: 16px;
-          padding: 20px 24px;
-          margin-bottom: 16px;
+          padding: 18px 20px;
+          margin-bottom: 12px;
           color: white;
           position: relative;
           overflow: hidden;
         ">
-          <div style="font-size:0.8rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
-          <div id="wallet-balance-display" style="font-size:2rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
+          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+          <div id="wallet-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
             <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
           </div>
           <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.1;">
@@ -441,7 +436,7 @@ export function showCheckoutModal(item) {
         </button>
       </div>
 
-      <div class="checkout-footer mt-lg" style="margin-top: auto; padding-top: 32px; padding-bottom: 20px; display: flex; justify-content: center;">
+      <div class="checkout-footer" style="margin-top: 16px; padding-top: 12px; padding-bottom: 16px; display: flex; justify-content: center;">
          <div class="secure-badge" style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.78rem; font-weight: 600; align-items: center;">
             <span style="display: flex; align-items: center; gap: 5px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -683,7 +678,7 @@ window.showCategoryInfo = (category) => {
           font-size: 0.9rem;
           cursor: pointer;
           transition: background 0.2s;
-        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+        " onmouseover="this.style.background='#e5e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
           Entendido
         </button>
       </div>
