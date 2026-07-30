@@ -35,22 +35,18 @@ export function showCompletedPiggiesModal(completedPiggies, baseROI) {
 
   modal.innerHTML = `
     <div class="animate-scale-in" style="width: 100%; max-width: 620px; height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; background: var(--color-bg, #FDF2F5); overflow: hidden; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-      <!-- Sticky Professional Header -->
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; background: white; border-bottom: 1px solid #e2e8f0; flex-shrink: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
-         <div style="display: flex; align-items: center; gap: 14px;">
-            <div style="width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; box-shadow: 0 4px 10px rgba(16,185,129,0.3); flex-shrink: 0;">
-               🏆
-            </div>
-            <div>
-               <h3 style="margin: 0; font-size: 1.25rem; font-weight: 850; color: #0f172a; line-height: 1.2;">Ciclos Completados</h3>
-               <div style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-top: 2px;">Historial de Piggys madurados in tu granja</div>
-            </div>
-         </div>
-         <button id="btn-close-completed-modal" style="background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: #334155; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+      <!-- Header matching design screenshot -->
+      <div style="padding: 24px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0;">
+         <button id="btn-back-completed" style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.9rem; font-weight: 600; font-family: inherit; margin-bottom: 18px; transition: color 0.2s;" onmouseover="this.style.color='var(--color-primary, #E91E63)'" onmouseout="this.style.color='#64748b'">
+           ← Volver a la Granja
+         </button>
+         <h2 style="margin: 0 0 6px 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Ciclos Completados</h2>
+         <p style="margin: 0 0 18px 0; font-size: 0.92rem; color: #475569; line-height: 1.4;">Historial de Piggys que han finalizado su etapa de engorde.</p>
+         <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
       </div>
 
       <!-- Content (Scrollable List of Cards) -->
-      <div style="flex: 1; overflow-y: auto; padding: 24px 20px; -webkit-overflow-scrolling: touch;">
+      <div style="flex: 1; overflow-y: auto; padding: 20px 20px 24px 20px; -webkit-overflow-scrolling: touch;">
          ${(completedPiggies || []).length === 0 ? `
            <div style="text-align: center; padding: 60px 20px; background: white; border-radius: 18px; border: 1px solid #e2e8f0; color: #64748b; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
              <span style="font-size: 40px; display: block; margin-bottom: 12px;">🐷</span>
@@ -72,7 +68,7 @@ export function showCompletedPiggiesModal(completedPiggies, baseROI) {
     }
   };
 
-  document.getElementById('btn-close-completed-modal').addEventListener('click', close);
+  document.getElementById('btn-back-completed').addEventListener('click', close);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) close();
   });
