@@ -6,7 +6,7 @@
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../../services/walletService.js';
-import { getUserPiggies, getDashboardStats } from '../../services/piggiesService.js';
+import { getDashboardStats } from '../../services/piggiesService.js';
 import { openWalletRechargeInfo } from './WalletRechargeModal.js';
 import { showRetiroSaldoModal } from './WalletWithdrawalModal.js';
 
@@ -257,16 +257,12 @@ export function showWalletDrawer(firstName, stats) {
 /**
  * Load wallet data autonomously and show the Wallet Drawer.
  */
-export function openWalletDrawer(autoOpenRecharge = false) {
+export async function openWalletDrawer(autoOpenRecharge = false) {
   try {
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
-    let piggies = AppState.get('piggies');
-    if (!piggies) {
-      piggies = await getUserPiggies();
-    }
-    const piggiesList = Array.isArray(piggies) ? piggies : [];
+    const piggiesList = AppState.get('piggies') || [];
     
     const [balance, referral, stats, transactions] = await Promise.all([
       getWalletBalance(),
