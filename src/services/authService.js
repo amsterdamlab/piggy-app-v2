@@ -13,6 +13,20 @@ let mockLoggedIn = false;
 let mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted: false };
 
 /**
+ * Helper to compute 1 or 2 initials from full name.
+ * e.g. "Hermes Lemos" -> "HL", "Juan" -> "J"
+ */
+export function getUserInitials(name) {
+    if (!name || typeof name !== 'string') return 'P';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'P';
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    const firstInitial = parts[0].charAt(0).toUpperCase();
+    const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+    return `${firstInitial}${lastInitial}`;
+}
+
+/**
  * Sign in / Sign up with Google OAuth.
  */
 export async function signInWithGoogle() {
@@ -339,4 +353,37 @@ export async function updatePassword(newPassword) {
     const client = getClient();
     const { error } = await client.auth.updateUser({ password: newPassword });
     return { error: error?.message || null };
+}
+
+/**
+ * Update user profile in Supabase and AppState.
+ * Updates personal and banking information.
+ */
+export async function updateUserProfile(updates) {
+    if (isUsingMockData()) {
+        const currentProfile = AppState.get('profile') || {};
+        mockProfile = { ...currentProfile, ...updates };
+        AppState.set({ profile: { ...mockProfile } });
+        return { data: mockProfile, error: null };
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { data: null, error: 'No hay usuario autenticado.' };
+
+    const { data, error } = await client
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .maybeSingle();
+
+    if (!error) {
+        const currentProfile = AppState.get('profile') || {};
+        const newProfile = data || { ...currentProfile, ...updates };
+        AppState.set({ profile: newProfile });
+        return { data: newProfile, error: null };
+    }
+
+    return { data: null, error: error.message };
 }
