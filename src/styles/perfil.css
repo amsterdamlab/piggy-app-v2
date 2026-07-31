@@ -1,0 +1,323 @@
+/* ============================================
+   PIGGY APP — Mi Perfil Styles
+   Matching exact aesthetic of reference mockup
+   ============================================ */
+
+.profile-page {
+    background: #f8fafc;
+    min-height: 100dvh;
+    padding-bottom: 80px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-header__back {
+    background: none;
+    border: none;
+    padding: 8px;
+    margin-left: -8px;
+    cursor: pointer;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.profile-header__back:hover {
+    background: #f1f5f9;
+}
+
+.profile-header__title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+    padding-right: 32px; /* balance back icon */
+}
+
+/* User Card Header */
+.profile-user-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 20px;
+}
+
+/* Avatar Circle — Always a perfect 1:1 circle */
+.profile-avatar-wrapper {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+}
+
+.profile-avatar-circle {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    border: 3px solid white;
+    box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.4);
+    box-sizing: border-box;
+}
+
+.profile-avatar-circle--single {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.profile-avatar-circle--double {
+    font-size: 1.65rem;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.profile-avatar-online {
+    position: absolute;
+    bottom: 2px;
+    left: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 3px solid white;
+    box-sizing: border-box;
+}
+
+.profile-user-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+    text-align: center;
+}
+
+.profile-referral-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #b80049;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    background: #fdf2f8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px dashed #fbcfe8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-referral-tag:hover {
+    background: #fce7f3;
+    transform: translateY(-1px);
+}
+
+/* Banner Referidos */
+.profile-banner-referral {
+    margin: 16px 20px 24px;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #5b50d6 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 10px 25px -5px rgba(91, 80, 214, 0.4);
+}
+
+.profile-banner-referral__text {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    margin: 0 0 12px 0;
+    font-weight: 500;
+}
+
+.profile-banner-referral__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+/* Menu Container */
+.profile-menu-card {
+    margin: 0 20px 28px;
+    background: white;
+    border-radius: 22px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: white;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.profile-menu-item:last-child {
+    border-bottom: none;
+}
+
+.profile-menu-item:hover {
+    background: #f8fafc;
+}
+
+.profile-menu-item__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-menu-item__icon {
+    width: 24px;
+    height: 24px;
+    color: #b80049; /* Specified pink color */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.profile-menu-item__text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.profile-menu-item__chevron {
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+}
+
+/* Footer Logos */
+.profile-footer {
+    padding: 24px 20px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.profile-footer__label {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.profile-footer__valle-logo {
+    height: 34px;
+    width: auto;
+    object-fit: contain;
+}
+
+.profile-footer__vigilado-badge {
+    border: 1.5px solid #000000;
+    border-radius: 4px;
+    padding: 6px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    max-width: 280px;
+}
+
+.profile-footer__vigilado-title {
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #000;
+    border-right: 1.5px solid #000;
+    padding-right: 10px;
+    line-height: 1;
+}
+
+.profile-footer__vigilado-sub {
+    font-size: 0.58rem;
+    font-weight: 800;
+    color: #000;
+    text-align: left;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+/* Modal / Subscreen Styles for Personal Data Edit */
+.profile-subscreen {
+    position: fixed;
+    inset: 0;
+    background: #f8fafc;
+    z-index: 100;
+    overflow-y: auto;
+    animation: slideInRight 0.25s ease-out;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.profile-data-card {
+    background: white;
+    border-radius: 20px;
+    margin: 16px 20px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+}
+
+.profile-data-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.profile-data-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
