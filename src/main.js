@@ -13,6 +13,7 @@ import './styles/aliados.css';
 import './styles/piggy-detail.css';
 import './styles/adopcion.css';
 import './styles/header.css';
+import './styles/perfil.css';
 
 // Core
 import { AppState } from './state.js';
@@ -29,6 +30,7 @@ import { renderPiggyDetailView } from './views/PiggyDetailView.js';
 import { renderAdopcionView } from './views/AdopcionView.js';
 import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
 import { renderReferidosView } from './views/ReferidosView.js';
+import { renderProfileView } from './views/ProfileView.js';
 
 // Components
 import { renderTopNav, removeTopNav } from './components/TopNav.js';
@@ -56,6 +58,7 @@ async function boot() {
   registerRoute('adopcion', renderAdopcionView);
   registerRoute('gourmet', renderPiggyGourmetView);
   registerRoute('referidos', renderReferidosView);
+  registerRoute('perfil', renderProfileView);
 
   // Subscribe to state changes
   AppState.subscribe((state, previous) => {
@@ -145,7 +148,7 @@ boot().catch((error) => {
         <div style="font-size: 48px;">😢</div>
         <h2>Error al cargar la aplicación</h2>
         <p style="color: var(--color-text-muted); font-size: var(--text-sm);">
-          Por favor recarga la página. Si el problema persiste, contacta soporte.
+          Por favor recarga la página. Si el problema me persiste, contacta soporte.
         </p>
         <button class="btn btn--primary" onclick="location.reload()">
           Recargar
