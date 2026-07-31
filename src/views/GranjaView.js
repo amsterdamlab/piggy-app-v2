@@ -4,7 +4,7 @@
    ============================================ */
 
 import { renderIcon } from '../icons.js';
-import { getProfile, signOut } from '../services/authService.js';
+import { getProfile, signOut, getUserInitials } from '../services/authService.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
 import { formatCOP } from '../services/mockData.js';
@@ -210,6 +210,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
 
         ${renderWalletBanner(firstName, stats)}
 
+
+
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
           <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
@@ -275,7 +277,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
 // ... renderGreeting remains the same ...
 
 function renderGreeting(firstName) {
-  const initial = firstName.charAt(0).toUpperCase();
+  const profile = AppState.get('profile') || {};
+  const initials = getUserInitials(profile.full_name || firstName);
+  const initialsFontSize = initials.length > 1 ? '1rem' : '1.15rem';
 
   // Gift icon (stroke style, consistent with bottom nav)
   const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
@@ -302,9 +306,9 @@ function renderGreeting(firstName) {
 
   return `
     <div class="granja-greeting animate-fade-in" style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <div class="granja-greeting__avatar">
-          <span class="granja-greeting__initial">${initial}</span>
+      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil">
+        <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+          <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
           <span class="granja-greeting__online"></span>
         </div>
         <div class="granja-greeting__text">
@@ -484,6 +488,11 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
 
   // Wallet listeners (delegated to module)
   attachWalletListeners(stats);
+
+  // Greeting avatar / profile trigger
+  document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
+    navigateTo('perfil');
+  });
 
   // Greeting action buttons
   document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
