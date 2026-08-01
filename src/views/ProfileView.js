@@ -8,6 +8,7 @@ import { getProfile, updateUserProfile, getUserInitials, signOut } from '../serv
 import { AppState } from '../state.js';
 import { navigateTo } from '../router.js';
 import { showSupportModal } from './granja/SupportModal.js';
+import { showReferralModal } from './granja/ReferralsModal.js';
 import { generateMockReferralCode } from '../services/referralService.js';
 
 // Colombian Banks list
@@ -54,9 +55,9 @@ export function renderProfileView() {
 
     app.innerHTML = `
         <div class="page profile-page animate-fade-in">
-            <!-- Header -->
+            <!-- Header with Back Arrow -->
             <div class="profile-header">
-                <button class="profile-header__back" id="btn-profile-back" aria-label="Volver a Mi Granja">
+                <button class="profile-header__back" id="btn-profile-back" aria-label="Volver a Mi Granja" title="Volver a Mi Granja">
                     ${renderIcon('arrowLeft', '', '22')}
                 </button>
                 <h1 class="profile-header__title">Mi Perfil</h1>
@@ -72,10 +73,10 @@ export function renderProfileView() {
                 </div>
                 <h2 class="profile-user-name">${fullName}</h2>
                 
-                <!-- Copyable Referral Code Tag -->
+                <!-- Copyable Referral Code Tag with line copy icon on right -->
                 <button class="profile-referral-tag" id="btn-copy-ref-profile" title="Copiar código de invitación">
                     <span>${referralCode}</span>
-                    ${renderIcon('copy', '', '16')}
+                    <span style="display:inline-flex; align-items:center; color:#b80049;">${renderIcon('copy', '', '16')}</span>
                 </button>
                 <div id="copy-ref-toast" style="font-size: 0.75rem; color: #16a34a; margin-top: 4px; display: none; font-weight: 700;">
                     ¡Código copiado al portapapeles! 📋
@@ -103,25 +104,25 @@ export function renderProfileView() {
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 2. Invitar Amigos -->
+                <!-- 2. Invitar Amigos (Caja de regalo en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-invitar">
                     <div class="profile-menu-item__left">
-                        <span class="profile-menu-item__icon">${renderIcon('gift', '', '22')}</span>
+                        <span class="profile-menu-item__icon">${renderIcon('giftBox', '', '22')}</span>
                         <span class="profile-menu-item__text">Invitar amigos</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 3. Centro de Ayuda -->
+                <!-- 3. Centro de Ayuda (Diadema de soporte en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-ayuda">
                     <div class="profile-menu-item__left">
-                        <span class="profile-menu-item__icon">${renderIcon('chatBubble', '', '22')}</span>
+                        <span class="profile-menu-item__icon">${renderIcon('headset', '', '22')}</span>
                         <span class="profile-menu-item__text">Centro de ayuda</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 4. Términos y Condiciones -->
+                <!-- 4. Términos y Condiciones (Hoja / Documento en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-terminos">
                     <div class="profile-menu-item__left">
                         <span class="profile-menu-item__icon">${renderIcon('documentText', '', '22')}</span>
@@ -183,9 +184,9 @@ function attachProfileViewListeners(profile) {
         });
     });
 
-    // Banner invite button
+    // Banner invite button -> Opens referral modal directly without leaving profile
     document.getElementById('btn-profile-invite-banner')?.addEventListener('click', () => {
-        navigateTo('referidos');
+        showReferralModal();
     });
 
     // Menu: Datos Personales
@@ -193,12 +194,12 @@ function attachProfileViewListeners(profile) {
         openDatosPersonalesSubscreen(profile);
     });
 
-    // Menu: Invitar amigos
+    // Menu: Invitar amigos -> Opens referral modal directly without leaving profile
     document.getElementById('btn-menu-invitar')?.addEventListener('click', () => {
-        navigateTo('referidos');
+        showReferralModal();
     });
 
-    // Menu: Centro de ayuda
+    // Menu: Centro de ayuda -> Opens support modal
     document.getElementById('btn-menu-ayuda')?.addEventListener('click', () => {
         showSupportModal();
     });
@@ -235,9 +236,9 @@ function openDatosPersonalesSubscreen(profile) {
 
     container.innerHTML = `
         <div class="profile-subscreen">
-            <!-- Subscreen Header -->
+            <!-- Subscreen Header with Back Arrow -->
             <div class="profile-header">
-                <button class="profile-header__back" id="btn-subscreen-back">
+                <button class="profile-header__back" id="btn-subscreen-back" aria-label="Volver" title="Volver">
                     ${renderIcon('arrowLeft', '', '22')}
                 </button>
                 <h1 class="profile-header__title">Datos Personales</h1>
@@ -455,8 +456,9 @@ function openLegalSubscreen() {
 
     container.innerHTML = `
         <div class="profile-subscreen">
+            <!-- Header with Back Arrow -->
             <div class="profile-header">
-                <button class="profile-header__back" id="btn-subscreen-back">
+                <button class="profile-header__back" id="btn-subscreen-back" aria-label="Volver" title="Volver">
                     ${renderIcon('arrowLeft', '', '22')}
                 </button>
                 <h1 class="profile-header__title">Términos y Condiciones</h1>
@@ -464,7 +466,10 @@ function openLegalSubscreen() {
 
             <div style="padding: 24px 20px;">
                 <div class="profile-data-card" style="margin:0 0 20px 0;">
-                    <div style="font-size: 32px; text-align: center; margin-bottom: 12px;">📜</div>
+                    <!-- Line Document Icon in #b80049 -->
+                    <div style="text-align: center; margin-bottom: 14px; color: #b80049;">
+                        ${renderIcon('documentText', '', '44')}
+                    </div>
                     <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 8px 0;">
                         Contratos y Políticas de Piggy App
                     </h3>
@@ -472,21 +477,26 @@ function openLegalSubscreen() {
                         Consulta de forma transparente nuestras condiciones de uso y la política de tratamiento de tus datos personales.
                     </p>
 
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
                         <a href="terminos-y-condiciones.html" target="_blank" class="btn btn--block" style="
                             background: #f8fafc;
                             color: #1e293b;
                             border: 1px solid #cbd5e1;
                             border-radius: 14px;
                             font-weight: 700;
-                            padding: 14px;
+                            font-size: 0.84rem;
+                            line-height: 1.35;
+                            padding: 14px 16px;
                             text-decoration: none;
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
+                            gap: 10px;
+                            white-space: normal;
+                            text-align: left;
                         ">
-                            <span>Ver Términos y Condiciones completos</span>
-                            <span>↗</span>
+                            <span style="flex:1;">Ver Términos y Condiciones completos de la plataforma</span>
+                            <span style="font-size:16px; flex-shrink:0;">↗</span>
                         </a>
 
                         <a href="tratamiento-de-datos.html" target="_blank" class="btn btn--block" style="
@@ -495,14 +505,19 @@ function openLegalSubscreen() {
                             border: 1px solid #cbd5e1;
                             border-radius: 14px;
                             font-weight: 700;
-                            padding: 14px;
+                            font-size: 0.84rem;
+                            line-height: 1.35;
+                            padding: 14px 16px;
                             text-decoration: none;
                             display: flex;
                             align-items: center;
                             justify-content: space-between;
+                            gap: 10px;
+                            white-space: normal;
+                            text-align: left;
                         ">
-                            <span>Ver Política de Tratamiento de Datos (Habeas Data)</span>
-                            <span>↗</span>
+                            <span style="flex:1;">Ver Política de Tratamiento de Datos Personales (Habeas Data)</span>
+                            <span style="font-size:16px; flex-shrink:0;">↗</span>
                         </a>
                     </div>
                 </div>
