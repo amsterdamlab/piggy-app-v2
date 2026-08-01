@@ -1,7 +1,7 @@
 /* ============================================
    PIGGY APP — Missions Service (v2)
-   7 missions: M1-M7 with visit-based auto-complete
-   and Silver Piggy 72h countdown for M6.
+   Missions flow M1-M9 with auto-complete
+   and 72h flash offer windows for M5 and M8.
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
@@ -10,9 +10,7 @@ import { MOCK_MISSIONS } from './mockData.js';
 import { ensureWelcomeBonusAssigned } from './walletService.js';
 
 /* ─── Mission Definitions ─────────────────────
-   Source of truth for mission structure (7 missions).
-   Phase 2: move these to a mission_definitions table
-   so admin can manage them without deploys.
+   Source of truth for mission structure (M1-M9).
    ─────────────────────────────────────────── */
 
 const MISSION_DEFINITIONS = [
@@ -42,35 +40,53 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm4', sortOrder: 4,
-        title: 'Compra tu 2do Piggy',
-        reward: '+1% en Margen Comercial de tu granja',
-        icon: '📈', cta: '#/mercado',
-        autoType: 'second_piggy',
-        requires: 'm2',
+        title: 'Descarga Piggy en tu Celular',
+        reward: 'Crea el acceso directo a Piggy App en la pantalla de tu celular',
+        icon: '📱', cta: 'install_pwa',
+        autoType: 'installed_pwa',
+        requires: 'm3',
     },
     {
         key: 'm5', sortOrder: 5,
+        title: 'Compra tu 2do Piggy (Piggy Gold)',
+        reward: '72 horas para aprovechar la oferta exclusiva Piggy Gold',
+        icon: '🏆', cta: '#/mercado',
+        autoType: 'second_piggy',
+        requires: 'm4',
+        hasFlashTimer: true,
+    },
+    {
+        key: 'm6', sortOrder: 6,
+        title: 'Completa tus Datos',
+        reward: 'Completa tus datos para que podamos enviarte tus comisiones al final de cada ciclo.',
+        icon: '💳', cta: '#/perfil?subscreen=datos',
+        autoType: 'completed_profile',
+        requires: 'm5',
+    },
+    {
+        key: 'm7', sortOrder: 7,
         title: 'Compra en locales aliados',
         reward: 'Conoce los descuentos exclusivos de nuestros aliados',
         icon: '🏛️', cta: '#/aliados',
         autoType: 'visited_aliados',
-        requires: 'm3',
+        requires: 'm6',
     },
     {
-        key: 'm6', sortOrder: 6,
-        title: 'Activa tu 3er Piggy',
-        reward: '72 horas para comprar un Piggy Silver exclusivo',
-        icon: '🌟', cta: 'open_silver_modal',
+        key: 'm8', sortOrder: 8,
+        title: 'Activa tu 3er Piggy (Advanced 30)',
+        reward: '72 horas para comprar un Piggy Advanced 30 exclusivo',
+        icon: '⚡', cta: '#/mercado',
         autoType: 'third_piggy',
-        requires: 'm4',
+        requires: 'm7',
+        hasFlashTimer: true,
     },
     {
-        key: 'm7', sortOrder: 7,
+        key: 'm9', sortOrder: 9,
         title: 'Refiere y logra una compra',
-        reward: 'Obtén $30.000 en tu Wallet',
+        reward: 'Obtén $30.000 en tu Wallet por tu primer referido efectivo',
         icon: '🤝', cta: 'open_referidos',
         autoType: 'first_referral_completed',
-        requires: 'm4',
+        requires: 'm8',
     },
 ];
 
@@ -90,21 +106,27 @@ function buildAutoCompletionMap(piggies, profile) {
     const referralStats    = AppState.get('referralStats') || {};
     const completedRefs    = referralStats.completedReferrals || 0;
     const visitedSections  = AppState.get('visitedSections') || {};
+    const pwaInstalled     = localStorage.getItem('piggy_pwa_installed') === 'true';
+
+    // Profile is completed if user has full_name and whatsapp filled
+    const isProfileComplete = Boolean(profile?.full_name && profile?.whatsapp);
 
     return {
         m1: visitedSections.gourmet   || false, // visited /gourmet
         m2: piggies.length >= 1,                 // bought 1st piggy
         m3: visitedSections.referidos || false, // visited referidos modal
-        m4: piggies.length >= 2,                 // bought 2nd piggy
-        m5: visitedSections.aliados   || false, // visited /aliados
-        m6: piggies.length >= 3,                 // bought 3rd piggy (silver or regular)
-        m7: completedRefs >= 1,                  // referral completed a purchase
+        m4: pwaInstalled              || false, // installed PWA / accepted prompt
+        m5: piggies.length >= 2,                 // bought 2nd piggy (or timer expired)
+        m6: isProfileComplete         || false, // filled profile info in Mi Perfil
+        m7: visitedSections.aliados   || false, // visited /aliados
+        m8: piggies.length >= 3,                 // bought 3rd piggy (or timer expired)
+        m9: completedRefs >= 1,                  // referral completed a purchase
     };
 }
 
 /* ─── Merge DB rows with definitions ─────────
    Applies locking rules, fills defaults, and
-   injects silverExpiry for M6.
+   injects 72h flash timers for M5 and M8.
    ─────────────────────────────────────────── */
 
 function mergeWithDefinitions(dbRows, autoMap) {
@@ -112,7 +134,7 @@ function mergeWithDefinitions(dbRows, autoMap) {
 
     return MISSION_DEFINITIONS.map(def => {
         const dbRow      = dbMap.get(def.key);
-        const isCompleted = dbRow?.is_completed || autoMap[def.key] || false;
+        let isCompleted = dbRow?.is_completed || autoMap[def.key] || false;
 
         // Lock if the required mission is not yet completed
         let isLocked = false;
@@ -122,13 +144,18 @@ function mergeWithDefinitions(dbRows, autoMap) {
             if (!reqDone) isLocked = true;
         }
 
-        // M6: compute the 72h Silver Piggy offer window from M4's completion timestamp
-        let silverExpiry = null;
-        if (def.key === 'm6' && !isCompleted && !isLocked) {
-            const m4Row = dbMap.get('m4');
-            if (m4Row?.completed_at) {
-                const expiryMs = new Date(m4Row.completed_at).getTime() + (72 * 60 * 60 * 1000);
-                silverExpiry = new Date(expiryMs).toISOString();
+        // M5 (Gold) and M8 (Advanced 30): 72h Flash timer computation
+        let flashExpiry = null;
+        if ((def.key === 'm5' || def.key === 'm8') && !isLocked) {
+            const reqKey = def.requires;
+            const reqRow = dbMap.get(reqKey);
+            if (reqRow?.completed_at) {
+                const expiryMs = new Date(reqRow.completed_at).getTime() + (72 * 60 * 60 * 1000);
+                flashExpiry = new Date(expiryMs).toISOString();
+                // If 72h expired without purchase, mark mission as completed so user advances
+                if (Date.now() > expiryMs) {
+                    isCompleted = true;
+                }
             }
         }
 
@@ -141,7 +168,7 @@ function mergeWithDefinitions(dbRows, autoMap) {
             is_completed: isCompleted,
             is_locked: isLocked,
             completed_at: dbRow?.completed_at || null,
-            silverExpiry,
+            flashExpiry,
         };
     });
 }
@@ -178,7 +205,7 @@ export async function getMissions(piggiesOverride = null) {
     const dbMap = new Map((dbRows || []).map(r => [r.mission_key, r]));
 
     // Upsert only auto-completable missions (not visit-based ones — those use completeMissionOnVisit)
-    const autoKeys = ['m2', 'm4', 'm6', 'm7']; // missions with real data triggers
+    const autoKeys = ['m2', 'm4', 'm5', 'm6', 'm8', 'm9']; // missions with real data/state triggers
     const autoRows = MISSION_DEFINITIONS
         .filter(def => autoKeys.includes(def.key))
         .map(def => {
