@@ -32,6 +32,9 @@ import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
 import { renderReferidosView } from './views/ReferidosView.js';
 import { renderProfileView } from './views/ProfileView.js';
 
+// Services
+import { initPWAListener } from './services/pwaService.js';
+
 // Components
 import { renderTopNav, removeTopNav } from './components/TopNav.js';
 import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
@@ -42,6 +45,9 @@ import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppM
  */
 async function boot() {
   console.log('🐷 Piggy App — Booting...');
+
+  // Initialize PWA install prompt listener
+  initPWAListener();
 
   // Show loading screen
   showLoadingScreen();
@@ -148,7 +154,7 @@ boot().catch((error) => {
         <div style="font-size: 48px;">😢</div>
         <h2>Error al cargar la aplicación</h2>
         <p style="color: var(--color-text-muted); font-size: var(--text-sm);">
-          Por favor recarga la página. Si el problema me persiste, contacta soporte.
+          Por favor recarga la página. Si el problema persiste, contacta soporte.
         </p>
         <button class="btn btn--primary" onclick="location.reload()">
           Recargar
