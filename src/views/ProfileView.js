@@ -26,7 +26,7 @@ const COLOMBIAN_BANKS = [
     'RappiPay',
     'Movii',
     'Davivienda',
-    'Banco Itaú',
+    'Banco Itáu',
     'Scotiabank Colpatria',
     'Banco Popular',
     'Banco de Occidente',
@@ -229,11 +229,6 @@ function attachProfileViewListeners(profile) {
             navigateTo('auth');
         }
     });
-
-    // Auto-open Datos Personales subscreen if URL has subscreen=datos (e.g. from Misión 6 CTA)
-    if (window.location.hash.includes('subscreen=datos')) {
-        openDatosPersonalesSubscreen(profile);
-    }
 }
 
 /**
@@ -436,7 +431,7 @@ function openDatosPersonalesSubscreen(profile) {
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Guardando en Supabase...';
+        submitBtn.textContent = 'Guardando...';
 
         const updates = {
             full_name: fullNameVal,
@@ -450,12 +445,12 @@ function openDatosPersonalesSubscreen(profile) {
         const { error } = await updateUserProfile(updates);
 
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Guardar Cambios';
+        submitBtn.textContent = 'Guardar Cambios';
 
         if (error) {
             showSubscreenStatus(`Error al guardar: ${error}`, '#ef4444', '#fef2f2', '#fecaca');
         } else {
-            showSubscreenStatus('✅ ¡Información guardada y sincronizada exitosamente con Supabase!', '#16a34a', '#f0fdf4', '#bbf7d0');
+            showSubscreenStatus('✅ ¡Información guardada exitosamente!', '#16a34a', '#f0fdf4', '#bbf7d0');
             await completeMissionOnVisit('m6').catch(err => console.warn('M6 complete error:', err));
             setTimeout(() => {
                 closeSubscreen();
