@@ -110,8 +110,8 @@ function buildAutoCompletionMap(piggies, profile) {
     const visitedSections  = AppState.get('visitedSections') || {};
     const pwaInstalled     = localStorage.getItem('piggy_pwa_installed') === 'true';
 
-    // Profile is completed if user has full_name and whatsapp filled
-    const isProfileComplete = Boolean(profile?.full_name && profile?.whatsapp);
+    // Profile bank data is completed if user has filled bank_name and bank_account_number
+    const isProfileComplete = Boolean(profile?.bank_name && profile?.bank_account_number);
 
     return {
         m1: visitedSections.gourmet   || false, // visited /gourmet
@@ -119,7 +119,7 @@ function buildAutoCompletionMap(piggies, profile) {
         m3: visitedSections.referidos || false, // visited referidos modal
         m4: pwaInstalled              || false, // installed PWA / accepted prompt
         m5: piggies.length >= 2,                 // bought 2nd piggy (or timer expired)
-        m6: isProfileComplete         || false, // filled profile info in Mi Perfil
+        m6: isProfileComplete         || false, // filled bank info in Mi Perfil
         m7: visitedSections.aliados   || false, // visited /aliados
         m8: piggies.length >= 3,                 // bought 3rd piggy (or timer expired)
         m9: completedRefs >= 1,                  // referral completed a purchase
@@ -260,7 +260,7 @@ export async function completeMissionOnVisit(missionKey) {
 
     // Persist section visit in AppState immediately so buildAutoCompletionMap always sees it
     const visitedSections = AppState.get('visitedSections') || {};
-    const sectionMap = { m1: 'gourmet', m3: 'referidos', m5: 'aliados' };
+    const sectionMap = { m1: 'gourmet', m3: 'referidos', m6: 'datos', m7: 'aliados' };
     if (sectionMap[missionKey]) {
         if (!visitedSections[sectionMap[missionKey]]) {
             visitedSections[sectionMap[missionKey]] = true;
