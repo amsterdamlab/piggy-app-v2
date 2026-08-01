@@ -229,6 +229,11 @@ function attachProfileViewListeners(profile) {
             navigateTo('auth');
         }
     });
+
+    // Auto-open Datos Personales subscreen if URL has subscreen=datos (e.g. from Misión 6 CTA)
+    if (window.location.hash.includes('subscreen=datos')) {
+        openDatosPersonalesSubscreen(profile);
+    }
 }
 
 /**
