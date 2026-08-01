@@ -132,11 +132,9 @@ function enrichItem(item) {
     const daysElapsed = DAYS_PER_MONTH_ELAPSED[currentMonth] || 0;
     const daysRemaining = Math.max(0, FATTENING_CYCLE_TOTAL_DAYS - daysElapsed);
 
-    // Misión 8 / Oferta 60 días engorde: Forzar precio a $1.300.000
-    let price = item.price || 1000000;
-    if (item.category === 'advanced60' || item.category === 'advanced30' || (item.category === 'advanced' && currentMonth === 3)) {
-        price = 1300000;
-    }
+    // Usa el precio configurado en la tabla marketplace de Supabase (con fallback si estuviera vacío)
+    const defaultFallback = (item.category === 'advanced60' || item.category === 'advanced30' || (item.category === 'advanced' && currentMonth === 3)) ? 1300000 : 1000000;
+    const price = item.price ?? defaultFallback;
 
     return {
         ...item,
