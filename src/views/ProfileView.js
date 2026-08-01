@@ -16,11 +16,13 @@ const COLOMBIAN_BANKS = [
     'Bancolombia',
     'Nequi',
     'Daviplata',
+    'Nu Bank',
+    'Ualá',
     'Banco de Bogotá',
     'BBVA Colombia',
     'Banco Falabella',
     'Lulo Bank',
-    'RappiPay / Davivienda',
+    'RappiPay',
     'Movii',
     'Davivienda',
     'Banco Itaú',
@@ -141,9 +143,9 @@ export function renderProfileView() {
                 </button>
             </div>
 
-            <!-- Footer Institucional -->
+            <!-- Footer Institucional Centrado -->
             <div class="profile-footer">
-                <div>
+                <div style="text-align: center;">
                     <div class="profile-footer__label">RESPALDADO POR GRANJA VALLE MORALES</div>
                     <img src="/vallemorales_logo.png" alt="Valle Morales" class="profile-footer__valle-logo" onerror="this.style.display='none'" />
                 </div>
@@ -152,6 +154,11 @@ export function renderProfileView() {
                 <div class="profile-footer__vigilado-badge">
                     <span class="profile-footer__vigilado-title">VIGILADO</span>
                     <span class="profile-footer__vigilado-sub">Superintendencia de Industria y Comercio de Colombia</span>
+                </div>
+
+                <!-- Derechos Reservados -->
+                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; font-weight: 500;">
+                    © Todos los derechos reservados Piggy App. 2026
                 </div>
             </div>
         </div>
@@ -310,15 +317,15 @@ function openDatosPersonalesSubscreen(profile) {
                     <div class="profile-data-header">
                         <span class="profile-data-title">
                             <span style="color:#b80049;">${renderIcon('card', '', '20')}</span>
-                            Cuenta para Transferencias de Comisiones
+                            Cuenta Bancaria
                         </span>
                     </div>
                     <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 16px 0;">
-                        Ingresa los datos de tu cuenta bancaria o monedero digital donde deseas recibir tus retiros y comisiones.
+                        Ingresa los datos de tu cuenta bancaria donde deseas recibir tus retiros y comisiones.
                     </p>
 
                     <div class="input-group" style="margin-bottom: 16px;">
-                        <label class="input-group__label" for="field-edit-bank">Banco o Monedero Digital</label>
+                        <label class="input-group__label" for="field-edit-bank">Nombre del Banco</label>
                         <div class="input-wrapper">
                             <span class="input-wrapper__icon">🏦</span>
                             <select class="input-wrapper__field" id="field-edit-bank" name="bankName" style="background:transparent;">
@@ -340,9 +347,9 @@ function openDatosPersonalesSubscreen(profile) {
                     </div>
 
                     <div class="input-group" style="margin-bottom: 16px;">
-                        <label class="input-group__label" for="field-edit-account-number">Número de Cuenta o Celular Nequi/Daviplata</label>
+                        <label class="input-group__label" for="field-edit-account-number">Número de Cuenta o Celular</label>
                         <div class="input-wrapper">
-                            <span class="input-wrapper__icon">🔢</span>
+                            <span class="input-wrapper__icon">${renderIcon('card', '', '18')}</span>
                             <input
                                 type="text"
                                 class="input-wrapper__field"
@@ -356,7 +363,7 @@ function openDatosPersonalesSubscreen(profile) {
                     </div>
 
                     <div class="input-group">
-                        <label class="input-group__label" for="field-edit-breve-key">Llave BREVE (Interoperabilidad Rápida)</label>
+                        <label class="input-group__label" for="field-edit-breve-key">Llave BREVE</label>
                         <div class="input-wrapper">
                             <span class="input-wrapper__icon">⚡</span>
                             <input
@@ -369,11 +376,11 @@ function openDatosPersonalesSubscreen(profile) {
                                 autocomplete="off"
                             />
                         </div>
-                        <span style="font-size:0.72rem; color:#94a3b8; margin-top:4px; display:block;">Opcional: Si utilizas el sistema Breve para transferencias inmediatas.</span>
+                        <span style="font-size:0.72rem; color:#94a3b8; margin-top:4px; display:block;">Tu llave es MUY necesaria para transferencias inmediatas.</span>
                     </div>
                 </div>
 
-                <!-- Save Button -->
+                <!-- Save Button (Sin Ícono) -->
                 <div style="padding: 0 20px;">
                     <button
                         type="submit"
@@ -391,7 +398,7 @@ function openDatosPersonalesSubscreen(profile) {
                             cursor: pointer;
                         "
                     >
-                        Guardar Cambios y Sincronizar 💾
+                        Guardar Cambios
                     </button>
                 </div>
             </form>
@@ -418,7 +425,7 @@ function openDatosPersonalesSubscreen(profile) {
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Guardando en Supabase... ⏳';
+        submitBtn.innerHTML = 'Guardando en Supabase...';
 
         const updates = {
             full_name: fullNameVal,
@@ -432,7 +439,7 @@ function openDatosPersonalesSubscreen(profile) {
         const { error } = await updateUserProfile(updates);
 
         submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Guardar Cambios y Sincronizar 💾';
+        submitBtn.innerHTML = 'Guardar Cambios';
 
         if (error) {
             showSubscreenStatus(`Error al guardar: ${error}`, '#ef4444', '#fef2f2', '#fecaca');
@@ -470,8 +477,8 @@ function openLegalSubscreen() {
                     <div style="text-align: center; margin-bottom: 14px; color: #b80049;">
                         ${renderIcon('documentText', '', '44')}
                     </div>
-                    <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 8px 0;">
-                        Contratos y Políticas de Piggy App
+                    <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 8px 0; line-height: 1.3;">
+                        Contratos y Políticas de<br>Piggy App
                     </h3>
                     <p style="font-size: 0.88rem; color: #64748b; text-align: center; line-height: 1.5; margin: 0 0 20px 0;">
                         Consulta de forma transparente nuestras condiciones de uso y la política de tratamiento de tus datos personales.
