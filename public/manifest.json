@@ -1,0 +1,21 @@
+{
+  "name": "Piggy App",
+  "short_name": "Piggy",
+  "description": "Piggy App — Compra tu Piggy y mira como tu granja crece. Plataforma Agro-Fintech de engorde porcino digital.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#b80049",
+  "icons": [
+    {
+      "src": "/piggy-loading-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/piggy-loading-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
