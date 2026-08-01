@@ -371,19 +371,27 @@ export async function updateUserProfile(updates) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { data: null, error: 'No hay usuario autenticado.' };
 
+    const currentProfile = AppState.get('profile') || {};
+
+    const payload = {
+        id: user.id,
+        email: user.email,
+        ...updates,
+        updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await client
         .from('profiles')
-        .update(updates)
-        .eq('id', user.id)
+        .upsert(payload, { onConflict: 'id' })
         .select()
         .maybeSingle();
 
     if (!error) {
-        const currentProfile = AppState.get('profile') || {};
-        const newProfile = data || { ...currentProfile, ...updates };
+        const newProfile = { ...currentProfile, ...(data || payload) };
         AppState.set({ profile: newProfile });
         return { data: newProfile, error: null };
     }
 
+    console.error('Error updating profile in Supabase:', error.message);
     return { data: null, error: error.message };
 }
