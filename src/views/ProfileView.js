@@ -10,6 +10,7 @@ import { navigateTo } from '../router.js';
 import { showSupportModal } from './granja/SupportModal.js';
 import { showReferralModal } from './granja/ReferralsModal.js';
 import { generateMockReferralCode } from '../services/referralService.js';
+import { completeMissionOnVisit } from '../services/missionsService.js';
 
 // Colombian Banks list
 const COLOMBIAN_BANKS = [
@@ -168,6 +169,11 @@ export function renderProfileView() {
     `;
 
     attachProfileViewListeners(profile);
+
+    // Auto-open Datos Personales subscreen if navigated from M6 ("Completa tus Datos")
+    if (window.location.hash.includes('subscreen=datos')) {
+        openDatosPersonalesSubscreen(profile);
+    }
 }
 
 /**
@@ -445,6 +451,7 @@ function openDatosPersonalesSubscreen(profile) {
             showSubscreenStatus(`Error al guardar: ${error}`, '#ef4444', '#fef2f2', '#fecaca');
         } else {
             showSubscreenStatus('✅ ¡Información guardada y sincronizada exitosamente con Supabase!', '#16a34a', '#f0fdf4', '#bbf7d0');
+            await completeMissionOnVisit('m6').catch(err => console.warn('M6 complete error:', err));
             setTimeout(() => {
                 closeSubscreen();
                 renderProfileView(); // Re-render main profile view with updated data
