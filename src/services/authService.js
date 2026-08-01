@@ -128,7 +128,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
         return { user: MOCK_USER, error: null };
     }
 
-    onProgress('🔑 Enviando datos al servidor de seguridad Supabase...');
+    onProgress('🔑 Enviando datos al servidor de seguridad...');
     const client = getClient();
     const { data, error } = await client.auth.signUp({
         email,
@@ -190,7 +190,7 @@ export async function signIn({ email, password }, onProgress = () => {}) {
         return { user: MOCK_USER, error: null };
     }
 
-    onProgress('🔑 Verificando tu correo y contraseña con el sistema de seguridad...');
+    onProgress('🔑 Verificando tu correo y contraseña...');
     const client = getClient();
     const { data, error } = await client.auth.signInWithPassword({ email, password });
 
@@ -198,7 +198,7 @@ export async function signIn({ email, password }, onProgress = () => {}) {
 
     // Fetch profile and update state
     if (data.user) {
-        onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
+        onProgress('⏳ Credenciales correctas. Consultando tu perfil...');
         const profile = await getProfile();
         onProgress('✅ Perfil verificado. Preparando tu granja agro...');
         AppState.set({
@@ -358,6 +358,7 @@ export async function updatePassword(newPassword) {
 /**
  * Update user profile in Supabase and AppState.
  * Updates personal and banking information.
+ * NOTE: Does NOT include updated_at - that column does not exist in the profiles table.
  */
 export async function updateUserProfile(updates) {
     if (isUsingMockData()) {
@@ -373,11 +374,11 @@ export async function updateUserProfile(updates) {
 
     const currentProfile = AppState.get('profile') || {};
 
+    // IMPORTANT: Do not add fields that don't exist in the profiles table schema
     const payload = {
         id: user.id,
         email: user.email,
-        ...updates,
-        updated_at: new Date().toISOString()
+        ...updates
     };
 
     const { data, error } = await client
@@ -392,6 +393,6 @@ export async function updateUserProfile(updates) {
         return { data: newProfile, error: null };
     }
 
-    console.error('Error updating profile in Supabase:', error.message);
+    console.error('Error updating profile:', error.message);
     return { data: null, error: error.message };
 }
