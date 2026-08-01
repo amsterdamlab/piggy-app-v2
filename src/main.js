@@ -31,6 +31,7 @@ import { renderAdopcionView } from './views/AdopcionView.js';
 import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
 import { renderReferidosView } from './views/ReferidosView.js';
 import { renderProfileView } from './views/ProfileView.js';
+import { renderDescargarView } from './views/DescargarView.js';
 
 // Services
 import { initPWAListener } from './services/pwaService.js';
@@ -65,6 +66,7 @@ async function boot() {
   registerRoute('gourmet', renderPiggyGourmetView);
   registerRoute('referidos', renderReferidosView);
   registerRoute('perfil', renderProfileView);
+  registerRoute('descargar', renderDescargarView);
 
   // Subscribe to state changes
   AppState.subscribe((state, previous) => {
