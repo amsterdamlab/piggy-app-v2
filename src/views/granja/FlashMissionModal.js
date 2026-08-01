@@ -98,9 +98,9 @@ export function showFlashMissionModal(mission) {
 
     if (!mission) return;
 
-    const theme     = getTypeTheme(mission.piggy_type);
-    const priceStr  = formatCOP(mission.price || 1000000);
-    let   remaining = mission.remainingMs || 0;
+    const defaultPrice = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
+    const price        = mission.price || defaultPrice;
+    const priceStr     = formatCOP(price);
 
     const piggyLabels = {
         silver:     'Piggy Silver',
@@ -347,8 +347,8 @@ export function showFlashMissionModal(mission) {
     const insufficient  = document.getElementById('flash-insufficient');
     const confirmBtn    = document.getElementById('flash-confirm-btn');
     const nameError     = document.getElementById('flash-name-error');
-    let currentBalance  = 0;
-    const price         = mission.price || 1000000;
+    const defaultPrice  = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
+    const price         = mission.price || defaultPrice;
 
     // Load wallet balance
     getWalletBalance().then(bal => {
@@ -464,7 +464,7 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${mission.piggy_label}`;
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });
