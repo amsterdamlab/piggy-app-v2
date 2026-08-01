@@ -1,7 +1,7 @@
 /* ============================================
    PIGGY APP — Missions Service (v2)
-   7 missions: M1-M7 with visit-based auto-complete
-   and Silver Piggy 72h countdown for M6.
+   9 missions: M1-M9 with visit-based auto-complete.
+   M5 (Gold): 72h timer | M8 (Advanced 30): 48h timer.
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
@@ -9,8 +9,8 @@ import { AppState } from '../state.js';
 import { MOCK_MISSIONS } from './mockData.js';
 import { ensureWelcomeBonusAssigned } from './walletService.js';
 
-/* ─── Mission Definitions ─────────────────────
-   Source of truth for mission structure (7 missions).
+/* ─── Mission Definitions ──────────────────────────
+   Source of truth for mission structure (9 missions).
    Phase 2: move these to a mission_definitions table
    so admin can manage them without deploys.
    ─────────────────────────────────────────── */
@@ -75,9 +75,9 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm8', sortOrder: 8,
-        title: 'Activa tu 3er Piggy (Advanced 30)',
-        reward: '72 horas para comprar un Piggy Advanced 30 exclusivo',
-        icon: '⚡', cta: '#/mercado',
+        title: 'Activa tu 3er Piggy (60 días de engorde)',
+        reward: 'Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)',
+        icon: '⚡', cta: 'open_buy_advanced30',
         autoType: 'third_piggy',
         requires: 'm7',
         hasFlashTimer: true,
@@ -126,9 +126,9 @@ function buildAutoCompletionMap(piggies, profile) {
     };
 }
 
-/* ─── Merge DB rows with definitions ─────────
+/* ─── Merge DB rows with definitions ───────────
    Applies locking rules, fills defaults, and
-   injects 72h flash timers for M5 and M8.
+   injects flash timers for M5 (72h) and M8 (48h).
    ─────────────────────────────────────────── */
 
 function mergeWithDefinitions(dbRows, autoMap) {
@@ -146,15 +146,17 @@ function mergeWithDefinitions(dbRows, autoMap) {
             if (!reqDone) isLocked = true;
         }
 
-        // M5 (Gold) and M8 (Advanced 30): 72h Flash timer computation
+        // M5 (Gold): 72h Flash timer | M8 (Advanced 30): 48h Flash timer (mega oferta)
         let flashExpiry = null;
         if ((def.key === 'm5' || def.key === 'm8') && !isLocked) {
             const reqKey = def.requires;
             const reqRow = dbMap.get(reqKey);
             if (reqRow?.completed_at) {
-                const expiryMs = new Date(reqRow.completed_at).getTime() + (72 * 60 * 60 * 1000);
+                // M5 = 72h window, M8 = 48h window (mega oferta)
+                const windowHours = def.key === 'm8' ? 48 : 72;
+                const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
                 flashExpiry = new Date(expiryMs).toISOString();
-                // If 72h expired without purchase, mark mission as completed so user advances
+                // If window expired without purchase, mark mission as completed so user advances
                 if (Date.now() > expiryMs) {
                     isCompleted = true;
                 }
@@ -251,7 +253,7 @@ export async function getMissions(piggiesOverride = null) {
  * Mark a mission as completed when the user visits a key section.
  * Persists to DB so it survives page reloads.
  * Uses a session-level guard to avoid redundant DB calls.
- * @param {string} missionKey - e.g. 'm1', 'm3', 'm5'
+ * @param {string} missionKey - e.g. 'm1', 'm3', 'm7'
  */
 export async function completeMissionOnVisit(missionKey) {
     if (missionKey === 'm1') {
@@ -379,7 +381,7 @@ export async function getMissionsProgress() {
     return { total, completed, percent };
 }
 
-/* ─── Mock / Backward-compat ─────────────── */
+/* ─── Mock / Backward-compat ────────────────── */
 
 const _mockManualCompletions = new Set();
 
