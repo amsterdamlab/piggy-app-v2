@@ -30,8 +30,9 @@ export function navigateTo(path) {
  * @returns {string} The current route path
  */
 function getCurrentRoute() {
-    const hash = window.location.hash.slice(2) || 'auth';
-    return hash.split('/')[0];
+    const raw = window.location.hash.slice(2) || 'auth';
+    const noQuery = raw.split('?')[0];
+    return noQuery.split('/')[0];
 }
 
 /**
