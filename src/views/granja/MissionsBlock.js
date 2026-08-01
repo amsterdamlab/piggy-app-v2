@@ -248,7 +248,7 @@ function renderM5Banner(mission) {
 
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-            <div class="banner banner--interactive" id="mission-banner" data-mission="m5" data-cta="#/mercado" style="
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m5" data-cta="open_buy_gold" style="
                 background: linear-gradient(135deg, #f59e0b 0%, #ca8a04 100%);
                 border-radius: 16px; padding: 20px 24px; color: white;
                 position: relative; overflow: hidden; cursor: pointer;
@@ -257,9 +257,9 @@ function renderM5Banner(mission) {
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">🏆 MISIÓN 5 · OFERTA RELÁMPAGO</div>
-                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy (Piggy Gold)</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">Oferta especial 72h para adquirir 1 Piggy Gold exclusivo</div>
+                        text-transform:uppercase; margin-bottom:10px;">🏆 MISIÓN 5 - CRECE TU GRANJA</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy (Gold)</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Aprovecha esta oportunidad de tener en tu granja un piggy especial con extra de comisión. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
@@ -270,7 +270,7 @@ function renderM5Banner(mission) {
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#a16207; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Ir a Mercado 🏆
+                            Comprar Piggy Gold 🏆
                         </span>
                     </div>
                 </div>
@@ -640,6 +640,20 @@ export function attachMissionListeners() {
         if (ctaUrl === 'open_cycle_modal' && cycleId) {
             const cycleData = window._activeCycleMissions?.find(m => m.id === cycleId);
             if (cycleData) showCycleMissionModal(cycleData);
+            return;
+        }
+
+        // ── Special CTA: open Piggy Gold checkout modal for M5
+        if (ctaUrl === 'open_buy_gold') {
+            try {
+                const items = await getMarketplaceItems();
+                const goldPiggy = items.find(i => i.category === 'gold' || i.item_name?.toLowerCase().includes('gold')) || items[0];
+                if (goldPiggy) showCheckoutModal(goldPiggy);
+                else navigateTo('mercado');
+            } catch (err) {
+                console.warn('Error launching gold checkout:', err);
+                navigateTo('mercado');
+            }
             return;
         }
 
