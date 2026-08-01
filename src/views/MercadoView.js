@@ -349,7 +349,7 @@ export function showCheckoutModal(item) {
           <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
             Un nuevo integrante para que tu granja siga creciendo desde
           </p>
-          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${item.priceFormatted}</div>
+          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price)}</div>
       </div>
 
       <!-- Custom Name Input Section -->
@@ -464,7 +464,7 @@ export function showCheckoutModal(item) {
           Saldo insuficiente. Recarga tu Cuenta para continuar.
         </div>
 
-        <!-- Confirm Purchase Button (with 7s pulse & glow & shine animation) -->
+        <!-- Confirm Purchase Button (with 7s pulse & glow animation) -->
         <button id="btn-confirm-purchase" class="btn-pulse-glow-7s" style="
           width: 100%;
           background: linear-gradient(135deg, #ec4899, #db2777);
