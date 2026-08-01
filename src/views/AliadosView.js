@@ -16,8 +16,8 @@ let activeCategory = null;
 export function renderAliadosView() {
   const app = document.getElementById('app');
 
-  // M5: auto-complete "Compra en locales aliados" on first visit
-  completeMissionOnVisit('m5');
+  // M7: auto-complete "Compra en locales aliados" on first visit
+  completeMissionOnVisit('m7');
 
   app.innerHTML = `
     <div class="page page--with-nav aliados-page">
@@ -156,7 +156,7 @@ function renderAllyCard(ally) {
         <span class="ally-card__specialty">${specialty}</span>
 
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
-          <p class="ally-card__contact-line" style="margin: 0;">📞 ${phone}</p>
+          <p class="ally-card__contact-line" style="margin: 0;">&#128222; ${phone}</p>
           <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="ally-card__wa-btn" style="
             display: inline-flex;
             align-items: center;
@@ -177,7 +177,7 @@ function renderAllyCard(ally) {
             Contactar
           </a>
         </div>
-        <p class="ally-card__contact-line">📍 ${address}</p>
+        <p class="ally-card__contact-line">&#128205; ${address}</p>
 
         <p class="ally-card__description">${description}</p>
         
