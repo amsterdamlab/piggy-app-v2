@@ -8,7 +8,8 @@ import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 
 /**
- * Render the standalone installation landing view with 7s synced shine+pulse CTA button.
+ * Render the standalone installation landing view.
+ * Fits within 100dvh without vertical scrolling.
  */
 export function renderDescargarView() {
     const app = document.getElementById('app');
@@ -37,6 +38,18 @@ export function renderDescargarView() {
                 10%, 100% { left: 200%; }
             }
 
+            .pwa-download-page {
+                min-height: 100dvh;
+                max-height: 100dvh;
+                height: 100dvh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 16px 20px 20px;
+                overflow: hidden;
+            }
+
             .pwa-install-btn {
                 position: relative;
                 overflow: hidden;
@@ -44,7 +57,7 @@ export function renderDescargarView() {
                 color: white;
                 font-size: 1.05rem;
                 font-weight: 800;
-                padding: 13px 20px;
+                padding: 12px 20px;
                 border-radius: 30px;
                 border: none;
                 cursor: pointer;
@@ -73,31 +86,31 @@ export function renderDescargarView() {
             }
         </style>
 
-        <div class="page profile-page animate-fade-in" style="min-height: 100dvh; display: flex; flex-direction: column; justify-content: space-between; padding: 24px 20px 32px;">
+        <div class="page profile-page animate-fade-in pwa-download-page">
             <div>
                 <!-- Centered Logo Principal -->
-                <div style="text-align: center; margin-top: 16px; margin-bottom: 24px;">
-                    <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='/pig2.jpg';" />
+                <div style="text-align: center; margin-top: 8px; margin-bottom: 16px;">
+                    <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="max-width: 155px; height: auto; display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='/pig2.jpg';" />
                 </div>
 
                 <!-- Main Hero Card -->
-                <div class="profile-data-card" style="text-align: center; padding: 28px 20px 20px; margin-bottom: 20px; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.08); border-radius: 24px;">
-                    <div style="background: rgba(236, 72, 153, 0.1); color: #db2777; display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px;">
+                <div class="profile-data-card" style="text-align: center; padding: 22px 16px 18px; margin-bottom: 12px; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.08); border-radius: 20px;">
+                    <div style="background: rgba(236, 72, 153, 0.1); color: #db2777; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;">
                         📱 APLICACIÓN OFICIAL PWA
                     </div>
 
-                    <p style="font-size: 0.88rem; color: #64748b; line-height: 1.5; margin: 0 0 22px 0;">
+                    <p style="font-size: 0.85rem; color: #64748b; line-height: 1.45; margin: 0 0 16px 0;">
                         Accede a tu granja en 1 segundo directamente desde la pantalla de inicio de tu celular.
                     </p>
 
-                    <!-- Pink Button with 7s Synchronized Shine + Pulse (No Icon) -->
+                    <!-- Pink Button "Descargar" with 7s Synchronized Animation -->
                     <button id="btn-install-landing-action" class="pwa-install-btn">
                         <span class="pwa-install-btn__shine"></span>
-                        <span>Agregar App</span>
+                        <span>Descargar</span>
                     </button>
 
                     <!-- Bold light-gray text directly under button -->
-                    <div style="font-size: 0.84rem; font-weight: 700; color: #94a3b8; margin-top: 12px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; margin-top: 10px;">
                         Rápida, liviana y 100% segura.
                     </div>
                 </div>
@@ -105,12 +118,12 @@ export function renderDescargarView() {
 
             <!-- Bottom Section & Institutional Footer -->
             <div>
-                <div style="text-align: center; margin-bottom: 20px;">
+                <div style="text-align: center; margin-bottom: 12px;">
                     <button id="btn-go-to-app-secondary" style="
                         background: transparent;
                         border: none;
                         color: #64748b;
-                        font-size: 0.84rem;
+                        font-size: 0.82rem;
                         font-weight: 700;
                         text-decoration: underline;
                         cursor: pointer;
@@ -120,16 +133,16 @@ export function renderDescargarView() {
                 </div>
 
                 <!-- Footer Identidad Valle Morales -->
-                <div class="profile-footer" style="padding-top: 10px; margin-top: 0;">
+                <div class="profile-footer" style="padding-top: 4px; margin-top: 0;">
                     <div style="text-align: center;">
-                        <div class="profile-footer__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 0.5px;">
+                        <div class="profile-footer__label" style="white-space: nowrap; font-size: 0.65rem; letter-spacing: 0.5px;">
                             RESPALDADO POR GRANJA VALLE MORALES
                         </div>
-                        <img src="/vallemorales_logo.png" alt="Valle Morales" class="profile-footer__valle-logo" style="margin: 8px auto;" onerror="this.style.display='none'" />
+                        <img src="/vallemorales_logo.png" alt="Valle Morales" class="profile-footer__valle-logo" style="margin: 6px auto; max-height: 28px;" onerror="this.style.display='none'" />
                     </div>
 
                     <!-- Derechos Reservados en 1 sola línea -->
-                    <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 8px; font-weight: 500; text-align: center; white-space: nowrap;">
+                    <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 4px; font-weight: 500; text-align: center; white-space: nowrap;">
                         © Todos los derechos reservados Piggy App. 2026
                     </div>
                 </div>
