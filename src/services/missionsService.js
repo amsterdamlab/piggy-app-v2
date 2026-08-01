@@ -1,7 +1,7 @@
 /* ============================================
    PIGGY APP — Missions Service (v2)
-   Missions flow M1-M9 with auto-complete
-   and 72h flash offer windows for M5 and M8.
+   7 missions: M1-M7 with visit-based auto-complete
+   and Silver Piggy 72h countdown for M6.
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
@@ -10,7 +10,9 @@ import { MOCK_MISSIONS } from './mockData.js';
 import { ensureWelcomeBonusAssigned } from './walletService.js';
 
 /* ─── Mission Definitions ─────────────────────
-   Source of truth for mission structure (M1-M9).
+   Source of truth for mission structure (7 missions).
+   Phase 2: move these to a mission_definitions table
+   so admin can manage them without deploys.
    ─────────────────────────────────────────── */
 
 const MISSION_DEFINITIONS = [
@@ -48,9 +50,9 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm5', sortOrder: 5,
-        title: 'Compra tu 2do Piggy (Piggy Gold)',
-        reward: '72 horas para aprovechar la oferta exclusiva Piggy Gold',
-        icon: '🏆', cta: '#/mercado',
+        title: 'Compra tu 2do Piggy (Gold)',
+        reward: 'Aprovecha esta oportunidad de tener en tu granja un piggy especial con extra de comisión. (Por tiempo limitado)',
+        icon: '🏆', cta: 'open_buy_gold',
         autoType: 'second_piggy',
         requires: 'm4',
         hasFlashTimer: true,
