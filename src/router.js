@@ -51,7 +51,11 @@ export function getRouteParam() {
 function authGuard(route) {
     const state = AppState.getState();
 
-    // Auth page is always accessible
+    // Auth and Descargar pages are always accessible
+    if (route === 'descargar') {
+        return true;
+    }
+
     if (route === 'auth') {
         // If already authenticated, redirect to granja
         if (state.isAuthenticated) {
