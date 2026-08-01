@@ -12,6 +12,13 @@ let deferredPrompt = null;
  * Initialize PWA install prompt listener.
  */
 export function initPWAListener() {
+    // Register Service Worker for PWA installability
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('🐷 Service Worker registrado:', reg.scope))
+            .catch(err => console.warn('Service Worker err:', err));
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
