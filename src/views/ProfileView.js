@@ -321,13 +321,13 @@ function openDatosPersonalesSubscreen(profile) {
                         </span>
                     </div>
                     <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 16px 0;">
-                        Ingresa los datos de tu cuenta bancaria donde deseas recibir tus retiros y comisiones.
+                        Ingresa los datos de tu cuenta bancaria para que recibas tus retiros.
                     </p>
 
                     <div class="input-group" style="margin-bottom: 16px;">
                         <label class="input-group__label" for="field-edit-bank">Nombre del Banco</label>
                         <div class="input-wrapper">
-                            <span class="input-wrapper__icon">🏦</span>
+                            <span class="input-wrapper__icon">${renderIcon('bankBuilding', '', '18')}</span>
                             <select class="input-wrapper__field" id="field-edit-bank" name="bankName" style="background:transparent;">
                                 <option value="">-- Selecciona tu banco --</option>
                                 ${bankOptionsHTML}
@@ -338,7 +338,7 @@ function openDatosPersonalesSubscreen(profile) {
                     <div class="input-group" style="margin-bottom: 16px;">
                         <label class="input-group__label" for="field-edit-account-type">Tipo de Cuenta</label>
                         <div class="input-wrapper">
-                            <span class="input-wrapper__icon">💳</span>
+                            <span class="input-wrapper__icon">${renderIcon('card', '', '18')}</span>
                             <select class="input-wrapper__field" id="field-edit-account-type" name="bankAccountType" style="background:transparent;">
                                 <option value="">-- Selecciona el tipo --</option>
                                 ${accountTypeOptionsHTML}
@@ -365,7 +365,7 @@ function openDatosPersonalesSubscreen(profile) {
                     <div class="input-group">
                         <label class="input-group__label" for="field-edit-breve-key">Llave BREVE</label>
                         <div class="input-wrapper">
-                            <span class="input-wrapper__icon">⚡</span>
+                            <span class="input-wrapper__icon">${renderIcon('zap', '', '18')}</span>
                             <input
                                 type="text"
                                 class="input-wrapper__field"
