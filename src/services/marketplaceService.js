@@ -58,7 +58,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         id: 3,
         item_name: 'Piggy Advanced (Mes 3)',
         description: 'Cerdo con máximo periodo de avance en su ciclo de engorde (3 meses).',
-        price: 1000000,
+        price: 1300000,
         extra_roi: 0.00,
         stock: 10,
         category: 'advanced',
@@ -132,12 +132,19 @@ function enrichItem(item) {
     const daysElapsed = DAYS_PER_MONTH_ELAPSED[currentMonth] || 0;
     const daysRemaining = Math.max(0, FATTENING_CYCLE_TOTAL_DAYS - daysElapsed);
 
+    // Misión 8 / Oferta 60 días engorde: Forzar precio a $1.300.000
+    let price = item.price || 1000000;
+    if (item.category === 'advanced60' || item.category === 'advanced30' || (item.category === 'advanced' && currentMonth === 3)) {
+        price = 1300000;
+    }
+
     return {
         ...item,
+        price: price,
         currentMonth: currentMonth,
         daysRemaining,
         cycleTotalDays: FATTENING_CYCLE_TOTAL_DAYS,
-        priceFormatted: formatCOP(item.price),
+        priceFormatted: formatCOP(price),
         hasBonus: item.extra_roi > 0,
         bonusText: item.extra_roi > 0 ? `+${(item.extra_roi * 100).toFixed(0)}%` : null,
     };
