@@ -347,8 +347,7 @@ export function showFlashMissionModal(mission) {
     const insufficient  = document.getElementById('flash-insufficient');
     const confirmBtn    = document.getElementById('flash-confirm-btn');
     const nameError     = document.getElementById('flash-name-error');
-    const defaultPrice  = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
-    const price         = mission.price || defaultPrice;
+    // price is already calculated at function scope (line 102)
 
     // Load wallet balance
     getWalletBalance().then(bal => {
