@@ -36,57 +36,130 @@ export function initPWAListener() {
  * Prompt PWA installation or show guided modal for iOS / non-supported browsers.
  */
 export async function triggerPWAInstall() {
+    // 1. If already installed/opened as PWA Standalone app, complete M4 immediately
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+        localStorage.setItem('piggy_pwa_installed', 'true');
+        await completeMissionOnVisit('m4');
+        if (window._refreshMissionBanner) window._refreshMissionBanner();
+        return;
+    }
+
+    // 2. Android / Chromium native install prompt
     if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            localStorage.setItem('piggy_pwa_installed', 'true');
-            await completeMissionOnVisit('m4');
-            if (window._refreshMissionBanner) window._refreshMissionBanner();
+        try {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                localStorage.setItem('piggy_pwa_installed', 'true');
+                await completeMissionOnVisit('m4');
+                if (window._refreshMissionBanner) window._refreshMissionBanner();
+            }
+            deferredPrompt = null;
+        } catch (e) {
+            console.warn('Native PWA prompt error:', e);
+            showPWAInstructionsModal();
         }
-        deferredPrompt = null;
     } else {
-        // Show simple installation modal / guidance for iOS & supported browsers
+        // 3. iOS or Browsers without active beforeinstallprompt
         showPWAInstructionsModal();
     }
 }
 
 /**
- * Show clean modal guide for adding Piggy App to home screen.
+ * Show clean, native-styled modal guide for adding Piggy App to home screen on iOS & Android.
  */
 function showPWAInstructionsModal() {
-    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const existingModal = document.getElementById('pwa-install-modal');
     if (existingModal) existingModal.remove();
 
     const modal = document.createElement('div');
     modal.id = 'pwa-install-modal';
     modal.className = 'modal-backdrop animate-fade-in';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
+        background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 20px;
+        box-sizing: border-box;
+    `;
+
     modal.innerHTML = `
-        <div class="modal-card animate-scale-up" style="max-width: 380px; text-align: center; padding: 24px; background: white; border-radius: 20px;">
-            <div style="font-size: 48px; margin-bottom: 12px;">📱</div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 8px;">
-                Agrega Piggy App a tu Celular
+        <div class="animate-scale-up" style="
+            background: white; border-radius: 24px; width: 100%; max-width: 380px;
+            padding: 24px 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            position: relative; overflow: hidden;
+        ">
+            <!-- Header Badge -->
+            <div style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 32px; box-shadow: 0 4px 12px rgba(236,72,153,0.15);">
+                📲
+            </div>
+
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.01em;">
+                ${isiOS ? 'Instalar Piggy App en tu iPhone' : 'Agregar Piggy a tu Pantalla'}
             </h3>
-            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin-bottom: 18px;">
-                ${isiOS 
-                    ? 'Para agregar el acceso directo en tu iPhone/iPad, presiona el botón <strong>Compartir</strong> ( ⎋ ) en Safari y selecciona <strong>"Agregar a Inicio"</strong>.' 
-                    : 'Para agregar el acceso directo a tu pantalla de inicio, presiona los tres puntos de tu navegador (⋮) y elige <strong>"Agregar a pantalla principal"</strong>.'}
+
+            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">
+                ${isiOS
+                    ? 'Sigue estos 2 sencillos pasos para guardar la App en tu celular:'
+                    : 'Para tener el acceso directo en tu celular como una App nativa:'}
             </p>
-            <button id="btn-pwa-modal-accept" class="btn btn--block" style="
-                background: #b80049; color: white; border-radius: 24px; font-weight: 800; padding: 14px; border: none; cursor: pointer; width: 100%;
+
+            <!-- Steps Box -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; text-align: left; margin-bottom: 20px;">
+                ${isiOS ? `
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="background: #b80049; color: white; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+                        <div style="font-size: 0.85rem; color: #334155; font-weight: 600;">
+                            Presiona el botón <strong style="color:#b80049;">Compartir</strong> <span style="font-size: 1.1rem; vertical-align: middle;">⎋</span> abajo en tu navegador Safari.
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="background: #b80049; color: white; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
+                        <div style="font-size: 0.85rem; color: #334155; font-weight: 600;">
+                            Desliza y selecciona <strong style="color:#0f172a;">"Agregar a Inicio"</strong> ( ➕ ).
+                        </div>
+                    </div>
+                ` : `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="background: #b80049; color: white; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+                        <div style="font-size: 0.85rem; color: #334155; font-weight: 600;">
+                            Toca los tres puntos <strong style="color:#b80049;">(⋮)</strong> de tu navegador y elige <strong style="color:#0f172a;">"Instalar aplicación"</strong> o "Agregar a inicio".
+                        </div>
+                    </div>
+                `}
+            </div>
+
+            <!-- Complete Mission Button -->
+            <button id="btn-pwa-modal-accept" style="
+                width: 100%; background: linear-gradient(135deg, #b80049, #880036);
+                color: white; border-radius: 14px; font-weight: 800; font-size: 0.95rem;
+                padding: 14px 20px; border: none; cursor: pointer;
+                box-shadow: 0 6px 20px -4px rgba(184,0,73,0.4); transition: transform 0.15s, opacity 0.15s;
             ">
                 ¡Listo! Completar Misión 📱
             </button>
+
+            <!-- Close cross -->
+            <button id="btn-pwa-modal-close" style="
+                position: absolute; top: 12px; right: 14px; background: none; border: none;
+                font-size: 1.2rem; color: #94a3b8; cursor: pointer; padding: 4px;
+            ">&times;</button>
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    document.getElementById('btn-pwa-modal-accept')?.addEventListener('click', async () => {
+    const finishInstallation = async () => {
         localStorage.setItem('piggy_pwa_installed', 'true');
         await completeMissionOnVisit('m4');
         modal.remove();
         if (window._refreshMissionBanner) window._refreshMissionBanner();
+    };
+
+    document.getElementById('btn-pwa-modal-accept')?.addEventListener('click', finishInstallation);
+    document.getElementById('btn-pwa-modal-close')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
     });
 }
