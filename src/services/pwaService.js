@@ -104,9 +104,12 @@ function showIOSPWAInstructionsModal() {
                 cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700;
             ">&times;</button>
 
-            <!-- Header Badge -->
-            <div style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 8px auto 16px; font-size: 32px; box-shadow: 0 4px 12px rgba(236,72,153,0.15);">
-                📲
+            <!-- Line-art Mobile Icon (No circular background) -->
+            <div style="display: flex; justify-content: center; margin: 6px auto 14px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#b80049" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="20" x="5" y="2" rx="3" ry="3"/>
+                    <path d="M12 18h.01"/>
+                </svg>
             </div>
 
             <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.01em;">
@@ -114,7 +117,7 @@ function showIOSPWAInstructionsModal() {
             </h3>
 
             <p style="font-size: 0.85rem; color: #64748b; line-height: 1.5; margin: 0 0 18px 0;">
-                Sigue estos sencillos pasos para guardar el acceso directo en tu celular:
+                Sigue estos pasos para tener tu granja Piggy a la mano.
             </p>
 
             <!-- Steps Box -->
@@ -145,7 +148,7 @@ function showIOSPWAInstructionsModal() {
                 padding: 14px 20px; border: none; cursor: pointer;
                 box-shadow: 0 6px 20px -4px rgba(184,0,73,0.4); transition: transform 0.15s, opacity 0.15s;
             ">
-                ¡Listo! Completar Misión 📱
+                ¡Listo! Completar Misión
             </button>
         </div>
     `;
@@ -176,7 +179,9 @@ function showAndroidFallbackModal() {
     const existingModal = document.getElementById('pwa-install-modal');
     if (existingModal) existingModal.remove();
 
-    const modal.className = 'modal-backdrop animate-fade-in';
+    const modal = document.createElement('div');
+    modal.id = 'pwa-install-modal';
+    modal.className = 'modal-backdrop animate-fade-in';
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
         background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -196,8 +201,12 @@ function showAndroidFallbackModal() {
                 cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700;
             ">&times;</button>
 
-            <div style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 8px auto 16px; font-size: 32px;">
-                📲
+            <!-- Line-art Mobile Icon (No circular background) -->
+            <div style="display: flex; justify-content: center; margin: 6px auto 14px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#b80049" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="14" height="20" x="5" y="2" rx="3" ry="3"/>
+                    <path d="M12 18h.01"/>
+                </svg>
             </div>
 
             <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0;">
@@ -214,7 +223,7 @@ function showAndroidFallbackModal() {
                 padding: 14px 20px; border: none; cursor: pointer;
                 box-shadow: 0 6px 20px -4px rgba(184,0,73,0.4);
             ">
-                ¡Listo! Completar Misión 📱
+                ¡Listo! Completar Misión
             </button>
         </div>
     `;
