@@ -104,22 +104,22 @@ export function renderMissionBanner(activeMissions, piggyCount) {
             <div class="section animate-fade-in-up" id="completed-missions-banner-section" style="animation-delay: 0.3s;">
                 <div style="
                     background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-                    border: 1px solid #a7f3d0; border-radius: 16px;
-                    padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+                    border: 1px solid #a7f3d0; border-radius: 14px;
+                    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
                     position: relative; overflow: hidden;
                 ">
-                    <img src="/piggy-favicon.svg" alt="Piggy" style="width: 42px; height: 42px; flex-shrink: 0; object-fit: contain;" />
-                    <div style="flex: 1; padding-right: 24px;">
-                        <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Felicitaciones!</div>
-                        <div style="font-size:0.8rem; color:#047857; margin-top:2px;">Sigue creciendo tu granja Piggy.</div>
+                    <img src="/piggy-favicon.svg" alt="Piggy" style="width: 36px; height: 36px; flex-shrink: 0; object-fit: contain;" />
+                    <div style="flex: 1; padding-right: 20px; min-width: 0;">
+                        <div style="font-weight:800; color:#065f46; font-size:0.92rem; line-height:1.2;">¡Felicitaciones!</div>
+                        <div style="font-size:0.78rem; color:#047857; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;">Sigue creciendo tu granja Piggy.</div>
                     </div>
                     <button id="btn-close-completed-banner" onclick="
                         localStorage.setItem('piggy_hide_completed_missions_banner', 'true');
                         document.getElementById('completed-missions-banner-section')?.remove();
                     " style="
-                        position: absolute; top: 12px; right: 14px; background: none; border: none;
-                        color: #065f46; font-size: 1.25rem; font-weight: 700; cursor: pointer;
-                        padding: 4px; line-height: 1; opacity: 0.7; transition: opacity 0.15s;
+                        position: absolute; top: 10px; right: 12px; background: none; border: none;
+                        color: #065f46; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+                        padding: 2px; line-height: 1; opacity: 0.7; transition: opacity 0.15s;
                     " onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0.7';">&times;</button>
                 </div>
             </div>
