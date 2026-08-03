@@ -110,18 +110,17 @@ export function renderMissionBanner(activeMissions, piggyCount) {
                 ">
                     <img src="/piggy-favicon.svg" alt="Piggy" style="width: 42px; height: 42px; flex-shrink: 0; object-fit: contain;" />
                     <div style="flex: 1; padding-right: 24px;">
-                        <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Misiones completadas!</div>
-                        <div style="font-size:0.8rem; color:#047857; margin-top:2px;">Tu granja sigue creciendo. ¡Felicitaciones!</div>
+                        <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Felicitaciones!</div>
+                        <div style="font-size:0.8rem; color:#047857; margin-top:2px;">Sigue creciendo tu granja Piggy.</div>
                     </div>
                     <button id="btn-close-completed-banner" onclick="
                         localStorage.setItem('piggy_hide_completed_missions_banner', 'true');
                         document.getElementById('completed-missions-banner-section')?.remove();
                     " style="
-                        position: absolute; top: 12px; right: 14px; background: rgba(6, 95, 70, 0.08); border: none;
-                        width: 28px; height: 28px; border-radius: 50%; color: #065f46; font-size: 1.1rem;
-                        font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;
-                        transition: background 0.15s;
-                    " onmouseover="this.style.background='rgba(6, 95, 70, 0.18)';" onmouseout="this.style.background='rgba(6, 95, 70, 0.08)';">&times;</button>
+                        position: absolute; top: 12px; right: 14px; background: none; border: none;
+                        color: #065f46; font-size: 1.25rem; font-weight: 700; cursor: pointer;
+                        padding: 4px; line-height: 1; opacity: 0.7; transition: opacity 0.15s;
+                    " onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0.7';">&times;</button>
                 </div>
             </div>
         `;
