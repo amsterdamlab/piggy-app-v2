@@ -18,6 +18,8 @@ import {
     detectAndCreateCycleMissions,
 } from '../services/flashMissionsService.js';
 
+import { startOnboardingTourIfEligible } from './granja/OnboardingTourModal.js';
+
 /* ── Module imports (Granja Section blocks) ───────── */
 import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
 import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
@@ -170,6 +172,9 @@ async function loadGranjaData(firstName) {
     showNewsBillboardModal(newsSlides);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
+
+    // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
+    startOnboardingTourIfEligible();
   } catch (error) {
     console.error('Error loading granja data:', error);
     const section = document.getElementById('piggies-section');
@@ -274,8 +279,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
   `;
 }
 
-// ... renderGreeting remains the same ...
-
 function renderGreeting(firstName) {
   const profile = AppState.get('profile') || {};
   const initials = getUserInitials(profile.full_name || firstName);
@@ -305,7 +308,7 @@ function renderGreeting(firstName) {
   </svg>`;
 
   return `
-    <div class="granja-greeting animate-fade-in" style="display:flex; align-items:center; justify-content:space-between;">
+    <div class="granja-greeting animate-fade-in" id="granja-header" style="display:flex; align-items:center; justify-content:space-between;">
       <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil">
         <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
           <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
@@ -352,8 +355,6 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
-
-// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 export function renderPiggiesList(piggies, baseROI) {
   return `
@@ -413,7 +414,6 @@ export function renderPiggyCard(piggy, baseROI) {
   `;
 }
 
-// ... renderBottomNav remains the same ...
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
