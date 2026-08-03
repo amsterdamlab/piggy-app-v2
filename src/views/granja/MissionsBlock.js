@@ -96,18 +96,32 @@ export function renderMissionBanner(activeMissions, piggyCount) {
     }
 
     if (!activeMissions || activeMissions.length === 0) {
+        if (localStorage.getItem('piggy_hide_completed_missions_banner') === 'true') {
+            return '';
+        }
+
         return `
-            <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="section animate-fade-in-up" id="completed-missions-banner-section" style="animation-delay: 0.3s;">
                 <div style="
                     background: linear-gradient(135deg, #ecfdf5, #d1fae5);
                     border: 1px solid #a7f3d0; border-radius: 16px;
-                    padding: 20px 22px; display: flex; align-items: center; gap: 14px;
+                    padding: 18px 20px; display: flex; align-items: center; gap: 14px;
+                    position: relative; overflow: hidden;
                 ">
-                    <div style="font-size:36px;">&#127881;</div>
-                    <div>
+                    <img src="/piggy-favicon.svg" alt="Piggy" style="width: 42px; height: 42px; flex-shrink: 0; object-fit: contain;" />
+                    <div style="flex: 1; padding-right: 24px;">
                         <div style="font-weight:800; color:#065f46; font-size:0.95rem;">¡Misiones completadas!</div>
-                        <div style="font-size:0.78rem; color:#047857; margin-top:2px;">Tu granja está al máximo rendimiento. ¡Felicitaciones! 🎉</div>
+                        <div style="font-size:0.8rem; color:#047857; margin-top:2px;">Tu granja sigue creciendo. ¡Felicitaciones!</div>
                     </div>
+                    <button id="btn-close-completed-banner" onclick="
+                        localStorage.setItem('piggy_hide_completed_missions_banner', 'true');
+                        document.getElementById('completed-missions-banner-section')?.remove();
+                    " style="
+                        position: absolute; top: 12px; right: 14px; background: rgba(6, 95, 70, 0.08); border: none;
+                        width: 28px; height: 28px; border-radius: 50%; color: #065f46; font-size: 1.1rem;
+                        font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;
+                        transition: background 0.15s;
+                    " onmouseover="this.style.background='rgba(6, 95, 70, 0.18)';" onmouseout="this.style.background='rgba(6, 95, 70, 0.08)';">&times;</button>
                 </div>
             </div>
         `;
@@ -352,25 +366,25 @@ function renderM8Banner(mission) {
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">⚡ MISIÓN 8 - SUBE TU NIVEL</div>
+                        text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu 3er Piggy</div>
                     <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(60 días de engorde)</div>
                     <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
-                            <span>⏳</span>
+                            <span>&#9203;</span>
                             <span style="font-size:0.85rem; font-weight:800; font-family:monospace;">${remaining}</span>
                         </div>
                     ` : ''}
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#5b21b6; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Advanced ⚡
+                            Comprar Piggy Advanced &#9889;
                         </span>
                     </div>
                 </div>
-                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">⚡</div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">&#9889;</div>
             </div>
         </div>
     `;
@@ -390,7 +404,7 @@ function renderM9Banner(mission) {
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">🤝 MISIÓN 9</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Refiere y logra una compra</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">✅ Recompensa: <strong>$30.000 en tu Wallet</strong> cuando tu referido compre</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">&#9989; Recompensa: <strong>$30.000 en tu Wallet</strong> cuando tu referido compre</div>
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#059669; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
                             Ir a Programa de Referidos →
@@ -421,7 +435,7 @@ function renderGenericBanner(mission) {
                         ${mission.icon} NUEVA MISIÓN
                     </div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title}</div>
-                    <div style="font-size:0.85rem; opacity:0.9;">✔ Recompensa: <strong>${mission.reward}</strong></div>
+                    <div style="font-size:0.85rem; opacity:0.9;">&#10004; Recompensa: <strong>${mission.reward}</strong></div>
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#6d28d9; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">${btnLabel} &rarr;</span>
                     </div>
@@ -658,19 +672,32 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Advanced 30 checkout modal for M8
+        // ── Special CTA: open Piggy Advanced (60 días) checkout modal for M8
         if (ctaUrl === 'open_buy_advanced30') {
             try {
                 const items = await getMarketplaceItems();
-                const advanced30Piggy = items.find(i =>
+                const baseItem = items.find(i =>
                     i.category === 'advanced30' ||
                     i.category === 'advanced60' ||
                     (i.category === 'advanced' && (i.currentMonth === 3 || i.current_month === 3)) ||
                     i.item_name?.toLowerCase().includes('advanced 30') ||
                     i.item_name?.toLowerCase().includes('advanced30')
                 ) || items[0];
-                if (advanced30Piggy) showCheckoutModal(advanced30Piggy);
-                else navigateTo('mercado');
+
+                if (baseItem) {
+                    // Item independiente exclusivo para la Misión 8 ($1.300.000 / 60 días engorde)
+                    const missionItem = {
+                        ...baseItem,
+                        item_name: 'Piggy Advanced (60 días)',
+                        price: 1300000,
+                        priceFormatted: '$1.300.000',
+                        currentMonth: 3,
+                        current_month: 3,
+                    };
+                    showCheckoutModal(missionItem);
+                } else {
+                    navigateTo('mercado');
+                }
             } catch (err) {
                 console.warn('Error launching advanced30 checkout:', err);
                 navigateTo('mercado');
