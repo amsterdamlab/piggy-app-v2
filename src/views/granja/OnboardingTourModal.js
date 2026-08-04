@@ -448,16 +448,22 @@ function finishTour(scrollToMissions = false) {
 
     if (scrollToMissions) {
         setTimeout(() => {
-            const missionsEl = document.querySelector('#mission-banner-container') || document.querySelector('#mission-banner');
-            if (missionsEl) {
-                missionsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                missionsEl.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
-                missionsEl.style.transform = 'scale(1.02)';
-                missionsEl.style.boxShadow = '0 0 0 3px #b80049, 0 10px 25px rgba(184, 0, 73, 0.3)';
+            const missionsContainer = document.querySelector('#mission-banner-container') || document.querySelector('#mission-banner');
+            if (missionsContainer) {
+                const targetCard = missionsContainer.querySelector('.card') || missionsContainer.firstElementChild || missionsContainer;
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                const savedRadius = targetCard.style.borderRadius;
+                targetCard.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease, border-radius 0.4s ease';
+                targetCard.style.borderRadius = '20px';
+                targetCard.style.transform = 'scale(1.02)';
+                targetCard.style.boxShadow = '0 0 0 4px #b80049, 0 12px 30px rgba(184, 0, 73, 0.4)';
+
                 setTimeout(() => {
-                    missionsEl.style.transform = '';
-                    missionsEl.style.boxShadow = '';
-                }, 1500);
+                    targetCard.style.transform = '';
+                    targetCard.style.boxShadow = '';
+                    targetCard.style.borderRadius = savedRadius || '';
+                }, 1800);
             }
         }, 150);
     }
