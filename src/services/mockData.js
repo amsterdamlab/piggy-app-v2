@@ -98,45 +98,6 @@ export const MOCK_ALLIES = [
         specialty: 'Cortes Premium',
         location: 'Cali, Valle del Cauca',
         image_url: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
-        description: 'Cortes selectos madurados y frescos para tus asados de fin de semana.',
-        benefit: '15% de descuento en Punta de Anca',
-        phone: '310 123 4567',
-        address: 'Av. Pasoancho # 50-20',
-        discount_info: '15% de descuento en cortes premium',
-    },
-    {
-        id: 'ally-002',
-        name: 'La Parrilla de Pepe',
-        category: 'Restaurante',
-        specialty: 'Parrilla & Barril',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=800&q=80',
-        description: 'Expertos en cocción lenta al barril. Chicharrón ahumado inigualable.',
-        benefit: '2x1 los jueves en platos de cerdo',
-        phone: '315 987 6543',
-        address: 'Granada Calle 9 # 12-45',
-        discount_info: '2x1 los jueves en platos de cerdo',
-    },
-    {
-        id: 'ally-003',
-        name: 'El Fogón de la Abuela',
-        category: 'Restaurante',
-        specialty: 'Comida Típica',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
-        description: 'Sabor tradicional con ingredientes del campo directo a tu mesa.',
-        benefit: 'Postre gratis por consumo > $50k',
-        phone: '312 456 7890',
-        address: 'San Antonio Cra 4 # 2-10',
-        discount_info: '10% en platos con cerdo',
-    },
-    {
-        id: 'ally-004',
-        name: 'SuperCarnes Express',
-        category: 'Distribuidor',
-        specialty: 'Venta al Por Mayor',
-        location: 'Medellín, Antioquia',
-        image_url: 'https://images.unsplash.com/photo-1615937651188-4b92cd38052e?auto=format&fit=crop&w=800&q=80',
         description: 'Abastecemos tu negocio con la mejor carne de cerdo de la región.',
         benefit: 'Envío gratis en pedidos mayoristas',
         phone: '300 555 1234',
@@ -291,9 +252,107 @@ export function formatPercentage(value) {
     return `${(value * 100).toFixed(0)}%`;
 }
 
-/** Simulate weight based on progress */
+/** Simulate weight based on progress (6kg to 120kg over 144 days) */
 export function simulateWeight(progressPercent) {
-    const minWeight = 15;
-    const maxWeight = 110;
-    return minWeight + ((maxWeight - minWeight) * progressPercent / 100);
+    const minWeight = 6;
+    const maxWeight = 120;
+    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
+    return minWeight + ((maxWeight - minWeight) * p / 100);
+}
+
+/**
+ * 9 Growth Stages breakdown for 144-day farm cycle.
+ * Descriptions are concise (max 3 lines) and free of explicit weight numbers.
+ */
+export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
+    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
+
+    if (p < 5.0) {
+        return {
+            stageNumber: 1,
+            stageName: 'Destete Inicial',
+            icon: '🍼',
+            badgeBg: '#fef3c7',
+            badgeColor: '#b45309',
+            description: `${piggyName} ha ingresado a las cunas de destete tras dejar su zona de lactancia calidamente.`
+        };
+    }
+    if (p < 14.0) {
+        return {
+            stageNumber: 2,
+            stageName: 'Climatización Controlada',
+            icon: '🌡️',
+            badgeBg: '#e0f2fe',
+            badgeColor: '#0369a1',
+            description: `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${piggyName} se mantenga en óptimas condiciones.`
+        };
+    }
+    if (p < 21.0) {
+        return {
+            stageNumber: 3,
+            stageName: 'Nutrición Fase 1',
+            icon: '🌾',
+            badgeBg: '#f0fdf4',
+            badgeColor: '#15803d',
+            description: `${piggyName} recibe su alimento pre-iniciador especializado para adaptar gradualmente su sistema digestivo.`
+        };
+    }
+    if (p < 27.0) {
+        return {
+            stageNumber: 4,
+            stageName: 'Nutrición Fase 2',
+            icon: '🍲',
+            badgeBg: '#fdf4ff',
+            badgeColor: '#a21caf',
+            description: `${piggyName} avanza en su plan nutricional con alimento de transición para fortalecer su flora intestinal.`
+        };
+    }
+    if (p < 35.0) {
+        return {
+            stageNumber: 5,
+            stageName: 'Alimento de Inicio',
+            icon: '🌿',
+            badgeBg: '#ecfdf5',
+            badgeColor: '#047857',
+            description: `${piggyName} consume alimento de inicio y completa la maduración total de su sistema digestivo.`
+        };
+    }
+    if (p < 62.0) {
+        return {
+            stageNumber: 6,
+            stageName: 'Desarrollo Acelerado',
+            icon: '🚀',
+            badgeBg: '#eff6ff',
+            badgeColor: '#1d4ed8',
+            description: `${piggyName} pasa a los galpones de engorde en lote y gana peso a ritmo acelerado con 16% de proteína.`
+        };
+    }
+    if (p < 98.0) {
+        return {
+            stageNumber: 7,
+            stageName: 'Engorde Final',
+            icon: '🥩',
+            badgeBg: '#fff1f2',
+            badgeColor: '#be123c',
+            description: `${piggyName} se alimenta libremente al 14% de proteína en nuestra granja cubierta.`
+        };
+    }
+    if (p < 100.0) {
+        return {
+            stageNumber: 8,
+            stageName: 'Pre-Salida (Ayuno Técnico)',
+            icon: '💧',
+            badgeBg: '#fefce8',
+            badgeColor: '#a16207',
+            description: `Se retira el alimento sólido de ${piggyName} para reducir la contaminación de la canal, manteniendo agua a libre voluntad.`
+        };
+    }
+    return {
+        stageNumber: 9,
+        stageName: 'Salida al Mercado',
+        icon: '🚚',
+        badgeBg: '#f0fdf4',
+        badgeColor: '#16a34a',
+        description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
+    };
 }
