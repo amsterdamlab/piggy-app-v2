@@ -10,7 +10,7 @@
 export const HEADSET_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
   <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
   <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
-  <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
+  <path d="M3 19a2 2 0 0 1 2 2h1a2 2 0 0 1 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
 </svg>`;
 
 /** WhatsApp support number */
@@ -51,7 +51,7 @@ export function showSupportModal() {
           width: 80px;
           height: 80px;
           margin: 0 auto;
-          color: #3b5998;
+          color: #581c87;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -59,7 +59,7 @@ export function showSupportModal() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="80" height="80">
             <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
             <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
-            <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
+            <path d="M3 19a2 2 0 0 1 2 2h1a2 2 0 0 1 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
           </svg>
         </div>
       </div>
