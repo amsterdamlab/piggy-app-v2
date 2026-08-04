@@ -142,9 +142,9 @@
     margin: 16px 20px 24px;
     padding: 20px 22px;
     border-radius: 20px;
-    background: linear-gradient(135deg, #5b50d6 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #910957 0%, #f22c75 100%);
     color: white;
-    box-shadow: 0 10px 25px -5px rgba(91, 80, 214, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(145, 9, 87, 0.4);
 }
 
 .profile-banner-referral__text {
