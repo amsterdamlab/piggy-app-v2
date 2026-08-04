@@ -261,7 +261,7 @@ export function simulateWeight(progressPercent) {
 }
 
 /**
- * 9 Growth Stages breakdown for 144-day farm cycle.
+ * 10 Growth Stages breakdown for 144-day farm cycle.
  * Descriptions are concise (max 3 lines) and free of explicit weight numbers.
  */
 export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
@@ -270,14 +270,14 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     if (p < 5.0) {
         return {
             stageNumber: 1,
-            stageName: 'Destete Inicial',
+            stageName: 'Destete',
             icon: '🍼',
             badgeBg: '#fef3c7',
             badgeColor: '#b45309',
             description: `${piggyName} ha ingresado a las cunas de destete tras dejar su zona de lactancia calidamente.`
         };
     }
-    if (p < 14.0) {
+    if (p < 9.0) {
         return {
             stageNumber: 2,
             stageName: 'Climatización Controlada',
@@ -287,10 +287,20 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
             description: `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${piggyName} se mantenga en óptimas condiciones.`
         };
     }
-    if (p < 21.0) {
+    if (p < 14.0) {
         return {
             stageNumber: 3,
-            stageName: 'Nutrición Fase 1',
+            stageName: 'Adaptación de Corral',
+            icon: '🏡',
+            badgeBg: '#fdf4ff',
+            badgeColor: '#c026d3',
+            description: `${piggyName} se socializa en su nuevo espacio y reconoce los puntos de hidratación y alimentación.`
+        };
+    }
+    if (p < 21.0) {
+        return {
+            stageNumber: 4,
+            stageName: 'Nutrición Adaptativa',
             icon: '🌾',
             badgeBg: '#f0fdf4',
             badgeColor: '#15803d',
@@ -299,8 +309,8 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     }
     if (p < 27.0) {
         return {
-            stageNumber: 4,
-            stageName: 'Nutrición Fase 2',
+            stageNumber: 5,
+            stageName: 'Nutrición Fortificada',
             icon: '🍲',
             badgeBg: '#fdf4ff',
             badgeColor: '#a21caf',
@@ -309,8 +319,8 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     }
     if (p < 35.0) {
         return {
-            stageNumber: 5,
-            stageName: 'Alimento de Inicio',
+            stageNumber: 6,
+            stageName: 'Alimento Proteico',
             icon: '🌿',
             badgeBg: '#ecfdf5',
             badgeColor: '#047857',
@@ -319,7 +329,7 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     }
     if (p < 62.0) {
         return {
-            stageNumber: 6,
+            stageNumber: 7,
             stageName: 'Desarrollo Acelerado',
             icon: '🚀',
             badgeBg: '#eff6ff',
@@ -329,7 +339,7 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     }
     if (p < 98.0) {
         return {
-            stageNumber: 7,
+            stageNumber: 8,
             stageName: 'Engorde Final',
             icon: '🥩',
             badgeBg: '#fff1f2',
@@ -339,8 +349,8 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     }
     if (p < 100.0) {
         return {
-            stageNumber: 8,
-            stageName: 'Pre-Salida (Ayuno Técnico)',
+            stageNumber: 9,
+            stageName: 'Preparación de Salida',
             icon: '💧',
             badgeBg: '#fefce8',
             badgeColor: '#a16207',
@@ -348,7 +358,7 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
         };
     }
     return {
-        stageNumber: 9,
+        stageNumber: 10,
         stageName: 'Salida al Mercado',
         icon: '🚚',
         badgeBg: '#f0fdf4',
