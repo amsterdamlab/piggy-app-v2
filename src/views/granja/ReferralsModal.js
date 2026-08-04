@@ -3,8 +3,10 @@
    Referral program modal and greeting badge code
    ============================================ */
 
+import { renderIcon } from '../../icons.js';
 import { getMyReferralCode, getMyReferralStats, shareReferralCode, formatReferralBalance } from '../../services/referralService.js';
 import { completeMissionOnVisit } from '../../services/missionsService.js';
+import { renderPiggyLoader } from '../../components/PiggyLoader.js';
 
 /**
  * Load the referral code into the greeting badge.
@@ -42,10 +44,7 @@ export async function showReferralModal() {
     <div class="modal animate-scale-in" style="position: relative; max-width:420px; max-height:90vh; overflow-y:auto;">
       <div class="modal__handle"></div>
       <button class="bonus-close" id="referral-modal-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
-      <div class="loading-container" style="padding:40px 0;">
-        <div class="spinner"></div>
-        <span>Cargando referidos...</span>
-      </div>
+      ${renderPiggyLoader('Cargando referidos...', { size: '60px', spinnerSize: '24px' })}
     </div>
   `;
   document.body.appendChild(modal);
@@ -121,7 +120,9 @@ export async function showReferralModal() {
 
       <!-- Header -->
       <div style="text-align:center; margin-bottom:20px;">
-        <div style="font-size:48px; margin-bottom:8px;">🤝</div>
+        <div style="display:flex; justify-content:center; color:#581c87; margin-bottom:8px;">
+          ${renderIcon('handshake', '', '44')}
+        </div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
           Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
