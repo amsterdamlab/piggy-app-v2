@@ -17,7 +17,7 @@ const TOUR_STEPS = [
         fallbackSelector: '.granja-greeting',
         title: 'Mi perfil',
         icon: '👤',
-        description: 'Información personal, referidos, centro de ayuda y términos.',
+        description: 'Aquí encuentras toda tu información personal, invitar amigos, centro de ayuda y términos y condiciones.',
         positionType: 'header_top',
     },
     {
@@ -25,16 +25,16 @@ const TOUR_STEPS = [
         fallbackSelector: '.wallet-banner-card',
         title: 'Cuenta Agro',
         icon: '💳',
-        description: 'Tu saldo disponible para compras de Piggys, retiros y bonos.',
+        description: 'Aquí ves tu saldo disponible para comprar Piggys, solicitar retiros de tu saldo comercial y bonos de consumo.',
         positionType: 'wallet_below',
     },
     {
-        selector: '#mis-piggies-section',
-        fallbackSelector: '#piggies-section',
+        selector: '#mis-piggies-header',
+        fallbackSelector: '#mis-piggies-section',
         title: 'Mis Piggys',
         icon: '🐷',
-        description: 'Monitorea el crecimiento de tu granja y tus comisiones en vivo.',
-        positionType: 'piggies_above',
+        description: 'Monitorea el crecimiento de tu granja y tus comisiones en tiempo real.',
+        positionType: 'piggies_strip_below',
     },
     {
         selector: '#mission-banner-container',
@@ -48,24 +48,31 @@ const TOUR_STEPS = [
         selector: '#granja-bottom-nav',
         fallbackSelector: '.bottom-nav',
         title: 'Menú Principal',
-        icon: '🧭',
+        icon: '🏡',
         description: 'Explora el Mercado, la Tienda de cárnicos y nuestra red de Aliados.',
         positionType: 'nav_above',
     },
 ];
 
 /**
- * Initialize and launch the onboarding tour if the user is eligible.
+ * Initialize and launch the onboarding tour if eligible or forced.
  */
 export async function startOnboardingTourIfEligible() {
     window._startPiggyOnboardingTour = forceStartTour;
+
+    // Check if user clicked "Ver Tutorial de Inicio" in Mi Perfil
+    if (window._forceLaunchOnboardingTour === true) {
+        window._forceLaunchOnboardingTour = false;
+        setTimeout(() => { startTour(); }, 200);
+        return;
+    }
 
     const isEligible = await shouldShowOnboardingTour();
     if (!isEligible) return;
 
     setTimeout(() => {
         startTour();
-    }, 600);
+    }, 500);
 }
 
 /**
@@ -157,7 +164,7 @@ function renderStep(index) {
             window.scrollTo({ top: 0, behavior: 'instant' });
         } else if (step.positionType === 'wallet_below') {
             targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
-        } else if (step.positionType === 'piggies_above' || step.positionType === 'missions_above') {
+        } else if (step.positionType === 'piggies_strip_below' || step.positionType === 'missions_above') {
             targetEl.scrollIntoView({ behavior: 'instant', block: 'center' });
         }
         highlightElement(targetEl);
@@ -210,7 +217,7 @@ function renderStep(index) {
                 </div>
 
                 <!-- Description -->
-                <div style="font-size: 0.8rem; color: #475569; line-height: 1.4; margin-bottom: 14px;">
+                <div style="font-size: 0.82rem; color: #475569; line-height: 1.45; margin-bottom: 14px;">
                     ${step.description}
                 </div>
 
@@ -241,7 +248,7 @@ function renderStep(index) {
         `;
 
         attachStepListeners(index);
-    }, 80);
+    }, 150);
 }
 
 function getTooltipPositionStyles(targetRect, positionType) {
@@ -259,9 +266,10 @@ function getTooltipPositionStyles(targetRect, positionType) {
         return 'top: 250px;';
     }
 
-    if (positionType === 'piggies_above') {
-        if (targetRect && targetRect.top > 200) {
-            return `bottom: ${Math.max(80, windowHeight - targetRect.top + 14)}px;`;
+    if (positionType === 'piggies_strip_below') {
+        if (targetRect) {
+            const topPos = Math.max(120, targetRect.bottom + 10);
+            return `top: ${topPos}px;`;
         }
         return 'top: 220px;';
     }
@@ -345,9 +353,9 @@ function renderFinalModal() {
                 <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 38px; width: auto; object-fit: contain;" />
             </div>
 
-            <!-- Subtext: Gray & Centered -->
-            <div style="font-size: 0.78rem; color: #64748b; font-weight: 600; text-align: center; margin-bottom: 22px;">
-                +10 años en el sector porcino
+            <!-- Subtext: Gray & Centered ALL CAPS -->
+            <div style="font-size: 0.76rem; color: #64748b; font-weight: 700; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 22px;">
+                +10 AÑOS EN EL SECTOR PORCINO
             </div>
 
             <!-- Action Button: ¡Comenzar! -->
