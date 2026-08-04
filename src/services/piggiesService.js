@@ -99,20 +99,23 @@ export async function getPiggyById(id) {
 
 /**
  * Create a new piggy for the user (Testing / Admin purpose).
+ * Note: Use buyMarketplaceItem for real purchases.
+ * @param {string} piggyName 
+ * @returns {Promise<Object>}
  */
-export async function createPiggy({ name, amount = 1000000, durationMonths = 3, extraRoi = 0 }) {
+export async function adoptPiggy(piggyName) {
     if (isUsingMockData()) {
         const newPiggy = {
-            id: `pig-${Date.now()}`,
-            user_id: 'user-001',
-            name: name || 'Nuevo Piggy',
+            id: `mock-${Date.now()}`,
+            user_id: 'mock-user',
+            name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString(),
-            investment_amount: amount,
-            extra_roi_bonus: extraRoi,
-            current_weight: 15,
-            created_at: new Date().toISOString(),
+            // default ~4mo 3wk
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            investment_amount: 250000,
+            extra_roi_bonus: 0,
+            current_weight: 15.0,
         };
         MOCK_PIGGIES.unshift(newPiggy);
         return enrichPiggyData(newPiggy);
@@ -120,26 +123,32 @@ export async function createPiggy({ name, amount = 1000000, durationMonths = 3, 
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + durationMonths);
+    if (!user) throw new Error('User not logged in');
 
     const { data, error } = await client
         .from('piggies')
-        .insert([{
+        .insert({
             user_id: user.id,
-            name: name || 'Nuevo Piggy',
+            name: piggyName,
+            investment_amount: 1000000,
             status: 'engorde',
-            investment_amount: amount,
-            extra_roi_bonus: extraRoi,
-            end_date: endDate.toISOString(),
-            current_weight: 15,
-        }])
+            current_weight: 15.0,
+            // purchase_date and end_date calculate automatically in DB default or trigger, 
+            // but let's rely on default for purchase_date. 
+            // end_date default is 4mo3wk from now in schema.
+        })
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return enrichPiggyData(data);
+}
+
+/**
+ * Create a piggy (alias for adoptPiggy).
+ */
+export async function createPiggy({ name, amount = 1000000, durationMonths = 3, extraRoi = 0 }) {
+    return adoptPiggy(name);
 }
 
 /**
