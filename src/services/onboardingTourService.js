@@ -11,23 +11,27 @@ const LOCAL_STORAGE_KEY = 'piggy_onboarding_completed';
 
 /**
  * Check if the current user should see the onboarding tour.
- * Returns true only if tour has NOT been completed.
+ * Prioritizes Supabase user profile so new accounts created on the same
+ * browser always see the tour automatically.
  * @returns {Promise<boolean>}
  */
 export async function shouldShowOnboardingTour() {
-    // Local storage check first for fast response
-    if (localStorage.getItem(LOCAL_STORAGE_KEY) === 'true') {
-        return false;
-    }
-
     const profile = AppState.get('profile');
+
+    // 1. If profile is loaded and explicitly completed in DB -> skip tour
     if (profile && profile.has_completed_onboarding === true) {
         localStorage.setItem(LOCAL_STORAGE_KEY, 'true');
         return false;
     }
 
-    if (isUsingMockData()) {
+    // 2. If profile is loaded and NOT completed (brand new account) -> show tour
+    if (profile && (profile.has_completed_onboarding === false || profile.has_completed_onboarding == null)) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
         return true;
+    }
+
+    if (isUsingMockData()) {
+        return localStorage.getItem(LOCAL_STORAGE_KEY) !== 'true';
     }
 
     try {
@@ -44,12 +48,16 @@ export async function shouldShowOnboardingTour() {
         if (data && data.has_completed_onboarding === true) {
             localStorage.setItem(LOCAL_STORAGE_KEY, 'true');
             return false;
+        } else {
+            // New user account! Clear stale browser localStorage and show tour
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            return true;
         }
     } catch (err) {
         console.warn('Error checking onboarding status:', err);
     }
 
-    return true;
+    return localStorage.getItem(LOCAL_STORAGE_KEY) !== 'true';
 }
 
 /**
