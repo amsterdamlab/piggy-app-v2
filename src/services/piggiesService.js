@@ -4,8 +4,8 @@
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
-import {
-    MOCK_PIGGIES,
+import { MOCK_PIGGIES } from './mockData.js';
+export {
     calculateBaseROI,
     calculateTotalReturn,
     getProgressPercentage,
