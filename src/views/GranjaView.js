@@ -289,8 +289,7 @@ function renderGreeting(firstName) {
     <rect x="3" y="8" width="18" height="4" rx="1"/>
     <path d="M12 8v13"/>
     <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
-    <path d="M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 8 12 8"/>
-    <path d="M16.5 8a2.5 2.5 0 0 1 0-5C15 3 12 8 12 8"/>
+    <path d="M7.5 8C6.12 8 5 6.88 5 5.5C5 4.12 6.12 3 7.5 3C10 3 12 8 12 8C12 8 14 3 16.5 3C17.88 3 19 4.12 19 5.5C19 6.88 17.88 8 16.5 8"/>
   </svg>`;
 
   // Headset icon (stroke style)
