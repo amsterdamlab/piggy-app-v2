@@ -137,8 +137,8 @@ export function renderProfileView() {
                 <!-- Ver Tutorial de Inicio -->
                 <button class="profile-menu-item" id="btn-menu-tutorial">
                     <div class="profile-menu-item__left">
-                        <span class="profile-menu-item__icon" style="font-size: 20px;">🚀</span>
-                        <span class="profile-menu-item__text" style="color: #b80049; font-weight: 700;">Ver Tutorial de Inicio</span>
+                        <span class="profile-menu-item__icon">${renderIcon('rocket', '', '22')}</span>
+                        <span class="profile-menu-item__text">Ver Tutorial de Inicio</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
@@ -234,6 +234,7 @@ function attachProfileViewListeners(profile) {
     // Menu: Ver Tutorial de Inicio (Reactivar)
     document.getElementById('btn-menu-tutorial')?.addEventListener('click', () => {
         localStorage.removeItem('piggy_onboarding_completed');
+        window._forceLaunchOnboardingTour = true;
         navigateTo('granja');
     });
 
