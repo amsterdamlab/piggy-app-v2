@@ -23,7 +23,7 @@ export function renderWalletBanner(firstName, stats) {
   return `
         <!-- Wallet Banner Compact Card (Green) -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.1s;">
-           <div class="wallet-banner-card" style="
+           <div class="wallet-banner-card" id="wallet-banner" style="
               background: linear-gradient(135deg, #10B981 0%, #059669 100%); 
               color: white; 
               padding: 20px 24px; 
