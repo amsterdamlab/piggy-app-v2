@@ -257,7 +257,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
 
         <!-- Mis Cerdos -->
         <div class="section animate-fade-in-up" id="mis-piggies-section" style="animation-delay: 0.2s;">
-          <div class="section__header">
+          <div class="section__header" id="mis-piggies-header">
             <h3 class="section__title">Mis Piggys</h3>
             <button id="btn-ver-completados" class="section__link" style="background:none; border:none; cursor:pointer; font-size:0.85rem; font-weight:700; color:#ec4899; display:flex; align-items:center; gap:4px; padding:0; font-family:inherit;">
               Completados ${completedPiggies.length > 0 ? `(${completedPiggies.length})` : ''} ${renderIcon('arrowRight', '', '14')}
@@ -290,7 +290,7 @@ function renderGreeting(firstName) {
     <path d="M12 8v13"/>
     <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
     <path d="M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 8 12 8"/>
-    <path d="M16.5 8a2.5 2.5 0 0 0 0-5C15 3 12 8 12 8"/>
+    <path d="M16.5 8a2.5 2.5 0 0 1 0-5C15 3 12 8 12 8"/>
   </svg>`;
 
   // Headset icon (stroke style)
