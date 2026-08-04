@@ -103,6 +103,45 @@ async function loadPiggyDetail(piggyId) {
                   </div>
                 </div>
               </div>
+
+              <!-- Etapa de Desarrollo en Tiempo Real -->
+              ${piggy.growthStage ? `
+                <div style="
+                  margin-top: 14px;
+                  padding-top: 12px;
+                  border-top: 1px solid #f1f5f9;
+                ">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-size: 1.1rem; line-height: 1;">${piggy.growthStage.icon}</span>
+                      <span style="font-size: 0.88rem; font-weight: 800; color: #0f172a; line-height: 1.2;">
+                        Etapa ${piggy.growthStage.stageNumber}: ${piggy.growthStage.stageName}
+                      </span>
+                    </div>
+                    <span style="
+                      background: ${piggy.growthStage.badgeBg};
+                      color: ${piggy.growthStage.badgeColor};
+                      font-size: 0.65rem;
+                      font-weight: 800;
+                      padding: 2px 8px;
+                      border-radius: 20px;
+                      letter-spacing: 0.3px;
+                      text-transform: uppercase;
+                    ">
+                      ${piggy.progress}% Completado
+                    </span>
+                  </div>
+                  <p style="
+                    font-size: 0.82rem;
+                    color: #475569;
+                    line-height: 1.45;
+                    margin: 0;
+                    font-weight: 500;
+                  ">
+                    ${piggy.growthStage.description}
+                  </p>
+                </div>
+              ` : ''}
             </div>
           </div>
 
