@@ -26,7 +26,7 @@ const COLOMBIAN_BANKS = [
     'RappiPay',
     'Movii',
     'Davivienda',
-    'Banco Itáu',
+    'Banco Itaú',
     'Scotiabank Colpatria',
     'Banco Popular',
     'Banco de Occidente',
@@ -134,6 +134,15 @@ export function renderProfileView() {
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
+                <!-- Ver Tutorial de Inicio -->
+                <button class="profile-menu-item" id="btn-menu-tutorial">
+                    <div class="profile-menu-item__left">
+                        <span class="profile-menu-item__icon" style="font-size: 20px;">🚀</span>
+                        <span class="profile-menu-item__text" style="color: #b80049; font-weight: 700;">Ver Tutorial de Inicio</span>
+                    </div>
+                    <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
+                </button>
+
                 <!-- 5. Cerrar Sesión -->
                 <button class="profile-menu-item" id="btn-menu-logout">
                     <div class="profile-menu-item__left">
@@ -222,6 +231,12 @@ function attachProfileViewListeners(profile) {
         openLegalSubscreen();
     });
 
+    // Menu: Ver Tutorial de Inicio (Reactivar)
+    document.getElementById('btn-menu-tutorial')?.addEventListener('click', () => {
+        localStorage.removeItem('piggy_onboarding_completed');
+        navigateTo('granja');
+    });
+
     // Menu: Cerrar sesión
     document.getElementById('btn-menu-logout')?.addEventListener('click', async () => {
         if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
@@ -229,6 +244,11 @@ function attachProfileViewListeners(profile) {
             navigateTo('auth');
         }
     });
+
+    // Auto-open Datos Personales subscreen if URL has subscreen=datos (e.g. from Misión 6 CTA)
+    if (window.location.hash.includes('subscreen=datos')) {
+        openDatosPersonalesSubscreen(profile);
+    }
 }
 
 /**
@@ -431,7 +451,7 @@ function openDatosPersonalesSubscreen(profile) {
         }
 
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Guardando...';
+        submitBtn.innerHTML = 'Guardando...';
 
         const updates = {
             full_name: fullNameVal,
@@ -445,12 +465,12 @@ function openDatosPersonalesSubscreen(profile) {
         const { error } = await updateUserProfile(updates);
 
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Guardar Cambios';
+        submitBtn.innerHTML = 'Guardar Cambios';
 
         if (error) {
             showSubscreenStatus(`Error al guardar: ${error}`, '#ef4444', '#fef2f2', '#fecaca');
         } else {
-            showSubscreenStatus('✅ ¡Información guardada exitosamente!', '#16a34a', '#f0fdf4', '#bbf7d0');
+            showSubscreenStatus('✅ ¡Información guardada y sincronizada exitosamente con Supabase!', '#16a34a', '#f0fdf4', '#bbf7d0');
             await completeMissionOnVisit('m6').catch(err => console.warn('M6 complete error:', err));
             setTimeout(() => {
                 closeSubscreen();
