@@ -120,8 +120,8 @@ export async function showReferralModal() {
 
       <!-- Header -->
       <div style="text-align:center; margin-bottom:20px;">
-        <div style="display:flex; justify-content:center; color:#581c87; margin-bottom:8px;">
-          ${renderIcon('handshake', '', '44')}
+        <div style="display:flex; justify-content:center; color:#b80049; margin-bottom:12px;">
+          ${renderIcon('giftBox', '', '48')}
         </div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
