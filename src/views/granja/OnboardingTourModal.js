@@ -2,12 +2,14 @@
    PIGGY APP — Interactive Onboarding Tour Modal
    5-step guided tour + Final Brand Pop-up Modal.
    Clean, compact cards without overlap or blur.
+   Includes transparent click-catcher for 100% click blocking.
    ============================================ */
 
 import { shouldShowOnboardingTour, markOnboardingTourAsCompleted } from '../../services/onboardingTourService.js';
 
 let _currentStepIndex = 0;
 let _tourOverlayEl = null;
+let _clickCatcherEl = null;
 let _currentHighlightedEl = null;
 let _savedElementStyles = null;
 
@@ -97,6 +99,10 @@ export function startTour() {
 function removeExistingOverlay() {
     const existing = document.getElementById('piggy-onboarding-tour-root');
     if (existing) existing.remove();
+    if (_clickCatcherEl) {
+        _clickCatcherEl.remove();
+        _clickCatcherEl = null;
+    }
 }
 
 function createTourOverlay() {
@@ -109,9 +115,30 @@ function createTourOverlay() {
         font-family: inherit; transition: opacity 0.3s ease;
     `;
     document.body.appendChild(_tourOverlayEl);
+
+    // Create transparent click blocker layer over focused element
+    _clickCatcherEl = document.createElement('div');
+    _clickCatcherEl.id = 'piggy-tour-click-catcher';
+    _clickCatcherEl.style.cssText = `
+        position: fixed; z-index: 99999; background: transparent;
+        pointer-events: auto; cursor: default; display: none;
+    `;
+    _clickCatcherEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, true);
+    _clickCatcherEl.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, true);
+    document.body.appendChild(_clickCatcherEl);
 }
 
 function clearPreviousHighlight() {
+    if (_clickCatcherEl) {
+        _clickCatcherEl.style.display = 'none';
+    }
+
     if (_currentHighlightedEl && _savedElementStyles) {
         _currentHighlightedEl.style.position = _savedElementStyles.position;
         _currentHighlightedEl.style.zIndex = _savedElementStyles.zIndex;
@@ -174,6 +201,15 @@ function renderStep(index) {
         const targetRect = targetEl ? targetEl.getBoundingClientRect() : null;
         const totalSteps = TOUR_STEPS.length;
         const isFirst = index === 0;
+
+        // Position transparent click catcher over target element to block clicks inside focused area
+        if (targetRect && _clickCatcherEl) {
+            _clickCatcherEl.style.top = `${targetRect.top}px`;
+            _clickCatcherEl.style.left = `${targetRect.left}px`;
+            _clickCatcherEl.style.width = `${targetRect.width}px`;
+            _clickCatcherEl.style.height = `${targetRect.height}px`;
+            _clickCatcherEl.style.display = 'block';
+        }
 
         _tourOverlayEl.innerHTML = `
             <!-- Tooltip Card (Guaranteed z-index: 100000) -->
