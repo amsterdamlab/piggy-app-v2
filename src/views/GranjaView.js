@@ -50,11 +50,16 @@ function renderRandomNotification(notif) {
   const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
   const cursor  = notif.ctaUrl ? 'pointer' : 'default';
 
+  // Unified background & border style matching exact image reference for ALL tips
+  const tipBgColor     = '#fff1f2';
+  const tipBorderColor = '#ffe4e6';
+  const tipTitleColor  = '#be123c';
+
   return `
     <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
       <div id="dynamic-notification" style="
-        background: ${notif.bgColor};
-        border: 1px solid ${notif.borderColor};
+        background: ${tipBgColor};
+        border: 1px solid ${tipBorderColor};
         border-radius: 14px;
         padding: 12px 16px;
         display: flex;
@@ -63,14 +68,14 @@ function renderRandomNotification(notif) {
         cursor: ${cursor};
         transition: transform 0.2s, box-shadow 0.2s;
       " ${ctaAttr}
-         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
+         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
         <div style="flex:1; min-width:0;">
-          <div style="font-weight:700; color:${notif.color}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
-          <div style="font-size:0.72rem; color:#6b7280; margin-top:2px;">&#10024; ${notif.reward}</div>
+          <div style="font-weight:700; color:${tipTitleColor}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
+          <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">&#10024; ${notif.reward}</div>
         </div>
-        <div style="font-size:14px; color:${notif.color}; opacity:0.5; flex-shrink:0;">
+        <div style="font-size:14px; color:${tipTitleColor}; opacity:0.6; flex-shrink:0;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
         </div>
       </div>
