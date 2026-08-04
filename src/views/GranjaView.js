@@ -256,7 +256,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         ` : ''}
 
         <!-- Mis Cerdos -->
-        <div class="section animate-fade-in-up" style="animation-delay: 0.2s;">
+        <div class="section animate-fade-in-up" id="mis-piggies-section" style="animation-delay: 0.2s;">
           <div class="section__header">
             <h3 class="section__title">Mis Piggys</h3>
             <button id="btn-ver-completados" class="section__link" style="background:none; border:none; cursor:pointer; font-size:0.85rem; font-weight:700; color:#ec4899; display:flex; align-items:center; gap:4px; padding:0; font-family:inherit;">
@@ -416,7 +416,7 @@ export function renderPiggyCard(piggy, baseROI) {
 
 export function renderBottomNav(activeTab) {
   return `
-    <nav class="bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
+    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
       <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
