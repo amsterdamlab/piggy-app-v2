@@ -11,27 +11,24 @@ const LOCAL_STORAGE_KEY = 'piggy_onboarding_completed';
 
 /**
  * Check if the current user should see the onboarding tour.
- * Prioritizes Supabase user profile so new accounts created on the same
- * browser always see the tour automatically.
+ * Strict check: returns false if tour was already completed in localStorage or DB.
  * @returns {Promise<boolean>}
  */
 export async function shouldShowOnboardingTour() {
-    const profile = AppState.get('profile');
+    // 1. LocalStorage check first (prevents re-triggering on page refresh)
+    if (localStorage.getItem(LOCAL_STORAGE_KEY) === 'true') {
+        return false;
+    }
 
-    // 1. If profile is loaded and explicitly completed in DB -> skip tour
+    // 2. Check profile in AppState
+    const profile = AppState.get('profile');
     if (profile && profile.has_completed_onboarding === true) {
         localStorage.setItem(LOCAL_STORAGE_KEY, 'true');
         return false;
     }
 
-    // 2. If profile is loaded and NOT completed (brand new account) -> show tour
-    if (profile && (profile.has_completed_onboarding === false || profile.has_completed_onboarding == null)) {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
-        return true;
-    }
-
     if (isUsingMockData()) {
-        return localStorage.getItem(LOCAL_STORAGE_KEY) !== 'true';
+        return false; // In mock mode, only start via explicit button
     }
 
     try {
@@ -48,16 +45,13 @@ export async function shouldShowOnboardingTour() {
         if (data && data.has_completed_onboarding === true) {
             localStorage.setItem(LOCAL_STORAGE_KEY, 'true');
             return false;
-        } else {
-            // New user account! Clear stale browser localStorage and show tour
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-            return true;
         }
     } catch (err) {
         console.warn('Error checking onboarding status:', err);
     }
 
-    return localStorage.getItem(LOCAL_STORAGE_KEY) !== 'true';
+    // If never completed, show once
+    return true;
 }
 
 /**
