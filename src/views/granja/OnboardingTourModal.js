@@ -415,33 +415,50 @@ function renderFinalModal() {
                 <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 38px; width: auto; object-fit: contain;" />
             </div>
 
-            <!-- Subtext: Gray & Centered ALL CAPS -->
-            <div style="font-size: 0.76rem; color: #64748b; font-weight: 700; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 22px;">
+            <!-- Subtext: Gray & Centered ALL CAPS (1 point smaller, no bold) -->
+            <div style="font-size: 0.68rem; color: #64748b; font-weight: 500; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 22px;">
                 +10 AÑOS EN EL SECTOR PORCINO
             </div>
 
-            <!-- Action Button: ¡Comenzar! -->
+            <!-- Action Button: ¡Comenzar! (Sin icono de cohete) -->
             <button id="btn-tour-finish-final" style="
                 background: linear-gradient(135deg, #b80049 0%, #880036 100%);
                 color: white; border: none; padding: 12px 24px; border-radius: 30px;
                 font-weight: 800; font-size: 0.95rem; cursor: pointer; width: 100%;
                 box-shadow: 0 6px 20px rgba(184, 0, 73, 0.4); transition: transform 0.15s;
             ">
-                ¡Comenzar! 🚀
+                ¡Comenzar!
             </button>
         </div>
     `;
 
     document.getElementById('btn-tour-finish-final')?.addEventListener('click', () => {
-        finishTour();
+        finishTour(true);
     });
 }
 
 /**
  * Complete and close tour permanently.
+ * Optionally scrolls smoothly to the missions section to encourage starting the 1st mission.
  */
-function finishTour() {
+function finishTour(scrollToMissions = false) {
     markOnboardingTourAsCompleted();
     clearPreviousHighlight();
     removeExistingOverlay();
+
+    if (scrollToMissions) {
+        setTimeout(() => {
+            const missionsEl = document.querySelector('#mission-banner-container') || document.querySelector('#mission-banner');
+            if (missionsEl) {
+                missionsEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                missionsEl.style.transition = 'transform 0.4s ease, box-shadow 0.4s ease';
+                missionsEl.style.transform = 'scale(1.02)';
+                missionsEl.style.boxShadow = '0 0 0 3px #b80049, 0 10px 25px rgba(184, 0, 73, 0.3)';
+                setTimeout(() => {
+                    missionsEl.style.transform = '';
+                    missionsEl.style.boxShadow = '';
+                }, 1500);
+            }
+        }, 150);
+    }
 }
