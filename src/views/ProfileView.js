@@ -37,8 +37,7 @@ const COLOMBIAN_BANKS = [
 
 const ACCOUNT_TYPES = [
     'Cuenta de Ahorros',
-    'Cuenta Corriente',
-    'Monedero Digital (Nequi/Daviplata/RappiPay)'
+    'Cuenta Corriente'
 ];
 
 let currentActiveSubscreen = null; // 'datos' | 'legal' | null
@@ -332,7 +331,8 @@ function openDatosPersonalesSubscreen(profile) {
                                 id="field-edit-whatsapp"
                                 name="whatsapp"
                                 value="${profile.whatsapp || ''}"
-                                placeholder="+57 300 123 4567"
+                                placeholder="Ej: 3001234567"
+                                minlength="10"
                                 required
                             />
                         </div>
@@ -374,7 +374,7 @@ function openDatosPersonalesSubscreen(profile) {
                     </div>
 
                     <div class="input-group" style="margin-bottom: 16px;">
-                        <label class="input-group__label" for="field-edit-account-number">Número de Cuenta o Celular</label>
+                        <label class="input-group__label" for="field-edit-account-number">Número de Cuenta</label>
                         <div class="input-wrapper">
                             <span class="input-wrapper__icon">${renderIcon('card', '', '18')}</span>
                             <input
@@ -383,7 +383,7 @@ function openDatosPersonalesSubscreen(profile) {
                                 id="field-edit-account-number"
                                 name="bankAccountNumber"
                                 value="${profile.bank_account_number || ''}"
-                                placeholder="Ej: 3001234567 o 123456789"
+                                placeholder="Ej: 123456789"
                                 autocomplete="off"
                             />
                         </div>
@@ -448,6 +448,12 @@ function openDatosPersonalesSubscreen(profile) {
 
         if (!fullNameVal) {
             showSubscreenStatus('Por favor ingresa tu nombre completo.', '#ef4444', '#fef2f2', '#fecaca');
+            return;
+        }
+
+        const whatsappDigits = (whatsappVal || '').replace(/\D/g, '');
+        if (!whatsappVal || whatsappDigits.length < 10) {
+            showSubscreenStatus('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.', '#ef4444', '#fef2f2', '#fecaca');
             return;
         }
 
