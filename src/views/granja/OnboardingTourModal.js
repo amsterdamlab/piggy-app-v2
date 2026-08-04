@@ -146,6 +146,7 @@ function clearPreviousHighlight() {
         _currentHighlightedEl.style.borderRadius = _savedElementStyles.borderRadius;
         _currentHighlightedEl.style.transition = _savedElementStyles.transition;
         _currentHighlightedEl.style.background = _savedElementStyles.background;
+        _currentHighlightedEl.style.padding = _savedElementStyles.padding;
         _currentHighlightedEl = null;
         _savedElementStyles = null;
     }
@@ -163,6 +164,7 @@ function highlightElement(el) {
         borderRadius: el.style.borderRadius || '',
         transition: el.style.transition || '',
         background: el.style.background || '',
+        padding: el.style.padding || '',
     };
 
     const computedPos = window.getComputedStyle(el).position;
@@ -170,9 +172,29 @@ function highlightElement(el) {
         el.style.position = 'relative';
     }
     el.style.zIndex = '99999';
-    el.style.boxShadow = '0 0 0 4px #b80049, 0 0 30px 4px rgba(184, 0, 73, 0.7)';
-    el.style.borderRadius = el.style.borderRadius || '16px';
-    el.style.transition = 'box-shadow 0.3s ease, z-index 0.3s ease';
+
+    // Ensure transparent/un-styled headers have a solid white background & padding to be 100% visible
+    const computedBg = window.getComputedStyle(el).backgroundColor;
+    const isTransparent = computedBg === 'rgba(0, 0, 0, 0)' || computedBg === 'transparent';
+
+    if (el.id === 'mis-piggies-header') {
+        el.style.background = '#ffffff';
+        el.style.padding = '10px 16px';
+        el.style.borderRadius = '16px';
+    } else if (el.id === 'granja-header') {
+        el.style.background = '#ffffff';
+        el.style.padding = '10px 14px';
+        el.style.borderRadius = '18px';
+    } else if (isTransparent && !el.style.background) {
+        el.style.background = '#ffffff';
+        el.style.padding = '8px 12px';
+        el.style.borderRadius = '16px';
+    } else {
+        el.style.borderRadius = el.style.borderRadius || '16px';
+    }
+
+    el.style.boxShadow = '0 0 0 4px #b80049, 0 12px 35px rgba(0, 0, 0, 0.4)';
+    el.style.transition = 'all 0.3s ease';
 }
 
 function renderStep(index) {
@@ -253,174 +275,167 @@ function renderStep(index) {
                 </div>
 
                 <!-- Description -->
-                <div style="font-size: 0.82rem; color: #475569; line-height: 1.45; margin-bottom: 14px;">
+                <p style="
+                    font-size: 0.85rem; color: #475569; line-height: 1.45;
+                    margin: 0 0 16px 0; font-weight: 500;
+                ">
                     ${step.description}
-                </div>
+                </p>
 
-                <!-- Footer Controls -->
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-                    <div>
-                        ${!isFirst ? `
-                            <button id="btn-tour-prev" style="
-                                background: #f1f5f9; color: #475569; border: none;
-                                padding: 7px 12px; border-radius: 8px; font-weight: 700;
-                                font-size: 0.78rem; cursor: pointer; transition: background 0.15s;
-                            ">
-                                ← Anterior
-                            </button>
-                        ` : '<div></div>'}
-                    </div>
+                <!-- Navigation Buttons -->
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    ${!isFirst ? `
+                        <button id="btn-tour-prev" style="
+                            background: #f1f5f9; color: #334155; border: none;
+                            padding: 8px 14px; border-radius: 10px; font-weight: 700;
+                            font-size: 0.82rem; cursor: pointer; transition: background 0.15s;
+                        ">
+                            ← Anterior
+                        </button>
+                    ` : '<div></div>'}
 
                     <button id="btn-tour-next" style="
-                        background: linear-gradient(135deg, #b80049 0%, #880036 100%);
-                        color: white; border: none; padding: 8px 18px; border-radius: 8px;
-                        font-weight: 800; font-size: 0.82rem; cursor: pointer;
+                        background: #b80049; color: white; border: none;
+                        padding: 9px 18px; border-radius: 12px; font-weight: 800;
+                        font-size: 0.88rem; cursor: pointer;
                         box-shadow: 0 4px 12px rgba(184, 0, 73, 0.35); transition: transform 0.15s;
                     ">
-                        ${index === totalSteps - 1 ? 'Finalizar →' : 'Siguiente →'}
+                        Siguiente →
                     </button>
                 </div>
             </div>
         `;
 
-        attachStepListeners(index);
-    }, 150);
+        attachTourCardListeners();
+    }, 100);
 }
 
 function getTooltipPositionStyles(targetRect, positionType) {
-    const windowHeight = window.innerHeight;
+    if (!targetRect) return 'top: 50%; transform: translate(-50%, -50%);';
+
+    const vh = window.innerHeight;
 
     if (positionType === 'header_top') {
-        return 'top: 105px;';
+        const topPos = Math.min(targetRect.bottom + 12, vh - 200);
+        return `top: ${Math.max(16, topPos)}px;`;
     }
-
     if (positionType === 'wallet_below') {
-        if (targetRect) {
-            const topPos = Math.max(120, targetRect.bottom + 14);
-            return `top: ${topPos}px;`;
-        }
-        return 'top: 250px;';
+        const topPos = Math.min(targetRect.bottom + 12, vh - 200);
+        return `top: ${Math.max(16, topPos)}px;`;
     }
-
     if (positionType === 'piggies_strip_below') {
-        if (targetRect) {
-            const topPos = Math.max(120, targetRect.bottom + 10);
-            return `top: ${topPos}px;`;
-        }
-        return 'top: 220px;';
+        const topPos = Math.min(targetRect.bottom + 12, vh - 200);
+        return `top: ${Math.max(16, topPos)}px;`;
     }
-
     if (positionType === 'missions_above') {
-        if (targetRect && targetRect.top > 180) {
-            return `bottom: ${Math.max(80, windowHeight - targetRect.top + 14)}px;`;
-        }
-        return 'bottom: 120px;';
+        const topPos = Math.max(16, targetRect.top - 190);
+        return `top: ${topPos}px;`;
     }
-
     if (positionType === 'nav_above') {
-        return 'bottom: 85px;';
+        const topPos = Math.max(16, targetRect.top - 190);
+        return `top: ${topPos}px;`;
     }
 
     return 'top: 50%; transform: translate(-50%, -50%);';
 }
 
-function attachStepListeners(currentIndex) {
-    const btnSkip = document.getElementById('btn-tour-skip');
-    const btnPrev = document.getElementById('btn-tour-prev');
-    const btnNext = document.getElementById('btn-tour-next');
+function attachTourCardListeners() {
+    document.getElementById('btn-tour-skip')?.addEventListener('click', () => {
+        completeTour();
+    });
 
-    if (btnSkip) {
-        btnSkip.addEventListener('click', () => {
-            finishTour();
-        });
-    }
-
-    if (btnPrev) {
-        btnPrev.addEventListener('click', () => {
-            if (_currentStepIndex > 0) {
-                _currentStepIndex--;
-                renderStep(_currentStepIndex);
-            }
-        });
-    }
-
-    if (btnNext) {
-        btnNext.addEventListener('click', () => {
-            _currentStepIndex++;
+    document.getElementById('btn-tour-prev')?.addEventListener('click', () => {
+        if (_currentStepIndex > 0) {
+            _currentStepIndex--;
             renderStep(_currentStepIndex);
-        });
-    }
+        }
+    });
+
+    document.getElementById('btn-tour-next')?.addEventListener('click', () => {
+        _currentStepIndex++;
+        renderStep(_currentStepIndex);
+    });
 }
 
-/**
- * Render Final Pop-up Brand Modal (Paso Final)
- */
 function renderFinalModal() {
     clearPreviousHighlight();
+    removeExistingOverlay();
+    markOnboardingTourAsCompleted();
 
-    _tourOverlayEl.innerHTML = `
-        <!-- Centered Modal Card (z-index: 100000) -->
+    const backdrop = document.createElement('div');
+    backdrop.id = 'piggy-onboarding-final-modal';
+    backdrop.style.cssText = `
+        position: fixed; inset: 0; z-index: 100000;
+        background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px); display: flex;
+        align-items: center; justify-content: center; padding: 20px;
+        animation: fadeIn 0.25s ease-out;
+    `;
+
+    backdrop.innerHTML = `
         <div style="
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: calc(100% - 36px); max-width: 340px;
-            background: white; border-radius: 24px; padding: 26px 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center; z-index: 100000;
-            animation: tourScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: white; width: 100%; max-width: 360px;
+            border-radius: 24px; padding: 28px 22px 24px; text-align: center;
+            position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+            animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         ">
-            <!-- Header: Favicon + Title in single row -->
+            <!-- Icon Hero -->
             <div style="
+                width: 72px; height: 72px; border-radius: 50%;
+                background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
                 display: flex; align-items: center; justify-content: center;
-                gap: 8px; font-size: 1.2rem; font-weight: 850; color: #0f172a;
-                margin-bottom: 8px;
+                margin: 0 auto 16px; font-size: 34px;
+                box-shadow: 0 10px 20px -5px rgba(225, 29, 72, 0.2);
             ">
-                <img src="/piggy-favicon.svg" alt="Piggy" style="width: 26px; height: 26px; object-fit: contain;" />
-                <span>Mi Granja Piggy</span>
+                🏡
             </div>
 
-            <!-- Subtitle Explicación -->
-            <div style="font-size: 0.85rem; color: #475569; line-height: 1.45; font-weight: 600; margin-bottom: 20px;">
-                Crece junto a nosotros con respaldo 100% en carne real.
-            </div>
+            <!-- Title -->
+            <h2 style="
+                font-size: 1.45rem; font-weight: 850; color: #0f172a;
+                margin: 0 0 6px 0; letter-spacing: -0.02em; line-height: 1.2;
+            ">
+                ¡Bienvenido a Piggy App!
+            </h2>
 
-            <!-- Valle Morales Logo (Small & Centered, NO gray box, NO pig emoji) -->
-            <div style="margin-bottom: 6px; display: flex; justify-content: center;">
-                <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 38px; width: auto; object-fit: contain;" />
-            </div>
-
-            <!-- Subtext: Gray & Centered ALL CAPS -->
-            <div style="font-size: 0.76rem; color: #64748b; font-weight: 700; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 22px;">
+            <!-- Subtitle -->
+            <div style="
+                font-size: 0.75rem; font-weight: 800; color: #be123c;
+                letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px;
+            ">
                 +10 AÑOS EN EL SECTOR PORCINO
             </div>
 
-            <!-- Action Button: ¡Comenzar! -->
-            <button id="btn-tour-finish-final" style="
-                width: 100%;
-                background: linear-gradient(135deg, #b80049 0%, #880036 100%);
-                color: white; border: none; padding: 13px 20px; border-radius: 14px;
-                font-weight: 800; font-size: 0.95rem; cursor: pointer;
-                box-shadow: 0 8px 20px -4px rgba(184, 0, 73, 0.4);
-                transition: transform 0.15s;
+            <!-- Description -->
+            <p style="
+                font-size: 0.88rem; color: #475569; line-height: 1.5;
+                margin: 0 0 22px 0; font-weight: 500;
             ">
-                ¡Comenzar!
+                Explora las funcionalidades de tu granja digital, monitorea tus cerditos y haz crecer tus comisiones.
+            </p>
+
+            <!-- CTA Button -->
+            <button id="btn-final-modal-close" style="
+                width: 100%; background: #b80049; color: white; border: none;
+                padding: 14px 20px; border-radius: 30px; font-weight: 800;
+                font-size: 1rem; cursor: pointer;
+                box-shadow: 0 8px 24px -4px rgba(184, 0, 73, 0.4);
+                transition: transform 0.15s, box-shadow 0.15s;
+            ">
+                ¡Entendido, a mi Granja! 🚀
             </button>
         </div>
     `;
 
-    const finishBtn = document.getElementById('btn-tour-finish-final');
-    if (finishBtn) {
-        finishBtn.addEventListener('click', () => {
-            finishTour();
-        });
-    }
+    document.body.appendChild(backdrop);
+
+    document.getElementById('btn-final-modal-close')?.addEventListener('click', () => {
+        backdrop.remove();
+    });
 }
 
-/**
- * Complete and close tour permanently.
- */
-function finishTour() {
-    markOnboardingTourAsCompleted();
+function completeTour() {
     clearPreviousHighlight();
     removeExistingOverlay();
+    markOnboardingTourAsCompleted();
 }
