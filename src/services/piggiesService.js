@@ -1,13 +1,11 @@
 /* ============================================
    PIGGY APP — Piggies Service
-   Manages user piggies, growth stages, ROI calculation,
-   and Marketplace purchases.
+   Manages piggy CRUD and ROI calculations
    ============================================ */
 
-import { getClient } from '../supabase.js';
+import { getClient, isUsingMockData } from './supabase.js';
 import {
     MOCK_PIGGIES,
-    isUsingMockData,
     calculateBaseROI,
     calculateTotalReturn,
     getProgressPercentage,
@@ -18,16 +16,16 @@ import {
     formatPercentage,
 } from './mockData.js';
 
-// Photo counters per stage for deterministic assignment
-const STAGE_PHOTO_COUNTS = { 1: 5, 2: 5, 3: 4 };
-
-/**
- * Deterministic photo index helper based on piggy ID
- */
-function getPiggyPhotoNumber(id) {
-    const numericHash = String(id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return (numericHash % 4) + 1;
-}
+export {
+    calculateBaseROI,
+    calculateTotalReturn,
+    getProgressPercentage,
+    getDaysRemaining,
+    simulateWeight,
+    getPiggyGrowthStage,
+    formatCOP,
+    formatPercentage,
+};
 
 /**
  * Fetch all piggies for the current user.
@@ -69,11 +67,15 @@ export async function getUserPiggies() {
 
 /**
  * Identify piggies that have passed their end_date and mark them as complete.
+ * Calls the secure database RPC `mark_expired_piggies` to handle status changes
+ * safely and securely on the server side.
+ * @param {string} userId 
  */
 export async function markExpiredPiggies(userId) {
     if (isUsingMockData()) return;
 
     const client = getClient();
+    
     const { error } = await client.rpc('mark_expired_piggies', { p_user_id: userId });
 
     if (error) {
@@ -85,6 +87,8 @@ export async function markExpiredPiggies(userId) {
 
 /**
  * Get a single piggy by ID.
+ * @param {string} id 
+ * @returns {Promise<Object>}
  */
 export async function getPiggyById(id) {
     if (isUsingMockData()) {
@@ -106,6 +110,9 @@ export async function getPiggyById(id) {
 
 /**
  * Create a new piggy for the user (Testing / Admin purpose).
+ * Note: Use buyMarketplaceItem for real purchases.
+ * @param {string} piggyName 
+ * @returns {Promise<Object>}
  */
 export async function adoptPiggy(piggyName) {
     if (isUsingMockData()) {
@@ -115,6 +122,7 @@ export async function adoptPiggy(piggyName) {
             name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
+            // default ~4mo 3wk
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
             investment_amount: 250000,
             extra_roi_bonus: 0,
@@ -145,9 +153,22 @@ export async function adoptPiggy(piggyName) {
 
 /**
  * Create a piggy directly (Legacy support)
+ * @param {Object} data - Piggy data object
  */
 export async function createPiggy(data) {
     return adoptPiggy(data.name || 'Nuevo Piggy');
+}
+
+/**
+ * Helper to compute photo number deterministically from piggy ID (1-4)
+ */
+function getPiggyPhotoNumber(id) {
+    const str = String(id || '1');
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash += str.charCodeAt(i);
+    }
+    return (Math.abs(hash) % 4) + 1;
 }
 
 /**
@@ -173,6 +194,7 @@ function enrichPiggyData(piggy) {
     if (isNaN(daysLeft)) daysLeft = 143;
 
     // Calculate progress based on REVERSE logic (143 - daysLeft)
+    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     let progress = Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100);
     if (isNaN(progress)) progress = 0;
@@ -186,7 +208,7 @@ function enrichPiggyData(piggy) {
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
-    // Determine current growth stage
+    // Determine current growth stage (1, 2, or 3 for photo selection)
     let currentStage;
     if (isComplete || daysElapsed > 90) {
         currentStage = 3;
@@ -200,6 +222,9 @@ function enrichPiggyData(piggy) {
 
     if (imageUrl) {
         if (!imageUrl.startsWith('http')) {
+            // If it's a standard pattern like 'assets/piggies/stageX/etX-Y.jpg',
+            // we dynamically update the stage X to match the actual current growth stage!
+            // This ensures the piggy GROWING works automatically while keeping the photo number Y!
             const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
             if (match) {
                 const photoNum = match[1];
@@ -207,10 +232,13 @@ function enrichPiggyData(piggy) {
             }
         }
     } else {
+        // Fallback in case image_url is empty in DB
         const photoNum = getPiggyPhotoNumber(piggy.id || '1');
         imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
     }
 
+    // Ensure it uses local absolute paths (/assets/piggies/...) to load directly from Vercel/localhost
+    // This resolves rate-limiting and loading latency errors from GitHub Raw
     if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
         imageUrl = '/' + imageUrl;
     }
@@ -241,6 +269,7 @@ export async function getDashboardStats(piggies = []) {
     const availablePiggies = validPiggies.filter((p) => p.isComplete);
 
     const piggyCount = activePiggies.length;
+    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
     // 1. Adquisición Bonos de Preventa (Active Investment)
@@ -274,6 +303,7 @@ export async function getDashboardStats(piggies = []) {
     let nextCloseProgress = 0;
 
     if (activePiggies.length > 0) {
+        // Find piggy with minimum days left (closest to completion)
         const closestPiggy = activePiggies.reduce((prev, curr) =>
             (prev.daysLeft < curr.daysLeft) ? prev : curr
         );
@@ -302,8 +332,12 @@ export async function getDashboardStats(piggies = []) {
 
 /**
  * Buy a piggy from the marketplace.
+ * The current_month of the item determines how many days remain in the cycle.
+ * @param {Object} item - The marketplace item
+ * @param {string|null} customName - Optional custom name for the piggy
  */
 export async function buyMarketplaceItem(item, customName = null) {
+    // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
@@ -325,6 +359,7 @@ export async function buyMarketplaceItem(item, customName = null) {
         };
         MOCK_PIGGIES.unshift(newPiggy);
 
+        // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
         return enrichPiggyData(newPiggy);
     }
@@ -333,6 +368,8 @@ export async function buyMarketplaceItem(item, customName = null) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
+    // Call Database Function (RPC)
+    // Passes current_month so the DB calculates the correct end_date
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -348,10 +385,12 @@ export async function buyMarketplaceItem(item, customName = null) {
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
+    // Success! Fetch the created piggy to return it
     if (rpcData && rpcData.piggy_id) {
         return getPiggyById(rpcData.piggy_id);
     }
 
+    // Fallback just for fetching data, not for logic
     const { data: latest } = await client
         .from('piggies')
         .select('*')
@@ -361,6 +400,3 @@ export async function buyMarketplaceItem(item, customName = null) {
 
     return enrichPiggyData(latest);
 }
-
-// Re-export utility functions for use in views
-export { calculateBaseROI, calculateTotalReturn, formatCOP, formatPercentage, getDaysRemaining };
