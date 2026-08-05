@@ -70,157 +70,188 @@ export const MOCK_MARKETPLACE = [
     },
     {
         id: 'item-003',
-        item_name: 'Piggy Elite',
-        description: 'Cerdo élite con genética superior y cuidado personalizado. Bono de +2% adicional.',
+        item_name: 'Piggy Pro',
+        description: 'Lote seleccionado con máxima eficiencia de conversión alimenticia. Bono de +2%.',
         price: 1500000,
         extra_roi: 0.02,
         stock: 10,
         image_url: null,
         category: 'accelerator',
     },
+];
+
+export const MOCK_TRANSACTIONS = [
     {
-        id: 'item-004',
-        item_name: 'Acelerador Nutricional',
-        description: 'Suplemento premium que mejora el crecimiento. +1% al cerdo seleccionado.',
-        price: 150000,
-        extra_roi: 0.01,
-        stock: 100,
-        image_url: null,
-        category: 'booster',
+        id: 'tx-001',
+        user_id: 'user-001',
+        type: 'compra',
+        amount: -1000000,
+        description: 'Compra de Piggy Pochito',
+        status: 'completado',
+        created_at: '2026-01-20T10:00:00Z',
+    },
+    {
+        id: 'tx-002',
+        user_id: 'user-001',
+        type: 'compra',
+        amount: -1000000,
+        description: 'Compra de Piggy Luna',
+        status: 'completado',
+        created_at: '2026-02-01T10:00:00Z',
+    },
+    {
+        id: 'tx-003',
+        user_id: 'user-001',
+        type: 'bono_referido',
+        amount: 30000,
+        description: 'Bono por referido registrado (Carlos M.)',
+        status: 'completado',
+        created_at: '2026-02-10T14:30:00Z',
     },
 ];
 
-export const MOCK_ALLIES = [
+/** 10 Growth stages over 144 days */
+export const PIGGY_GROWTH_STAGES = [
     {
-        id: 'ally-001',
-        name: 'Carnes Don Julio',
-        category: 'Carnicería',
-        specialty: 'Cortes Premium',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
-        description: 'Abastecemos tu negocio con la mejor carne de cerdo de la región.',
-        benefit: 'Envío gratis en pedidos mayoristas',
-        phone: '300 555 1234',
-        address: 'Centro, Calle 50 # 40-20',
-        discount_info: 'Entrega gratuita en Medellín',
+        stageNumber: 1,
+        minPercent: 0,
+        maxPercent: 4.9,
+        title: 'Destete',
+        icon: '🍼',
+        approxDays: 'Días 0 - 7',
+        description: (name) => `${name} ha ingresado a las cunas de destete tras dejar su zona de lactancia cálidamente.`
     },
     {
-        id: 'ally-005',
-        name: 'Huellitas Felices',
-        category: 'Petshop',
-        specialty: 'Alimentos y Spa',
-        location: 'Bogotá, Cundinamarca',
-        image_url: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
-        description: 'Todo para consentir a tu peludo. Baño, peluquería y juguetes.',
-        benefit: '10% en Baño y Peluquería',
-        phone: '312 456 7890',
-        address: 'Av. Principal # 45-12',
-        discount_info: '10% en Baño y Peluquería',
+        stageNumber: 2,
+        minPercent: 5.0,
+        maxPercent: 8.9,
+        title: 'Climatización Controlada',
+        icon: '🌡️',
+        approxDays: 'Días 8 - 13',
+        description: (name) => `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${name} se mantenga en óptimas condiciones.`
     },
     {
-        id: 'ally-006',
-        name: 'El Barbero',
-        category: 'Barbería',
-        specialty: 'Cortes Clásicos',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
-        description: 'Estilo y tradición. Afeitado con toalla caliente y los mejores cortes.',
-        benefit: '2x1 en corte de cabello y barba',
-        phone: '315 789 1234',
-        address: 'Calle 10 # 20-30',
-        discount_info: '2x1 en corte de cabello y barba',
+        stageNumber: 3,
+        minPercent: 9.0,
+        maxPercent: 13.9,
+        title: 'Adaptación de Corral',
+        icon: '🏡',
+        approxDays: 'Días 14 - 20',
+        description: (name) => `${name} se socializa en su nuevo espacio y reconoce los puntos de hidratación y alimentación.`
+    },
+    {
+        stageNumber: 4,
+        minPercent: 14.0,
+        maxPercent: 20.9,
+        title: 'Nutrición Adaptativa',
+        icon: '🌾',
+        approxDays: 'Días 21 - 30',
+        description: (name) => `${name} recibe su alimento pre-iniciador especializado para adaptar gradualmente su sistema digestivo.`
+    },
+    {
+        stageNumber: 5,
+        minPercent: 21.0,
+        maxPercent: 26.9,
+        title: 'Nutrición Fortificada',
+        icon: '🍲',
+        approxDays: 'Días 31 - 38',
+        description: (name) => `${name} avanza en su plan nutricional con alimento de transición para fortalecer su flora intestinal.`
+    },
+    {
+        stageNumber: 6,
+        minPercent: 27.0,
+        maxPercent: 34.9,
+        title: 'Alimento Proteico',
+        icon: '🌿',
+        approxDays: 'Días 39 - 50',
+        description: (name) => `${name} consume alimento de inicio y completa la maduración total de su sistema digestivo.`
+    },
+    {
+        stageNumber: 7,
+        minPercent: 35.0,
+        maxPercent: 61.9,
+        title: 'Desarrollo Acelerado',
+        icon: '🚀',
+        approxDays: 'Días 51 - 89',
+        description: (name) => `${name} pasa a los galpones de engorde en lote y gana peso a ritmo acelerado con 16% de proteína.`
+    },
+    {
+        stageNumber: 8,
+        minPercent: 62.0,
+        maxPercent: 97.9,
+        title: 'Engorde Final',
+        icon: '🥩',
+        approxDays: 'Días 90 - 140',
+        description: (name) => `${name} se alimenta libremente al 14% de proteína en nuestra granja cubierta.`
+    },
+    {
+        stageNumber: 9,
+        minPercent: 98.0,
+        maxPercent: 99.9,
+        title: 'Preparación de Salida',
+        icon: '💧',
+        approxDays: 'Días 141 - 143',
+        description: (name) => `Se retira el alimento sólido de ${name} para reducir la contaminación de la canal, manteniendo agua a libre voluntad.`
+    },
+    {
+        stageNumber: 10,
+        minPercent: 100.0,
+        maxPercent: 100.0,
+        title: 'Salida al Mercado',
+        icon: '🚚',
+        approxDays: 'Día 144',
+        description: (name) => `${name} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
     }
 ];
 
-export const MOCK_MISSIONS = [
-    {
-        id: 'm1',
-        title: 'Crea una cuenta nueva',
-        reward: 'Bono de consumo por valor de $30.000',
-        is_completed: true,
-        icon: '🎉',
-        cta: null
-    },
-    {
-        id: 'm2',
-        title: 'Compra tu primer Piggy',
-        reward: 'Desbloquea Piggy de 3 meses',
-        is_completed: true, // Simulado completado para ver progreso
-        icon: '🐷',
-        cta: '#/mercado'
-    },
-    {
-        id: 'm3',
-        title: 'Invita a un amigo a Piggy',
-        reward: 'Desbloquea tu código referido',
-        is_completed: false,
-        icon: '📲',
-        cta: 'https://wa.me/?text=Hola!%20Te%20invito%20a%20ser%20parte%20de%20Piggy%20y%20ganar%20con%20cerdos%20digitales.%20Unete%20aqui:%20piggy.app'
-    },
-    {
-        id: 'm4',
-        title: 'Compra tu 2do Piggy',
-        reward: '+1% en Margen Comercial',
-        is_completed: false,
-        icon: '📈',
-        cta: '#/mercado'
-    },
-    {
-        id: 'm5',
-        title: 'Compra en locales aliados',
-        reward: 'Desbloquea Piggy Silver (24h)',
-        is_completed: false,
-        icon: '&#127980;',
-        cta: '#/aliados'
-    },
-    {
-        id: 'm6',
-        title: 'Cierra tu primer ciclo',
-        reward: 'Desbloquea Piggy Silver (24h)',
-        is_completed: false,
-        icon: '&#128260;',
-        cta: null
-    },
-    {
-        id: 'm7',
-        title: 'Activa tu 3er Piggy',
-        reward: 'Mant&eacute;n 10% Margen Comercial',
-        is_completed: false,
-        icon: '&#128048;',
-        cta: '#/mercado'
-    },
-    {
-        id: 'm8',
-        title: 'Compra la oferta de la semana',
-        reward: 'Desbloquea Piggy Gold (24h)',
-        is_completed: false,
-        icon: '&#128293;',
-        cta: '#/mercado'
-    },
-    {
-        id: 'm9',
-        title: 'Refiere y logra una compra',
-        reward: 'Obt&eacute;n $30.000 en tu Wallet',
-        is_completed: false,
-        icon: '&#129309;',
-        cta: null
-    }
-];
+/**
+ * Get current growth stage based on progress percentage
+ */
+export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
+    const p = Math.max(0, Math.min(100, progressPercent || 0));
+    const stage = PIGGY_GROWTH_STAGES.find(s => p >= s.minPercent && p <= s.maxPercent)
+                 || PIGGY_GROWTH_STAGES[PIGGY_GROWTH_STAGES.length - 1];
 
-/** Investment amount formatted as COP */
+    return {
+        stageNumber: stage.stageNumber,
+        title: stage.title,
+        icon: stage.icon,
+        approxDays: stage.approxDays,
+        description: stage.description(piggyName),
+        minPercent: stage.minPercent,
+        maxPercent: stage.maxPercent,
+    };
+}
+
+/** Check if Supabase client is available */
+export function isSupabaseConfigured() {
+    return (
+        typeof window !== 'undefined' &&
+        window.__ENV__ &&
+        window.__ENV__.VITE_SUPABASE_URL &&
+        window.__ENV__.VITE_SUPABASE_ANON_KEY &&
+        !window.__ENV__.VITE_SUPABASE_URL.includes('your-supabase')
+    );
+}
+
+/** Format COP currency safely */
 export function formatCOP(amount) {
+    const num = Number(amount);
+    if (amount === undefined || amount === null || isNaN(num)) return '$ 0';
     return new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(num);
 }
 
 /** Calculate days remaining from now until end_date */
 export function getDaysRemaining(endDate) {
-    const now = new Date();
+    if (!endDate) return 143;
     const end = new Date(endDate);
+    if (isNaN(end.getTime())) return 143;
+    const now = new Date();
     const diff = end - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
@@ -254,115 +285,16 @@ export function formatPercentage(value) {
 
 /** Simulate weight based on progress (6kg to 120kg over 144 days) */
 export function simulateWeight(progressPercent) {
-    const minWeight = 6;
-    const maxWeight = 120;
-    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
-    return minWeight + ((maxWeight - minWeight) * p / 100);
+    const p = Math.max(0, Math.min(100, progressPercent || 0));
+    return 6 + Math.pow(p / 100, 1.4) * 114;
 }
 
-/**
- * 10 Growth Stages breakdown for 144-day farm cycle.
- * Descriptions are concise (max 3 lines) and free of explicit weight numbers.
- */
-export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
-    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
-
-    if (p < 5.0) {
-        return {
-            stageNumber: 1,
-            stageName: 'Destete',
-            icon: '🍼',
-            badgeBg: '#fef3c7',
-            badgeColor: '#b45309',
-            description: `${piggyName} ha ingresado a las cunas de destete tras dejar su zona de lactancia calidamente.`
-        };
-    }
-    if (p < 9.0) {
-        return {
-            stageNumber: 2,
-            stageName: 'Climatización Controlada',
-            icon: '🌡️',
-            badgeBg: '#e0f2fe',
-            badgeColor: '#0369a1',
-            description: `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${piggyName} se mantenga en óptimas condiciones.`
-        };
-    }
-    if (p < 14.0) {
-        return {
-            stageNumber: 3,
-            stageName: 'Adaptación de Corral',
-            icon: '🏡',
-            badgeBg: '#fdf4ff',
-            badgeColor: '#c026d3',
-            description: `${piggyName} se socializa en su nuevo espacio y reconoce los puntos de hidratación y alimentación.`
-        };
-    }
-    if (p < 21.0) {
-        return {
-            stageNumber: 4,
-            stageName: 'Nutrición Adaptativa',
-            icon: '🌾',
-            badgeBg: '#f0fdf4',
-            badgeColor: '#15803d',
-            description: `${piggyName} recibe su alimento pre-iniciador especializado para adaptar gradualmente su sistema digestivo.`
-        };
-    }
-    if (p < 27.0) {
-        return {
-            stageNumber: 5,
-            stageName: 'Nutrición Fortificada',
-            icon: '🍲',
-            badgeBg: '#fdf4ff',
-            badgeColor: '#a21caf',
-            description: `${piggyName} avanza en su plan nutricional con alimento de transición para fortalecer su flora intestinal.`
-        };
-    }
-    if (p < 35.0) {
-        return {
-            stageNumber: 6,
-            stageName: 'Alimento Proteico',
-            icon: '🌿',
-            badgeBg: '#ecfdf5',
-            badgeColor: '#047857',
-            description: `${piggyName} consume alimento de inicio y completa la maduración total de su sistema digestivo.`
-        };
-    }
-    if (p < 62.0) {
-        return {
-            stageNumber: 7,
-            stageName: 'Desarrollo Acelerado',
-            icon: '🚀',
-            badgeBg: '#eff6ff',
-            badgeColor: '#1d4ed8',
-            description: `${piggyName} pasa a los galpones de engorde en lote y gana peso a ritmo acelerado con 16% de proteína.`
-        };
-    }
-    if (p < 98.0) {
-        return {
-            stageNumber: 8,
-            stageName: 'Engorde Final',
-            icon: '🥩',
-            badgeBg: '#fff1f2',
-            badgeColor: '#be123c',
-            description: `${piggyName} se alimenta libremente al 14% de proteína en nuestra granja cubierta.`
-        };
-    }
-    if (p < 100.0) {
-        return {
-            stageNumber: 9,
-            stageName: 'Preparación de Salida',
-            icon: '💧',
-            badgeBg: '#fefce8',
-            badgeColor: '#a16207',
-            description: `Se retira el alimento sólido de ${piggyName} para reducir la contaminación de la canal, manteniendo agua a libre voluntad.`
-        };
-    }
-    return {
-        stageNumber: 10,
-        stageName: 'Salida al Mercado',
-        icon: '🚚',
-        badgeBg: '#f0fdf4',
-        badgeColor: '#16a34a',
-        description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
-    };
-}
+/** Tips arrays for tips rotation */
+export const PIGGY_TIPS = [
+    { icon: '💡', title: '¿Sabías que?', description: 'La porcicultura representa uno de los sectores agropecuarios de mayor crecimiento en la región.', reward: 'Aprende más en la sección EduPork' },
+    { icon: '🌾', title: 'Alimentación Eficiente', description: 'Nuestros cerditos reciben dieta balanceada a base de maíz y soya con alta digestibilidad.', reward: 'Crecimiento óptimo garantizado' },
+    { icon: '📈', title: 'Maximiza tu Rentabilidad', description: 'Al tener 3 o más Piggys en tu granja, tu margen comercial aumenta automáticamente al 10%.', reward: '+10% Margen Comercial' },
+    { icon: '🛡️', title: 'Seguridad Agro', description: 'Cada Piggy cuenta con seguro de trazabilidad y acompañamiento veterinario 24/7.', reward: 'Inversión 100% respaldada' },
+    { icon: '🎁', title: 'Refiere y Gana', description: 'Comparte tu código de referido y gana $30.000 COP en bonos por cada amigo que adopte su primer Piggy.', reward: '$30.000 por cada referido' },
+    { icon: '🚚', title: 'Cierre de Ciclo', description: 'Al llegar al 100% de progreso, el cerdo es trasladado y comercializado a precio de mercado.', reward: 'Retiro directo a tu cuenta' },
+];
