@@ -128,7 +128,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
         return { user: MOCK_USER, error: null };
     }
 
-    onProgress('🔑 Enviando datos al servidor de seguridad...');
+    onProgress('🔑 Enviando datos al servidor de seguridad Supabase...');
     const client = getClient();
     const { data, error } = await client.auth.signUp({
         email,
@@ -179,26 +179,27 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
  */
 export async function signIn({ email, password }, onProgress = () => {}) {
     if (isUsingMockData()) {
-        onProgress('⚙️ Modo demo detectado. Iniciando sesión simulada...');
         mockLoggedIn = true;
         mockProfile = { ...MOCK_PROFILE, terms_accepted: true, habeas_data_accepted: true };
         AppState.set({
-            currentUser: { ...MOCK_USER, email },
+            currentUser: { ...MOCK_USER },
             profile: { ...mockProfile },
             isAuthenticated: true,
         });
         return { user: MOCK_USER, error: null };
     }
 
-    onProgress('🔑 Verificando tu correo y contraseña...');
+    onProgress('🔒 Verificando tus credenciales con el servidor de Supabase...');
     const client = getClient();
-    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password,
+    });
 
     if (error) return { user: null, error: error.message };
 
-    // Fetch profile and update state
     if (data.user) {
-        onProgress('⏳ Credenciales correctas. Consultando tu perfil...');
+        onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
         const profile = await getProfile();
         onProgress('✅ Perfil verificado. Preparando tu granja agro...');
         AppState.set({
@@ -276,7 +277,13 @@ export async function acceptTerms() {
  */
 export async function checkSession() {
     if (isUsingMockData()) {
-        AppState.set({ authLoading: false });
+        const storedBal = parseFloat(localStorage.getItem('mock_wallet_balance') || '2000000');
+        AppState.set({
+            currentUser: { ...MOCK_USER },
+            profile: { ...MOCK_PROFILE, wallet_balance: storedBal },
+            isAuthenticated: true,
+            authLoading: false,
+        });
         return;
     }
 
@@ -329,70 +336,34 @@ export async function checkSession() {
  */
 export async function sendPasswordReset(email) {
     if (isUsingMockData()) {
-        console.log(`🐷 Mock: Sending password reset to ${email}`);
         return { error: null };
     }
 
     const client = getClient();
     const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#auth`
+        redirectTo: `${window.location.origin}/#/auth?mode=reset`
     });
 
     return { error: error?.message || null };
 }
 
 /**
- * Update password for current authenticated user (recovery flow).
+ * Update user password after recovery link click.
  */
-export async function updatePassword(newPassword) {
+export async function updateUserPassword(newPassword) {
     if (isUsingMockData()) {
-        console.log('🐷 Mock: Updated password successfully');
+        AppState.set({ isResettingPassword: false });
         return { error: null };
     }
 
     const client = getClient();
-    const { error } = await client.auth.updateUser({ password: newPassword });
-    return { error: error?.message || null };
-}
-
-/**
- * Update user profile in Supabase and AppState.
- * Updates personal and banking information.
- * NOTE: Does NOT include updated_at - that column does not exist in the profiles table.
- */
-export async function updateUserProfile(updates) {
-    if (isUsingMockData()) {
-        const currentProfile = AppState.get('profile') || {};
-        mockProfile = { ...currentProfile, ...updates };
-        AppState.set({ profile: { ...mockProfile } });
-        return { data: mockProfile, error: null };
-    }
-
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return { data: null, error: 'No hay usuario autenticado.' };
-
-    const currentProfile = AppState.get('profile') || {};
-
-    // IMPORTANT: Do not add fields that don't exist in the profiles table schema
-    const payload = {
-        id: user.id,
-        email: user.email,
-        ...updates
-    };
-
-    const { data, error } = await client
-        .from('profiles')
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .maybeSingle();
+    const { error } = await client.auth.updateUser({
+        password: newPassword
+    });
 
     if (!error) {
-        const newProfile = { ...currentProfile, ...(data || payload) };
-        AppState.set({ profile: newProfile });
-        return { data: newProfile, error: null };
+        AppState.set({ isResettingPassword: false });
     }
 
-    console.error('Error updating profile:', error.message);
-    return { data: null, error: error.message };
+    return { error: error?.message || null };
 }
