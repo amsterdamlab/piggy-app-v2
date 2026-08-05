@@ -41,8 +41,8 @@ function initMockState() {
     }
 
     // Guaranteed Option A refund ($2.000.000 COP) check
-    const hasRefundTx = (mockTransactions || []).some(tx => tx.description && tx.description.includes('Reembolso por compra de Piggys'));
-    if (!hasRefundTx) {
+    const isRefundApplied = localStorage.getItem('mock_refund_applied_v3') === 'true';
+    if (!isRefundApplied) {
         mockBalance = (mockBalance || 0) + 2000000;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
 
@@ -57,7 +57,11 @@ function initMockState() {
         if (!mockTransactions) mockTransactions = [];
         mockTransactions.unshift(refundTx);
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-        localStorage.setItem('mock_refund_option_a_v1', 'true');
+        localStorage.setItem('mock_refund_applied_v3', 'true');
+
+        // Force AppState profile update
+        const curProfile = AppState.get('profile') || {};
+        AppState.set({ profile: { ...curProfile, wallet_balance: mockBalance } });
     }
 }
 
