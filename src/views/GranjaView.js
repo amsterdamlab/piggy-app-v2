@@ -220,6 +220,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
 
         ${renderWalletBanner(firstName, stats)}
 
+
+
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
           <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
@@ -430,11 +432,11 @@ export function renderBottomNav(activeTab) {
         <span>Granja</span>
       </a>
       <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
-        <span class="bottom-nav__icon">${renderIcon('market', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
         <span>Mercado</span>
       </a>
-      <a href="#/tienda" class="bottom-nav__item ${activeTab === 'tienda' ? 'bottom-nav__item--active' : ''}" id="nav-tienda">
-        <span class="bottom-nav__icon">${renderIcon('meat', '', '24')}</span>
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
+        <span class="bottom-nav__icon">${renderIcon('star', '', '24')}</span>
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
@@ -446,19 +448,59 @@ export function renderBottomNav(activeTab) {
 }
 
 /**
- * Attach event listeners for the Granja view.
+ * Attach event listeners.
  */
-function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies) {
-  // Banner listeners (Wallet & Missions)
-  attachWalletListeners(stats);
-  attachMissionListeners(piggyCount, piggies);
-
-  // Profile click from greeting avatar
-  document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
-    location.hash = '#/perfil';
+function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
+  // Piggy card click
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
+    });
   });
 
-  // Action Buttons (Referidos | Soporte | Salir)
+  // Completed piggies modal trigger
+  const btnCompletados = document.getElementById('btn-ver-completados');
+  if (btnCompletados) {
+    btnCompletados.addEventListener('click', () => {
+      const completedPiggies = (piggies || []).filter(p => p.isComplete);
+      showCompletedPiggiesModal(completedPiggies, stats.baseROI);
+    });
+  }
+
+  // Mission listeners (delegated to module)
+  attachMissionListeners();
+
+  // Dynamic Notification click
+  const notifEl = document.getElementById('dynamic-notification');
+  if (notifEl && notifEl.dataset.cta) {
+    notifEl.addEventListener('click', () => {
+      const cta = notifEl.dataset.cta;
+      if (cta.startsWith('#/')) {
+        navigateTo(cta.replace('#/', ''));
+      } else {
+        window.open(cta, '_blank');
+      }
+    });
+  }
+
+  // Quick Buy Action -> Redirect to Mercado
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+    quickBuyBtn.addEventListener('click', () => {
+      navigateTo('mercado');
+    });
+  }
+
+  // Wallet listeners (delegated to module)
+  attachWalletListeners(stats);
+
+  // Greeting avatar / profile trigger
+  document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
+    navigateTo('perfil');
+  });
+
+  // Greeting action buttons
   document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
     showReferralModal();
   });
@@ -468,40 +510,9 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies) {
   });
 
   document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+    if (confirm('¿Cerrar sesión?')) {
       await signOut();
-      AppState.clear();
-      navigateTo('#/');
+      navigateTo('auth');
     }
-  });
-
-  // Notification strip CTA click
-  document.getElementById('dynamic-notification')?.addEventListener('click', (e) => {
-    const el = e.currentTarget;
-    const url = el.getAttribute('data-cta');
-    if (url) {
-      navigateTo(url);
-    }
-  });
-
-  // Quick buy button
-  document.getElementById('btn-quick-buy')?.addEventListener('click', () => {
-    navigateTo('#/mercado');
-  });
-
-  // Ver completados link
-  document.getElementById('btn-ver-completados')?.addEventListener('click', () => {
-    showCompletedPiggiesModal();
-  });
-
-  // Piggy card clicks
-  const piggyCards = document.querySelectorAll('.piggy-card');
-  piggyCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const piggyId = card.getAttribute('data-piggy-id');
-      if (piggyId) {
-        navigateTo(`#/piggy/${piggyId}`);
-      }
-    });
   });
 }
