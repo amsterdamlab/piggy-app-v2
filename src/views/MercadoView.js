@@ -8,7 +8,7 @@ import { renderBottomNav } from './GranjaView.js';
 import { navigateTo } from '../router.js';
 import { getMarketplaceItems } from '../services/marketplaceService.js';
 import { buyMarketplaceItem } from '../services/piggiesService.js';
-import { getWalletBalance, formatCOP, deductWalletBalance } from '../services/walletService.js';
+import { getWalletBalance, formatCOP, deductWalletBalance, addWalletBalance } from '../services/walletService.js';
 import { AppState } from '../state.js';
 import { openWalletRechargeInfo, openWalletDrawer } from './granja/WalletBlock.js';
 import { renderPiggyLoader } from '../components/PiggyLoader.js';
@@ -19,13 +19,9 @@ let cachedItems = [];
 /**
  * Generate a stable photo number (1-5) for marketplace items.
  */
-function getMarketplacePhotoNumber(itemId) {
-  let hash = 0;
-  const str = String(itemId || 'default');
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return (Math.abs(hash) % 5) + 1;
+function getMarketplacePhotoNumber(id) {
+  const numericHash = String(id).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return (numericHash % 5) + 1;
 }
 
 /**
@@ -34,105 +30,106 @@ function getMarketplacePhotoNumber(itemId) {
 export function renderMercadoView() {
   const app = document.getElementById('app');
 
-  app.innerHTML = `
+  app.innerHTML = buildMercadoShell();
+
+  loadMercadoItems();
+
+  return () => {
+    // cleanup
+  };
+}
+
+/**
+ * Build the shell layout before items load.
+ */
+function buildMercadoShell() {
+  return `
     <div class="page page--with-nav mercado-page">
       <div class="page__content">
-
         <!-- Header -->
         <div class="mercado-header animate-fade-in-up">
-          <h2 class="mercado-title">Mercado</h2>
-          <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
+          <div class="mercado-header__badge">
+            ${renderIcon('market', '', '16')}
+            Mercado Abierto
+          </div>
+          <h2 class="mercado-header__title">Mercado Piggy</h2>
+          <p class="mercado-header__subtitle">
+            Compra Piggys en distintas etapas de crecimiento y genera beneficios.
+          </p>
         </div>
 
-        <!-- Products List -->
-        <div id="mercado-content">
-          ${renderPiggyLoader('Cargando el mercado...')}
+        <!-- Filter Chips -->
+        <div class="mercado-filters animate-fade-in-up" style="animation-delay:0.05s;">
+          <button class="filter-chip filter-chip--active" data-category="all">Todos</button>
+          <button class="filter-chip" data-category="standard">Estándar</button>
+          <button class="filter-chip" data-category="advanced">Mes 2+</button>
+          <button class="filter-chip" data-category="accelerator">Bonus ROI</button>
         </div>
 
+        <!-- Items Container -->
+        <div id="mercado-items-container" class="mercado-items">
+          ${renderPiggyLoader('Cargando cerditos disponibles...')}
+        </div>
       </div>
+
       ${renderBottomNav('mercado')}
     </div>
   `;
-
-  loadMarketplaceData();
-
-  return () => { };
 }
 
 /**
- * Load marketplace data from service.
+ * Fetch marketplace items and render them into the container.
  */
-async function loadMarketplaceData() {
+async function loadMercadoItems() {
+  const container = document.getElementById('mercado-items-container');
+  if (!container) return;
+
   try {
     const items = await getMarketplaceItems();
     cachedItems = items;
-    renderItems(items);
-  } catch (error) {
-    console.error('Error loading marketplace:', error);
-    const container = document.getElementById('mercado-content');
-    if (container) {
+
+    if (items.length === 0) {
       container.innerHTML = `
-        <div class="mercado-empty">
-          <p>Error al cargar el mercado. Intenta de nuevo.</p>
+        <div class="empty-state">
+          <div class="empty-state__icon">🐷</div>
+          <div class="empty-state__title">No hay Piggys disponibles</div>
+          <div class="empty-state__description">
+            En este momento no hay cerditos disponibles en el mercado. Vuelve más tarde.
+          </div>
         </div>
       `;
+      return;
     }
+
+    renderItemsList(items);
+    attachMercadoListeners();
+  } catch (error) {
+    console.error('Error loading marketplace items:', error);
+    container.innerHTML = `
+      <div class="auth-form__error auth-form__error--visible">
+        Error al cargar el mercado: ${error.message}
+      </div>
+    `;
   }
 }
 
 /**
- * Render items list.
+ * Render list of product cards.
  */
-function renderItems(items) {
-  const container = document.getElementById('mercado-content');
+function renderItemsList(items) {
+  const container = document.getElementById('mercado-items-container');
   if (!container) return;
 
-  // Filter out zero stock (service does it, but double check)
-  const availableItems = items.filter(item => item.stock > 0);
+  container.innerHTML = items.map((item) => renderProductCard(item)).join('');
 
-  if (availableItems.length === 0) {
-    container.innerHTML = `
-      <div class="mercado-empty animate-fade-in-up">
-        <span style="font-size:48px;">🔍</span>
-        <p>No hay Piggies disponibles en este momento.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = `
-    <div class="mercado-list">
-      ${availableItems.map(renderProductCard).join('')}
-    </div>
-  `;
-
-  // Attach buy button listeners
-  availableItems.forEach(item => {
-    document.getElementById(`buy-${item.id}`)?.addEventListener('click', () => {
-      showCheckoutModal(item);
-    });
-  });
-
-  // Attach ribbon click listeners programmatically
-  container.querySelectorAll('.js-ribbon').forEach(ribbon => {
-    ribbon.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const category = ribbon.getAttribute('data-category');
-      if (category && window.showCategoryInfo) {
-        window.showCategoryInfo(category);
-      }
-    });
-  });
-
-  // Attach image click listeners for category info
-  container.querySelectorAll('.js-img-category').forEach(imgWrap => {
-    imgWrap.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const category = imgWrap.getAttribute('data-category');
-      if (category && window.showCategoryInfo) {
-        window.showCategoryInfo(category);
-      }
-    });
+  // Re-attach buy listeners to newly rendered cards
+  items.forEach((item) => {
+    const buyBtn = document.getElementById(`buy-${item.id}`);
+    if (buyBtn) {
+      buyBtn.addEventListener('click', () => {
+        showCheckoutModal(item);
+      });
+    }
   });
 }
 
@@ -193,7 +190,6 @@ function renderProductCard(item) {
             <span class="mcard__info-value">${item.current_weight || 15} kg</span>
           </div>
         </div>
-
 
         <!-- Price Info -->
         <div class="mcard__price-row">
@@ -319,104 +315,81 @@ export function showCheckoutModal(item) {
               ✕
           </button>
         </div>
-        <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
+        <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: 500; margin-bottom: 16px;">
+          Completa los datos de tu Piggy y confirma el débito directo desde tu Wallet.
+        </p>
     </div>
-    
-    <!-- Checklist Body -->
-    <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
-      
-      <!-- Summary Section (Integrated with light pink background) -->
-      <div class="checkout-summary" style="
-          width: 100%; 
-          max-width: 400px; 
-          text-align: center; 
-          background: transparent;
-          padding: 0;
-          margin-bottom: 20px;">
-          
-          <div style="
-              width: 76px; 
-              height: 76px; 
-              margin: 0 auto 12px; 
-              border-radius: 50%; 
-              overflow: hidden;
-              border: 3px solid white;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
-          </div>
-          
-          <h2 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em;">¡Compra tu Piggy!</h2>
-          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
-            Un nuevo integrante para que tu granja siga creciendo desde
-          </p>
-          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price)}</div>
+
+    <!-- Main Content Area -->
+    <div style="padding: 0 24px 30px 24px; flex: 1;">
+
+      <!-- Summary Card -->
+      <div style="background: white; border-radius: 16px; padding: 16px; margin-bottom: 20px; display: flex; gap: 14px; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <img src="${imgSrc}" alt="${item.item_name}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 12px; flex-shrink: 0;" onerror="this.onerror=null;this.src='pig2.jpg'" />
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 0.72rem; font-weight: 700; color: #ec4899; text-transform: uppercase; letter-spacing: 0.5px;">${item.category ? item.category.toUpperCase() : 'ESTÁNDAR'}</div>
+          <h3 style="margin: 2px 0 4px 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.item_name}</h3>
+          <div style="font-size: 1.15rem; font-weight: 850; color: #10B981;">${item.priceFormatted}</div>
+        </div>
       </div>
 
-      <!-- Custom Name Input Section -->
-      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 24px; text-align: center;">
-           
-           <div style="margin-bottom: 12px;">
-                <input type="text" id="piggy-custom-name" 
-                       placeholder="Ponle un nombre a tu Piggy"
-                       autocomplete="off"
-                       style="
-                           width: 100%;
-                           padding: 14px 16px;
-                           border: 2px solid #fce7f3;
-                           border-radius: 14px;
-                           font-size: 1rem;
-                           font-weight: 600;
-                           color: var(--color-text-primary);
-                           outline: none;
-                           text-align: center;
-                           transition: all 0.2s;
-                           box-sizing: border-box;
-                           background: #fff;
-                       "
-                       onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
-                       onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
-                />
-           </div>
+      <!-- Piggy Naming Section -->
+      <div style="background: white; border-radius: 16px; padding: 18px 16px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.03);">
+        <label for="piggy-custom-name" style="display: block; font-size: 0.88rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;">
+          Nombra a tu Piggy <span style="color: #ec4899;">*</span>
+        </label>
+        <p style="margin: 0 0 12px 0; font-size: 0.78rem; color: #64748b;">
+          Elige un nombre único para identificarlo en tu granja digital.
+        </p>
 
-           <!-- Name Suggestions (3 White Pills with 1px Intense Pink Border) -->
-           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
-               ${shuffled.map(name => `
-                  <button class="name-pill" style="
-                      background: white; 
-                      color: #db2777; 
-                      border: 1px solid #ec4899; 
-                      padding: 7px 16px; 
-                      border-radius: 20px; 
-                      font-size: 0.85rem; 
-                      font-weight: 700; 
-                      cursor: pointer;
-                      box-shadow: 0 2px 6px rgba(236, 72, 153, 0.08);
-                      transition: all 0.2s;
-                  " 
-                  onmouseover="this.style.background='#fdf2f8'; this.style.transform='translateY(-1px)';"
-                  onmouseout="this.style.background='white'; this.style.transform='translateY(0)';"
-                  onclick="selectPiggyName('${name}')">${name}</button>
-               `).join('')}
-           </div>
-           
-           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:8px;">
-                * Debes darle un nombre para continuar
-           </div>
+        <input type="text" id="piggy-custom-name" placeholder="Ej: Pochito, Pumba, Rosita..." maxlength="20" style="
+          width: 100%;
+          padding: 12px 14px;
+          border-radius: 10px;
+          border: 1.5px solid #fce7f3;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.2s;
+          box-sizing: border-box;
+          margin-bottom: 10px;
+        " onfocus="this.style.borderColor='#ec4899'" onblur="this.style.borderColor='#fce7f3'" />
+
+        <!-- Name validation message -->
+        <div id="name-error" style="font-size: 0.75rem; color: #dc2626; margin-bottom: 10px; font-weight: 600; opacity: 0; transition: opacity 0.2s;">
+          * El nombre debe tener al menos 3 caracteres
+        </div>
+
+        <!-- Name Suggestions -->
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Sugerencias rápidas:</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          ${shuffled.map(n => `
+            <button type="button" class="name-pill" onclick="window.selectPiggyName('${n}')" style="
+              background: #fdf2f8;
+              color: #db2777;
+              border: 1px solid #fbcfe8;
+              padding: 5px 12px;
+              border-radius: 20px;
+              font-size: 0.78rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.15s;
+            " onmouseover="this.style.background='#fce7f3'" onmouseout="this.style.background='#fdf2f8'">
+              + ${n}
+            </button>
+          `).join('')}
+        </div>
       </div>
 
-      <!-- Wallet Section -->
-      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; transition: opacity 0.3s;">
-        
-        <!-- Balance Display -->
-        <div style="
-          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-          border-radius: 16px;
-          padding: 18px 20px;
-          margin-bottom: 12px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-        ">
+      <!-- Payment Method / Balance Section -->
+      <div id="wallet-checkout-section" style="background: white; border-radius: 16px; padding: 18px 16px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); opacity: 1; pointer-events: auto; transition: all 0.3s;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">Método de Pago</span>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #10B981; background: #ecfdf5; padding: 2px 8px; border-radius: 12px;">Saldo Agro (Wallet)</span>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; position: relative; overflow: hidden;">
           <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
           <div id="wallet-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
             <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
@@ -534,15 +507,12 @@ export function showCheckoutModal(item) {
     const nameValid = nameVal.length >= 3;
     const hasFunds = currentBalance >= item.price;
 
-    // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
     walletSection.style.opacity = '1';
     walletSection.style.pointerEvents = 'auto';
 
-    // Show/hide insufficient funds notice and recharge button
     insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
     recargarBtn.style.display = !hasFunds ? 'flex' : 'none';
 
-    // Enable confirm button directly if they have sufficient funds
     if (hasFunds) {
       confirmBtn.style.opacity = '1';
       confirmBtn.style.pointerEvents = 'auto';
@@ -551,7 +521,6 @@ export function showCheckoutModal(item) {
       confirmBtn.style.pointerEvents = 'none';
     }
 
-    // Name validation feedback
     if (nameValid) {
       errorMsg.style.opacity = '0';
       input.style.borderColor = '#10B981';
@@ -602,8 +571,7 @@ export function showCheckoutModal(item) {
   // Confirm Purchase
   confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
-     
-    // Check name validation on click
+
     if (customName.length < 3) {
       errorMsg.style.opacity = '1';
       errorMsg.textContent = '* Debes darle un nombre de al menos 3 letras a tu cerdito';
@@ -614,13 +582,10 @@ export function showCheckoutModal(item) {
 
     if (currentBalance < item.price) return;
 
-    // Visual feedback
     confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
     confirmBtn.style.pointerEvents = 'none';
 
     try {
-      // ── CRÍTICO: Descontar wallet PRIMERO antes de llamar el RPC ──
-      // El RPC buy_piggy maneja stock y creación del piggy pero NO descuenta wallet.
       const deductResult = await deductWalletBalance(item.price);
       if (!deductResult.success) {
         throw new Error(
@@ -630,14 +595,19 @@ export function showCheckoutModal(item) {
         );
       }
 
-      // Wallet descontada ✅ — ahora crear el piggy
-      await buyMarketplaceItem(item, customName);
+      try {
+        await buyMarketplaceItem(item, customName);
+      } catch (piggyError) {
+        console.error('Fallo al crear el Piggy, realizando reembolso automático:', piggyError);
+        await addWalletBalance(item.price, `Reembolso de emergencia: fallo en compra de ${customName}`);
+        throw new Error('Hubo un inconveniente al generar tu cerdito. Tu dinero fue reembolsado automáticamente a tu Cuenta Agro.');
+      }
 
       close();
       navigateTo('granja');
     } catch (error) {
       console.error(error);
-      alert('Error en la transaccion: ' + error.message);
+      alert('Error en la transacción: ' + error.message);
       confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>Confirmar Compra`;
       confirmBtn.style.pointerEvents = 'auto';
     }
@@ -679,70 +649,93 @@ window.showCategoryInfo = (category) => {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 100000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
-    box-sizing: border-box;
   `;
 
-  const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
-
   popup.innerHTML = `
-    <div class="animate-scale-in" style="
+    <div style="
       background: white;
       border-radius: 20px;
+      padding: 24px 20px 20px 20px;
+      max-width: 320px;
       width: 100%;
-      max-width: 340px;
-      overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      animation: scaleIn 0.2s ease-out;
     ">
       <div style="
         background: ${theme.bg};
         color: ${theme.color};
-        width: 100%;
-        padding: 20px 24px;
-        text-align: center;
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
         font-weight: 800;
-        font-size: 1.15rem;
-        letter-spacing: 0.5px;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
       ">
-        Categoría ${capitalizedCat}
+        Categoría ${category}
       </div>
-
-      <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
+      <p style="font-size: 0.88rem; color: #334155; line-height: 1.5; margin: 0 0 20px 0; font-weight: 500;">
         ${text}
-      </div>
-
-      <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
-        <button id="btn-close-cat-popup" style="
-          width: 100%;
-          background: #f3f4f6;
-          color: #1f2937;
-          border: none;
-          padding: 12px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-          Entendido
-        </button>
-      </div>
+      </p>
+      <button onclick="document.getElementById('category-info-popup').remove()" style="
+        width: 100%;
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+      ">
+        Entendido
+      </button>
     </div>
   `;
 
   document.body.appendChild(popup);
-
-  const close = () => popup.remove();
-  document.getElementById('btn-close-cat-popup').addEventListener('click', close);
-  popup.addEventListener('click', (e) => {
-    if (e.target === popup) close();
-  });
 };
+
+/**
+ * Attach interactive listeners for filtering and category clicks.
+ */
+function attachMercadoListeners() {
+  const container = document.getElementById('mercado-items-container');
+  if (!container) return;
+
+  const filterChips = document.querySelectorAll('.filter-chip');
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach(c => c.classList.remove('filter-chip--active'));
+      chip.classList.add('filter-chip--active');
+
+      const cat = chip.getAttribute('data-category');
+      if (cat === 'all') {
+        renderItemsList(cachedItems);
+      } else if (cat === 'advanced') {
+        renderItemsList(cachedItems.filter(i => (i.currentMonth || 1) >= 2));
+      } else if (cat === 'accelerator') {
+        renderItemsList(cachedItems.filter(i => i.category === 'accelerator' || (i.extra_roi || 0) > 0));
+      } else {
+        renderItemsList(cachedItems.filter(i => i.category === cat));
+      }
+    });
+  });
+
+  container.addEventListener('click', (e) => {
+    const ribbon = e.target.closest('.js-ribbon');
+    const imgCategory = e.target.closest('.js-img-category');
+    const target = ribbon || imgCategory;
+
+    if (target) {
+      const cat = target.getAttribute('data-category');
+      if (cat && window.showCategoryInfo) {
+        window.showCategoryInfo(cat);
+      }
+    }
+  });
+}
