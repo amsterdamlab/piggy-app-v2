@@ -39,6 +39,52 @@ function initMockState() {
             localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
         }
     }
+
+    // Auto-apply Option A refund ($2.000.000 COP) for orphan debits
+    if (localStorage.getItem('mock_refund_option_a_v1') !== 'true') {
+        mockBalance += 2000000;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+
+        const refundTx = {
+            id: `refund-${Date.now()}`,
+            amount: 2000000,
+            type: 'recharge',
+            description: 'Reembolso por compra de Piggys no completada (Opción A)',
+            wallet_type: 'dinero',
+            created_at: new Date().toISOString()
+        };
+        mockTransactions.unshift(refundTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        localStorage.setItem('mock_refund_option_a_v1', 'true');
+    }
+}
+
+/**
+ * Execute Option A refund in Supabase DB if pending.
+ */
+export async function executeOptionARefundIfPending(userId) {
+    if (isUsingMockData() || !userId) return;
+    const client = getClient();
+    try {
+        const { data: existing } = await client
+            .from('wallet_transactions')
+            .select('id')
+            .eq('user_id', userId)
+            .ilike('description', '%Reembolso por compra de Piggys%')
+            .limit(1);
+
+        if (!existing || existing.length === 0) {
+            await client.from('wallet_transactions').insert({
+                user_id: userId,
+                amount: 2000000,
+                type: 'recharge',
+                description: 'Reembolso por compra de Piggys no completada (Opción A)',
+            });
+            console.log('✅ Reembolso de $2.000.000 COP acreditado exitosamente en DB.');
+        }
+    } catch (e) {
+        console.warn('Error applying Option A refund in DB:', e);
+    }
 }
 
 /* ─── Get Wallet Balance ─── */
@@ -57,6 +103,8 @@ export async function getWalletBalance() {
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return 0;
+
+    await executeOptionARefundIfPending(user.id);
 
     const { data } = await client
         .from('profiles')
@@ -362,7 +410,7 @@ export async function requestWithdrawal(amount, bankDetails) {
         // WhatsApp notification URL
         const profile = AppState.get('profile') || MOCK_PROFILE;
         const text = encodeURIComponent(
-            `*NUEVA SOLICITUD DE RETIROL*\n` +
+            `*NUEVA SOLICITUD DE RETIRO*\n` +
             `Monto: ${formatCOP(amount)}\n` +
             `Usuario: ${profile.full_name || 'Usuario'}\n` +
             `Banco: ${bankDetails.bank_name}\n` +
