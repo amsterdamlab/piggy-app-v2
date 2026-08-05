@@ -40,9 +40,10 @@ function initMockState() {
         }
     }
 
-    // Auto-apply Option A refund ($2.000.000 COP) for orphan debits
-    if (localStorage.getItem('mock_refund_option_a_v1') !== 'true') {
-        mockBalance += 2000000;
+    // Guaranteed Option A refund ($2.000.000 COP) check
+    const hasRefundTx = (mockTransactions || []).some(tx => tx.description && tx.description.includes('Reembolso por compra de Piggys'));
+    if (!hasRefundTx) {
+        mockBalance = (mockBalance || 0) + 2000000;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
 
         const refundTx = {
@@ -53,6 +54,7 @@ function initMockState() {
             wallet_type: 'dinero',
             created_at: new Date().toISOString()
         };
+        if (!mockTransactions) mockTransactions = [];
         mockTransactions.unshift(refundTx);
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
         localStorage.setItem('mock_refund_option_a_v1', 'true');
