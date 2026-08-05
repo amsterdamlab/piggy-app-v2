@@ -1,69 +1,71 @@
-/* ==========================================================================
-   PIGGY APP — Granja View (Dashboard Principal)
-   Clean implementation matching mobile mockups.
-   Refactored to import modular components from /granja folder.
-   ========================================================================== */
+/* ============================================
+   PIGGY APP — Granja (Dashboard) View
+   Matches screen2.png design
+   ============================================ */
 
-import { renderIcon } from '../components/Icons.js';
+import { renderIcon } from '../icons.js';
+import { getProfile, signOut, getUserInitials } from '../services/authService.js';
+import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
+import { formatCOP } from '../services/mockData.js';
+import { navigateTo } from '../router.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
-import { getRandomTip, getActiveNewsSlides } from '../services/tipsService.js';
+import { getRandomTip } from '../services/tipsService.js';
+import { getActiveMissions } from '../services/missionsService.js';
 import {
-    getActiveMissions,
     getActiveUserFlashMissions,
     getActiveCycleMissions,
-    detectAndCreateCycleMissions
-} from '../services/missionsService.js';
-import { AppState } from '../state.js';
-import { getUserInitials } from '../utils/formatters.js';
+    detectAndCreateCycleMissions,
+} from '../services/flashMissionsService.js';
 
-// Modular component imports (clean SoC)
-import { renderWalletBanner, openWalletDrawer } from './granja/WalletBlock.js';
-import { renderPriorityMissionBanner } from '../components/MissionBanner.js';
-import { showNewsBillboardModal } from './granja/NewsBillboardModal.js';
 import { startOnboardingTourIfEligible } from './granja/OnboardingTourModal.js';
-import { renderWalletSkeleton, renderPiggyLoader } from './granja/GranjaSkeletons.js';
-import { removeBonusModal } from './granja/BonusModal.js';
+
+/* ── Module imports (Granja Section blocks) ───────── */
+import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
+import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
+import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
+import { showSupportModal, HEADSET_ICON_SVG } from './granja/SupportModal.js';
+import { removeBonusModal } from './granja/WelcomeBonusModal.js';
+import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
+
+/* ── News Billboard Imports ── */
+import { getActiveNewsSlides } from '../services/newsService.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
+import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
+
+/* =========================================
+   DYNAMIC NOTIFICATIONS
+   Fetched from Supabase dynamic_tips table.
+   Managed manually by admin — no hardcoding.
+   ========================================= */
 
 /**
- * Utility: format COP currency safely.
- */
-function formatCOP(amount) {
-  const num = Number(amount);
-  if (amount === undefined || amount === null || isNaN(num)) return '$ 0';
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-}
-
-/**
- * Render dynamic rotative tips/notifications banner.
+ * Render the notification strip.
+ * @param {Object} notif - Tip data from tipsService (already resolved)
  */
 function renderRandomNotification(notif) {
+  // Guard: if no tip data provided, render nothing
   if (!notif) return '';
 
-  const isEduPorkTip = notif.reward && notif.reward.includes('EduPork');
-  const tipTitleColor = isEduPorkTip ? '#be123c' : '#059669';
-  const ctaAttr = isEduPorkTip
-      ? `onclick="location.hash='#/perfil'; setTimeout(() => { const el = document.getElementById('item-edupork'); if(el) el.scrollIntoView({behavior:'smooth'}); }, 300);"`
-      : '';
+  const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
+  const cursor  = notif.ctaUrl ? 'pointer' : 'default';
+
+  // Unified background & border style matching exact image reference for ALL tips
+  const tipBgColor     = '#fff1f2';
+  const tipBorderColor = '#ffe4e6';
+  const tipTitleColor  = '#be123c';
 
   return `
-    <div class="animate-fade-in-up" style="margin-bottom: 20px; animation-delay: 0.05s;">
-      <div style="
-        background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
-        border: 1px solid #fecdd3;
-        border-left: 4px solid ${tipTitleColor};
+    <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
+      <div id="dynamic-notification" style="
+        background: ${tipBgColor};
+        border: 1px solid ${tipBorderColor};
         border-radius: 14px;
-        padding: 12px 14px;
+        padding: 12px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 4px 14px rgba(225,29,72,0.06);
-        cursor: ${isEduPorkTip ? 'pointer' : 'default'};
+        cursor: ${cursor};
         transition: transform 0.2s, box-shadow 0.2s;
       " ${ctaAttr}
          onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
@@ -127,11 +129,18 @@ function buildGranjaShell(firstName) {
  */
 async function loadGranjaData(firstName) {
   try {
+    // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
+    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
+    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
+    // con getUserPiggies(), AppState todavía está vacío → race condition.
     const piggies = await getUserPiggies();
     AppState.set({ piggies });
 
+    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
+    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
     await detectAndCreateCycleMissions(piggies);
 
+    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
@@ -148,9 +157,12 @@ async function loadGranjaData(firstName) {
       getActiveNewsSlides(),
     ]);
 
+    // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
     window._activeFlashMissions = flashMissions;
     window._activeCycleMissions = cycleMissions;
 
+    // wallet_balance = real cash (ciclos completados + recargas)
+    // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
     stats.walletBalance          = walletBalance;
     stats.referralBonus          = referralBonus;
     stats.referralBonusFormatted = formatCOP(referralBonus);
@@ -161,10 +173,12 @@ async function loadGranjaData(firstName) {
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
 
+    // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     showNewsBillboardModal(newsSlides);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
 
+    // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
   } catch (error) {
     console.error('Error loading granja data:', error);
@@ -268,11 +282,14 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
   `;
 }
 
+// ... renderGreeting remains the same ...
+
 function renderGreeting(firstName) {
   const profile = AppState.get('profile') || {};
   const initials = getUserInitials(profile.full_name || firstName);
   const initialsFontSize = initials.length > 1 ? '1rem' : '1.15rem';
 
+  // Gift icon (stroke style, consistent with bottom nav)
   const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <rect x="3" y="8" width="18" height="4" rx="1"/>
     <path d="M12 8v13"/>
@@ -280,12 +297,14 @@ function renderGreeting(firstName) {
     <path d="M7.5 8C6.12 8 5 6.88 5 5.5C5 4.12 6.12 3 7.5 3C10 3 12 8 12 8C12 8 14 3 16.5 3C17.88 3 19 4.12 19 5.5C19 6.88 17.88 8 16.5 8"/>
   </svg>`;
 
+  // Headset icon (stroke style)
   const headsetIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
     <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
     <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
   </svg>`;
 
+  // Logout icon (stroke style)
   const logoutIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
     <polyline points="16 17 21 12 16 7"/>
@@ -305,6 +324,7 @@ function renderGreeting(firstName) {
         </div>
       </div>
 
+      <!-- Action Buttons: Referidos | Soporte | Salir -->
       <div class="greeting-actions">
         <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
           ${giftIconSVG}
@@ -320,6 +340,9 @@ function renderGreeting(firstName) {
   `;
 }
 
+/**
+ * Render empty piggies state matching screen2.png.
+ */
 function renderEmptyPiggies() {
   return `
     <div class="empty-state">
@@ -336,6 +359,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 export function renderPiggiesList(piggies, baseROI) {
   return `
@@ -420,48 +445,62 @@ export function renderBottomNav(activeTab) {
   `;
 }
 
+/**
+ * Attach event listeners for the Granja view.
+ */
 function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies) {
+  // Banner listeners (Wallet & Missions)
+  attachWalletListeners(stats);
+  attachMissionListeners(piggyCount, piggies);
+
+  // Profile click from greeting avatar
   document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
     location.hash = '#/perfil';
   });
 
+  // Action Buttons (Referidos | Soporte | Salir)
   document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
-    location.hash = '#/perfil';
-    setTimeout(() => {
-      window._openReferralModalFromProfile?.();
-    }, 200);
+    showReferralModal();
   });
 
   document.getElementById('btn-greeting-support')?.addEventListener('click', () => {
-    location.hash = '#/perfil';
-    setTimeout(() => {
-      window._openSupportModalFromProfile?.();
-    }, 200);
+    showSupportModal();
   });
 
-  document.getElementById('btn-greeting-logout')?.addEventListener('click', () => {
+  document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
     if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+      await signOut();
       AppState.clear();
-      location.hash = '#/';
-      location.reload();
+      navigateTo('#/');
     }
   });
 
+  // Notification strip CTA click
+  document.getElementById('dynamic-notification')?.addEventListener('click', (e) => {
+    const el = e.currentTarget;
+    const url = el.getAttribute('data-cta');
+    if (url) {
+      navigateTo(url);
+    }
+  });
+
+  // Quick buy button
   document.getElementById('btn-quick-buy')?.addEventListener('click', () => {
-    location.hash = '#/mercado';
+    navigateTo('#/mercado');
   });
 
+  // Ver completados link
   document.getElementById('btn-ver-completados')?.addEventListener('click', () => {
-    openWalletDrawer(stats);
+    showCompletedPiggiesModal();
   });
 
-  const cards = document.querySelectorAll('.piggy-card');
-  cards.forEach((card) => {
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('#btn-adopt-empty')) return;
+  // Piggy card clicks
+  const piggyCards = document.querySelectorAll('.piggy-card');
+  piggyCards.forEach(card => {
+    card.addEventListener('click', () => {
       const piggyId = card.getAttribute('data-piggy-id');
       if (piggyId) {
-        location.hash = `#/piggy/${piggyId}`;
+        navigateTo(`#/piggy/${piggyId}`);
       }
     });
   });
