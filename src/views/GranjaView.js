@@ -1,71 +1,69 @@
-/* ============================================
-   PIGGY APP — Granja (Dashboard) View
-   Matches screen2.png design
-   ============================================ */
+/* ==========================================================================
+   PIGGY APP — Granja View (Dashboard Principal)
+   Clean implementation matching mobile mockups.
+   Refactored to import modular components from /granja folder.
+   ========================================================================== */
 
-import { renderIcon } from '../icons.js';
-import { getProfile, signOut, getUserInitials } from '../services/authService.js';
-import { AppState } from '../state.js';
+import { renderIcon } from '../components/Icons.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
-import { formatCOP } from '../services/mockData.js';
-import { navigateTo } from '../router.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
-import { getRandomTip } from '../services/tipsService.js';
-import { getActiveMissions } from '../services/missionsService.js';
+import { getRandomTip, getActiveNewsSlides } from '../services/tipsService.js';
 import {
+    getActiveMissions,
     getActiveUserFlashMissions,
     getActiveCycleMissions,
-    detectAndCreateCycleMissions,
-} from '../services/flashMissionsService.js';
+    detectAndCreateCycleMissions
+} from '../services/missionsService.js';
+import { AppState } from '../state.js';
+import { getUserInitials } from '../utils/formatters.js';
 
+// Modular component imports (clean SoC)
+import { renderWalletBanner, openWalletDrawer } from './granja/WalletBlock.js';
+import { renderPriorityMissionBanner } from '../components/MissionBanner.js';
+import { showNewsBillboardModal } from './granja/NewsBillboardModal.js';
 import { startOnboardingTourIfEligible } from './granja/OnboardingTourModal.js';
-
-/* ── Module imports (Granja Section blocks) ───────── */
-import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
-import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
-import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
-import { showSupportModal, HEADSET_ICON_SVG } from './granja/SupportModal.js';
-import { removeBonusModal } from './granja/WelcomeBonusModal.js';
-import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
-
-/* ── News Billboard Imports ── */
-import { getActiveNewsSlides } from '../services/newsService.js';
-import { renderPiggyLoader } from '../components/PiggyLoader.js';
-import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
-
-/* =========================================
-   DYNAMIC NOTIFICATIONS
-   Fetched from Supabase dynamic_tips table.
-   Managed manually by admin — no hardcoding.
-   ========================================= */
+import { renderWalletSkeleton, renderPiggyLoader } from './granja/GranjaSkeletons.js';
+import { removeBonusModal } from './granja/BonusModal.js';
 
 /**
- * Render the notification strip.
- * @param {Object} notif - Tip data from tipsService (already resolved)
+ * Utility: format COP currency safely.
+ */
+function formatCOP(amount) {
+  const num = Number(amount);
+  if (amount === undefined || amount === null || isNaN(num)) return '$ 0';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
+/**
+ * Render dynamic rotative tips/notifications banner.
  */
 function renderRandomNotification(notif) {
-  // Guard: if no tip data provided, render nothing
   if (!notif) return '';
 
-  const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
-  const cursor  = notif.ctaUrl ? 'pointer' : 'default';
-
-  // Unified background & border style matching exact image reference for ALL tips
-  const tipBgColor     = '#fff1f2';
-  const tipBorderColor = '#ffe4e6';
-  const tipTitleColor  = '#be123c';
+  const isEduPorkTip = notif.reward && notif.reward.includes('EduPork');
+  const tipTitleColor = isEduPorkTip ? '#be123c' : '#059669';
+  const ctaAttr = isEduPorkTip
+      ? `onclick="location.hash='#/perfil'; setTimeout(() => { const el = document.getElementById('item-edupork'); if(el) el.scrollIntoView({behavior:'smooth'}); }, 300);"`
+      : '';
 
   return `
-    <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
-      <div id="dynamic-notification" style="
-        background: ${tipBgColor};
-        border: 1px solid ${tipBorderColor};
+    <div class="animate-fade-in-up" style="margin-bottom: 20px; animation-delay: 0.05s;">
+      <div style="
+        background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+        border: 1px solid #fecdd3;
+        border-left: 4px solid ${tipTitleColor};
         border-radius: 14px;
-        padding: 12px 16px;
+        padding: 12px 14px;
         display: flex;
         align-items: center;
         gap: 12px;
-        cursor: ${cursor};
+        box-shadow: 0 4px 14px rgba(225,29,72,0.06);
+        cursor: ${isEduPorkTip ? 'pointer' : 'default'};
         transition: transform 0.2s, box-shadow 0.2s;
       " ${ctaAttr}
          onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
@@ -129,18 +127,11 @@ function buildGranjaShell(firstName) {
  */
 async function loadGranjaData(firstName) {
   try {
-    // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
-    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
-    // con getUserPiggies(), AppState todavía está vacío → race condition.
     const piggies = await getUserPiggies();
     AppState.set({ piggies });
 
-    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
-    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
     await detectAndCreateCycleMissions(piggies);
 
-    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
@@ -157,12 +148,9 @@ async function loadGranjaData(firstName) {
       getActiveNewsSlides(),
     ]);
 
-    // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
     window._activeFlashMissions = flashMissions;
     window._activeCycleMissions = cycleMissions;
 
-    // wallet_balance = real cash (ciclos completados + recargas)
-    // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
     stats.walletBalance          = walletBalance;
     stats.referralBonus          = referralBonus;
     stats.referralBonusFormatted = formatCOP(referralBonus);
@@ -173,12 +161,10 @@ async function loadGranjaData(firstName) {
     const app = document.getElementById('app');
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
 
-    // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     showNewsBillboardModal(newsSlides);
 
     attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
 
-    // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
   } catch (error) {
     console.error('Error loading granja data:', error);
@@ -219,8 +205,6 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         ${notification}
 
         ${renderWalletBanner(firstName, stats)}
-
-
 
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
@@ -289,7 +273,6 @@ function renderGreeting(firstName) {
   const initials = getUserInitials(profile.full_name || firstName);
   const initialsFontSize = initials.length > 1 ? '1rem' : '1.15rem';
 
-  // Gift icon (stroke style, consistent with bottom nav)
   const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <rect x="3" y="8" width="18" height="4" rx="1"/>
     <path d="M12 8v13"/>
@@ -297,14 +280,12 @@ function renderGreeting(firstName) {
     <path d="M7.5 8C6.12 8 5 6.88 5 5.5C5 4.12 6.12 3 7.5 3C10 3 12 8 12 8C12 8 14 3 16.5 3C17.88 3 19 4.12 19 5.5C19 6.88 17.88 8 16.5 8"/>
   </svg>`;
 
-  // Headset icon (stroke style)
   const headsetIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
     <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
     <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
   </svg>`;
 
-  // Logout icon (stroke style)
   const logoutIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
     <polyline points="16 17 21 12 16 7"/>
@@ -324,7 +305,6 @@ function renderGreeting(firstName) {
         </div>
       </div>
 
-      <!-- Action Buttons: Referidos | Soporte | Salir -->
       <div class="greeting-actions">
         <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
           ${giftIconSVG}
@@ -340,9 +320,6 @@ function renderGreeting(firstName) {
   `;
 }
 
-/**
- * Render empty piggies state matching screen2.png.
- */
 function renderEmptyPiggies() {
   return `
     <div class="empty-state">
@@ -369,8 +346,10 @@ export function renderPiggiesList(piggies, baseROI) {
 }
 
 export function renderPiggyCard(piggy, baseROI) {
-  const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
-  const projectedReturn = piggy.investment_amount * (1 + totalROI);
+  const inv = parseFloat(piggy.investment_amount) || 1000000;
+  const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
+  const totalROI = baseROI + extraRoi;
+  const projectedReturn = inv * (1 + totalROI);
 
   return `
     <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
@@ -382,13 +361,13 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__name">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-      ? '<span class="badge badge--success">✓ Completado</span>'
-      : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
-    }
+              ? '<span class="badge badge--success">✓ Completado</span>'
+              : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
+            }
           </div>
         </div>
-        ${piggy.extra_roi_bonus > 0 ? `
-          <span class="badge badge--warning">+${(piggy.extra_roi_bonus * 100).toFixed(0)}%</span>
+        ${extraRoi > 0 ? `
+          <span class="badge badge--warning">+${(extraRoi * 100).toFixed(0)}%</span>
         ` : ''}
       </div>
 
@@ -411,7 +390,7 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold text-primary" style="font-size:0.9rem;">
             <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">CC:</span> ${formatCOP(projectedReturn)}
           </div>
-          ${piggy.extra_roi_bonus > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Incluye comisión +${(piggy.extra_roi_bonus * 100).toFixed(0)}%</div>` : ''}
+          ${extraRoi > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Incluye comisión +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
@@ -426,91 +405,64 @@ export function renderBottomNav(activeTab) {
         <span>Granja</span>
       </a>
       <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
-        <span class="bottom-nav__icon">
-          <span class="icon" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-          </span>
-        </span>
+        <span class="bottom-nav__icon">${renderIcon('market', '', '24')}</span>
         <span>Mercado</span>
       </a>
-      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
-        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
+      <a href="#/tienda" class="bottom-nav__item ${activeTab === 'tienda' ? 'bottom-nav__item--active' : ''}" id="nav-tienda">
+        <span class="bottom-nav__icon">${renderIcon('meat', '', '24')}</span>
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
-        <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('handshake', '', '24')}</span>
         <span>Aliados</span>
       </a>
     </nav>
   `;
 }
 
-/**
- * Attach event listeners.
- */
-function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
-  // Piggy card click
-  document.querySelectorAll('.piggy-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const piggyId = card.dataset.piggyId;
-      navigateTo(`piggy/${piggyId}`);
-    });
-  });
-
-  // Completed piggies modal trigger
-  const btnCompletados = document.getElementById('btn-ver-completados');
-  if (btnCompletados) {
-    btnCompletados.addEventListener('click', () => {
-      const completedPiggies = (piggies || []).filter(p => p.isComplete);
-      showCompletedPiggiesModal(completedPiggies, stats.baseROI);
-    });
-  }
-
-  // Mission listeners (delegated to module)
-  attachMissionListeners();
-
-  // Dynamic Notification click
-  const notifEl = document.getElementById('dynamic-notification');
-  if (notifEl && notifEl.dataset.cta) {
-    notifEl.addEventListener('click', () => {
-      const cta = notifEl.dataset.cta;
-      if (cta.startsWith('#/')) {
-        navigateTo(cta.replace('#/', ''));
-      } else {
-        window.open(cta, '_blank');
-      }
-    });
-  }
-
-  // Quick Buy Action -> Redirect to Mercado
-  const quickBuyBtn = document.getElementById('btn-quick-buy');
-  if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', () => {
-      navigateTo('mercado');
-    });
-  }
-
-  // Wallet listeners (delegated to module)
-  attachWalletListeners(stats);
-
-  // Greeting avatar / profile trigger
+function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies) {
   document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
-    navigateTo('perfil');
+    location.hash = '#/perfil';
   });
 
-  // Greeting action buttons
   document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
-    showReferralModal();
+    location.hash = '#/perfil';
+    setTimeout(() => {
+      window._openReferralModalFromProfile?.();
+    }, 200);
   });
 
   document.getElementById('btn-greeting-support')?.addEventListener('click', () => {
-    showSupportModal();
+    location.hash = '#/perfil';
+    setTimeout(() => {
+      window._openSupportModalFromProfile?.();
+    }, 200);
   });
 
-  document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
-    if (confirm('¿Cerrar sesión?')) {
-      await signOut();
-      navigateTo('auth');
+  document.getElementById('btn-greeting-logout')?.addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+      AppState.clear();
+      location.hash = '#/';
+      location.reload();
     }
+  });
+
+  document.getElementById('btn-quick-buy')?.addEventListener('click', () => {
+    location.hash = '#/mercado';
+  });
+
+  document.getElementById('btn-ver-completados')?.addEventListener('click', () => {
+    openWalletDrawer(stats);
+  });
+
+  const cards = document.querySelectorAll('.piggy-card');
+  cards.forEach((card) => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-adopt-empty')) return;
+      const piggyId = card.getAttribute('data-piggy-id');
+      if (piggyId) {
+        location.hash = `#/piggy/${piggyId}`;
+      }
+    });
   });
 }
