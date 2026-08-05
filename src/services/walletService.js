@@ -83,7 +83,7 @@ export async function executeOptionARefundIfPending(userId) {
             await client.from('wallet_transactions').insert({
                 user_id: userId,
                 amount: 2000000,
-                type: 'recharge',
+                type: 'credit',
                 description: 'Reembolso por compra de Piggys no completada (Opción A)',
             });
             console.log('✅ Reembolso de $2.000.000 COP acreditado exitosamente en DB.');
@@ -281,7 +281,7 @@ export async function addWalletBalance(amount, description = 'Reembolso a Wallet
         .insert({
             user_id: user.id,
             amount: amount, // positive = credit
-            type: 'recharge',
+            type: 'credit',
             description: description,
         });
 
