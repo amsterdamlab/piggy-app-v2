@@ -179,25 +179,24 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
  */
 export async function signIn({ email, password }, onProgress = () => {}) {
     if (isUsingMockData()) {
+        onProgress('⚙️ Modo demo detectado. Iniciando sesión simulada...');
         mockLoggedIn = true;
         mockProfile = { ...MOCK_PROFILE, terms_accepted: true, habeas_data_accepted: true };
         AppState.set({
-            currentUser: { ...MOCK_USER },
+            currentUser: { ...MOCK_USER, email },
             profile: { ...mockProfile },
             isAuthenticated: true,
         });
         return { user: MOCK_USER, error: null };
     }
 
-    onProgress('🔒 Verificando tus credenciales con el servidor de Supabase...');
+    onProgress('🔑 Verificando tu correo y contraseña con el sistema de seguridad...');
     const client = getClient();
-    const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password,
-    });
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
 
     if (error) return { user: null, error: error.message };
 
+    // Fetch profile and update state
     if (data.user) {
         onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
         const profile = await getProfile();
@@ -336,19 +335,20 @@ export async function checkSession() {
  */
 export async function sendPasswordReset(email) {
     if (isUsingMockData()) {
+        console.log(`🐷 Mock: Sending password reset to ${email}`);
         return { error: null };
     }
 
     const client = getClient();
     const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#/auth?mode=reset`
+        redirectTo: `${window.location.origin}/#auth`
     });
 
     return { error: error?.message || null };
 }
 
 /**
- * Update user password after recovery link click.
+ * Update password for current authenticated user (recovery flow).
  */
 export async function updateUserPassword(newPassword) {
     if (isUsingMockData()) {
@@ -357,13 +357,51 @@ export async function updateUserPassword(newPassword) {
     }
 
     const client = getClient();
-    const { error } = await client.auth.updateUser({
-        password: newPassword
-    });
-
+    const { error } = await client.auth.updateUser({ password: newPassword });
     if (!error) {
         AppState.set({ isResettingPassword: false });
     }
-
     return { error: error?.message || null };
+}
+
+export { updateUserPassword as updatePassword };
+
+/**
+ * Update user profile in Supabase and AppState.
+ * Updates personal and banking information.
+ */
+export async function updateUserProfile(updates) {
+    if (isUsingMockData()) {
+        const currentProfile = AppState.get('profile') || {};
+        mockProfile = { ...currentProfile, ...updates };
+        AppState.set({ profile: { ...mockProfile } });
+        return { data: mockProfile, error: null };
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { data: null, error: 'No hay usuario autenticado.' };
+
+    const currentProfile = AppState.get('profile') || {};
+
+    const payload = {
+        id: user.id,
+        email: user.email,
+        ...updates
+    };
+
+    const { data, error } = await client
+        .from('profiles')
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .maybeSingle();
+
+    if (!error) {
+        const newProfile = { ...currentProfile, ...(data || payload) };
+        AppState.set({ profile: newProfile });
+        return { data: newProfile, error: null };
+    }
+
+    console.error('Error updating profile in Supabase:', error.message);
+    return { data: null, error: error.message };
 }
