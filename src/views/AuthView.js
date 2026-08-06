@@ -113,9 +113,9 @@ export function renderAuthView() {
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
           <div style="display: flex; justify-content: center; margin-bottom: 8px;">
-            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 28px; width: auto; object-fit: contain;" />
+            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 45px; width: auto; object-fit: contain;" />
           </div>
-          <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR GRANJA VALLE MORALES</p>
+          <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR VALLE MORALES</p>
           <div class="auth-trust__icons">
             ${renderIcon('heart', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
@@ -259,24 +259,28 @@ function renderFormFields() {
             class="input-wrapper__field"
             id="field-referral"
             name="referralCode"
-            placeholder="Ej: JUAN123"
+            placeholder="Ej: RAFA1B2"
             autocomplete="off"
             style="text-transform: uppercase;"
           />
-          <span id="referral-status" style="font-size: 14px; margin-right: 8px;"></span>
+          <span id="referral-status" style="font-size:16px; flex-shrink:0; padding-right:8px;"></span>
         </div>
-        <div id="referral-feedback" style="font-size: 0.72rem; margin-top: 2px; font-weight: 600;"></div>
+        <div id="referral-feedback" style="font-size:0.75rem; margin-top:2px;"></div>
       </div>
-
-      <!-- Consent Checkboxes -->
-      <div style="margin-top: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;">
-        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.75rem; color: #475569; cursor: pointer; line-height: 1.3;">
-          <input type="checkbox" id="check-terms" style="margin-top: 2px; accent-color: #fb2c74;" required />
-          <span>Acepto los <a href="#" id="link-terms" style="color: #fb2c74; font-weight: 700; text-decoration: underline;">Términos y Condiciones</a> de Piggy App.</span>
+      <!-- Checkboxes de Términos y Tratamiento de Datos -->
+      <div class="auth-checkboxes" style="margin-top: -4px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
+        <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
+          <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
+          <span>
+            He leído y acepto los <a href="terminos-y-condiciones.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Términos y Condiciones</a> de Piggy App.
+          </span>
         </label>
-        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.75rem; color: #475569; cursor: pointer; line-height: 1.3;">
-          <input type="checkbox" id="check-habeas" style="margin-top: 2px; accent-color: #fb2c74;" required />
-          <span>Autorizo el <a href="#" id="link-habeas" style="color: #fb2c74; font-weight: 700; text-decoration: underline;">Tratamiento de Mis Datos Personales</a>.</span>
+
+        <label class="checkbox" for="check-habeas" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
+          <input type="checkbox" id="check-habeas" name="acceptHabeas" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
+          <span>
+            Autorizo el <a href="tratamiento-de-datos.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Tratamiento de Datos Personales</a> (Habeas Data).
+          </span>
         </label>
       </div>
     `;
@@ -314,7 +318,6 @@ function renderFormFields() {
             id="field-new-password"
             name="newPassword"
             placeholder="Mínimo 6 caracteres"
-            autocomplete="new-password"
             required
             minlength="6"
           />
@@ -326,7 +329,6 @@ function renderFormFields() {
     `;
   }
 
-  // Default: Login Tab
   return `
     ${googleHeaderHTML}
 
@@ -475,17 +477,6 @@ function attachAuthListeners() {
     }, 600);
   });
 
-  // Legal Modal Triggers (Términos & Habeas Data)
-  document.getElementById('link-terms')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    renderLegalModal('terms');
-  });
-
-  document.getElementById('link-habeas')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    renderLegalModal('privacy');
-  });
-
   // Form submission
   document.getElementById('auth-form')?.addEventListener('submit', handleSubmit);
 
@@ -614,22 +605,21 @@ async function performForgotPassword(email) {
               <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
                 Te hemos enviado un enlace de restablecimiento a <strong>${email}</strong>. Revisa tu bandeja de entrada y spam.
               </p>
-              <button id="btn-back-from-forgot-success" class="btn btn--block btn--lg" style="background: #fb2c74; color: white; border-radius: 30px;">
-                Volver a Iniciar Sesión
+              <button id="btn-success-back" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
+                Volver al Inicio
               </button>
             </div>
           </div>
         </div>
       `;
-
-      document.getElementById('btn-back-from-forgot-success')?.addEventListener('click', () => {
+      document.getElementById('btn-success-back')?.addEventListener('click', () => {
         activeAuthTab = 'login';
-        AppState.set({ isResettingPassword: false });
         renderAuthView();
       });
     }
-  } catch (err) {
-    showFormError('Ocurrió un error inesperado. Intenta de nuevo.');
+  } catch (error) {
+    console.error('🐷 ForgotPassword error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -650,13 +640,34 @@ async function performUpdatePassword(newPassword) {
       showFormError(translateSupabaseError(result.error));
     } else {
       AppState.set({ isResettingPassword: false });
-      showStatusMessage('✅ ¡Contraseña actualizada con éxito! Ingresando a tu granja...', '#065f46', '#ecfdf5', '#a7f3d0');
-      setTimeout(() => {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="auth-page page">
+          <div class="auth-page__content">
+            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
+            </div>
+            
+            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
+              <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Contraseña Guardada!</h2>
+              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                Tu contraseña ha sido actualizada exitosamente. Ya puedes acceder a todas las funciones de tu Cuenta Agro.
+              </p>
+              <button id="btn-success-farm" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
+                Ingresar a Mi Granja
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('btn-success-farm')?.addEventListener('click', () => {
         navigateTo('granja');
-      }, 1500);
+      });
     }
-  } catch (err) {
-    showFormError('No se pudo actualizar la contraseña.');
+  } catch (error) {
+    console.error('🐷 UpdatePassword error:', error);
+    showFormError('Ha ocurrido un error. Inténtalo de nuevo.');
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -664,36 +675,48 @@ async function performUpdatePassword(newPassword) {
 }
 
 /**
- * Execute sign up flow.
+ * Execute the signup after terms are accepted.
  */
 async function performSignUp({ email, password, fullName, whatsapp, referralCode }) {
   isSubmitting = true;
-  formError = null;
-  updateSubmitButton();
+  updateSubmitButton('Creando cuenta...');
+  showStatusMessage('🔄 Iniciando creación de tu cuenta agro y verificando datos...', '#1e3a8a', '#eff6ff', '#bfdbfe');
 
   try {
-    const result = await signUp({ email, password, fullName, whatsapp });
+    const result = await signUp({ email, password, fullName, whatsapp }, (msg) => {
+      showStatusMessage(msg, '#1e3a8a', '#eff6ff', '#bfdbfe');
+    });
 
     if (result.error) {
-      showFormError(translateSupabaseError(result.error));
-    } else {
-      if (referralCode) {
-        try {
-          await linkReferral(referralCode);
-        } catch (refErr) {
-          console.warn('Non-blocking referral linking error:', refErr);
-        }
-      }
-
-      showStatusMessage('✅ ¡Cuenta creada exitosamente! Redirigiendo...', '#065f46', '#ecfdf5', '#a7f3d0');
-
-      setTimeout(() => {
-        navigateTo('granja');
-      }, 1200);
+      hideStatusMessage();
+      showFormError(translateSupabaseError(result.error), result.error);
+      return;
     }
-  } catch (err) {
-    console.error('Registration Error:', err);
-    showFormError('Ocurrió un error inesperado al registrarse. Intenta nuevamente.');
+
+    // Link referral if code was provided
+    if (referralCode && result.user?.id) {
+      showStatusMessage('🎁 Vinculando código de invitación con tu referente...', '#6b21a8', '#faf5ff', '#e9d5ff');
+      updateSubmitButton('Vinculando invitación...');
+      try {
+        const linkResult = await linkReferral(result.user.id, referralCode);
+        if (linkResult.linked) {
+          console.log('🐷 Referral linked successfully');
+        } else {
+          console.warn('🐷 Referral link skipped:', linkResult.reason);
+        }
+      } catch (refErr) {
+        // Don't block signup if referral linking fails
+        console.warn('🐷 Referral linking error (non-blocking):', refErr);
+      }
+    }
+
+    showStatusMessage('✅ ¡Cuenta creada con éxito! Redirigiendo a tu granja...', '#065f46', '#ecfdf5', '#a7f3d0');
+    updateSubmitButton('Iniciando sesión...');
+    setTimeout(() => navigateTo('granja'), 600);
+  } catch (error) {
+    console.error('🐷 SignUp error:', error);
+    hideStatusMessage();
+    showFormError('Ha ocurrido un error en el registro. Inténtalo de nuevo.', error.message || error);
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -701,24 +724,30 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
 }
 
 /**
- * Execute sign in flow.
+ * Execute the sign in.
  */
 async function performSignIn({ email, password }) {
   isSubmitting = true;
-  formError = null;
-  updateSubmitButton();
+  updateSubmitButton('Verificando credenciales...');
+  showStatusMessage('🔄 Conectando con el servidor de seguridad para validar tu acceso...', '#1e3a8a', '#eff6ff', '#bfdbfe');
 
   try {
-    const result = await signIn({ email, password });
+    const result = await signIn({ email, password }, (msg) => {
+      showStatusMessage(msg, '#1e3a8a', '#eff6ff', '#bfdbfe');
+    });
 
     if (result.error) {
-      showFormError(translateSupabaseError(result.error));
+      hideStatusMessage();
+      showFormError(translateSupabaseError(result.error), result.error);
     } else {
-      navigateTo('granja');
+      showStatusMessage('✅ ¡Credenciales validadas con éxito! Redirigiendo a tu granja...', '#065f46', '#ecfdf5', '#a7f3d0');
+      updateSubmitButton('Iniciando sesión...');
+      setTimeout(() => navigateTo('granja'), 600);
     }
-  } catch (err) {
-    console.error('Sign-in error:', err);
-    showFormError('Correo o contraseña incorrectos.');
+  } catch (error) {
+    console.error('🐷 SignIn error:', error);
+    hideStatusMessage();
+    showFormError('Ha ocurrido un error al intentar iniciar sesión. Inténtalo de nuevo.', error.message || error);
   } finally {
     isSubmitting = false;
     updateSubmitButton();
@@ -726,50 +755,28 @@ async function performSignIn({ email, password }) {
 }
 
 /**
- * Translate Supabase error messages to friendly Spanish.
- * @param {string} errorMsg
- * @returns {string}
+ * Translate common Supabase error messages to Spanish.
  */
-function translateSupabaseError(errorMsg) {
-  if (!errorMsg) return 'Error al procesar la solicitud.';
-  const lower = errorMsg.toLowerCase();
+function translateSupabaseError(errorMessage) {
+  const translations = {
+    'Invalid login credentials': 'Correo o contraseña incorrectos.',
+    'User already registered': 'Este correo ya está registrado. Intenta iniciar sesión.',
+    'Password should be at least 6 characters': 'Tu contraseña debe tener al menos 6 caracteres.',
+    'Email not confirmed': 'Revisa tu correo para confirmar tu cuenta.',
+    'Signup is not allowed for this instance': 'El registro no está disponible en este momento.',
+    'Unsupported provider: provider is not enabled': 'El inicio de sesión con Google aún no se ha activado en el panel de Supabase.',
+  };
 
-  if (lower.includes('already registered') || lower.includes('user_already_exists')) {
-    return 'Este correo ya está registrado. Intenta iniciar sesión.';
-  }
-  if (lower.includes('invalid login credentials') || lower.includes('invalid_credentials')) {
-    return 'Correo o contraseña incorrectos.';
-  }
-  if (lower.includes('password should be at least')) {
-    return 'La contraseña debe tener al menos 6 caracteres.';
-  }
-  if (lower.includes('rate limit')) {
-    return 'Demasiados intentos. Por favor espera un momento e intenta nuevamente.';
-  }
-
-  return errorMsg;
+  return translations[errorMessage] || errorMessage;
 }
 
 /**
- * Show error message in form.
- * @param {string} msg
+ * Show status message during login / signup.
  */
-function showFormError(msg) {
-  formError = msg;
-  const errorEl = document.getElementById('form-error');
-  if (errorEl) {
-    errorEl.textContent = msg;
-    errorEl.classList.add('auth-form__error--visible');
-  }
-}
-
-/**
- * Show status banner message.
- */
-function showStatusMessage(msg, color, bgColor, borderColor) {
+function showStatusMessage(message, color = '#1e3a8a', bgColor = '#eff6ff', borderColor = '#bfdbfe') {
   const banner = document.getElementById('auth-status-banner');
   if (banner) {
-    banner.textContent = msg;
+    banner.textContent = message;
     banner.style.color = color;
     banner.style.backgroundColor = bgColor;
     banner.style.border = `1px solid ${borderColor}`;
@@ -778,32 +785,58 @@ function showStatusMessage(msg, color, bgColor, borderColor) {
 }
 
 /**
- * Update submit button state.
+ * Hide status message.
  */
-function updateSubmitButton() {
-  const btn = document.getElementById('auth-submit');
-  if (!btn) return;
-
-  btn.disabled = isSubmitting;
-  btn.style.opacity = isSubmitting ? '0.7' : '1';
-
-  if (isSubmitting) {
-    btn.innerHTML = `<span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;display:inline-block;vertical-align:middle;"></span> Procesando...`;
-  } else {
-    btn.innerHTML = activeAuthTab === 'forgot'
-      ? 'Enviar Enlace'
-      : (activeAuthTab === 'reset'
-        ? 'Guardar Contraseña'
-        : (activeAuthTab === 'register'
-          ? 'Comenzar mi granja'
-          : 'Iniciar Sesión'));
+function hideStatusMessage() {
+  const banner = document.getElementById('auth-status-banner');
+  if (banner) {
+    banner.style.display = 'none';
   }
 }
 
 /**
- * Cleanup function.
+ * Show form error.
+ */
+function showFormError(message, rawError = null) {
+  hideStatusMessage();
+  formError = message;
+  const errorEl = document.getElementById('form-error');
+  if (errorEl) {
+    if (rawError) {
+      errorEl.innerHTML = `${message}<br><span style="font-size: 0.7rem; color: #ef4444; font-family: monospace; display: block; margin-top: 4px; word-break: break-all; font-weight: normal;">[Detalle Técnico: ${rawError}]</span>`;
+    } else {
+      errorEl.textContent = message;
+    }
+    errorEl.classList.add('auth-form__error--visible');
+  }
+}
+
+/**
+ * Update submit button loading state with custom progress message.
+ */
+function updateSubmitButton(customText = null) {
+  const btn = document.getElementById('auth-submit');
+  if (!btn) return;
+
+  btn.disabled = isSubmitting;
+  if (isSubmitting) {
+    const text = customText || 'Cargando...';
+    btn.innerHTML = `
+      <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;vertical-align:middle;display:inline-block;"></span>
+      <span style="vertical-align:middle;">${text}</span>
+    `;
+  } else {
+    btn.innerHTML = `
+      ${activeAuthTab === 'forgot' ? 'Enviar Enlace' : (activeAuthTab === 'reset' ? 'Guardar Contraseña' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'))}
+    `;
+  }
+}
+
+/**
+ * Cleanup when leaving the auth view.
  */
 function cleanupAuthView() {
+  passwordVisible = false;
   isSubmitting = false;
   formError = null;
 }
