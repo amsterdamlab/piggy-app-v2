@@ -180,12 +180,12 @@ export function showWalletDrawer(firstName, stats) {
                   </div>
                ` : (stats.transactions || []).map((tx, i, arr) => {
                   const isDebit = tx.amount < 0;
-                  const isConsumo = tx.wallet_type === 'consumo';
+                  const isConsumo = tx.wallet_type === 'consumo' || (tx.description && (tx.description.toLowerCase().includes('bono') || tx.description.toLowerCase().includes('consumo')));
                   const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
                   const badgeColor = isDebit ? '#dc2626' : '#059669';
                   const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
                   const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
-                  const meatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`;
+                  const meatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M 12 3 C 7 3 3 7.5 3 13 C 3 18.5 7.5 21 12.5 21 C 17.5 21 21 17.5 21 13.5 C 21 9.5 18 8.5 16.5 7.5 C 15 6.5 15.5 3 12 3 Z"/><path d="M 11.8 5.2 C 8 5.2 4.8 8.8 4.8 13.2 C 4.8 17.2 8.5 19.2 12.2 19.2 C 16 19.2 19.2 16.2 19.2 13.2 C 19.2 10.2 16.8 9.2 15.2 8.2 C 13.8 7.2 14.2 5.2 11.8 5.2 Z"/><circle cx="10" cy="14" r="2"/></svg>`;
                   const accountType = isConsumo ? meatIcon : bellIcon;
                   const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
