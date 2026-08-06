@@ -4,6 +4,7 @@
    ========================================================================== */
 
 import { formatCOP } from '../../services/mockData.js';
+import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../../services/walletService.js';
 import { getDashboardStats } from '../../services/piggiesService.js';
@@ -78,7 +79,7 @@ export function showWalletDrawer(firstName, stats) {
                <div style="font-size:0.98rem; font-weight:800; color:#0f172a;">${stats.adquisicionBonosFormatted}</div>
             </div>
             <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:14px; text-align:center;">
-               <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Diferencial de Preventa</div>
+               <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Comisión Comercial Total</div>
                <div style="font-size:0.98rem; font-weight:800; color:#059669;">+${stats.diferencialPreventaFormatted}</div>
             </div>
          </div>
@@ -96,7 +97,7 @@ export function showWalletDrawer(firstName, stats) {
             gap: 10px;
          ">
             <div style="display: flex; align-items: center; gap: 8px; color: #7C3AED; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13"/><path d="M19 12H5"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A2.5 2.5 0 0 1 12 5.5A2.5 2.5 0 0 1 16.5 3a2.5 2.5 0 0 1 0 5"/></svg>
+              ${renderIcon('meat', '', '18')}
               <span>BONOS DE CONSUMO</span>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -205,7 +206,7 @@ export function showWalletDrawer(firstName, stats) {
                         </span>
                      </div>
                   `;
-               }).join('')}
+                }).join('')}
             </div>
          </div>
 
