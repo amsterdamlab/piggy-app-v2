@@ -78,7 +78,7 @@ async function loadPiggyDetail(piggyId) {
 
           <!-- Progress section -->
           <div class="section animate-fade-in-up" style="animation-delay:0.1s;">
-            <h3 class="section__title">Ciclo de Engorde</h3>
+            <h3 class="section__title" style="margin-bottom: 12px;">Ciclo de Engorde</h3>
             <div class="piggy-detail__progress-card card">
               <div class="piggy-card__progress-header">
                 <span class="text-sm text-muted">Progreso general</span>
@@ -133,7 +133,7 @@ async function loadPiggyDetail(piggyId) {
 
           <!-- Financial info -->
           <div class="section animate-fade-in-up" style="animation-delay:0.2s;">
-            <h3 class="section__title">Información Comercial</h3>
+            <h3 class="section__title" style="margin-bottom: 12px;">Información Comercial</h3>
             <div class="card">
               <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">Preventa Comercial</span>
