@@ -134,7 +134,7 @@ export function renderDescargarView() {
             <!-- 4. Footer Identidad Valle Morales -->
             <div style="text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div style="white-space: nowrap; font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">
-                    RESPALDADO POR GRANJA VALLE MORALES
+                    RESPALDADO POR VALLE MORALES
                 </div>
 
                 <img src="/vallemorales_logo.png" alt="Valle Morales" style="max-height: 28px; width: auto; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />
