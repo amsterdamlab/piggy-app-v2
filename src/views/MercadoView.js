@@ -658,9 +658,9 @@ window.showCategoryInfo = (category) => {
   if (existing) existing.remove();
 
   const infoTexts = {
-    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en un mercado exclusivo.',
-    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en un mercado exclusivo.',
-    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en un mercado exclusivo.',
+    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
+    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
+    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
     advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito será tu mejor aliado.'
   };
 

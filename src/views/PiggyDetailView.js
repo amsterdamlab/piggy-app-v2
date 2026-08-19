@@ -136,11 +136,11 @@ async function loadPiggyDetail(piggyId) {
             <h3 class="section__title" style="margin-bottom: 12px;">Información Comercial</h3>
             <div class="card">
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Preventa Comercial</span>
+                <span class="text-sm text-muted">Valor Piggy</span>
                 <span class="font-semibold">${formatCOP(piggy.investment_amount)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Comisión Comercial Variable</span>
+                <span class="text-sm text-muted">Beneficio</span>
                 <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
               </div>
               <div class="piggy-detail__finance-row">
@@ -149,17 +149,17 @@ async function loadPiggyDetail(piggyId) {
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
-                  <span class="text-sm text-muted">Comisión Extra</span>
+                  <span class="text-sm text-muted">Beneficio Canal de Venta</span>
                   <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
                 </div>
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Comisión Comercial</span>
+                <span class="font-semibold">Total Beneficio</span>
                 <span class="font-bold text-primary" style="font-size:var(--text-lg);">${formatCOP(gain)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Saldo del Cierre Comercial</span>
+                <span class="font-semibold">Valor Referencia en Mercado</span>
                 <span class="font-bold" style="font-size:var(--text-lg);">${formatCOP(projectedReturn)}</span>
               </div>
             </div>
