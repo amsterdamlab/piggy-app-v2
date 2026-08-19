@@ -121,7 +121,7 @@ export function showSupportModal() {
 
       <!-- Entity Footer -->
       <p style="margin:0; font-size:0.72rem; color:#9ca3af; text-align:center; line-height:1.4;">
-        Nuestro centro de atención en Piggy App está operado bajo la marca <strong style="color:#6b7280;">Valle Morales SAS</strong>
+        Nuestro centro de atención en Piggy App está operado bajo la marca <strong style="color:#6b7280;">Granja Villa Morales del Valle SAS</strong>
       </p>
     </div>
   `;
