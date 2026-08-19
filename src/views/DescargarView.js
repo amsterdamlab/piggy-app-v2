@@ -131,13 +131,13 @@ export function renderDescargarView() {
                 </button>
             </div>
 
-            <!-- 4. Footer Identidad Valle Morales -->
+            <!-- 4. Footer Identidad Granja Villa Morales del Valle SAS -->
             <div style="text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div style="white-space: nowrap; font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">
-                    RESPALDADO POR VALLE MORALES
+                    RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS
                 </div>
 
-                <img src="/vallemorales_logo.png" alt="Valle Morales" style="max-height: 28px; width: auto; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />
+                <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" style="max-height: 28px; width: auto; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />
 
                 <!-- Derechos Reservados con 2 espacios adicionales hacia abajo -->
                 <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 500; text-align: center; white-space: nowrap; margin-top: 14px;">
