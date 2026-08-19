@@ -141,6 +141,12 @@ export async function openWalletRechargeInfo(liveStats = null) {
             padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
             box-shadow:0 4px 14px rgba(16,185,129,0.35); transition:opacity 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
           ">Continuar <span style="font-size:1.1rem;">→</span></button>
+
+          <!-- Términos y Condiciones -->
+          <a href="terminos-y-condiciones.html" target="_blank" style="
+            display:block; text-align:center; font-size:0.75rem; color:#64748b; font-weight:500;
+            text-decoration:underline; margin-top:16px; cursor:pointer;
+          ">Términos y Condiciones</a>
         </div>
     `;
 
@@ -250,7 +256,11 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Pasarela de pago segura operada por Bancolombia</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0;">🔒 Pasarela de pago segura operada por Bancolombia</p>
+          <a href="terminos-y-condiciones.html" target="_blank" style="
+            display:inline-block; font-size:0.72rem; color:#64748b; font-weight:500;
+            text-decoration:underline; cursor:pointer;
+          ">Términos y Condiciones</a>
         </div>
     `;
 
