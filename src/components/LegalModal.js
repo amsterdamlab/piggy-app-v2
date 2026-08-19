@@ -27,7 +27,7 @@ const LEGAL_TEXT = `
 
 <h4 style="color: var(--color-primary); margin-bottom: var(--space-sm);">PARTE I: AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES (HABEAS DATA)</h4>
 
-<p>En cumplimiento de la <strong>Ley 1581 de 2012</strong> y el <strong>Decreto 1377 de 2013</strong>, el USUARIO autoriza a <strong>PIGGY S.A.S.</strong> y a sus aliados operativos <strong>GRANJA VILLA MORALES</strong> para recolectar, almacenar, circular y utilizar sus datos personales (nombre completo, correo electrónico, número de teléfono móvil y ubicación) para las siguientes finalidades:</p>
+<p>En cumplimiento de la <strong>Ley 1581 de 2012</strong> y el <strong>Decreto 1377 de 2013</strong>, el USUARIO autoriza a <strong>PIGGY S.A.S.</strong> y a sus aliados operativos <strong>GRANJA VILLA MORALES DEL VALLE SAS</strong> para recolectar, almacenar, circular y utilizar sus datos personales (nombre completo, correo electrónico, número de teléfono móvil y ubicación) para las siguientes finalidades:</p>
 
 <ol style="padding-left: var(--space-lg); margin: var(--space-md) 0;">
   <li style="margin-bottom: var(--space-sm);"><strong>Gestión de Cuenta:</strong> Creación, mantenimiento y administración del perfil del usuario en la plataforma.</li>
@@ -68,7 +68,7 @@ const LEGAL_TEXT = `
 </ul>
 
 <h5 style="margin: var(--space-md) 0 var(--space-xs);">5. NATURALEZA DEL CONTRATO</h5>
-<p>Las partes acuerdan que esta es una operación de <strong>economía real</strong> (Compraventa de cosa futura con mandato de gestión). No constituye captación masiva de dinero ni una inversión financiera. El respaldo del capital es el inventario físico de cárnicos comercializable por parte de <strong>GRANJA VILLA MORALES</strong>.</p>
+<p>Las partes acuerdan que esta es una operación de <strong>economía real</strong> (Compraventa de cosa futura con mandato de gestión). No constituye captación masiva de dinero ni una inversión financiera. El respaldo del capital es el inventario físico de cárnicos comercializable por parte de <strong>GRANJA VILLA MORALES DEL VALLE SAS</strong>.</p>
 
 <h5 style="margin: var(--space-md) 0 var(--space-xs);">6. CANCELACIÓN ANTICIPADA</h5>
 <p>El USUARIO puede vender su activo en el Marketplace interno. Si solicita el retiro del capital antes de finalizar el ciclo sin haber concretado una venta entre usuarios, se aplicará una penalidad del <strong>diez por ciento (10%)</strong> por ruptura de ciclo productivo.</p>
