@@ -37,7 +37,7 @@ export function showBonusModal(hasPiggies) {
                 PIGGY otorga un Bono de Consumo por valor de TREINTA MIL PESOS M/CTE ($30.000 COP) a todo usuario nuevo que complete satisfactoriamente el registro en la plataforma y realice su primera adopción de un "Piggy" (pago único de $1.000.000 COP).</p>
 
                 <p><strong>2. Condiciones de Redención:</strong><br/>
-                Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Valle Morales, bajo las siguientes condiciones:</p>
+                Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Granja Villa Morales del Valle SAS, bajo las siguientes condiciones:</p>
                 <ul>
                     <li><strong>Compra Mínima:</strong> El valor del pedido debe ser igual o superior a CIENTO CINCUENTA MIL PESOS M/CTE ($150.000 COP), sin incluir costos de envío.</li>
                     <li><strong>Aplicación del Bono:</strong> Una vez cumplido el monto mínimo, el bono de $30.000 se restará del valor total a pagar por los productos.</li>
