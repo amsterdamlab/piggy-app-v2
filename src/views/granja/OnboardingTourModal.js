@@ -35,7 +35,7 @@ const TOUR_STEPS = [
         fallbackSelector: '#mis-piggies-section',
         title: 'Mis Piggys',
         icon: '🐷',
-        description: 'Monitorea el crecimiento de tu granja y tus comisiones en tiempo real.',
+        description: 'Monitorea el crecimiento de tu granja y el progreso de tus Piggys en tiempo real.',
         positionType: 'piggies_strip_below',
     },
     {
@@ -43,7 +43,7 @@ const TOUR_STEPS = [
         fallbackSelector: '#mission-banner',
         title: 'Misiones',
         icon: '🎁',
-        description: 'Completa misiones para ganar bonos, descuentos y acelerar tu granja.',
+        description: 'Completa misiones para ganar bonos, descuentos y haz que tu granja crezca.',
         positionType: 'missions_above',
     },
     {
