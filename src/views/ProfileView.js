@@ -155,18 +155,12 @@ export function renderProfileView() {
             <!-- Footer Institucional Centrado -->
             <div class="profile-footer">
                 <div style="text-align: center;">
-                    <div class="profile-footer__label">RESPALDADO POR GRANJA VALLE MORALES</div>
-                    <img src="/vallemorales_logo.png" alt="Valle Morales" class="profile-footer__valle-logo" onerror="this.style.display='none'" />
-                </div>
-
-                <!-- Insignia Superintendencia -->
-                <div class="profile-footer__vigilado-badge">
-                    <span class="profile-footer__vigilado-title">VIGILADO</span>
-                    <span class="profile-footer__vigilado-sub">Superintendencia de Industria y Comercio de Colombia</span>
+                    <div class="profile-footer__label">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</div>
+                    <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" class="profile-footer__valle-logo" onerror="this.style.display='none'" />
                 </div>
 
                 <!-- Derechos Reservados -->
-                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; font-weight: 500;">
+                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 10px; font-weight: 500;">
                     © Todos los derechos reservados Piggy App. 2026
                 </div>
             </div>
