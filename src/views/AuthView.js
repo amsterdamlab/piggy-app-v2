@@ -113,9 +113,9 @@ export function renderAuthView() {
         <!-- Trust Badges -->
         <div class="auth-trust animate-fade-in" style="padding: var(--space-md) var(--space-lg) var(--space-lg);">
           <div style="display: flex; justify-content: center; margin-bottom: 8px;">
-            <img src="/vallemorales_logo.png" alt="Valle Morales" style="height: 45px; width: auto; object-fit: contain;" />
+            <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" style="height: 45px; width: auto; object-fit: contain;" />
           </div>
-          <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR VALLE MORALES</p>
+          <p class="auth-trust__label" style="white-space: nowrap; font-size: 0.68rem; letter-spacing: 1px; margin-bottom: var(--space-md);">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</p>
           <div class="auth-trust__icons">
             ${renderIcon('heart', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
@@ -840,3 +840,4 @@ function cleanupAuthView() {
   isSubmitting = false;
   formError = null;
 }
+
