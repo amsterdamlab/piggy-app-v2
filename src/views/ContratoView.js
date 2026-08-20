@@ -411,10 +411,8 @@ function renderSuccessScreen({ piggyName, contractUrl, hash, userName, userCedul
     <div class="page contrato-page animate-fade-in" style="display:flex; align-items:center; justify-content:center; padding: 24px 16px;">
         <div class="contrato-success-card animate-scale-in" style="max-width:480px; width:100%;">
             
-            <!-- Circular Piggy Logo -->
-            <div style="margin: 0 auto 16px auto; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25); border: 2px solid #fce7f3;">
-                <img src="/piggy-loading-logo.png" alt="Piggy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
-            </div>
+            <!-- Piggy Logo -->
+            <img src="/piggy-loading-logo.png" alt="Piggy" style="width: 80px; height: 80px; object-fit: contain; margin: 0 auto 16px auto; display: block;" onerror="this.onerror=null;this.src='pig2.jpg'" />
             
             <h2 style="font-size:1.35rem; font-weight:800; color:#0f172a; margin:0 0 8px 0; letter-spacing:-0.01em; white-space:nowrap;">
                 ¡Felicidades por tu compra!
