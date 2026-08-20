@@ -93,14 +93,16 @@ BEGIN
     v_stage := 1;
   END IF;
 
-  -- Generate stable random photo number 1-5 and build path
-  v_photo_num := floor(random() * 5 + 1)::int;
-  v_image_url := 'assets/piggies/stage' || v_stage || '/et' || v_stage || '-' || v_photo_num || '.jpg';
-
-  -- 2. Deduct stock
+  -- 2. Deduct stock and retrieve item image_url
   UPDATE marketplace
   SET stock = stock - 1
-  WHERE id = p_item_id;
+  WHERE id = p_item_id
+  RETURNING image_url INTO v_image_url;
+
+  -- Fallback if item had no image_url configured
+  IF v_image_url IS NULL OR v_image_url = '' THEN
+    v_image_url := 'assets/piggies/stage' || v_stage || '/et' || v_stage || '-1.jpg';
+  END IF;
 
   -- Fetch user profile data to store in piggies table
   SELECT full_name INTO v_full_name
