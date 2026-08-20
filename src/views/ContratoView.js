@@ -7,8 +7,8 @@
 import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
-import { adoptPiggy } from '../services/piggiesService.js';
-import { deductWalletBalance } from '../services/walletService.js';
+import { adoptPiggy, buyMarketplaceItem } from '../services/piggiesService.js';
+import { deductWalletBalance, getWalletBalance } from '../services/walletService.js';
 import { openSignatureModal } from '../components/SignatureModal.js';
 import { stampAndUploadContract } from '../services/contractService.js';
 import { formatCOP } from '../services/mockData.js';
@@ -85,16 +85,33 @@ const CLAUSES = [
 
 let currentSignatureDataUrl = null;
 let currentPiggyName = 'Mi Piggy';
-const ITEM_PRICE = 1000000;
+let currentItemPrice = 1000000;
+let currentMarketplaceItem = null;
 
 export function renderContratoView() {
     const app = document.getElementById('app');
     const profile = AppState.get('profile') || {};
     const user = AppState.get('currentUser') || {};
 
-    // Get Piggy Name from query param or session
+    // Get Piggy Name and item from query param or session
     const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    currentPiggyName = urlParams.get('name') || sessionStorage.getItem('pending_piggy_name') || 'Bacon';
+    
+    const savedItemStr = sessionStorage.getItem('pending_marketplace_item');
+    currentMarketplaceItem = null;
+    if (savedItemStr) {
+        try {
+            currentMarketplaceItem = JSON.parse(savedItemStr);
+        } catch (e) {
+            console.warn('Error parsing pending_marketplace_item:', e);
+        }
+    }
+
+    currentPiggyName = urlParams.get('name') || sessionStorage.getItem('pending_piggy_name') || currentMarketplaceItem?.item_name || 'Bacon';
+    
+    const rawPrice = urlParams.get('price') || currentMarketplaceItem?.price;
+    currentItemPrice = rawPrice ? parseFloat(rawPrice) : 1000000;
+    if (isNaN(currentItemPrice) || currentItemPrice <= 0) currentItemPrice = 1000000;
+
     currentSignatureDataUrl = null;
 
     const initialFullName = profile.full_name || user.user_metadata?.full_name || '';
@@ -128,7 +145,7 @@ export function renderContratoView() {
                 </h1>
                 <div class="contrato-hero__meta">
                     <div>🐖 <strong>Piggy a vincular:</strong> "${currentPiggyName}"</div>
-                    <div>💰 <strong>Inversión:</strong> ${formatCOP(ITEM_PRICE)}</div>
+                    <div>💰 <strong>Inversión:</strong> ${formatCOP(currentItemPrice)}</div>
                     <div>🏢 <strong>Operador:</strong> Granja Villa Morales del Valle S.A.S.</div>
                 </div>
             </div>
@@ -235,7 +252,7 @@ export function renderContratoView() {
                     gap:8px;
                 ">
                     <span>Piggy</span>
-                    <span>Firmar y Confirmar Compra (${formatCOP(ITEM_PRICE)})</span>
+                    <span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>
                 </button>
             </div>
 
@@ -259,7 +276,11 @@ export function renderContratoView() {
 function attachContratoListeners() {
     // Back button
     document.getElementById('btn-back-contrato')?.addEventListener('click', () => {
-        navigateTo('adopcion');
+        if (currentMarketplaceItem) {
+            navigateTo('mercado');
+        } else {
+            navigateTo('adopcion');
+        }
     });
 
     // Scroll to sign section
@@ -347,6 +368,12 @@ function attachContratoListeners() {
         finalizeBtn.style.pointerEvents = 'none';
 
         try {
+            // 0. Pre-validate wallet balance before executing contract or DB calls
+            const currentWalletBal = await getWalletBalance();
+            if (currentWalletBal < currentItemPrice) {
+                throw new Error(`Saldo insuficiente en tu Wallet para realizar la compra (${formatCOP(currentItemPrice)}). Tu saldo actual es ${formatCOP(currentWalletBal)}.`);
+            }
+
             const user = AppState.get('currentUser');
             const userId = user?.id || null;
 
@@ -356,12 +383,17 @@ function attachContratoListeners() {
                 userName,
                 userCedula,
                 piggyName: currentPiggyName,
-                investmentAmount: ITEM_PRICE,
+                investmentAmount: currentItemPrice,
                 userId
             });
 
             // 2. Register Piggy in DB
-            const newPiggy = await adoptPiggy(currentPiggyName, contractResult?.contractUrl);
+            let newPiggy;
+            if (currentMarketplaceItem) {
+                newPiggy = await buyMarketplaceItem(currentMarketplaceItem, currentPiggyName, contractResult?.contractUrl);
+            } else {
+                newPiggy = await adoptPiggy(currentPiggyName, contractResult?.contractUrl);
+            }
 
             // 3. Update contract_url in piggies table & cedula in profiles table if DB active
             if (!isUsingMockData() && userId) {
@@ -394,13 +426,17 @@ function attachContratoListeners() {
                 AppState.set({ profile: { ...currentProfile, cedula: userCedula } });
             }
 
-            // 4. Deduct Wallet Balance
-            const deductResult = await deductWalletBalance(ITEM_PRICE);
+            // 4. Deduct Wallet Balance — ONLY AFTER CONTRACT & PIGGY ARE SUCCESSFULLY PROCESSED
+            const deductResult = await deductWalletBalance(currentItemPrice);
             if (!deductResult.success) {
                 console.warn('[WALLET] Deduct balance warning:', deductResult.reason);
             }
 
-            // 5. Render Success Screen
+            // 5. Clear pending session storage
+            sessionStorage.removeItem('pending_marketplace_item');
+            sessionStorage.removeItem('pending_piggy_name');
+
+            // 6. Render Success Screen
             renderSuccessScreen({
                 piggyName: currentPiggyName,
                 contractUrl: contractResult.contractUrl,
@@ -412,7 +448,7 @@ function attachContratoListeners() {
         } catch (error) {
             console.error('Error finalizando contrato:', error);
             alert('Hubo un error al procesar el contrato: ' + error.message);
-            finalizeBtn.innerHTML = `<span>Firmar y Confirmar Compra (${formatCOP(ITEM_PRICE)})</span>`;
+            finalizeBtn.innerHTML = `<span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>`;
             finalizeBtn.style.pointerEvents = 'auto';
         }
     });

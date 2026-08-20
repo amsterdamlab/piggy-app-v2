@@ -484,8 +484,8 @@ export function showCheckoutModal(item) {
           opacity: 0.5;
           pointer-events: none;
         ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-          Confirmar Compra
+          <span>✍️</span>
+          <span>Firmar Contrato y Comprar</span>
         </button>
       </div>
 
@@ -599,8 +599,8 @@ export function showCheckoutModal(item) {
     }
   });
 
-  // Confirm Purchase
-  confirmBtn.addEventListener('click', async () => {
+  // Confirm Purchase -> Navigate to Contract Signing
+  confirmBtn.addEventListener('click', () => {
     const customName = input.value.trim();
      
     // Check name validation on click
@@ -614,39 +614,12 @@ export function showCheckoutModal(item) {
 
     if (currentBalance < item.price) return;
 
-    // Visual feedback
-    confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
-    confirmBtn.style.pointerEvents = 'none';
+    // Save pending purchase details in session
+    sessionStorage.setItem('pending_piggy_name', customName);
+    sessionStorage.setItem('pending_marketplace_item', JSON.stringify(item));
 
-    try {
-      // ── CRÍTICO: Descontar wallet PRIMERO antes de llamar el RPC ──
-      // El RPC buy_piggy maneja stock y creación del piggy pero NO descuenta wallet.
-      const deductResult = await deductWalletBalance(item.price);
-      if (!deductResult.success) {
-        throw new Error(
-          deductResult.reason === 'insufficient_balance'
-            ? 'Saldo insuficiente en tu Wallet.'
-            : 'No se pudo procesar el pago. Intenta de nuevo.'
-        );
-      }
-
-      // Wallet descontada ✅ — ahora crear el piggy
-      try {
-        await buyMarketplaceItem(item, customName);
-      } catch (piggyError) {
-        console.error('Fallo al crear el Piggy, realizando reembolso automático:', piggyError);
-        await addWalletBalance(item.price, `Reembolso de emergencia: fallo en compra de ${customName}`);
-        throw new Error('Hubo un inconveniente al generar tu cerdito. Tu dinero fue reembolsado automáticamente a tu Cuenta Agro.');
-      }
-
-      close();
-      navigateTo('granja');
-    } catch (error) {
-      console.error(error);
-      alert('Error en la transacción: ' + error.message);
-      confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>Confirmar Compra`;
-      confirmBtn.style.pointerEvents = 'auto';
-    }
+    close();
+    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${item.price}`);
   });
 }
 

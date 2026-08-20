@@ -6,12 +6,10 @@
 import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
 import { renderBottomNav } from './GranjaView.js';
-import { adoptPiggy } from '../services/piggiesService.js';
-import { getWalletBalance, deductWalletBalance } from '../services/walletService.js';
+import { getWalletBalance } from '../services/walletService.js';
 import { formatCOP } from '../services/mockData.js';
 import { AppState } from '../state.js';
-import { openWalletRechargeInfo, openWalletDrawer } from './granja/WalletBlock.js';
-
+import { openWalletDrawer } from './granja/WalletBlock.js';
 
 /**
  * Render the Adopcion view.
@@ -32,10 +30,8 @@ export function renderAdopcionView() {
       <div class="page__content adopcion-content">
         
         <!-- Piggy Image Circle -->
-        <!-- Piggy Image Circle -->
         <div class="adopcion-image-wrapper animate-scale-in">
           <div class="adopcion-image adopcion-image--clean">
-            <!-- Clean image without badge -->
             <img src="pig2.jpg" alt="Piggy Bank" class="adopcion-image__img" />
           </div>
         </div>
@@ -112,10 +108,6 @@ function attachAdopcionListeners() {
 }
 
 /**
- * Show Checkout/Payment Gateway Modal
- */
-
-/**
  * Show Checkout Modal — Wallet-based purchase flow
  */
 function showCheckoutModal(piggyName) {
@@ -123,9 +115,6 @@ function showCheckoutModal(piggyName) {
   if (existing) existing.remove();
 
   const ITEM_PRICE = 1000000;
-  const ADMIN_WHATSAPP = '573154870448';
-  const profile = AppState.get('profile');
-  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
   const modal = document.createElement('div');
   modal.id = 'checkout-modal';
@@ -272,11 +261,12 @@ function showCheckoutModal(piggyName) {
     }
   });
 
-  // Confirm -> Navigate to contract signing
+  // Confirm -> Navigate to contract signing without deducting wallet balance
   confirmBtn.addEventListener('click', () => {
     if (currentBalance < ITEM_PRICE) return;
     sessionStorage.setItem('pending_piggy_name', piggyName);
+    sessionStorage.removeItem('pending_marketplace_item');
     close();
-    navigateTo(`contrato?name=${encodeURIComponent(piggyName)}`);
+    navigateTo(`contrato?name=${encodeURIComponent(piggyName)}&price=${ITEM_PRICE}`);
   });
 }

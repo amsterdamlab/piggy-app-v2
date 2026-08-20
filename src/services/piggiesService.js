@@ -375,8 +375,9 @@ export async function getDashboardStats(piggies = []) {
  * The current_month of the item determines how many days remain in the cycle.
  * @param {Object} item - The marketplace item
  * @param {string|null} customName - Optional custom name for the piggy
+ * @param {string|null} contractUrl - Optional URL of the signed contract PDF
  */
-export async function buyMarketplaceItem(item, customName = null) {
+export async function buyMarketplaceItem(item, customName = null, contractUrl = null) {
     // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
@@ -396,6 +397,7 @@ export async function buyMarketplaceItem(item, customName = null) {
             extra_roi_bonus: item.extra_roi || 0,
             category: item.category,
             current_weight: item.current_weight || 15.0,
+            contract_url: contractUrl || '/contracts/contrato_base.pdf',
         };
         MOCK_PIGGIES.unshift(newPiggy);
 
@@ -425,9 +427,19 @@ export async function buyMarketplaceItem(item, customName = null) {
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
+    // If contractUrl provided, update it on the created piggy
+    const createdPiggyId = rpcData?.piggy_id;
+    if (contractUrl && createdPiggyId) {
+        try {
+            await client.from('piggies').update({ contract_url: contractUrl }).eq('id', createdPiggyId);
+        } catch (e) {
+            console.warn('No se pudo actualizar contract_url en piggy recién creado:', e);
+        }
+    }
+
     // Success! Fetch the created piggy to return it
-    if (rpcData && rpcData.piggy_id) {
-        return getPiggyById(rpcData.piggy_id);
+    if (createdPiggyId) {
+        return getPiggyById(createdPiggyId);
     }
 
     // Fallback just for fetching data, not for logic
