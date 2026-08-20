@@ -39,6 +39,8 @@ DECLARE
   v_days_remaining int;
   v_total_cycle_days int := 143; -- ~4 months 3 weeks
   v_full_name text;
+  v_stage int;
+  v_image_url text;
 BEGIN
   -- 1. Lock and check stock
   SELECT stock INTO v_current_stock
@@ -58,27 +60,42 @@ BEGIN
   v_days_elapsed := GREATEST(0, (p_current_month - 1) * 30);
   v_days_remaining := GREATEST(1, v_total_cycle_days - v_days_elapsed);
 
-  -- 2. Deduct stock
+  -- Determine stage of purchase
+  IF v_days_elapsed > 90 THEN
+    v_stage := 3;
+  ELSIF v_days_elapsed > 30 THEN
+    v_stage := 2;
+  ELSE
+    v_stage := 1;
+  END IF;
+
+  -- 2. Deduct stock and retrieve item image_url
   UPDATE marketplace
   SET stock = stock - 1
-  WHERE id = p_item_id;
+  WHERE id = p_item_id
+  RETURNING image_url INTO v_image_url;
 
-  -- Fetch user full_name from profiles to store in piggies table for easy identification
+  IF v_image_url IS NULL OR v_image_url = '' THEN
+    v_image_url := 'assets/piggies/stage' || v_stage || '/et' || v_stage || '-1.jpg';
+  END IF;
+
+  -- Fetch user profile data to store in piggies table
   SELECT full_name INTO v_full_name
   FROM profiles
   WHERE id = p_user_id;
 
-  -- 3. Create the piggy with calculated end_date based on remaining days
+  -- 3. Create the piggy with calculated end_date and image_url stored directly
   INSERT INTO piggies (
     user_id, name, full_name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
-    purchase_date, end_date
+    purchase_date, end_date, image_url
   )
   VALUES (
     p_user_id, p_item_name, v_full_name, p_price, 'engorde',
     p_extra_roi, p_category, 15.0,
     NOW(),
-    NOW() + (v_days_remaining || ' days')::interval
+    NOW() + (v_days_remaining || ' days')::interval,
+    v_image_url
   )
   RETURNING id INTO v_new_piggy_id;
 
