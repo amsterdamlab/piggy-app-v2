@@ -115,6 +115,7 @@ export async function getPiggyById(id) {
  * @returns {Promise<Object>}
  */
 export async function adoptPiggy(piggyName, contractUrl = null) {
+    const defaultImageUrl = 'assets/piggies/stage1/et1-1.jpg';
     if (isUsingMockData()) {
         const newPiggy = {
             id: `mock-${Date.now()}`,
@@ -128,6 +129,7 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
             extra_roi_bonus: 0,
             current_weight: 15.0,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
+            image_url: defaultImageUrl,
         };
         MOCK_PIGGIES.unshift(newPiggy);
         return enrichPiggyData(newPiggy);
@@ -143,6 +145,7 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         investment_amount: 1000000,
         status: 'engorde',
         current_weight: 15.0,
+        image_url: defaultImageUrl,
     };
     if (contractUrl) {
         insertPayload.contract_url = contractUrl;
@@ -155,18 +158,16 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         .single();
 
     if (error) {
-        // If contract_url column doesn't exist yet, retry without it
-        if (error.message && error.message.includes('contract_url')) {
-            delete insertPayload.contract_url;
-            const { data: retryData, error: retryError } = await client
-                .from('piggies')
-                .insert(insertPayload)
-                .select()
-                .single();
-            if (retryError) throw new Error(retryError.message);
-            return enrichPiggyData(retryData);
-        }
-        throw new Error(error.message);
+        // If contract_url or image_url column doesn't exist yet, retry without non-essential fields
+        delete insertPayload.contract_url;
+        delete insertPayload.image_url;
+        const { data: retryData, error: retryError } = await client
+            .from('piggies')
+            .insert(insertPayload)
+            .select()
+            .single();
+        if (retryError) throw new Error(retryError.message);
+        return enrichPiggyData(retryData);
     }
     return enrichPiggyData(data);
 }
@@ -269,12 +270,10 @@ function enrichPiggyData(piggy) {
     let imageUrl = piggy.image_url || piggy.imageUrl;
 
     if (imageUrl) {
-        if (!imageUrl.startsWith('http')) {
-            const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
-            if (match) {
-                const photoNum = match[1];
-                imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
-            }
+        const match = imageUrl.match(/et\d-(\d)\.jpg/);
+        if (match) {
+            const photoNum = match[1];
+            imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
         }
     } else {
         const photoNum = getPiggyPhotoNumber(piggy.id || '1');
@@ -384,6 +383,9 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
     const daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
     const finalName = customName || item.item_name;
+    const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
+    const defaultPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
+    const finalImageUrl = item.image_url || item.imageUrl || `assets/piggies/stage${stage}/et${stage}-${defaultPhotoNum}.jpg`;
 
     if (isUsingMockData()) {
         const newPiggy = {
@@ -398,6 +400,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             category: item.category,
             current_weight: item.current_weight || 15.0,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
+            image_url: finalImageUrl,
         };
         MOCK_PIGGIES.unshift(newPiggy);
 
@@ -427,13 +430,19 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
-    // If contractUrl provided, update it on the created piggy
+    // If contractUrl or finalImageUrl provided, update them on the created piggy
     const createdPiggyId = rpcData?.piggy_id;
-    if (contractUrl && createdPiggyId) {
-        try {
-            await client.from('piggies').update({ contract_url: contractUrl }).eq('id', createdPiggyId);
-        } catch (e) {
-            console.warn('No se pudo actualizar contract_url en piggy recién creado:', e);
+    if (createdPiggyId) {
+        const updatePayload = {};
+        if (contractUrl) updatePayload.contract_url = contractUrl;
+        if (finalImageUrl) updatePayload.image_url = finalImageUrl;
+
+        if (Object.keys(updatePayload).length > 0) {
+            try {
+                await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
+            } catch (e) {
+                console.warn('No se pudo actualizar contract_url / image_url en piggy recién creado:', e);
+            }
         }
     }
 
