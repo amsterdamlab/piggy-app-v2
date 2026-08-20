@@ -50,20 +50,14 @@ trigger: always_on
 
 **VI. PROTOCOLO DE CONEXIÓN Y DESPLIEGUE (GitHub & Vercel)**
 
-* **Uso Exclusivo de MCP para Deployment (No usar comandos de Windows/Terminal):** Al realizar un push, commit o cualquier tipo de deployment a GitHub, **SIEMPRE** hazlo de forma exclusiva a través del servidor MCP de GitHub (`push_files`, `create_or_update_file`, etc.). **Queda estrictamente prohibido utilizar el sistema o terminal de Windows para realizar despliegues o comandos de git** (tales como `git add`, `git commit` o scripts de subida), ya que estas herramientas locales carecen de las credenciales adecuadas y el entorno local no dispone de ellas en su PATH. Todo el flujo de despliegue remoto debe gestionarse únicamente interactuando con las herramientas MCP provistas.
-
-* **Verificación Unica de Conexión:** Al inicio de cada sesión, verifica **una sola vez** la conexión con GitHub vía MCP.
-  * *Repositorio Objetivo:* `piggy-app-v2`.
-  * *Regla:* Una vez confirmada la conexión, no vuelvas a verificarla en la misma sesión.
-
-* **Despliegue Continuo Atomico:** Al finalizar cualquier ajuste o nueva funcionalidad, genera un `push` inmediato a GitHub para disparar el despliegue en Vercel.
-  * *Alcance del Push:* Sube **exclusivamente** los archivos modificados o creados para la tarea actual. No hagas push de todo el proyecto innecesariamente.
-  * *Nota:* La sincronización Vercel-GitHub ya existe; tu responsabilidad es solo subir el código.
-
+* **Uso Exclusivo Obligatorio de MCP para Deployment:** Cada vez que se realice o finalice cualquier ajuste, corrección o nueva funcionalidad en local, **SIEMPRE e INMEDIATAMENTE** se deben subir los cambios a GitHub **única y exclusivamente** a través de las herramientas del servidor MCP de GitHub (`push_files`, `create_or_update_file`, etc.).
+* **Prohibición Estricta de Otros Métodos:** Queda estrictamente prohibido utilizar el sistema o terminal de Windows para realizar despliegues o comandos de git (`git add`, `git commit`, `git push` o scripts locales), así como cualquier otro método alternativo que no sea MCP.
+* **Sincronización Continua con Vercel:** La sincronización entre GitHub (`amsterdamlab/piggy-app-v2`) y Vercel es automática; subir inmediatamente los archivos vía MCP asegura que el usuario pueda ver los cambios reflejados en tiempo real en la app online.
+* **Verificación Única de Conexión:** Al inicio de cada sesión, verifica **una sola vez** la conexión con GitHub vía MCP en el repositorio objetivo `piggy-app-v2`.
+* **Alcance Atómico del Push:** Sube **exclusivamente** los archivos modificados o creados para la tarea actual. No hagas push de todo el proyecto innecesariamente.
 * **⚠️ Regla de Archivos Grandes (>1000 líneas):** Antes de hacer push de un archivo que supere las **1,000 líneas**, DETENTE y NO intentes subirlo automáticamente vía MCP. En su lugar:
   1. Informa al usuario que el archivo es demasiado grande para push automático.
   2. Proporciona el **paso a paso manual** para subir el archivo vía la interfaz web de GitHub:
      - Ir a `https://github.com/amsterdamlab/piggy-app-v2/edit/main/<ruta_del_archivo>`
      - Borrar el contenido, copiar/pegar desde el archivo local, y hacer commit.
   3. *Prevención:* Cuando un archivo se acerque a las 800+ líneas, sugiere proactivamente **dividirlo en módulos más pequeños** (componentización).
-  * *Razón:* El token limit de salida del agente no permite incluir archivos completos de más de ~1000 líneas en un solo mensaje, causando bloqueo.
