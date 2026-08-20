@@ -221,6 +221,47 @@ function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
 }
 
 /**
+ * Extract or compute the display code for a piggy:
+ * - With contract: 'PGY-TX-B843WD' (from contract_code, contract_url, or hash)
+ * - Without contract: '#173802' (last 6 chars of ID)
+ * @param {Object} piggy
+ * @returns {string}
+ */
+export function getPiggyDisplayCode(piggy) {
+    if (!piggy) return '#000000';
+
+    // 1. If explicit contract_code exists in record
+    const explicitCode = piggy.contract_code || piggy.contractCode || piggy.contract_hash;
+    if (explicitCode && typeof explicitCode === 'string' && explicitCode.trim() !== '') {
+        const clean = explicitCode.trim().toUpperCase();
+        if (clean.startsWith('PGY-TX-')) {
+            const parts = clean.split('-');
+            const lastPart = parts.length >= 4 ? parts[3] : (parts[2] || 'TX');
+            return `PGY-TX-${lastPart}`;
+        }
+        return clean.startsWith('#') ? clean : `PGY-TX-${clean}`;
+    }
+
+    // 2. Extract from contract_url if present
+    const contractUrl = piggy.contract_url || piggy.contractUrl;
+    if (contractUrl && typeof contractUrl === 'string') {
+        const match = contractUrl.match(/PGY-TX-([A-Z0-9]+)-([A-Z0-9]+)/i);
+        if (match) {
+            return `PGY-TX-${match[2].toUpperCase()}`;
+        }
+        const simpleMatch = contractUrl.match(/PGY-TX-([A-Z0-9]+)/i);
+        if (simpleMatch) {
+            return `PGY-TX-${simpleMatch[1].toUpperCase()}`;
+        }
+    }
+
+    // 3. Fallback for piggies without contract: last 6 characters of ID
+    const rawId = String(piggy.id || '000000').replace(/[^a-zA-Z0-9]/g, '');
+    const last6 = rawId.length >= 6 ? rawId.slice(-6).toUpperCase() : rawId.padStart(6, '0').toUpperCase();
+    return `#${last6}`;
+}
+
+/**
  * Enrich a piggy record with computed fields for display.
  */
 function enrichPiggyData(piggy) {
@@ -286,6 +327,7 @@ function enrichPiggyData(piggy) {
 
     const piggyName = piggy.name || (piggy.id ? `Piggy #${String(piggy.id).slice(-4)}` : 'Tu Piggy');
     const growthStage = getPiggyGrowthStage(progress, piggyName);
+    const displayCode = getPiggyDisplayCode(piggy);
 
     return {
         ...piggy,
@@ -298,6 +340,8 @@ function enrichPiggyData(piggy) {
         imageUrl,
         name: piggyName,
         growthStage,
+        displayCode,
+        contract_code: displayCode,
     };
 }
 
@@ -376,7 +420,7 @@ export async function getDashboardStats(piggies = []) {
  * @param {string|null} customName - Optional custom name for the piggy
  * @param {string|null} contractUrl - Optional URL of the signed contract PDF
  */
-export async function buyMarketplaceItem(item, customName = null, contractUrl = null) {
+export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
     // Calculate days remaining based on current_month (matches marketplaceService logic)
     const CYCLE_TOTAL_DAYS = 143;
     const currentMonth = item.currentMonth || item.current_month || 1;
@@ -387,9 +431,21 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     const defaultPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
     const finalImageUrl = item.image_url || item.imageUrl || `assets/piggies/stage${stage}/et${stage}-${defaultPhotoNum}.jpg`;
 
+    let calculatedCode = customContractCode;
+    if (!calculatedCode && contractUrl) {
+        const match = contractUrl.match(/PGY-TX-([A-Z0-9]+)-([A-Z0-9]+)/i);
+        if (match) {
+            calculatedCode = `PGY-TX-${match[2].toUpperCase()}`;
+        } else {
+            const simpleMatch = contractUrl.match(/PGY-TX-([A-Z0-9]+)/i);
+            calculatedCode = simpleMatch ? `PGY-TX-${simpleMatch[1].toUpperCase()}` : null;
+        }
+    }
+
     if (isUsingMockData()) {
+        const mockId = `mock-${Date.now()}`;
         const newPiggy = {
-            id: `mock-${Date.now()}`,
+            id: mockId,
             user_id: 'mock-user',
             name: finalName,
             status: 'engorde',
@@ -401,6 +457,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             current_weight: item.current_weight || 15.0,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
             image_url: finalImageUrl,
+            contract_code: calculatedCode || `#${mockId.slice(-6).toUpperCase()}`,
         };
         MOCK_PIGGIES.unshift(newPiggy);
 
@@ -414,7 +471,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     if (!user) throw new Error('Usuario no autenticado');
 
     // Call Database Function (RPC)
-    // Passes current_month and contractUrl so the DB calculates the correct end_date and persists the contract URL atomically
+    // Passes current_month, contractUrl, and contractCode so the DB calculates the correct end_date and persists the contract code atomically
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -424,6 +481,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         p_category: item.category || 'standard',
         p_current_month: currentMonth,
         p_contract_url: contractUrl,
+        p_contract_code: calculatedCode,
     });
 
     if (rpcError) {
@@ -431,18 +489,19 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
-    // If contractUrl or finalImageUrl provided, update them on the created piggy
+    // If contractUrl, contractCode or finalImageUrl provided, update them on the created piggy
     const createdPiggyId = rpcData?.piggy_id;
     if (createdPiggyId) {
         const updatePayload = {};
         if (contractUrl) updatePayload.contract_url = contractUrl;
+        if (calculatedCode) updatePayload.contract_code = calculatedCode;
         if (finalImageUrl) updatePayload.image_url = finalImageUrl;
 
         if (Object.keys(updatePayload).length > 0) {
             try {
                 await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
             } catch (e) {
-                console.warn('No se pudo actualizar contract_url / image_url en piggy recién creado:', e);
+                console.warn('No se pudo actualizar contract_url / contract_code / image_url en piggy recién creado:', e);
             }
         }
     }
