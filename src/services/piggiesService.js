@@ -440,6 +440,3 @@ export async function buyMarketplaceItem(item, customName = null) {
 
     return enrichPiggyData(latest);
 }
-
-// Re-export utility functions for use in views
-export { calculateBaseROI, calculateTotalReturn, formatCOP, formatPercentage, getDaysRemaining };
