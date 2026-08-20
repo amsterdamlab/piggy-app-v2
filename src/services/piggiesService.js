@@ -414,7 +414,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     if (!user) throw new Error('Usuario no autenticado');
 
     // Call Database Function (RPC)
-    // Passes current_month so the DB calculates the correct end_date
+    // Passes current_month and contractUrl so the DB calculates the correct end_date and persists the contract URL atomically
     const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
         p_item_id: item.id,
         p_user_id: user.id,
@@ -423,6 +423,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         p_extra_roi: item.extra_roi || 0,
         p_category: item.category || 'standard',
         p_current_month: currentMonth,
+        p_contract_url: contractUrl,
     });
 
     if (rpcError) {
