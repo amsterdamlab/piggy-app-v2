@@ -32,6 +32,7 @@ export const MOCK_PIGGIES = [
         current_weight: 45.2,
         created_at: '2026-01-20T10:00:00Z',
         name: 'Pochito',
+        image_url: 'assets/piggies/stage2/et2-1.jpg',
     },
     {
         id: 'pig-002',
@@ -44,6 +45,7 @@ export const MOCK_PIGGIES = [
         current_weight: 32.7,
         created_at: '2026-02-01T10:00:00Z',
         name: 'Luna',
+        image_url: 'assets/piggies/stage1/et1-2.jpg',
     },
 ];
 
@@ -184,7 +186,7 @@ export const MOCK_MISSIONS = [
         id: 'm2',
         title: 'Compra tu primer Piggy',
         reward: 'Desbloquea Piggy de 3 meses',
-        is_completed: true,
+        is_completed: true, // Simulado completado para ver progreso
         icon: '🐷',
         cta: '#/mercado'
     },
@@ -409,3 +411,4 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
         description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
     };
 }
+
