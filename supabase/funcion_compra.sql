@@ -26,7 +26,8 @@ CREATE OR REPLACE FUNCTION buy_piggy(
   p_extra_roi numeric,
   p_category text,
   p_current_month integer DEFAULT 1,
-  p_contract_url text DEFAULT NULL
+  p_contract_url text DEFAULT NULL,
+  p_contract_code text DEFAULT NULL
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -42,6 +43,7 @@ DECLARE
   v_full_name text;
   v_stage int;
   v_image_url text;
+  v_final_contract_code text;
 BEGIN
   -- 1. Lock and check stock
   SELECT stock INTO v_current_stock
@@ -85,29 +87,45 @@ BEGIN
   FROM profiles
   WHERE id = p_user_id;
 
-  -- 3. Create the piggy with calculated end_date, image_url, and contract_url stored directly
+  -- Generate new UUID for piggy
+  v_new_piggy_id := gen_random_uuid();
+
+  -- Determine final contract code
+  IF p_contract_code IS NOT NULL AND p_contract_code <> '' THEN
+    v_final_contract_code := p_contract_code;
+  ELSIF p_contract_url IS NOT NULL AND p_contract_url <> '' THEN
+    -- Extract code from contract_url if present
+    v_final_contract_code := substring(p_contract_url from 'PGY-TX-[A-Za-z0-9]+-([A-Za-z0-9]+)');
+    IF v_final_contract_code IS NOT NULL THEN
+      v_final_contract_code := 'PGY-TX-' || upper(v_final_contract_code);
+    ELSE
+      v_final_contract_code := '#' || upper(substring(replace(v_new_piggy_id::text, '-', '') from 27 for 6));
+    END IF;
+  ELSE
+    -- Fallback for piggies without contract: # + last 6 characters of ID
+    v_final_contract_code := '#' || upper(substring(replace(v_new_piggy_id::text, '-', '') from 27 for 6));
+  END IF;
+
+  -- 3. Create the piggy with calculated end_date, image_url, contract_url, and contract_code stored directly
   INSERT INTO piggies (
-    user_id, name, full_name, investment_amount, status,
+    id, user_id, name, full_name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
-    purchase_date, end_date, image_url, contract_url
+    purchase_date, end_date, image_url, contract_url, contract_code
   )
   VALUES (
-    p_user_id, p_item_name, v_full_name, p_price, 'engorde',
+    v_new_piggy_id, p_user_id, p_item_name, v_full_name, p_price, 'engorde',
     p_extra_roi, p_category, 15.0,
     NOW(),
     NOW() + (v_days_remaining || ' days')::interval,
     v_image_url,
-    p_contract_url
-  )
-  RETURNING id INTO v_new_piggy_id;
+    p_contract_url,
+    v_final_contract_code
+  );
 
   -- 4. Process referral commission (only triggers on first purchase)
-  --    This function checks internally if it's the user's first piggy
-  --    and if they have a pending referral.
   BEGIN
     v_referral_result := process_referral_on_purchase(p_user_id);
   EXCEPTION WHEN OTHERS THEN
-    -- Non-blocking: if referral processing fails, the purchase still succeeds
     v_referral_result := jsonb_build_object('triggered', false, 'reason', 'error');
   END;
 
@@ -115,6 +133,7 @@ BEGIN
     'success', true,
     'piggy_id', v_new_piggy_id,
     'days_remaining', v_days_remaining,
+    'contract_code', v_final_contract_code,
     'referral', v_referral_result
   );
 END;
