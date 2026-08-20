@@ -58,7 +58,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         id: 3,
         item_name: 'Piggy Advanced (Mes 3)',
         description: 'Cerdo con máximo periodo de avance en su ciclo de engorde (3 meses).',
-        price: 1300000,
+        price: 1000000,
         extra_roi: 0.00,
         stock: 10,
         category: 'advanced',
@@ -136,6 +136,19 @@ function enrichItem(item) {
     const defaultFallback = (item.category === 'advanced60' || item.category === 'advanced30' || (item.category === 'advanced' && currentMonth === 3)) ? 1300000 : 1000000;
     const price = item.price ?? defaultFallback;
 
+    // Stable, deterministic image URL based on item configuration / id / month
+    const defaultPhotoMap = {
+        1: 'assets/piggies/stage1/et1-1.jpg',
+        2: 'assets/piggies/stage2/et2-1.jpg',
+        3: 'assets/piggies/stage2/et2-2.jpg',
+        4: 'assets/piggies/stage1/et1-2.jpg',
+        5: 'assets/piggies/stage1/et1-3.jpg',
+        6: 'assets/piggies/stage1/et1-4.jpg',
+    };
+    const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
+    const fallbackPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
+    const resolvedImageUrl = item.image_url || defaultPhotoMap[item.id] || `assets/piggies/stage${stage}/et${stage}-${fallbackPhotoNum}.jpg`;
+
     return {
         ...item,
         price: price,
@@ -145,5 +158,6 @@ function enrichItem(item) {
         priceFormatted: formatCOP(price),
         hasBonus: item.extra_roi > 0,
         bonusText: item.extra_roi > 0 ? `+${(item.extra_roi * 100).toFixed(0)}%` : null,
+        image_url: resolvedImageUrl,
     };
 }
