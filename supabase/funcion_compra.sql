@@ -25,7 +25,8 @@ CREATE OR REPLACE FUNCTION buy_piggy(
   p_item_name text,
   p_extra_roi numeric,
   p_category text,
-  p_current_month integer DEFAULT 1
+  p_current_month integer DEFAULT 1,
+  p_contract_url text DEFAULT NULL
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -84,18 +85,19 @@ BEGIN
   FROM profiles
   WHERE id = p_user_id;
 
-  -- 3. Create the piggy with calculated end_date and image_url stored directly
+  -- 3. Create the piggy with calculated end_date, image_url, and contract_url stored directly
   INSERT INTO piggies (
     user_id, name, full_name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
-    purchase_date, end_date, image_url
+    purchase_date, end_date, image_url, contract_url
   )
   VALUES (
     p_user_id, p_item_name, v_full_name, p_price, 'engorde',
     p_extra_roi, p_category, 15.0,
     NOW(),
     NOW() + (v_days_remaining || ' days')::interval,
-    v_image_url
+    v_image_url,
+    p_contract_url
   )
   RETURNING id INTO v_new_piggy_id;
 
