@@ -342,15 +342,20 @@ function attachContratoListeners() {
                 newPiggy = await adoptPiggy(currentPiggyName, contractResult?.contractUrl);
             }
 
-            // 3. Update contract_url in piggies table & cedula in profiles table if DB active
+            // 3. Update contract_url & image_url in piggies table & cedula in profiles table if DB active
             if (!isUsingMockData() && userId) {
                 const client = getClient();
                 try {
-                    if (newPiggy?.id && contractResult?.contractUrl) {
-                        await client
-                            .from('piggies')
-                            .update({ contract_url: contractResult.contractUrl })
-                            .eq('id', newPiggy.id);
+                    if (newPiggy?.id) {
+                        const updatePiggyPayload = {};
+                        if (contractResult?.contractUrl) updatePiggyPayload.contract_url = contractResult.contractUrl;
+                        if (currentMarketplaceItem?.image_url) updatePiggyPayload.image_url = currentMarketplaceItem.image_url;
+                        if (Object.keys(updatePiggyPayload).length > 0) {
+                            await client
+                                .from('piggies')
+                                .update(updatePiggyPayload)
+                                .eq('id', newPiggy.id);
+                        }
                     }
                 } catch (piggyUpdateErr) {
                     console.warn('[ContratoView] Could not update contract_url in piggies table:', piggyUpdateErr);
