@@ -33,126 +33,131 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
             display: flex;
             flex-direction: column;
             position: relative;
+            padding: 20px;
+            box-sizing: border-box;
         ">
-            <!-- Top Close Button Bar -->
-            <div style="
-                padding: 16px 18px 0 18px;
+            <!-- Close Button (No background circle, top-right) -->
+            <button id="btn-close-signature" style="
+                position: absolute;
+                top: 14px;
+                right: 14px;
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #64748b;
+                padding: 4px;
                 display: flex;
                 align-items: center;
-                justify-content: flex-end;
+                justify-content: center;
+                transition: color 0.2s;
+                z-index: 10;
+            " onmouseover="this.style.color='#0f172a';" onmouseout="this.style.color='#64748b';">
+                ${renderIcon('close', '', '20')}
+            </button>
+
+            <!-- Buyer Info with Icons (Dark Gray) -->
+            <div style="
+                margin-top: 8px;
+                margin-bottom: 14px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 12px 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                box-sizing: border-box;
             ">
-                <button id="btn-close-signature" style="
-                    background: #f1f5f9;
-                    border: none;
-                    cursor: pointer;
-                    color: #64748b;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                " onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
-                    ${renderIcon('close', '', '18')}
-                </button>
+                <div style="display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;">
+                    <span style="color: #475569; display: flex; align-items: center; flex-shrink: 0;">${renderIcon('user', '', '18')}</span>
+                    <span style="word-break: break-word;">${userName}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;">
+                    <span style="color: #475569; display: flex; align-items: center; flex-shrink: 0;">${renderIcon('documentText', '', '18')}</span>
+                    <span style="word-break: break-word;">${userCedula}</span>
+                </div>
             </div>
 
-            <!-- Body -->
-            <div style="padding: 10px 20px 20px 20px;">
-                
-                <!-- Buyer Info -->
-                <div style="
-                    font-size: 0.88rem;
-                    color: #1e293b;
-                    margin-bottom: 14px;
-                    background: #f8fafc;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    padding: 12px 16px;
-                    line-height: 1.5;
-                ">
-                    <div><strong>Comprador:</strong> ${userName}</div>
-                    <div style="margin-top:2px;"><strong>C.C.:</strong> ${userCedula}</div>
-                </div>
-
-                <!-- Canvas Box -->
-                <div style="
-                    position: relative;
-                    border: 2px dashed #cbd5e1;
-                    border-radius: 14px;
-                    background: #ffffff;
-                    touch-action: none;
-                    user-select: none;
-                    margin-bottom: 12px;
-                ">
-                    <canvas id="signature-canvas" style="
-                        width: 100%;
-                        height: 180px;
-                        display: block;
-                        cursor: crosshair;
-                        border-radius: 12px;
-                    "></canvas>
-                    
-                    <div id="canvas-placeholder" style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        color: #94a3b8;
-                        font-size: 0.85rem;
-                        pointer-events: none;
-                        font-weight: 500;
-                        display: flex;
-                        align-items: center;
-                        gap: 6px;
-                    ">
-                        <span>🖊️</span> Dibuja aquí con tu dedo o mouse
-                    </div>
-                </div>
-
-                <!-- Canvas Actions -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px;">
-                    <span style="font-size:0.75rem; color:#94a3b8;">Línea base para firma electrónica</span>
-                    <button type="button" id="btn-clear-canvas" style="
-                        background: #f1f5f9;
-                        color: #475569;
-                        border: none;
-                        padding: 6px 14px;
-                        border-radius: 8px;
-                        font-size: 0.78rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 4px;
-                        transition: all 0.2s;
-                    ">
-                        🗑️ Limpiar
-                    </button>
-                </div>
-
-                <!-- Confirm Button -->
-                <button type="button" id="btn-accept-signature" style="
+            <!-- Canvas Box with Clear Button inside (bottom-right) -->
+            <div style="
+                position: relative;
+                border: 2px dashed #cbd5e1;
+                border-radius: 14px;
+                background: #ffffff;
+                touch-action: none;
+                user-select: none;
+                margin-bottom: 18px;
+                width: 100%;
+                box-sizing: border-box;
+            ">
+                <canvas id="signature-canvas" style="
                     width: 100%;
-                    background: linear-gradient(135deg, #10B981, #059669);
-                    color: white;
-                    border: none;
-                    padding: 14px 20px;
+                    height: 180px;
+                    display: block;
+                    cursor: crosshair;
                     border-radius: 12px;
-                    font-weight: 800;
-                    font-size: 0.95rem;
+                "></canvas>
+                
+                <div id="canvas-placeholder" style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: #94a3b8;
+                    font-size: 0.85rem;
+                    pointer-events: none;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                ">
+                    <span>🖊️</span> Dibuja aquí con tu dedo o mouse
+                </div>
+
+                <!-- Clear Button (Trash icon only, inside bottom-right) -->
+                <button type="button" id="btn-clear-canvas" title="Limpiar firma" style="
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    background: #f1f5f9;
+                    color: #64748b;
+                    border: 1px solid #e2e8f0;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 8px;
                     cursor: pointer;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 8px;
-                    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
                     transition: all 0.2s;
-                ">
-                    ✓ Aceptar y Aplicar Firma
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+                    z-index: 5;
+                " onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b'; this.style.borderColor='#e2e8f0';">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
             </div>
+
+            <!-- Confirm Button -->
+            <button type="button" id="btn-accept-signature" style="
+                width: 100%;
+                background: linear-gradient(135deg, #10B981, #059669);
+                color: white;
+                border: none;
+                padding: 14px 20px;
+                border-radius: 12px;
+                font-weight: 800;
+                font-size: 0.95rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+                transition: all 0.2s;
+            ">
+                <span>Aplicar Firma</span>
+            </button>
         </div>
     `;
 
@@ -232,7 +237,8 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
     canvas.addEventListener('mouseleave', stopDrawing);
 
     // Clear
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const rect = canvas.getBoundingClientRect();
         ctx.clearRect(0, 0, rect.width, rect.height);
         hasDrawn = false;

@@ -137,6 +137,8 @@ export function renderContratoView() {
                     </label>
                     <input 
                         type="text" 
+                        inputmode="numeric"
+                        pattern="[0-9]*"
                         id="contrato-user-cedula" 
                         class="contrato-input-field" 
                         value="${initialCedula}" 
@@ -248,6 +250,11 @@ function attachContratoListeners() {
     const previewBox = document.getElementById('signature-preview-box');
     const nameInput = document.getElementById('contrato-user-name');
     const cedulaInput = document.getElementById('contrato-user-cedula');
+
+    // Only numbers in cedula
+    cedulaInput?.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
 
     previewBox?.addEventListener('click', () => {
         const userName = nameInput?.value?.trim() || 'Comprador';
