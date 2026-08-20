@@ -80,6 +80,18 @@ export async function openWalletRechargeInfo(liveStats = null) {
   const PRESETS = [200000, 500000, 1000000, 2000000];
   let selectedAmount = 200000;
 
+  // Helper formatting functions for thousands separators (dots)
+  const formatThousands = (num) => {
+    if (!num && num !== 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const parseFormattedNumber = (val) => {
+    if (!val) return 0;
+    const digits = String(val).replace(/\D/g, '');
+    return parseInt(digits, 10) || 0;
+  };
+
   /* ─────────────────────────────────────────
      STEP 1 — Amount selector
   ───────────────────────────────────────── */
@@ -91,17 +103,16 @@ export async function openWalletRechargeInfo(liveStats = null) {
           </div>
         ` : ''}
         <!-- Sticky Header -->
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#10B981,#059669); display:flex; align-items:center; justify-content:center; color:white;">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
             </div>
             <div>
-              <div style="font-weight:800; font-size:1.1rem; color:#0f172a; line-height:1.2;">Recargar Cuenta Agro</div>
-              <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Selecciona el monto que deseas ingresar</div>
+              <div style="font-weight:800; font-size:1.15rem; color:#0f172a; line-height:1.2;">¿Cuánto quieres recargar?</div>
             </div>
           </div>
-          <button id="rch-close" style="background:#f1f5f9; border:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#334155; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+          <button id="rch-close" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
         </div>
 
         <!-- Scrollable Body Content -->
@@ -128,8 +139,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
             <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O ingresa un monto personalizado</label>
             <div style="position:relative;">
               <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
-              <input type="number" id="rch-custom-amount" placeholder="Ej: 150000" min="10000"
-                value="${PRESETS.includes(selectedAmount) ? '' : selectedAmount}"
+              <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 150.000"
+                value="${formatThousands(selectedAmount)}"
                 style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
                 onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e2e8f0';" />
             </div>
@@ -146,47 +157,56 @@ export async function openWalletRechargeInfo(liveStats = null) {
           <a href="terminos-y-condiciones.html" target="_blank" style="
             display:block; text-align:center; font-size:0.75rem; color:#64748b; font-weight:500;
             text-decoration:underline; margin-top:16px; cursor:pointer;
-          ">Términos y Condiciones</a>
+          ">Ver Términos y Condiciones</a>
         </div>
     `;
 
     document.getElementById('rch-close').addEventListener('click', close);
 
-    // Preset selection: Actualización reactiva de estilos para evitar re-renderizado total (flicker)
+    const updatePresetStyles = (amount) => {
+      container.querySelectorAll('.preset-btn').forEach(b => {
+        const bAmount = parseInt(b.dataset.amount);
+        if (bAmount === amount) {
+          b.style.borderColor = '#10B981';
+          b.style.background = '#ecfdf5';
+          b.style.color = '#059669';
+        } else {
+          b.style.borderColor = '#e5e7eb';
+          b.style.background = 'white';
+          b.style.color = '#374151';
+        }
+      });
+    };
+
+    // Preset selection: Actualización del input con puntos y estilos
     container.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         selectedAmount = parseInt(btn.dataset.amount);
         const customInput = document.getElementById('rch-custom-amount');
-        if (customInput) customInput.value = '';
-
-        container.querySelectorAll('.preset-btn').forEach(b => {
-          b.style.borderColor = '#e5e7eb';
-          b.style.background = 'white';
-          b.style.color = '#374151';
-        });
-        btn.style.borderColor = '#10B981';
-        btn.style.background = '#ecfdf5';
-        btn.style.color = '#059669';
+        if (customInput) customInput.value = formatThousands(selectedAmount);
+        updatePresetStyles(selectedAmount);
       });
     });
 
-    // Custom amount input
-    document.getElementById('rch-custom-amount').addEventListener('input', (e) => {
-      const v = parseInt(e.target.value);
-      if (!isNaN(v) && v > 0) {
-        selectedAmount = v;
-        // Quitar selección visual de los presets
-        container.querySelectorAll('.preset-btn').forEach(b => {
-          b.style.borderColor = '#e5e7eb';
-          b.style.background = 'white';
-          b.style.color = '#374151';
-        });
+    // Custom amount input con formateo automático de puntos de miles
+    const customInputEl = document.getElementById('rch-custom-amount');
+    customInputEl.addEventListener('input', (e) => {
+      const rawDigits = e.target.value.replace(/\D/g, '');
+      if (!rawDigits) {
+        e.target.value = '';
+        selectedAmount = 0;
+        updatePresetStyles(0);
+        return;
       }
+      const num = parseInt(rawDigits, 10);
+      selectedAmount = num;
+      e.target.value = formatThousands(num);
+      updatePresetStyles(num);
     });
 
     document.getElementById('rch-step1-next').addEventListener('click', () => {
-      const customVal = parseInt(document.getElementById('rch-custom-amount').value);
-      if (!isNaN(customVal) && customVal >= 10000) selectedAmount = customVal;
+      const customVal = parseFormattedNumber(document.getElementById('rch-custom-amount').value);
+      if (customVal >= 10000) selectedAmount = customVal;
       if (!selectedAmount || selectedAmount < 10000) {
         alert('El monto mínimo de recarga es $10.000');
         return;
@@ -214,7 +234,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
               <div style="font-size:0.75rem; color:#059669; font-weight:700;">Monto a ingresar: ${formatCOP(selectedAmount)}</div>
             </div>
           </div>
-          <button id="rch-close" style="background:#f1f5f9; border:none; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#334155; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
+          <button id="rch-close" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
         </div>
 
         <!-- Scrollable Body Content -->
@@ -260,7 +280,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
           <a href="terminos-y-condiciones.html" target="_blank" style="
             display:inline-block; font-size:0.72rem; color:#64748b; font-weight:500;
             text-decoration:underline; cursor:pointer;
-          ">Términos y Condiciones</a>
+          ">Ver Términos y Condiciones</a>
         </div>
     `;
 
