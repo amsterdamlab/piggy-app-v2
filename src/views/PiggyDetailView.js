@@ -71,10 +71,12 @@ async function loadPiggyDetail(piggyId) {
               <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-top: -2px; margin-bottom: 8px;">
-              <span style="display: inline-flex; align-items: center; color: var(--color-primary, #ec4899);">${renderIcon('tag', '', '15')}</span>
-              <span style="letter-spacing: 0.3px;">${piggy.displayCode || piggy.contract_code}</span>
-              ${piggy.isComplete ? '<span class="badge badge--success" style="font-size: 0.7rem; padding: 2px 8px; margin-left: 4px;">✓ Completado</span>' : ''}
+            <div style="display: flex; align-items: center; justify-content: center; margin-top: 4px; margin-bottom: 6px;">
+              <span class="badge badge--primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; padding: 6px 14px; letter-spacing: 0.3px;">
+                <span style="display: inline-flex; align-items: center; color: currentColor;">${renderIcon('tag', '', '14')}</span>
+                <span>${piggy.displayCode || piggy.contract_code || '#000000'}</span>
+              </span>
+              ${piggy.isComplete ? '<span class="badge badge--success" style="font-size: 0.75rem; padding: 4px 10px; margin-left: 6px;">✓ Completado</span>' : ''}
             </div>
           </div>
 
