@@ -389,7 +389,8 @@ function attachContratoListeners() {
                 contractUrl: contractResult.contractUrl,
                 hash: contractResult.hash,
                 userName,
-                userCedula
+                userCedula,
+                pdfBlob: contractResult.pdfBlob
             });
 
         } catch (error) {
@@ -404,55 +405,88 @@ function attachContratoListeners() {
     });
 }
 
-function renderSuccessScreen({ piggyName, contractUrl, hash, userName, userCedula }) {
+function renderSuccessScreen({ piggyName, contractUrl, hash, userName, userCedula, pdfBlob }) {
     const app = document.getElementById('app');
     app.innerHTML = `
     <div class="page contrato-page animate-fade-in" style="display:flex; align-items:center; justify-content:center; padding: 24px 16px;">
         <div class="contrato-success-card animate-scale-in" style="max-width:480px; width:100%;">
-            <div class="contrato-success-icon">
-                ✓
+            
+            <!-- Circular Piggy Logo -->
+            <div style="margin: 0 auto 16px auto; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25); border: 2px solid #fce7f3;">
+                <img src="/piggy-loading-logo.png" alt="Piggy" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
             </div>
             
-            <h2 style="font-size:1.4rem; font-weight:800; color:#0f172a; margin:0 0 8px 0;">
-                ¡Felicidades por tu nuevo Piggy!
+            <h2 style="font-size:1.35rem; font-weight:800; color:#0f172a; margin:0 0 8px 0; letter-spacing:-0.01em; white-space:nowrap;">
+                ¡Felicidades por tu compra!
             </h2>
-            <p style="color:#64748b; font-size:0.9rem; margin:0 0 20px 0; line-height:1.5;">
-                El Piggy <strong>"${piggyName}"</strong> ya se encuentra en tu granja y el contrato ha sido firmado y almacenado legalmente.
+            <p style="color:#64748b; font-size:0.88rem; margin:0 0 20px 0; line-height:1.5;">
+                Tu Piggy <strong>"${piggyName}"</strong> ya se encuentra en tu granja y el contrato ha sido firmado y almacenado legalmente.
             </p>
 
-            <!-- Verification Badge -->
+            <!-- Verification Badge with dashed border -->
             <div style="
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                padding: 12px 16px;
+                background: transparent;
+                border: 1.5px dashed #cbd5e1;
+                border-radius: 14px;
+                padding: 14px 16px;
                 text-align: left;
-                font-size: 0.78rem;
+                font-size: 0.8rem;
                 color: #475569;
-                margin-bottom: 24px;
-                line-height: 1.5;
+                margin-bottom: 22px;
+                line-height: 1.55;
             ">
                 <div><strong>Firmante:</strong> ${userName} (C.C. ${userCedula})</div>
-                <div><strong>ID Transacción:</strong> <span style="font-family:monospace; color:var(--color-primary);">${hash}</span></div>
+                <div><strong>ID Transacción:</strong> <span style="font-family:monospace; color:var(--color-primary, #ec4899); font-weight:700;">${hash}</span></div>
                 <div><strong>Estado:</strong> Firmado con validez jurídica (Ley 527 de 1999)</div>
             </div>
 
             <!-- Action Buttons -->
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <a 
-                    href="${contractUrl}" 
-                    target="_blank" 
-                    download="Contrato_Piggy_${piggyName}.pdf" 
-                    class="btn btn--primary btn--block btn--lg"
-                    style="background: linear-gradient(135deg, #10B981, #059669); text-decoration:none; display:flex; align-items:center; justify-content:center; gap:8px;"
-                >
-                    ${renderIcon('download', '', '20')}
-                    Descargar Contrato Firmado (PDF)
-                </a>
-
-                <button class="btn btn--secondary btn--block btn--lg" id="btn-ir-granja">
-                    🚜 Ir a Mi Granja
+            <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+                <button class="btn btn--primary btn--block btn--lg" id="btn-ir-granja" style="
+                    background: linear-gradient(135deg, var(--color-primary, #ec4899), #db2777);
+                    color: white;
+                    border: none;
+                    padding: 14px 20px;
+                    border-radius: 14px;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    box-shadow: 0 6px 20px -4px rgba(236,72,153,0.4);
+                    transition: all 0.2s;
+                    width: 100%;
+                    box-sizing: border-box;
+                ">
+                    ${renderIcon('farm', '', '20')}
+                    <span>Ir a Mi Granja</span>
                 </button>
+
+                <!-- Underlined Download Link -->
+                <a 
+                    href="#" 
+                    id="btn-descargar-contrato" 
+                    style="
+                        color: var(--color-primary, #ec4899); 
+                        font-weight: 700; 
+                        font-size: 0.9rem; 
+                        text-decoration: underline; 
+                        cursor: pointer; 
+                        display: inline-flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        gap: 6px; 
+                        padding: 6px 0;
+                        transition: opacity 0.2s;
+                    "
+                    onmouseover="this.style.opacity='0.8';"
+                    onmouseout="this.style.opacity='1';"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Descargar Contrato Firmado</span>
+                </a>
             </div>
         </div>
     </div>
@@ -460,5 +494,33 @@ function renderSuccessScreen({ piggyName, contractUrl, hash, userName, userCedul
 
     document.getElementById('btn-ir-granja')?.addEventListener('click', () => {
         navigateTo('granja');
+    });
+
+    document.getElementById('btn-descargar-contrato')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            let blobToDownload = pdfBlob;
+            if (!blobToDownload && contractUrl) {
+                const res = await fetch(contractUrl);
+                blobToDownload = await res.blob();
+            }
+
+            if (!blobToDownload) {
+                window.open(contractUrl, '_blank');
+                return;
+            }
+
+            const blobUrl = URL.createObjectURL(blobToDownload);
+            const tempLink = document.createElement('a');
+            tempLink.href = blobUrl;
+            tempLink.download = `Contrato_Piggy_${piggyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        } catch (err) {
+            console.warn('Error downloading contract blob directly:', err);
+            window.open(contractUrl, '_blank');
+        }
     });
 }
