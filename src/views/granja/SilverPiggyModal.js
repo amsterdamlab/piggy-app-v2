@@ -27,6 +27,7 @@ const SILVER_PIGGY_ITEM = {
     priceFormatted: '$1.000.000',
     hasBonus: true,
     bonusText: '+1%',
+    image_url: 'assets/piggies/stage1/et1-2.jpg',
 };
 
 /** Active countdown interval — cleaned up on modal close */
