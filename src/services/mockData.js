@@ -33,6 +33,7 @@ export const MOCK_PIGGIES = [
         created_at: '2026-01-20T10:00:00Z',
         name: 'Pochito',
         image_url: 'assets/piggies/stage2/et2-1.jpg',
+        contract_code: '#PIG001',
     },
     {
         id: 'pig-002',
@@ -46,6 +47,8 @@ export const MOCK_PIGGIES = [
         created_at: '2026-02-01T10:00:00Z',
         name: 'Luna',
         image_url: 'assets/piggies/stage1/et1-2.jpg',
+        contract_code: 'PGY-TX-B843WD',
+        contract_url: 'https://elhsvitbqzivgajccify.supabase.co/storage/v1/object/public/contracts/contratos/3349c043-bd00-4937-a831-6b5e6bb91738/contrato_1787196691238_PGY-TX-RK52-B843WD.pdf',
     },
 ];
 
