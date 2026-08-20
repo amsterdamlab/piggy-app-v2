@@ -76,7 +76,6 @@ async function loadPiggyDetail(piggyId) {
                 <span style="display: inline-flex; align-items: center; color: currentColor;">${renderIcon('tag', '', '14')}</span>
                 <span>${piggy.displayCode || piggy.contract_code || '#000000'}</span>
               </span>
-              ${piggy.isComplete ? '<span class="badge badge--success" style="font-size: 0.75rem; padding: 4px 10px; margin-left: 6px;">✓ Completado</span>' : ''}
             </div>
           </div>
 
