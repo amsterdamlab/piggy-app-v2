@@ -41,12 +41,19 @@ export async function getUserPiggies() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
 
-    // Sincronizar los pesos reales en base de datos antes de consultar
+    // 1. Sincronizar pesos y marcar cerditos vencidos en DB ANTES de consultar
     if (user) {
-        const { error: syncError } = await client.rpc('sync_piggy_weights', { p_user_id: user.id });
-        if (syncError) console.warn('Sync weight error:', syncError);
+        try {
+            await Promise.allSettled([
+                client.rpc('sync_piggy_weights', { p_user_id: user.id }),
+                client.rpc('mark_expired_piggies', { p_user_id: user.id })
+            ]);
+        } catch (syncErr) {
+            console.warn('Sync/expired RPC error:', syncErr);
+        }
     }
 
+    // 2. Consultar los piggies con su status y pesos actualizados
     const { data, error } = await client
         .from('piggies')
         .select('*')
@@ -57,9 +64,6 @@ export async function getUserPiggies() {
         console.warn('Error fetching piggies:', error);
         return [];
     }
-
-    // Auto-persist completion status for expired piggies
-    await markExpiredPiggies(user.id);
 
     // Enrich DB data with runtime calculated fields (daysLeft, progress)
     return (data || []).map(enrichPiggyData);
