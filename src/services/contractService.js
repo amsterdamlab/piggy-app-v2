@@ -280,10 +280,15 @@ export async function stampAndUploadContract({
         contractUrl = publicData?.publicUrl || URL.createObjectURL(pdfBlob);
     }
 
+    const hashParts = transaccionHash.split('-');
+    const shortCode = hashParts.length >= 4 ? hashParts[3] : (hashParts[2] || 'TX001');
+    const contractCode = `PGY-TX-${shortCode.toUpperCase()}`;
+
     return {
         success: true,
         contractUrl,
         pdfBlob,
-        hash: transaccionHash
+        hash: transaccionHash,
+        contractCode
     };
 }
