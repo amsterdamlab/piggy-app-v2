@@ -176,7 +176,7 @@ async function loadGranjaData(firstName) {
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     showNewsBillboardModal(newsSlides);
 
-    attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
+    attachGranjaListeners(piggies.length > 0, stats, piggyCount, piggies);
 
     // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
@@ -417,7 +417,7 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold text-primary" style="font-size:0.9rem;">
             <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">CC:</span> ${formatCOP(projectedReturn)}
           </div>
-          ${extraRoi > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Beneficio x Venta +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
+          ${extraRoi > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>
