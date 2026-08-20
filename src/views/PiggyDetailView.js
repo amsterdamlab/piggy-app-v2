@@ -71,9 +71,11 @@ async function loadPiggyDetail(piggyId) {
               <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
-            <span class="badge ${piggy.isComplete ? 'badge--success' : 'badge--primary'}">
-              ${piggy.isComplete ? '✓ Completado' : `${piggy.daysLeft} días restantes`}
-            </span>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-top: -2px; margin-bottom: 8px;">
+              <span style="display: inline-flex; align-items: center; color: var(--color-primary, #ec4899);">${renderIcon('tag', '', '15')}</span>
+              <span style="letter-spacing: 0.3px;">${piggy.displayCode || piggy.contract_code}</span>
+              ${piggy.isComplete ? '<span class="badge badge--success" style="font-size: 0.7rem; padding: 2px 8px; margin-left: 4px;">✓ Completado</span>' : ''}
+            </div>
           </div>
 
           <!-- Progress section -->
@@ -135,6 +137,13 @@ async function loadPiggyDetail(piggyId) {
           <div class="section animate-fade-in-up" style="animation-delay:0.2s;">
             <h3 class="section__title" style="margin-bottom: 12px;">Información Comercial</h3>
             <div class="card">
+              <div class="piggy-detail__finance-row">
+                <span class="text-sm text-muted">ID / Radicado</span>
+                <span class="font-semibold" style="display:flex;align-items:center;gap:5px;">
+                  <span style="color:var(--color-primary, #ec4899);display:inline-flex;">${renderIcon('tag', '', '14')}</span>
+                  ${piggy.displayCode || piggy.contract_code}
+                </span>
+              </div>
               <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">Valor Piggy</span>
                 <span class="font-semibold">${formatCOP(piggy.investment_amount)}</span>
