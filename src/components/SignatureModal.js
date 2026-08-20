@@ -33,7 +33,7 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
             display: flex;
             flex-direction: column;
             position: relative;
-            padding: 20px;
+            padding: 24px 20px 20px 20px;
             box-sizing: border-box;
         ">
             <!-- Close Button (No background circle, top-right) -->
@@ -45,7 +45,7 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
                 border: none;
                 cursor: pointer;
                 color: #64748b;
-                padding: 4px;
+                padding: 6px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -55,9 +55,9 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
                 ${renderIcon('close', '', '20')}
             </button>
 
-            <!-- Buyer Info with Icons (Dark Gray) -->
+            <!-- Buyer Info with Icons (Dark Gray) - with extra top margin for clean spacing -->
             <div style="
-                margin-top: 8px;
+                margin-top: 22px;
                 margin-bottom: 14px;
                 background: #f8fafc;
                 border: 1px solid #e2e8f0;
@@ -156,7 +156,7 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
                 box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
                 transition: all 0.2s;
             ">
-                <span>Aplicar Firma</span>
+                <span>✓ Aplicar Firma</span>
             </button>
         </div>
     `;
