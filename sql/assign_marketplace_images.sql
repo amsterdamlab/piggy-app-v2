@@ -1,12 +1,24 @@
--- Script to assign random coherent images to marketplace items based on their current month (stage)
+-- Script to assign deterministic images to marketplace items based on category and stage
 UPDATE public.marketplace
-SET image_url = 'assets/piggies/stage1/et1-' || floor(random() * 5 + 1)::int || '.jpg'
-WHERE current_month < 2;
+SET image_url = 'assets/piggies/stage1/et1-1.jpg'
+WHERE category = 'standard';
 
 UPDATE public.marketplace
-SET image_url = 'assets/piggies/stage2/et2-' || floor(random() * 5 + 1)::int || '.jpg'
-WHERE current_month >= 2 AND current_month < 4;
+SET image_url = 'assets/piggies/stage2/et2-1.jpg'
+WHERE category = 'advanced' AND current_month = 2;
 
 UPDATE public.marketplace
-SET image_url = 'assets/piggies/stage3/et3-' || floor(random() * 5 + 1)::int || '.jpg'
-WHERE current_month >= 4;
+SET image_url = 'assets/piggies/stage2/et2-2.jpg'
+WHERE category = 'advanced' AND current_month = 3;
+
+UPDATE public.marketplace
+SET image_url = 'assets/piggies/stage1/et1-2.jpg'
+WHERE category = 'silver';
+
+UPDATE public.marketplace
+SET image_url = 'assets/piggies/stage1/et1-3.jpg'
+WHERE category = 'gold';
+
+UPDATE public.marketplace
+SET image_url = 'assets/piggies/stage1/et1-4.jpg'
+WHERE category = 'premium';
