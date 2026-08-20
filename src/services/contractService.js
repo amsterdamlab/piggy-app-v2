@@ -7,6 +7,67 @@
 import { getClient, isUsingMockData } from './supabase.js';
 
 /**
+ * Ensure PDF-Lib is loaded and return { PDFDocument, rgb, StandardFonts }.
+ * Uses npm bundle if available, otherwise window.PDFLib or dynamic CDN loading with retries.
+ */
+export async function getPDFLib() {
+    if (typeof window !== 'undefined' && window.PDFLib) {
+        return window.PDFLib;
+    }
+
+    // Try dynamic import (bundled by Vite)
+    try {
+        const mod = await import('pdf-lib');
+        if (mod && (mod.PDFDocument || mod.default?.PDFDocument)) {
+            return mod.PDFDocument ? mod : mod.default;
+        }
+    } catch (e) {
+        console.warn('[ContractService] Dynamic import failed, attempting CDN fallback:', e);
+    }
+
+    // Fallback: Dynamically load script from reliable CDNs
+    const cdns = [
+        'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.9/dist/pdf-lib.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.9/pdf-lib.min.js',
+        'https://unpkg.com/pdf-lib@1.17.9/dist/pdf-lib.min.js'
+    ];
+
+    for (const cdn of cdns) {
+        try {
+            await new Promise((resolve, reject) => {
+                const existing = document.querySelector(`script[src="${cdn}"]`);
+                if (existing && window.PDFLib) {
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = cdn;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Failed to load ${cdn}`));
+                document.head.appendChild(script);
+            });
+
+            if (window.PDFLib) {
+                return window.PDFLib;
+            }
+        } catch {
+            console.warn(`[ContractService] Failed to load from ${cdn}, trying next...`);
+        }
+    }
+
+    if (window.PDFLib) return window.PDFLib;
+
+    throw new Error('La librería PDF-Lib no se pudo cargar. Por favor verifica tu conexión a internet.');
+}
+
+/**
+ * Preload PDF-Lib in background when contract view mounts.
+ */
+export function preloadPDFLib() {
+    getPDFLib().catch(err => console.warn('[ContractService] Preload warning:', err));
+}
+
+/**
  * Fetch the client's public IP address for audit purposes.
  * @returns {Promise<string>}
  */
@@ -81,12 +142,8 @@ export async function stampAndUploadContract({
     investmentAmount = 1000000,
     userId = null
 }) {
-    // 1. Check if PDFLib is available
-    const PDFLib = window.PDFLib;
-    if (!PDFLib) {
-        throw new Error('La librería PDF-Lib no está cargada. Verifica tu conexión a internet.');
-    }
-
+    // 1. Ensure PDFLib is loaded
+    const PDFLib = await getPDFLib();
     const { PDFDocument, rgb, StandardFonts } = PDFLib;
 
     // 2. Fetch Base PDF
@@ -111,7 +168,6 @@ export async function stampAndUploadContract({
     const pages = pdfDoc.getPages();
     const pageIndex = Math.min(14, pages.length - 1);
     const targetPage = pages[pageIndex];
-    const { width, height } = targetPage.getSize();
 
     // 5. Embed Signature Image (PNG)
     let signatureImage = null;

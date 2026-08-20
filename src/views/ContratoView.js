@@ -10,7 +10,7 @@ import { AppState } from '../state.js';
 import { adoptPiggy, buyMarketplaceItem } from '../services/piggiesService.js';
 import { deductWalletBalance, getWalletBalance } from '../services/walletService.js';
 import { openSignatureModal } from '../components/SignatureModal.js';
-import { stampAndUploadContract } from '../services/contractService.js';
+import { stampAndUploadContract, preloadPDFLib } from '../services/contractService.js';
 import { formatCOP } from '../services/mockData.js';
 import { getClient, isUsingMockData } from '../services/supabase.js';
 import { CONTRACT_CLAUSES } from '../data/contractClauses.js';
@@ -21,6 +21,7 @@ let currentItemPrice = 1000000;
 let currentMarketplaceItem = null;
 
 export function renderContratoView() {
+    preloadPDFLib();
     const app = document.getElementById('app');
     const profile = AppState.get('profile') || {};
     const user = AppState.get('currentUser') || {};
