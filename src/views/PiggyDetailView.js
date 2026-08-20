@@ -165,19 +165,6 @@ async function loadPiggyDetail(piggyId) {
             </div>
           </div>
 
-          <!-- Legal Contract Section -->
-          <div class="section animate-fade-in-up" style="animation-delay:0.25s;">
-            <h3 class="section__title" style="margin-bottom: 12px;">Documento Legal</h3>
-            <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px;">
-              <div>
-                <div style="font-weight:700; font-size:0.95rem; color:#1f2937;">Contrato de Compraventa</div>
-                <div style="font-size:0.8rem; color:#6b7280;">Documento firmado electrónicamente</div>
-              </div>
-              <a href="${piggy.contract_url || '/contracts/contrato_base.pdf'}" target="_blank" download="Contrato_Piggy_${piggy.name || piggy.id}.pdf" class="btn btn--secondary btn--sm" style="display:flex; align-items:center; gap:6px; text-decoration:none; white-space:nowrap;">
-                ${renderIcon('download', '', '16')} Descargar PDF
-              </a>
-            </div>
-          </div>
 
           <!-- Liquidation (only if cycle complete) -->
           ${piggy.isComplete ? `
