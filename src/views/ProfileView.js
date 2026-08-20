@@ -325,7 +325,7 @@ function openDatosPersonalesSubscreen(profile) {
                         <span style="font-size:0.7rem; color:#94a3b8; margin-top:2px; display:block;">El correo está vinculado a tu cuenta.</span>
                     </div>
 
-                    <div class="input-group">
+                    <div class="input-group" style="margin-bottom: 16px;">
                         <label class="input-group__label">WhatsApp / Celular</label>
                         <div class="input-wrapper">
                             <span class="input-wrapper__icon">${renderIcon('phone', '', '18')}</span>
@@ -340,6 +340,23 @@ function openDatosPersonalesSubscreen(profile) {
                                 required
                             />
                         </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-group__label">Número de Cédula / C.C</label>
+                        <div class="input-wrapper">
+                            <span class="input-wrapper__icon">${renderIcon('documentText', '', '18')}</span>
+                            <input
+                                type="text"
+                                class="input-wrapper__field"
+                                id="field-edit-cedula"
+                                name="cedula"
+                                value="${profile.cedula || profile.document_id || ''}"
+                                placeholder="Ej: 1023456789"
+                                autocomplete="off"
+                            />
+                        </div>
+                        <span style="font-size:0.7rem; color:#94a3b8; margin-top:2px; display:block;">Se usará para autocompletar tus contratos oficiales de compra.</span>
                     </div>
                 </div>
 
@@ -445,6 +462,7 @@ function openDatosPersonalesSubscreen(profile) {
 
         const fullNameVal = document.getElementById('field-edit-name')?.value.trim();
         const whatsappVal = document.getElementById('field-edit-whatsapp')?.value.trim();
+        const cedulaVal = document.getElementById('field-edit-cedula')?.value.trim();
         const bankNameVal = document.getElementById('field-edit-bank')?.value;
         const bankTypeVal = document.getElementById('field-edit-account-type')?.value;
         const bankAccVal = document.getElementById('field-edit-account-number')?.value.trim();
@@ -467,6 +485,7 @@ function openDatosPersonalesSubscreen(profile) {
         const updates = {
             full_name: fullNameVal,
             whatsapp: whatsappVal,
+            cedula: cedulaVal || null,
             bank_name: bankNameVal,
             bank_account_type: bankTypeVal,
             bank_account_number: bankAccVal,

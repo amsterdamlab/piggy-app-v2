@@ -383,9 +383,15 @@ function attachContratoListeners() {
                         .from('profiles')
                         .update({ cedula: userCedula })
                         .eq('id', userId);
+                    
+                    const currentProfile = AppState.get('profile') || {};
+                    AppState.set({ profile: { ...currentProfile, cedula: userCedula } });
                 } catch (profileUpdateErr) {
                     console.warn('[ContratoView] Could not update cedula in profiles table:', profileUpdateErr);
                 }
+            } else if (isUsingMockData()) {
+                const currentProfile = AppState.get('profile') || {};
+                AppState.set({ profile: { ...currentProfile, cedula: userCedula } });
             }
 
             // 4. Deduct Wallet Balance
