@@ -92,6 +92,7 @@ export function renderGranjaView() {
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
   app.innerHTML = buildGranjaShell(firstName);
+  attachGreetingActions();
 
   loadGranjaData(firstName);
 
@@ -176,7 +177,7 @@ async function loadGranjaData(firstName) {
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     showNewsBillboardModal(newsSlides);
 
-    attachGranjaListeners(piggies.length > 0, stats, piggyCount, piggies);
+    attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
 
     // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
@@ -315,7 +316,7 @@ function renderGreeting(firstName) {
 
   return `
     <div class="granja-greeting animate-fade-in" id="granja-header" style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil">
+      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil" onclick="location.hash='#/perfil'">
         <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
           <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
           <span class="granja-greeting__online"></span>
@@ -499,6 +500,14 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
   // Wallet listeners (delegated to module)
   attachWalletListeners(stats);
 
+  // Greeting actions (profile, referrals, support, logout)
+  attachGreetingActions();
+}
+
+/**
+ * Attach listeners for greeting action bar (works in both skeleton and full state).
+ */
+export function attachGreetingActions() {
   // Greeting avatar / profile trigger
   document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
     navigateTo('perfil');

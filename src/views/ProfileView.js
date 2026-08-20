@@ -48,12 +48,22 @@ let currentActiveSubscreen = null; // 'datos' | 'legal' | null
 export function renderProfileView() {
     const app = document.getElementById('app');
     const state = AppState.getState();
-    const profile = state.profile || {};
+    let profile = state.profile || {};
 
     const fullName = profile.full_name || 'Usuario Piggy';
     const initials = getUserInitials(fullName);
     const initialsClass = initials.length > 1 ? 'profile-avatar-circle--double' : 'profile-avatar-circle--single';
     const referralCode = profile.referral_code || generateMockReferralCode(fullName);
+
+    // If profile is empty in state, fetch fresh from Supabase
+    if (!profile.full_name) {
+        getProfile().then((freshProfile) => {
+            if (freshProfile && freshProfile.full_name) {
+                AppState.set({ profile: freshProfile });
+                renderProfileView();
+            }
+        }).catch(err => console.warn('Background profile fetch error:', err));
+    }
 
     app.innerHTML = `
         <div class="page profile-page animate-fade-in">
