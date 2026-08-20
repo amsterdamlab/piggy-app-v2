@@ -281,7 +281,7 @@ export async function addWalletBalance(amount, description = 'Reembolso a Wallet
         .insert({
             user_id: user.id,
             amount: amount, // positive = credit
-            type: 'credit',
+            type: 'recharge',
             description: description,
         });
 
@@ -497,6 +497,80 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
         success: true,
         newBalance: profile?.wallet_balance || 0,
         transactionId: data?.id,
+    };
+}
+
+/**
+ * Registrar una solicitud de recarga por Bre-B (Semi-automática).
+ * Inserta un registro en wallet_transactions con estado 'PENDING' para que
+ * el administrador verifique la transferencia y lo apruebe en Supabase.
+ *
+ * @param {Object} params
+ * @param {number} params.amount - Monto a recargar en COP
+ * @param {string} params.reference - Código de referencia único (ej: PGY-748291)
+ * @param {string} [params.breBKey='@piggygranjamoral'] - Llave Bre-B utilizada
+ * @param {Object} [params.mockState=null] - Estado mutable para mock mode
+ * @returns {Promise<{ success: boolean, transactionId?: string, reason?: string }>}
+ */
+export async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {
+    const description = `Recarga Bre-B [Ref: ${reference}] — Pendiente ($${formatCOP(amount)}) [Llave: ${breBKey}]`;
+
+    if (isUsingMockData()) {
+        initMockState();
+
+        const newTransaction = {
+            id: `breb-${Date.now()}`,
+            amount: 0,
+            type: 'simulation_recharge',
+            description,
+            wallet_type: 'dinero',
+            payment_method: 'BRE_B',
+            simulation_status: 'PENDING',
+            created_at: new Date().toISOString(),
+        };
+
+        mockTransactions.unshift(newTransaction);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+
+        if (mockState) {
+            mockState.transactions = mockTransactions;
+        }
+
+        return {
+            success: true,
+            transactionId: newTransaction.id,
+            status: 'PENDING'
+        };
+    }
+
+    // Real Supabase mode
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    const { data, error } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: 0,
+            type: 'simulation_recharge',
+            description,
+            wallet_type: 'dinero',
+            payment_method: 'BRE_B',
+            simulation_status: 'PENDING',
+        })
+        .select('id')
+        .single();
+
+    if (error) {
+        console.error('Error insertando solicitud de recarga Bre-B en wallet_transactions:', error);
+        return { success: false, reason: error.message };
+    }
+
+    return {
+        success: true,
+        transactionId: data?.id,
+        status: 'PENDING'
     };
 }
 
