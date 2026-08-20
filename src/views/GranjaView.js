@@ -251,9 +251,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center; 
-                    font-size: 18px; 
-                    font-weight: 800; 
+                    justify-content: center;
+                    font-size: 18px;
+                    font-weight: 800;
                     padding-bottom: 2px;
                 ">+</div>
                 Compra un Nuevo Piggy
@@ -387,11 +387,10 @@ export function renderPiggyCard(piggy, baseROI) {
         </div>
         <div class="piggy-card__info">
           <div class="piggy-card__name">${piggy.name}</div>
-          <div class="piggy-card__status">
-            ${piggy.isComplete
-              ? '<span class="badge badge--success">✓ Completado</span>'
-              : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
-            }
+          <div class="piggy-card__code" style="display: flex; align-items: center; gap: 4px; font-size: 0.78rem; font-weight: 700; color: #64748b; margin-top: 3px;">
+            <span style="display: inline-flex; align-items: center; color: var(--color-primary, #ec4899);">${renderIcon('tag', '', '13')}</span>
+            <span style="letter-spacing: 0.3px;">${piggy.displayCode || piggy.contract_code}</span>
+            ${piggy.isComplete ? '<span class="badge badge--success" style="font-size: 0.65rem; padding: 2px 6px; margin-left: 4px;">✓ Completado</span>' : ''}
           </div>
         </div>
         ${extraRoi > 0 ? `
