@@ -13,75 +13,7 @@ import { openSignatureModal } from '../components/SignatureModal.js';
 import { stampAndUploadContract } from '../services/contractService.js';
 import { formatCOP } from '../services/mockData.js';
 import { getClient, isUsingMockData } from '../services/supabase.js';
-
-// Legal clauses text from the official contract
-const CLAUSES = [
-    {
-        num: "1",
-        title: "PARTES",
-        text: "1.1. GRANJA VILLA MORALES DEL VALLE S.A.S., sociedad legalmente constituida conforme a las leyes de la República de Colombia, identificada con NIT No. 900.860.384-7, representada legalmente por OSCAR IVÁN MÁRQUEZ MORALES, identificado con cédula de ciudadanía No. 14.590.206, quien para efectos del presente contrato actuará en calidad de operadora de la plataforma digital PIGGY APP y de comercializadora del producto agropecuario derivado de la operación, denominándose en adelante LA PLATAFORMA y 1.2. EL USUARIO, entendido como la persona natural o jurídica que acepta electrónicamente los términos del presente contrato mediante la plataforma digital PIGGY APP; quienes conjuntamente podrán denominarse las “PARTES”, celebran el presente CONTRATO MARCO DE OPERACIÓN AGROPRODUCTIVA DIGITAL, CUSTODIA, TRAZABILIDAD Y COMERCIALIZACIÓN, el cual se regirá por las cláusulas que a continuación se expresan y en general por las disposiciones aplicables a la materia que trata este contrato."
-    },
-    {
-        num: "2",
-        title: "CONSIDERACIONES",
-        text: "2.1. Que LA PLATAFORMA Y COMERCIALIZADORA administra una plataforma digital denominada “PIGGY APP”, orientada a la gestión, seguimiento y trazabilidad de operaciones agroproductivas relacionadas con procesos de crianza, engorde y comercialización de porcinos. 2.2 Que EL OPERADOR PRODUCTIVO desarrolla actividades agropecuarias relacionadas con la custodia, alimentación, manejo técnico, control sanitario y desarrollo productivo de porcinos dentro de predios destinados a la actividad agropecuaria. 2.3. Que el modelo desarrollado mediante la plataforma digital se encuentra respaldado en activos agropecuarios reales, individualizables y sometidos a procesos productivos verificables y trazables. 2.4. Que EL USUARIO manifiesta su interés en vincularse al modelo agroproductivo mediante la adquisición de un activo agropecuario real vinculado a un ciclo productivo y comercial administrado a través de la plataforma digital. 2.5 Que las PARTES reconocen expresamente que el presente modelo corresponde a una operación agrocomercial sustentada en activos reales y procesos productivos verificables, y que cualquier resultado económico derivado de la operación dependerá del comportamiento real de la actividad agropecuaria y de las condiciones del mercado. 2.6 Que las PARTES reconocen igualmente que la actividad agropecuaria se encuentra expuesta a riesgos propios del sector, incluyendo contingencias sanitarias, fluctuaciones comerciales, variabilidad de precios, mortalidad animal y demás factores inherentes a la actividad productiva. 2.7. Que las PARTES manifiestan que el presente contrato tiene como finalidad regular las condiciones operativas, productivas, comerciales y de trazabilidad aplicables al funcionamiento del modelo agroproductivo digital desarrollado mediante la plataforma PIGGY APP."
-    },
-    {
-        num: "3",
-        title: "DEFINICIONES",
-        text: "Para efectos del presente contrato las partes aceptan los términos, definiciones, condiciones y especificaciones establecidas a continuación: 3.1. Activo Agroproductivo: Corresponde al porcino individualizable y trazable que hace parte del proceso productivo desarrollado por EL OPERADOR PRODUCTIVO, respaldado en registros técnicos, sanitarios y operativos verificables. 3.2. Ciclo Productivo: Periodo durante el cual el Activo Agroproductivo se encuentra vinculado a procesos de crianza, custodia, alimentación, engorde, manejo sanitario y posterior comercialización dentro de la operación agroproductiva. 3.3. Plataforma Digital: Corresponde a la aplicación tecnológica denominada PIGGY APP, administrada por LA PLATAFORMA Y COMERCIALIZADORA, mediante la cual se gestiona la vinculación de usuarios, trazabilidad operativa, seguimiento del proceso productivo y administración general de la operación agrocomercial. 3.4. Resultado Económico: Corresponde al valor variable derivado del proceso de comercialización del Activo Agroproductivo, calculado conforme a las condiciones reales de producción, costos operativos, comportamiento del mercado y demás variables asociadas a la actividad agropecuaria. El Resultado Económico no constituye rentabilidad fija, rendimiento garantizado ni utilidad previamente asegurada."
-    },
-    {
-        num: "4",
-        title: "OBJETO",
-        text: "El presente contrato tiene por objeto regular la vinculación de EL USUARIO a la operación agrocomercial desarrollada mediante la plataforma digital PIGGY APP, administrada por LA PLATAFORMA Y COMERCIALIZADORA, a través de la adquisición de un Activo Agroproductivo real, individualizable y trazable, vinculado a un proceso de crianza, custodia, alimentación, manejo sanitario, engorde y posterior comercialización desarrollado por EL OPERADOR PRODUCTIVO. Para el cumplimiento del objeto contractual, LA PLATAFORMA Y COMERCIALIZADORA, EL OPERADOR PRODUCTIVO y EL USUARIO actuarán con autonomía técnica, administrativa y operativa dentro de las funciones que les corresponden conforme a la naturaleza del modelo agroproductivo y de acuerdo con las obligaciones establecidas en el presente contrato. PARÁGRAFO PRIMERO. Las PARTES reconocen expresamente que el presente modelo corresponde a una operación agroproductiva respaldada en activos reales y procesos productivos verificables, y no constituye actividad financiera, mecanismo de captación de recursos, inversión colectiva ni esquema de rentabilidad garantizada. PARÁGRAFO SEGUNDO. EL USUARIO declara conocer y aceptar que cualquier Resultado Económico derivado de la operación dependerá exclusivamente del comportamiento real del proceso productivo, los costos operativos, las condiciones del mercado y los riesgos propios de la actividad agropecuaria."
-    },
-    {
-        num: "5",
-        title: "OBLIGACIONES DE LA PLATAFORMA Y COMERCIALIZADORA",
-        text: "LA PLATAFORMA Y COMERCIALIZADORA se obliga para con EL USUARIO y EL OPERADOR PRODUCTIVO a administrar la plataforma digital PIGGY APP, gestionar la vinculación de usuarios, mantener mecanismos razonables de identificación, registro y trazabilidad, facilitar al usuario acceso a la información del ciclo productivo, gestionar operativamente la comercialización del producto y realizar la liquidación económica conforme a las condiciones reales del mercado y costos operativos."
-    },
-    {
-        num: "6",
-        title: "OBLIGACIONES DEL OPERADOR PRODUCTIVO",
-        text: "EL OPERADOR PRODUCTIVO se obliga a desarrollar el proceso agroproductivo de crianza, custodia, alimentación, manejo técnico, control sanitario y engorde, mantener los activos dentro de predios aptos con protocolos veterinarios y de bioseguridad, llevar registros del ciclo productivo y cumplir con todas las disposiciones sanitarias y regulatorias aplicables."
-    },
-    {
-        num: "7",
-        title: "OBLIGACIONES DEL USUARIO",
-        text: "EL USUARIO se obliga a suministrar información veraz y actualizada, cumplir los procedimientos de validación e identificación, utilizar la plataforma conforme a la ley y las condiciones pactadas, y reconocer expresamente que el modelo corresponde a una actividad agroproductiva real sujeta a las variables y riesgos propios del sector agropecuario."
-    },
-    {
-        num: "8",
-        title: "TRAZABILIDAD DEL ACTIVO AGROPRODUCTIVO",
-        text: "Las PARTES reconocen que la trazabilidad del Activo Agroproductivo constituye un elemento esencial del modelo. EL OPERADOR PRODUCTIVO y LA PLATAFORMA implementarán mecanismos razonables de identificación, control y seguimiento sobre la evolución del ciclo de engorde."
-    },
-    {
-        num: "9",
-        title: "COMERCIALIZACIÓN Y LIQUIDACIÓN ECONÓMICA",
-        text: "La comercialización del producto derivado del proceso será gestionada por LA PLATAFORMA conforme a las condiciones reales del mercado y la liquidación económica se calculará con base en precios reales de venta menos costos operativos y sanitarios. No constituye rentabilidad fija ni rendimiento garantizado."
-    },
-    {
-        num: "10 - 22",
-        title: "ADMINISTRACIÓN, RIESGOS, CUMPLIMIENTO Y CONFIDENCIALIDAD",
-        text: "Se regulan los mecanismos de administración de recursos, aceptación informada de los riesgos biológicos y comerciales del sector porcino, controles de prevención de lavado de activos (SARLAFT/SAGRILAFT), tratamiento de datos personales (Ley 1581 de 2012), reglas de publicidad y reserva estricta de confidencialidad entre las partes."
-    },
-    {
-        num: "23",
-        title: "ACEPTACIÓN ELECTRÓNICA Y VIGENCIA",
-        text: "Las PARTES reconocen expresamente la validez jurídica de la aceptación electrónica del presente contrato mediante los mecanismos digitales implementados en la plataforma PIGGY APP, de plena conformidad con la Ley 527 de 1999 sobre comercio electrónico y mensajes de datos. Entra en vigencia desde el momento de su firma electrónica."
-    },
-    {
-        num: "24 - 27",
-        title: "NOTIFICACIONES, MODIFICACIONES Y LEGISLACIÓN APLICABLE",
-        text: "Las partes aceptan notificaciones electrónicas en los canales registrados. El contrato se rige e interpreta bajo las leyes de la República de Colombia, con domicilio contractual fijado en la República de Colombia."
-    },
-    {
-        num: "28",
-        title: "PERFECCIONAMIENTO Y ACEPTACIÓN",
-        text: "El presente contrato se entenderá perfeccionado con la aceptación y firma electrónica realizada por EL USUARIO mediante la plataforma digital PIGGY APP y producirá plenos efectos jurídicos."
-    }
-];
+import { CONTRACT_CLAUSES } from '../data/contractClauses.js';
 
 let currentSignatureDataUrl = null;
 let currentPiggyName = 'Mi Piggy';
@@ -120,19 +52,19 @@ export function renderContratoView() {
     app.innerHTML = `
     <div class="page contrato-page animate-fade-in">
         
-        <!-- Header -->
-        <header class="contrato-header">
-            <button class="btn btn--ghost btn--sm" id="btn-back-contrato">
-                ${renderIcon('arrowRight', '', '16')} Volver
+        <!-- Header matching Tu Cuenta Agro structure -->
+        <div style="padding: 20px 20px 0 20px; background: white; flex-shrink: 0; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <button id="btn-back-contrato" style="background: none; border: none; padding: 0; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.9rem; font-weight: 600; font-family: inherit; margin-bottom: 12px; transition: color 0.2s;" onmouseover="this.style.color='var(--color-primary, #E91E63)'" onmouseout="this.style.color='#64748b'">
+                ${renderIcon('arrowLeft', '', '18')} Volver
             </button>
-            <div style="font-weight:800; font-size:0.95rem; color:var(--color-primary);">
-                Piggy App Legal
-            </div>
-        </header>
+            <h2 style="margin: 0 0 6px 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Contrato de Compra</h2>
+            <p style="margin: 0 0 14px 0; font-size: 0.88rem; color: #475569; line-height: 1.4;">Documento oficial de vinculación y operación agroproductiva.</p>
+            <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
+        </div>
 
         <div class="contrato-content">
             
-            <!-- Hero / Header Card -->
+            <!-- Hero / Summary Card -->
             <div class="contrato-hero animate-scale-in">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
                     <span style="background:rgba(255,255,255,0.15); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:700;">
@@ -150,17 +82,17 @@ export function renderContratoView() {
                 </div>
             </div>
 
-            <!-- Full Legal Text Accordion / Body -->
+            <!-- Full Legal Text Accordion / Body (All 28 Clauses) -->
             <div class="contrato-legal-body animate-fade-in-up">
                 <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-weight:800; color:#0f172a; font-size:0.95rem;">Cláusulas del Contrato</span>
-                    <span style="font-size:0.75rem; color:#64748b;">16 páginas estándar</span>
+                    <span style="font-size:0.75rem; color:#64748b;">28 Cláusulas</span>
                 </div>
 
-                ${CLAUSES.map(c => `
+                ${CONTRACT_CLAUSES.map(c => `
                     <div class="contrato-clause">
                         <div class="contrato-clause__title">
-                            <span style="color:var(--color-primary);">${c.num}.</span> ${c.title}
+                            <span style="color:var(--color-primary, #ec4899);">${c.num}.</span> ${c.title}
                         </div>
                         <p class="contrato-clause__text">${c.text}</p>
                     </div>
@@ -172,7 +104,7 @@ export function renderContratoView() {
                 <div class="contrato-rep-card__title">✍️ Firma del Representante Legal (Pre-firmado)</div>
                 <div><strong>LA PLATAFORMA Y COMERCIALIZADORA</strong></div>
                 <div>GRANJA VILLA MORALES DEL VALLE S.A.S. &bull; NIT: 900.860.384-7</div>
-                <div style="font-size:0.78rem; color:#64748b;">OSCAR IVÁN MÁRQUEZ MORALES &bull; C.C. 14.590.206</div>
+                <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">OSCAR IVÁN MÁRQUEZ MORALES &bull; C.C. 14.590.206</div>
             </div>
 
             <!-- Buyer Identity & Signature Form Section -->
@@ -184,42 +116,40 @@ export function renderContratoView() {
                     Confirma tus datos personales y dibuja tu firma para vincular legalmente tu Piggy.
                 </p>
 
-                <!-- Inputs -->
-                <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
-                    <div>
-                        <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">
-                            Nombre Completo del Comprador:
-                        </label>
-                        <input 
-                            type="text" 
-                            id="contrato-user-name" 
-                            class="input-wrapper__field" 
-                            style="width:100%; box-sizing:border-box;"
-                            value="${initialFullName}" 
-                            placeholder="Ej: Carlos Andrés Pérez Gómez" 
-                        />
-                    </div>
+                <!-- Editable Form Text Boxes -->
+                <div class="contrato-input-group">
+                    <label class="contrato-input-label" for="contrato-user-name">
+                        Nombre Completo del Comprador
+                    </label>
+                    <input 
+                        type="text" 
+                        id="contrato-user-name" 
+                        class="contrato-input-field" 
+                        value="${initialFullName}" 
+                        placeholder="Ingresa tu nombre completo" 
+                        autocomplete="name"
+                    />
+                </div>
 
-                    <div>
-                        <label style="display:block; font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:4px;">
-                            Cédula de Ciudadanía / Documento de Identidad:
-                        </label>
-                        <input 
-                            type="text" 
-                            id="contrato-user-cedula" 
-                            class="input-wrapper__field" 
-                            style="width:100%; box-sizing:border-box;"
-                            value="${initialCedula}" 
-                            placeholder="Ej: 1023456789" 
-                        />
-                    </div>
+                <div class="contrato-input-group" style="margin-bottom: 18px;">
+                    <label class="contrato-input-label" for="contrato-user-cedula">
+                        Número de Cédula / C.C
+                    </label>
+                    <input 
+                        type="text" 
+                        id="contrato-user-cedula" 
+                        class="contrato-input-field" 
+                        value="${initialCedula}" 
+                        placeholder="Ingresa tu número de documento" 
+                        autocomplete="off"
+                    />
                 </div>
 
                 <!-- Signature Trigger / Preview -->
                 <div id="signature-preview-box" class="contrato-signature-preview">
                     <div id="signature-empty-state" style="padding: 10px 0;">
                         <span style="font-size:28px;">✍️</span>
-                        <div style="font-weight:700; font-size:0.9rem; color:var(--color-primary); margin-top:4px;">
+                        <div style="font-weight:700; font-size:0.9rem; color:var(--color-primary, #ec4899); margin-top:4px;">
                             Toca aquí para dibujar tu firma
                         </div>
                         <div style="font-size:0.75rem; color:#94a3b8;">
@@ -228,15 +158,15 @@ export function renderContratoView() {
                     </div>
                     <div id="signature-filled-state" style="display:none;">
                         <img id="signature-preview-img" class="contrato-signature-preview__img" alt="Firma del comprador" />
-                        <div style="font-size:0.75rem; color:var(--color-primary); font-weight:600; margin-top:6px;">
+                        <div style="font-size:0.75rem; color:var(--color-primary, #ec4899); font-weight:600; margin-top:6px;">
                             ✎ Toca para cambiar la firma
                         </div>
                     </div>
                 </div>
 
                 <!-- Legal Terms Checkbox -->
-                <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.8rem; color:#475569; margin-bottom:20px; cursor:pointer;">
-                    <input type="checkbox" id="contrato-agree-check" style="margin-top:3px; accent-color:var(--color-primary);" checked />
+                <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.8rem; color:#475569; margin-bottom:20px; cursor:pointer; line-height:1.4;">
+                    <input type="checkbox" id="contrato-agree-check" style="margin-top:2px; accent-color:var(--color-primary, #ec4899);" checked />
                     <span>
                         He leído, entiendo y acepto expresamente las 28 cláusulas del Contrato Marco y autorizo el estampado de mi firma electrónica en el documento oficial.
                     </span>
@@ -244,14 +174,14 @@ export function renderContratoView() {
 
                 <!-- Submit Button -->
                 <button type="button" id="btn-finalizar-contrato" class="btn btn--primary btn--block btn--lg" style="
-                    background: linear-gradient(135deg, var(--color-primary, #b80049), #db2777);
+                    background: linear-gradient(135deg, var(--color-primary, #ec4899), #db2777);
                     font-weight:800;
                     display:flex;
                     align-items:center;
                     justify-content:center;
                     gap:8px;
                 ">
-                    <span>Piggy</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
                     <span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>
                 </button>
             </div>
@@ -448,7 +378,10 @@ function attachContratoListeners() {
         } catch (error) {
             console.error('Error finalizando contrato:', error);
             alert('Hubo un error al procesar el contrato: ' + error.message);
-            finalizeBtn.innerHTML = `<span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>`;
+            finalizeBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+                <span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>
+            `;
             finalizeBtn.style.pointerEvents = 'auto';
         }
     });

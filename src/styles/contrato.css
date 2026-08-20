@@ -1,76 +1,111 @@
 /* ============================================
-   PIGGY APP — Contrato View Styles
+   PIGGY APP — Contrato View Styles (Fully Responsive)
    ============================================ */
 
 .contrato-page {
     background-color: var(--color-bg, #f8fafc);
     min-height: 100vh;
-    padding-bottom: 90px;
-}
-
-.contrato-header {
-    background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 16px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    padding-bottom: 100px;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .contrato-content {
-    max-width: 768px;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 20px 16px;
+    padding: 16px 14px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
+@media (min-width: 640px) {
+    .contrato-content {
+        padding: 24px 20px;
+    }
+}
+
+/* Hero / Summary Card */
 .contrato-hero {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: #ffffff;
     border-radius: 16px;
-    padding: 24px 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.25);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .contrato-hero {
+        padding: 24px 22px;
+        margin-bottom: 20px;
+    }
 }
 
 .contrato-hero__title {
-    font-size: 1.15rem;
+    font-size: 1.02rem;
     font-weight: 800;
-    line-height: 1.35;
-    margin: 0 0 8px 0;
-    letter-spacing: -0.02em;
+    line-height: 1.4;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.01em;
+    word-break: break-word;
+}
+
+@media (min-width: 640px) {
+    .contrato-hero__title {
+        font-size: 1.15rem;
+    }
 }
 
 .contrato-hero__meta {
     font-size: 0.82rem;
-    color: #94a3b8;
-    line-height: 1.4;
+    color: #cbd5e1;
+    line-height: 1.5;
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-direction: column;
+    gap: 6px;
     margin-top: 12px;
     padding-top: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+@media (min-width: 480px) {
+    .contrato-hero__meta {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}
+
+/* Legal Body with 28 Clauses */
 .contrato-legal-body {
     background: #ffffff;
     border-radius: 16px;
     border: 1px solid #e2e8f0;
-    padding: 24px 20px;
-    font-size: 0.88rem;
-    line-height: 1.65;
+    padding: 18px 14px;
+    font-size: 0.85rem;
+    line-height: 1.6;
     color: #334155;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    margin-bottom: 24px;
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+    margin-bottom: 18px;
+    box-sizing: border-box;
+    width: 100%;
+    word-break: break-word;
+}
+
+@media (min-width: 640px) {
+    .contrato-legal-body {
+        padding: 24px 20px;
+        font-size: 0.88rem;
+        margin-bottom: 24px;
+    }
 }
 
 .contrato-clause {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
     border-bottom: 1px solid #f1f5f9;
 }
 
@@ -81,53 +116,48 @@
 }
 
 .contrato-clause__title {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #0f172a;
     margin-bottom: 6px;
     display: flex;
     align-items: baseline;
     gap: 6px;
+    line-height: 1.35;
 }
 
 .contrato-clause__text {
     margin: 0;
     color: #475569;
-    text-align: justify;
+    text-align: left;
+    font-size: 0.82rem;
+    line-height: 1.55;
 }
 
-/* Floating quick scroll button */
-.contrato-sticky-bar {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    width: 90%;
-    max-width: 400px;
-    display: flex;
-    justify-content: center;
-    transition: opacity 0.3s, transform 0.3s;
+@media (min-width: 640px) {
+    .contrato-clause__text {
+        font-size: 0.85rem;
+    }
 }
 
-.contrato-sticky-btn {
-    background: linear-gradient(135deg, var(--color-primary, #b80049), #e11d48);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
+/* Representative Legal Card */
+.contrato-rep-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    font-size: 0.82rem;
+    color: #475569;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.contrato-rep-card__title {
     font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    box-shadow: 0 10px 25px rgba(184, 0, 73, 0.4);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.contrato-sticky-btn:active {
-    transform: scale(0.97);
+    color: #1e293b;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
 }
 
 /* Buyer & Signature Form Card */
@@ -135,45 +165,70 @@
     background: #ffffff;
     border-radius: 16px;
     border: 2px solid #e2e8f0;
-    padding: 24px 20px;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
-    margin-bottom: 30px;
+    padding: 18px 14px;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06);
+    margin-bottom: 24px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-.contrato-sign-card--highlight {
-    border-color: var(--color-primary, #b80049);
+@media (min-width: 640px) {
+    .contrato-sign-card {
+        padding: 24px 20px;
+        margin-bottom: 30px;
+    }
 }
 
-.contrato-rep-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 20px;
+/* Input Fields */
+.contrato-input-group {
+    margin-bottom: 14px;
+}
+
+.contrato-input-label {
+    display: block;
     font-size: 0.82rem;
-    color: #475569;
-}
-
-.contrato-rep-card__title {
     font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
+    color: #334155;
+    margin-bottom: 6px;
 }
 
+.contrato-input-field {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.contrato-input-field:focus {
+    border-color: var(--color-primary, #ec4899);
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.12);
+}
+
+/* Signature Box */
 .contrato-signature-preview {
     border: 2px dashed #cbd5e1;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 14px;
     text-align: center;
-    background: #fcfcfc;
+    background: #f8fafc;
     margin-bottom: 16px;
     cursor: pointer;
     transition: all 0.2s;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .contrato-signature-preview:hover {
-    border-color: var(--color-primary, #b80049);
-    background: #fff5f8;
+    border-color: var(--color-primary, #ec4899);
+    background: #fdf2f8;
 }
 
 .contrato-signature-preview__img {
@@ -184,26 +239,72 @@
     display: block;
 }
 
+/* Floating quick scroll button */
+.contrato-sticky-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    width: calc(100% - 32px);
+    max-width: 380px;
+    display: flex;
+    justify-content: center;
+    transition: opacity 0.3s, transform 0.3s;
+    box-sizing: border-box;
+}
+
+.contrato-sticky-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--color-primary, #ec4899), #db2777);
+    color: white;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.contrato-sticky-btn:active {
+    transform: scale(0.98);
+}
+
 /* Success View */
 .contrato-success-card {
     background: #ffffff;
     border-radius: 20px;
-    padding: 36px 24px;
+    padding: 28px 18px;
     text-align: center;
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.1);
     border: 1px solid #e2e8f0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .contrato-success-card {
+        padding: 36px 24px;
+    }
 }
 
 .contrato-success-icon {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: linear-gradient(135deg, #10B981, #059669);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
-    margin: 0 auto 20px auto;
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+    font-size: 32px;
+    margin: 0 auto 16px auto;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
 }
