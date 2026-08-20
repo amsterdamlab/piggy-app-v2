@@ -165,24 +165,33 @@ export function renderContratoView() {
                 </div>
 
                 <!-- Legal Terms Checkbox -->
-                <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.8rem; color:#475569; margin-bottom:20px; cursor:pointer; line-height:1.4;">
+                <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.82rem; color:#475569; margin-bottom:20px; cursor:pointer; line-height:1.4;">
                     <input type="checkbox" id="contrato-agree-check" style="margin-top:2px; accent-color:var(--color-primary, #ec4899);" checked />
                     <span>
-                        He leído, entiendo y acepto expresamente las 28 cláusulas del Contrato Marco y autorizo el estampado de mi firma electrónica en el documento oficial.
+                        He leído, entiendo y acepto expresamente este contrato y autorizo anexar mi firma electrónica en el documento oficial.
                     </span>
                 </label>
 
-                <!-- Submit Button -->
-                <button type="button" id="btn-finalizar-contrato" class="btn btn--primary btn--block btn--lg" style="
-                    background: linear-gradient(135deg, var(--color-primary, #ec4899), #db2777);
-                    font-weight:800;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    gap:8px;
+                <!-- Submit Button with Pulse & Glow Effect -->
+                <button type="button" id="btn-finalizar-contrato" class="btn-pulse-glow-7s" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #ec4899, #db2777);
+                    color: white;
+                    border: none;
+                    padding: 14px 20px;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    box-shadow: 0 6px 20px -4px rgba(236,72,153,0.4);
+                    transition: all 0.2s;
                 ">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-                    <span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>
+                    <span>Confirmar Compra</span>
                 </button>
             </div>
 
@@ -380,7 +389,7 @@ function attachContratoListeners() {
             alert('Hubo un error al procesar el contrato: ' + error.message);
             finalizeBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-                <span>Firmar y Confirmar Compra (${formatCOP(currentItemPrice)})</span>
+                <span>Confirmar Compra</span>
             `;
             finalizeBtn.style.pointerEvents = 'auto';
         }

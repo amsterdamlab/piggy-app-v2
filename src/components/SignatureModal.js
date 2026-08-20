@@ -32,48 +32,48 @@ export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             display: flex;
             flex-direction: column;
+            position: relative;
         ">
-            <!-- Header -->
+            <!-- Top Close Button Bar -->
             <div style="
-                padding: 18px 20px;
-                border-bottom: 1px solid #f1f5f9;
+                padding: 16px 18px 0 18px;
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
-                background: #f8fafc;
+                justify-content: flex-end;
             ">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size: 20px;">✍️</span>
-                    <div>
-                        <h3 style="margin:0; font-size:1.05rem; font-weight:800; color:#1e293b;">Dibuja tu Firma</h3>
-                        <p style="margin:0; font-size:0.75rem; color:#64748b;">Firma digital del comprador</p>
-                    </div>
-                </div>
                 <button id="btn-close-signature" style="
-                    background: transparent;
+                    background: #f1f5f9;
                     border: none;
                     cursor: pointer;
                     color: #64748b;
-                    padding: 4px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
                     display: flex;
-                ">
-                    ${renderIcon('close', '', '20')}
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+                    ${renderIcon('close', '', '18')}
                 </button>
             </div>
 
             <!-- Body -->
-            <div style="padding: 20px;">
+            <div style="padding: 10px 20px 20px 20px;">
+                
+                <!-- Buyer Info -->
                 <div style="
-                    font-size: 0.82rem;
-                    color: #475569;
-                    margin-bottom: 12px;
-                    background: #f0fdf4;
-                    border: 1px solid #bbf7d0;
-                    border-radius: 10px;
-                    padding: 10px 14px;
-                    line-height: 1.4;
+                    font-size: 0.88rem;
+                    color: #1e293b;
+                    margin-bottom: 14px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 12px 16px;
+                    line-height: 1.5;
                 ">
-                    <strong>Firmante:</strong> ${userName} &bull; <strong>C.C.:</strong> ${userCedula}
+                    <div><strong>Comprador:</strong> ${userName}</div>
+                    <div style="margin-top:2px;"><strong>C.C.:</strong> ${userCedula}</div>
                 </div>
 
                 <!-- Canvas Box -->
