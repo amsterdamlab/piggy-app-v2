@@ -1,0 +1,209 @@
+/* ============================================
+   PIGGY APP — Contrato View Styles
+   ============================================ */
+
+.contrato-page {
+    background-color: var(--color-bg, #f8fafc);
+    min-height: 100vh;
+    padding-bottom: 90px;
+}
+
+.contrato-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.contrato-content {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+.contrato-hero {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+}
+
+.contrato-hero__title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.contrato-hero__meta {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contrato-legal-body {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    padding: 24px 20px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+}
+
+.contrato-clause {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.contrato-clause:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.contrato-clause__title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.contrato-clause__text {
+    margin: 0;
+    color: #475569;
+    text-align: justify;
+}
+
+/* Floating quick scroll button */
+.contrato-sticky-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    width: 90%;
+    max-width: 400px;
+    display: flex;
+    justify-content: center;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.contrato-sticky-btn {
+    background: linear-gradient(135deg, var(--color-primary, #b80049), #e11d48);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(184, 0, 73, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.contrato-sticky-btn:active {
+    transform: scale(0.97);
+}
+
+/* Buyer & Signature Form Card */
+.contrato-sign-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+    padding: 24px 20px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+}
+
+.contrato-sign-card--highlight {
+    border-color: var(--color-primary, #b80049);
+}
+
+.contrato-rep-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.contrato-rep-card__title {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.contrato-signature-preview {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    background: #fcfcfc;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.contrato-signature-preview:hover {
+    border-color: var(--color-primary, #b80049);
+    background: #fff5f8;
+}
+
+.contrato-signature-preview__img {
+    max-height: 80px;
+    max-width: 220px;
+    object-fit: contain;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Success View */
+.contrato-success-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 36px 24px;
+    text-align: center;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.contrato-success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.35);
+}

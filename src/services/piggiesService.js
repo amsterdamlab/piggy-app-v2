@@ -34,7 +34,7 @@ export {
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
-        return MOCK_PIGGIES.map(enrichPiggyData).filter(Boolean);
+        return MOCK_PIGGIES.map(enrichPiggyData);
     }
 
     const client = getClient();
@@ -62,7 +62,7 @@ export async function getUserPiggies() {
     await markExpiredPiggies(user.id);
 
     // Enrich DB data with runtime calculated fields (daysLeft, progress)
-    return (data || []).map(enrichPiggyData).filter(Boolean);
+    return (data || []).map(enrichPiggyData);
 }
 
 /**
@@ -114,7 +114,7 @@ export async function getPiggyById(id) {
  * @param {string} piggyName 
  * @returns {Promise<Object>}
  */
-export async function adoptPiggy(piggyName) {
+export async function adoptPiggy(piggyName, contractUrl = null) {
     if (isUsingMockData()) {
         const newPiggy = {
             id: `mock-${Date.now()}`,
@@ -127,6 +127,7 @@ export async function adoptPiggy(piggyName) {
             investment_amount: 250000,
             extra_roi_bonus: 0,
             current_weight: 15.0,
+            contract_url: contractUrl || '/contracts/contrato_base.pdf',
         };
         MOCK_PIGGIES.unshift(newPiggy);
         return enrichPiggyData(newPiggy);
@@ -136,39 +137,86 @@ export async function adoptPiggy(piggyName) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('User not logged in');
 
+    const insertPayload = {
+        user_id: user.id,
+        name: piggyName,
+        investment_amount: 1000000,
+        status: 'engorde',
+        current_weight: 15.0,
+    };
+    if (contractUrl) {
+        insertPayload.contract_url = contractUrl;
+    }
+
     const { data, error } = await client
         .from('piggies')
-        .insert({
-            user_id: user.id,
-            name: piggyName,
-            investment_amount: 1000000,
-            status: 'engorde',
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) {
+        // If contract_url column doesn't exist yet, retry without it
+        if (error.message && error.message.includes('contract_url')) {
+            delete insertPayload.contract_url;
+            const { data: retryData, error: retryError } = await client
+                .from('piggies')
+                .insert(insertPayload)
+                .select()
+                .single();
+            if (retryError) throw new Error(retryError.message);
+            return enrichPiggyData(retryData);
+        }
+        throw new Error(error.message);
+    }
     return enrichPiggyData(data);
 }
 
 /**
- * Create a piggy directly (Legacy support)
- * @param {Object} data - Piggy data object
+ * Create a piggy (alias for adoptPiggy).
  */
-export async function createPiggy(data) {
-    return adoptPiggy(data.name || 'Nuevo Piggy');
+export async function createPiggy({ name, amount = 1000000, durationMonths = 3, extraRoi = 0 }) {
+    return adoptPiggy(name);
 }
 
 /**
- * Helper to compute photo number deterministically from piggy ID (1-4)
+ * Generate a stable hash number from a string (piggy ID) to pick a
+ * consistent random photo (1-5) per piggy without changing on refresh.
+ * @param {string} idStr
+ * @returns {number} 1 to 5
  */
-function getPiggyPhotoNumber(id) {
-    const str = String(id || '1');
+function getPiggyPhotoNumber(idStr) {
     let hash = 0;
+    const str = String(idStr || 'default');
     for (let i = 0; i < str.length; i++) {
-        hash += str.charCodeAt(i);
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return (Math.abs(hash) % 4) + 1;
+    return (Math.abs(hash) % 5) + 1; // Returns 1, 2, 3, 4 or 5
+}
+
+/**
+ * Determine the growth stage and build the image URL for a piggy.
+ * Stage 1 → Month 1  (daysElapsed 0-30)   → et1-{n}.jpg
+ * Stage 2 → Months 2-3 (daysElapsed 31-90) → et2-{n}.jpg
+ * Stage 3 → Month 4 to end of cycle        → et3-{n}.jpg
+ *
+ * Each piggy keeps the same number (n = 1-5) across all stages,
+ * so the same animal is visually tracked through its growth.
+ * @param {string} piggyId
+ * @param {number} daysElapsed
+ * @param {boolean} isComplete
+ * @returns {string} Image URL
+ */
+function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
+    let stage;
+    if (isComplete || daysElapsed > 90) {
+        stage = 3;
+    } else if (daysElapsed > 30) {
+        stage = 2;
+    } else {
+        stage = 1;
+    }
+    const photoNum = getPiggyPhotoNumber(piggyId);
+    return `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
 }
 
 /**
@@ -208,7 +256,7 @@ function enrichPiggyData(piggy) {
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
 
-    // Determine current growth stage (1, 2, or 3 for photo selection)
+    // Determine current growth stage
     let currentStage;
     if (isComplete || daysElapsed > 90) {
         currentStage = 3;
@@ -222,9 +270,6 @@ function enrichPiggyData(piggy) {
 
     if (imageUrl) {
         if (!imageUrl.startsWith('http')) {
-            // If it's a standard pattern like 'assets/piggies/stageX/etX-Y.jpg',
-            // we dynamically update the stage X to match the actual current growth stage!
-            // This ensures the piggy GROWING works automatically while keeping the photo number Y!
             const match = imageUrl.match(/assets\/piggies\/stage\d\/et\d-(\d)\.jpg/);
             if (match) {
                 const photoNum = match[1];
@@ -232,13 +277,10 @@ function enrichPiggyData(piggy) {
             }
         }
     } else {
-        // Fallback in case image_url is empty in DB
         const photoNum = getPiggyPhotoNumber(piggy.id || '1');
         imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
     }
 
-    // Ensure it uses local absolute paths (/assets/piggies/...) to load directly from Vercel/localhost
-    // This resolves rate-limiting and loading latency errors from GitHub Raw
     if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
         imageUrl = '/' + imageUrl;
     }
@@ -269,7 +311,6 @@ export async function getDashboardStats(piggies = []) {
     const availablePiggies = validPiggies.filter((p) => p.isComplete);
 
     const piggyCount = activePiggies.length;
-    // Calculate global ROI based on total active count
     const baseROI = calculateBaseROI(piggyCount);
 
     // 1. Adquisición Bonos de Preventa (Active Investment)
@@ -303,7 +344,6 @@ export async function getDashboardStats(piggies = []) {
     let nextCloseProgress = 0;
 
     if (activePiggies.length > 0) {
-        // Find piggy with minimum days left (closest to completion)
         const closestPiggy = activePiggies.reduce((prev, curr) =>
             (prev.daysLeft < curr.daysLeft) ? prev : curr
         );
@@ -400,3 +440,6 @@ export async function buyMarketplaceItem(item, customName = null) {
 
     return enrichPiggyData(latest);
 }
+
+// Re-export utility functions for use in views
+export { calculateBaseROI, calculateTotalReturn, formatCOP, formatPercentage, getDaysRemaining };

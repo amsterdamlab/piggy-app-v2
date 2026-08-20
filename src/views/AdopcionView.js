@@ -210,13 +210,12 @@ function showCheckoutModal(piggyName) {
         <!-- Confirm Button -->
         <button id="adopcion-btn-confirm" style="
           width:100%; background:linear-gradient(135deg,#ec4899,#db2777); color:white;
-          border:none; padding:14px 20px; border-radius:12px; font-weight:700; font-size:1rem;
+          border:none; padding:13px 20px; border-radius:12px; font-weight:700; font-size:0.9rem;
           cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
           box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
           opacity:0.5; pointer-events:none;
         ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-          Confirmar Compra
+          ✍️ Firmar Contrato y Comprar
         </button>
       </div>
     </div>
@@ -235,6 +234,10 @@ function showCheckoutModal(piggyName) {
     balanceDisplay.textContent = formatCOP(balance);
     const hasFunds = balance >= ITEM_PRICE;
     insufficientNotice.style.display = hasFunds ? 'none' : 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = hasFunds ? 'none' : 'flex';
+    }
     if (hasFunds) {
       confirmBtn.style.opacity = '1';
       confirmBtn.style.pointerEvents = 'auto';
@@ -242,6 +245,10 @@ function showCheckoutModal(piggyName) {
   }).catch(() => {
     balanceDisplay.textContent = '$0';
     insufficientNotice.style.display = 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = 'flex';
+    }
   });
 
   // Close
@@ -265,28 +272,11 @@ function showCheckoutModal(piggyName) {
     }
   });
 
-  // Confirm
-  confirmBtn.addEventListener('click', async () => {
+  // Confirm -> Navigate to contract signing
+  confirmBtn.addEventListener('click', () => {
     if (currentBalance < ITEM_PRICE) return;
-    confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
-    confirmBtn.style.pointerEvents = 'none';
-    try {
-      await adoptPiggy(piggyName);
-
-      // ─── CRÍTICO: Descontar balance de la wallet ───
-      const deductResult = await deductWalletBalance(ITEM_PRICE);
-      if (!deductResult.success) {
-        console.error('[WALLET] Balance deduction failed after adoption:', deductResult.reason);
-      }
-
-      close();
-      alert(`¡Compra exitosa! Tu Piggy ha sido registrado.`);
-      navigateTo('granja');
-    } catch (error) {
-      console.error(error);
-      alert('Error en la transacci\u00F3n: ' + error.message);
-      confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>Confirmar Compra`;
-      confirmBtn.style.pointerEvents = 'auto';
-    }
+    sessionStorage.setItem('pending_piggy_name', piggyName);
+    close();
+    navigateTo(`contrato?name=${encodeURIComponent(piggyName)}`);
   });
 }

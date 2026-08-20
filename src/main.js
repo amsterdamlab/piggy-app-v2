@@ -14,6 +14,7 @@ import './styles/piggy-detail.css';
 import './styles/adopcion.css';
 import './styles/header.css';
 import './styles/perfil.css';
+import './styles/contrato.css';
 
 // Core
 import { AppState } from './state.js';
@@ -28,6 +29,7 @@ import { renderMercadoView } from './views/MercadoView.js';
 import { renderAliadosView } from './views/AliadosView.js';
 import { renderPiggyDetailView } from './views/PiggyDetailView.js';
 import { renderAdopcionView } from './views/AdopcionView.js';
+import { renderContratoView } from './views/ContratoView.js';
 import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
 import { renderReferidosView } from './views/ReferidosView.js';
 import { renderProfileView } from './views/ProfileView.js';
@@ -63,6 +65,7 @@ async function boot() {
   registerRoute('aliados', renderAliadosView);
   registerRoute('piggy', renderPiggyDetailView);
   registerRoute('adopcion', renderAdopcionView);
+  registerRoute('contrato', renderContratoView);
   registerRoute('gourmet', renderPiggyGourmetView);
   registerRoute('referidos', renderReferidosView);
   registerRoute('perfil', renderProfileView);
