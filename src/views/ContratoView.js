@@ -366,18 +366,26 @@ function attachContratoListeners() {
             // 3. Update contract_url in piggies table & cedula in profiles table if DB active
             if (!isUsingMockData() && userId) {
                 const client = getClient();
-                if (newPiggy?.id && contractResult?.contractUrl) {
-                    await client
-                        .from('piggies')
-                        .update({ contract_url: contractResult.contractUrl })
-                        .eq('id', newPiggy.id);
+                try {
+                    if (newPiggy?.id && contractResult?.contractUrl) {
+                        await client
+                            .from('piggies')
+                            .update({ contract_url: contractResult.contractUrl })
+                            .eq('id', newPiggy.id);
+                    }
+                } catch (piggyUpdateErr) {
+                    console.warn('[ContratoView] Could not update contract_url in piggies table:', piggyUpdateErr);
                 }
 
-                // Update profile cedula
-                await client
-                    .from('profiles')
-                    .update({ cedula: userCedula })
-                    .eq('id', userId);
+                try {
+                    // Update profile cedula
+                    await client
+                        .from('profiles')
+                        .update({ cedula: userCedula })
+                        .eq('id', userId);
+                } catch (profileUpdateErr) {
+                    console.warn('[ContratoView] Could not update cedula in profiles table:', profileUpdateErr);
+                }
             }
 
             // 4. Deduct Wallet Balance
