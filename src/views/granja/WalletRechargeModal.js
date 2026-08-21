@@ -5,7 +5,7 @@ import { rechargeWallet, requestBreBRecharge, requestQRRecharge } from '../../se
 
 /**
  * Show the multi-step Wallet Recharge modal:
- * Step 1: Amount selector (Min $200.000 COP)
+ * Step 1: Amount selector (Min $1.000.000 COP)
  * Step 2: Payment method (Bre-B, Paga con QR, Wompi +3%, Assisted WhatsApp)
  * Step 3 (Bre-B): Hazlo Bre-B (@piggygranjamoral)
  * Step 3 (QR): Paga con QR (qr_code.jpg download + instructions)
@@ -26,6 +26,13 @@ export async function openWalletRechargeInfo(liveStats = null) {
   const ADMIN_WHATSAPP = '573154870448';
   const OFFICIAL_BRE_B_KEY = '@piggygranjamoral';
 
+  // Preload QR Code and logo assets in background so they render immediately
+  try {
+    const qrPreload = new Image();
+    qrPreload.src = '/qr_code.jpeg';
+    const logoPreload = new Image();
+    logoPreload.src = '/logo_qr.png';
+  } catch (_) {}
 
   // Shared mutable mock state so that the drawer updates after simulation
   const mockState = {
@@ -75,7 +82,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
   };
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  /* ── QUICK AMOUNT PRESETS ── */
+  /* ── QUICK AMOUNT PRESETS (Mínimo $1.000.000 COP) ── */
   const PRESETS = [1000000, 2000000, 3000000, 5000000];
   let selectedAmount = 1000000;
 
@@ -92,7 +99,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
   };
 
   /* ─────────────────────────────────────────
-     STEP 1 — Amount selector (Min $200.000)
+     STEP 1 — Amount selector (Min $1.000.000)
   ───────────────────────────────────────── */
   const renderStep1 = () => {
     container.innerHTML = `
@@ -109,7 +116,6 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
             <div>
               <div style="font-weight:800; font-size:1.15rem; color:#0f172a; line-height:1.2;">¿Cuánto quieres recargar?</div>
-              <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Monto mínimo: $200.000 COP</div>
             </div>
           </div>
           <button id="rch-close" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
@@ -136,7 +142,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
           <!-- Custom amount -->
           <div style="margin-bottom:24px;">
-            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O ingresa un monto personalizado (mín. $200.000)</label>
+            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O digita tu monto (min. $200.000)</label>
             <div style="position:relative;">
               <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
               <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 500.000"
@@ -238,7 +244,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
             <button id="rch-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
               ← Volver
             </button>
-            <button id="rch-close" style="background:transparent; border:none; padding:0; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
+            <button id="rch-close" style="background:transparent; border:none; padding:0; font-size:22px; font-weight:700; color:#94a3b8; cursor:line; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
           </div>
           
           <!-- Título y Monto ubicados debajo del botón Volver -->
@@ -266,14 +272,13 @@ export async function openWalletRechargeInfo(liveStats = null) {
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
                 <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Transferencia Bre-B</span>
-                <span style="background:white; color:#be123c; border:1px solid #ffe4e6; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+                <span style="background:white; color:#8125d1; border:1px solid #ddd6fe; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
               </div>
-              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere desde cualquier banco con nuestra llave.</div>
-              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Transfiere desde cualquier banco a nuestra llave.</div>
             </div>
           </button>
 
-          <!-- 2. BOTÓN: Paga con QR Code (Fondo #fff1f2, borde tenue 1px #ffe4e6, logo_qr.png) -->
+          <!-- 2. BOTÓN: Paga con QR (Fondo #fff1f2, borde tenue 1px #ffe4e6, logo_qr.png) -->
           <button id="rch-qr-btn" style="
             background: #fff1f2; border: 1px solid #ffe4e6;
             color: #0f172a; padding: 22px 20px; border-radius: 18px;
@@ -287,11 +292,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con QR Code</span>
-                <span style="background:white; color:#be123c; border:1px solid #ffe4e6; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con QR</span>
+                <span style="background:white; color:#8125d1; border:1px solid #ddd6fe; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
               </div>
-              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Fácil y al instante desde la app de tu banco.</div>
-              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Fácil y al instante desde la app de tu banco.</div>
             </div>
           </button>
 
@@ -319,15 +323,17 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
           </button>
 
-          <!-- 4. BOTÓN: Recarga Asistida (Líneas limpias, sin flecha) -->
+          <!-- 4. BOTÓN: Recarga Asistida (Líneas limpias, ícono WhatsApp negro) -->
           <button id="rch-whatsapp-btn" style="
             background: white; border: 1px solid #e2e8f0; color: #1e293b;
             padding: 20px 18px; border-radius: 18px; font-weight: 600; font-size: 0.95rem;
             cursor: pointer; display: flex; align-items: flex-start; gap: 14px; text-align: left;
             transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
           " onmouseover="this.style.borderColor='#10B981'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
-            <div style="width:52px; height:52px; min-width:52px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#334155; margin-top:2px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <div style="width:52px; height:52px; min-width:52px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#0f172a; margin-top:2px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+              </svg>
             </div>
             <div style="flex:1; min-width:0;">
               <div style="font-size:1.05rem; font-weight:850; color:#0f172a; margin-bottom:6px; line-height:1.25;">Recarga Asistida</div>
@@ -337,7 +343,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0;">🔒 Transacciones seguras respaldadas por Piggy App</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Transacciones seguras respaldadas por Piggy App</span>
+          </p>
           <a href="terminos-y-condiciones.html" target="_blank" style="
             display:inline-block; font-size:0.72rem; color:#64748b; font-weight:500;
             text-decoration:underline; cursor:pointer;
@@ -428,7 +437,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
           
           <div>
             <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Hazlo Bre-B</h2>
-            <div style="font-size:0.82rem; color:#64748b;">Transfiere desde cualquier banco fácil.</div>
+            <div style="font-size:0.82rem; color:#64748b;">Transfiere desde cualquier banco fácil y seguro.</div>
           </div>
         </div>
 
@@ -476,23 +485,23 @@ export async function openWalletRechargeInfo(liveStats = null) {
           <div style="margin-bottom:20px;">
             <button id="btn-breb-ya-transferi" style="
               width: 100%;
-              background: linear-gradient(135deg, #25D366, #128C7E);
+              background: #22c55e;
               color: white;
               border: none;
               padding: 16px 20px;
-              border-radius: 14px;
-              font-weight: 850;
+              border-radius: 9999px;
+              font-weight: 800;
               font-size: 1.05rem;
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
               gap: 10px;
-              box-shadow: 0 6px 18px rgba(37,211,102,0.35);
+              box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
               transition: all 0.2s;
-            " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)';" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.364 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+            " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
               </svg>
               Ya transferí
             </button>
@@ -524,7 +533,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Interoperabilidad oficial Banco de la República de Colombia</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Pagos instantaneos y seguros con Llave Bre-B</span>
+          </p>
         </div>
     `;
 
@@ -592,7 +604,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
           </div>
           
           <div>
-            <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Paga con QR Code</h2>
+            <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Paga con QR</h2>
             <div style="font-size:0.82rem; color:#64748b;">Fácil y al instante desde la app de tu banco.</div>
           </div>
         </div>
@@ -617,8 +629,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
               Código QR Oficial Bancolombia
             </div>
             
-            <div style="display:inline-block; padding:12px; background:white; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:10px;">
-              <img src="/qr_code.jpeg" alt="Código QR de Pago" style="width:210px; height:210px; object-fit:contain; display:block; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
+            <div style="display:inline-block; padding:12px; background:white; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:10px; min-width:210px; min-height:210px;">
+              <img src="/qr_code.jpeg" alt="Código QR de Pago" loading="eager" decoding="async" style="width:210px; height:210px; object-fit:contain; display:block; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
             </div>
 
             <!-- Botón en texto subrayado para descargar el QR -->
@@ -642,11 +654,11 @@ export async function openWalletRechargeInfo(liveStats = null) {
           <div style="margin-bottom:20px;">
             <button id="btn-qr-ya-transferi" style="
               width: 100%;
-              background: linear-gradient(135deg, #25D366, #128C7E);
+              background: #22c55e;
               color: white;
               border: none;
               padding: 16px 20px;
-              border-radius: 14px;
+              border-radius: 9999px;
               font-weight: 850;
               font-size: 1.05rem;
               cursor: pointer;
@@ -654,11 +666,11 @@ export async function openWalletRechargeInfo(liveStats = null) {
               align-items: center;
               justify-content: center;
               gap: 10px;
-              box-shadow: 0 6px 18px rgba(37,211,102,0.35);
+              box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
               transition: all 0.2s;
-            " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)';" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.364 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+            " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
               </svg>
               Ya transferí
             </button>
@@ -690,7 +702,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Pagos instantáneos con QR · Red Bancaria Nacional</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Pagos instantaneos y seguros con QR</span>
+          </p>
         </div>
     `;
 
@@ -748,7 +763,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
           </p>
         </div>
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Transacción cifrada con SSL · Wompi by Bancolombia</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Transacción cifrada con SSL · Wompi by Bancolombia</span>
+          </p>
         </div>
     `;
 
@@ -808,7 +826,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Cuentas Agro seguras · Piggy App</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Cuentas Agro seguras · Piggy App</span>
+          </p>
         </div>
     `;
 
@@ -895,7 +916,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0;">🔒 Cuentas Agro seguras · Piggy App</p>
+          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Cuentas Agro seguras · Piggy App</span>
+          </p>
         </div>
     `;
 
