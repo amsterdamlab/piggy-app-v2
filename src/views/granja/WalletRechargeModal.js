@@ -257,15 +257,15 @@ export async function openWalletRechargeInfo(liveStats = null) {
         <!-- Scrollable Body Content (4 Botones en orden: Bre-B, QR, Wompi, Asistida) -->
         <div style="flex:1; overflow-y:auto; padding:20px 20px 40px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
           
-          <!-- 1. BOTÓN: Transferencia Bre-B (Fondo #fff1f2, borde tenue 1px #ffe4e6) -->
+          <!-- 1. BOTÓN: Transferencia Bre-B (Fondo #fdf2f5, borde tenue 1px #ffe4e6) -->
           <button id="rch-breb-btn" style="
-            background: #fff1f2; border: 1px solid #ffe4e6;
+            background: #fdf2f5; border: 1px solid #ffe4e6;
             color: #0f172a; padding: 22px 20px; border-radius: 18px;
             font-weight: 700; font-size: 1rem; cursor: pointer;
             display: flex; align-items: flex-start; gap: 14px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
             text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
-          " onmouseover="this.style.background='#ffe4e6'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fff1f2'; this.style.transform='translateY(0)';">
+          " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
             <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px;">
               <img src="/logo_breb.png" alt="Bre-B" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggy-favicon.svg';" />
             </div>
@@ -278,15 +278,15 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
           </button>
 
-          <!-- 2. BOTÓN: Paga con QR (Fondo #fff1f2, borde tenue 1px #ffe4e6, logo_qr.png) -->
+          <!-- 2. BOTÓN: Paga con QR (Fondo #fdf2f5, borde tenue 1px #ffe4e6, logo_qr.png) -->
           <button id="rch-qr-btn" style="
-            background: #fff1f2; border: 1px solid #ffe4e6;
+            background: #fdf2f5; border: 1px solid #ffe4e6;
             color: #0f172a; padding: 22px 20px; border-radius: 18px;
             font-weight: 700; font-size: 1rem; cursor: pointer;
             display: flex; align-items: flex-start; gap: 14px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
             text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
-          " onmouseover="this.style.background='#ffe4e6'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fff1f2'; this.style.transform='translateY(0)';">
+          " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
             <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px;">
               <img src="/logo_qr.png" alt="Código QR" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
             </div>
