@@ -561,12 +561,16 @@ export async function openWalletRechargeInfo(liveStats = null) {
       btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
 
       try {
-        await requestBreBRecharge({
+        const res = await requestBreBRecharge({
           amount: selectedAmount,
           reference: breBRef,
           breBKey: OFFICIAL_BRE_B_KEY,
           mockState
         });
+
+        if (res && res.success === false) {
+          throw new Error(res.reason || 'Error al registrar solicitud');
+        }
 
         const msg = `🐷 *PIGGY APP — Comprobante de Recarga Bre-B*\n\n` +
           `👤 *Usuario:* ${userName}\n` +
@@ -719,11 +723,15 @@ export async function openWalletRechargeInfo(liveStats = null) {
       btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
 
       try {
-        await requestQRRecharge({
+        const res = await requestQRRecharge({
           amount: selectedAmount,
           reference: qrRef,
           mockState
         });
+
+        if (res && res.success === false) {
+          throw new Error(res.reason || 'Error al registrar solicitud');
+        }
 
         const msg = `🐷 *PIGGY APP — Comprobante de Recarga con Código QR*\n\n` +
           `👤 *Usuario:* ${userName}\n` +

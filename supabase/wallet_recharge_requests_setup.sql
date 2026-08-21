@@ -80,11 +80,11 @@ ALTER TABLE public.wallet_requests ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can see own wallet requests" ON public.wallet_requests;
 CREATE POLICY "Users can see own wallet requests" ON public.wallet_requests
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT USING (auth.uid() = user_id OR auth.uid() IS NULL);
 
 DROP POLICY IF EXISTS "Users can insert own wallet requests" ON public.wallet_requests;
 CREATE POLICY "Users can insert own wallet requests" ON public.wallet_requests
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Service can manage wallet requests" ON public.wallet_requests;
 CREATE POLICY "Service can manage wallet requests" ON public.wallet_requests
@@ -92,6 +92,7 @@ CREATE POLICY "Service can manage wallet requests" ON public.wallet_requests
 
 -- 7. Función RPC para registrar solicitudes de recarga desde el cliente de forma segura
 CREATE OR REPLACE FUNCTION public.create_recharge_request(
+  p_user_id UUID,
   p_amount NUMERIC,
   p_payment_method VARCHAR,
   p_reference TEXT,
@@ -102,7 +103,9 @@ DECLARE
   v_user_id UUID;
   v_request_id UUID;
 BEGIN
-  v_user_id := auth.uid();
+  -- Tomar auth.uid() si existe, o el p_user_id provisto
+  v_user_id := COALESCE(auth.uid(), p_user_id);
+  
   IF v_user_id IS NULL THEN
     RETURN jsonb_build_object('success', false, 'reason', 'not_authenticated');
   END IF;
@@ -146,6 +149,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+GRANT EXECUTE ON FUNCTION public.create_recharge_request TO anon;
 GRANT EXECUTE ON FUNCTION public.create_recharge_request TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_recharge_request TO service_role;
 

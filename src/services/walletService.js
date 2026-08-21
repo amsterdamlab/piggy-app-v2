@@ -525,12 +525,32 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
 
     // Real Supabase mode
     const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return { success: false, reason: 'not_authenticated' };
+    if (!client) {
+        return { success: false, reason: 'no_supabase_client' };
+    }
+
+    let userId = null;
+    try {
+        const { data: authData } = await client.auth.getUser();
+        userId = authData?.user?.id;
+    } catch (e) {
+        console.warn('No se pudo obtener usuario de auth.getUser:', e);
+    }
+
+    if (!userId) {
+        const profile = AppState.get('profile') || AppState.get('currentUser');
+        userId = profile?.id;
+    }
+
+    if (!userId) {
+        console.error('No se encontró ID de usuario para registrar la solicitud');
+        return { success: false, reason: 'not_authenticated' };
+    }
 
     // 1. Intentar registrar a través de RPC seguro
     try {
         const { data, error } = await client.rpc('create_recharge_request', {
+            p_user_id: userId,
             p_amount: amount,
             p_payment_method: 'BRE_B',
             p_reference: reference,
@@ -538,6 +558,7 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
         });
 
         if (!error && data?.success) {
+            console.log('✅ Solicitud Bre-B registrada vía RPC en wallet_requests:', data);
             return {
                 success: true,
                 requestId: data.request_id,
@@ -545,15 +566,18 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
                 status: 'pending'
             };
         }
+        if (error) {
+            console.warn('RPC create_recharge_request retornó error, intentando inserción directa:', error);
+        }
     } catch (rpcErr) {
-        console.warn('RPC create_recharge_request no disponible, procediendo con inserción directa en wallet_requests:', rpcErr);
+        console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
     }
 
     // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
         .from('wallet_requests')
         .insert({
-            user_id: user.id,
+            user_id: userId,
             request_type: 'recharge',
             payment_method: 'BRE_B',
             reference: reference,
@@ -571,6 +595,7 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
         return { success: false, reason: error.message };
     }
 
+    console.log('✅ Solicitud Bre-B registrada exitosamente en wallet_requests:', data);
     return {
         success: true,
         requestId: data?.id,
@@ -603,12 +628,32 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
 
     // Real Supabase mode
     const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return { success: false, reason: 'not_authenticated' };
+    if (!client) {
+        return { success: false, reason: 'no_supabase_client' };
+    }
+
+    let userId = null;
+    try {
+        const { data: authData } = await client.auth.getUser();
+        userId = authData?.user?.id;
+    } catch (e) {
+        console.warn('No se pudo obtener usuario de auth.getUser:', e);
+    }
+
+    if (!userId) {
+        const profile = AppState.get('profile') || AppState.get('currentUser');
+        userId = profile?.id;
+    }
+
+    if (!userId) {
+        console.error('No se encontró ID de usuario para registrar la solicitud');
+        return { success: false, reason: 'not_authenticated' };
+    }
 
     // 1. Intentar registrar a través de RPC seguro
     try {
         const { data, error } = await client.rpc('create_recharge_request', {
+            p_user_id: userId,
             p_amount: amount,
             p_payment_method: 'QR_CODE',
             p_reference: reference,
@@ -616,6 +661,7 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
         });
 
         if (!error && data?.success) {
+            console.log('✅ Solicitud QR registrada vía RPC en wallet_requests:', data);
             return {
                 success: true,
                 requestId: data.request_id,
@@ -623,15 +669,18 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
                 status: 'pending'
             };
         }
+        if (error) {
+            console.warn('RPC create_recharge_request retornó error, intentando inserción directa:', error);
+        }
     } catch (rpcErr) {
-        console.warn('RPC create_recharge_request no disponible, procediendo con inserción directa en wallet_requests:', rpcErr);
+        console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
     }
 
     // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
         .from('wallet_requests')
         .insert({
-            user_id: user.id,
+            user_id: userId,
             request_type: 'recharge',
             payment_method: 'QR_CODE',
             reference: reference,
@@ -649,6 +698,7 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
         return { success: false, reason: error.message };
     }
 
+    console.log('✅ Solicitud QR registrada exitosamente en wallet_requests:', data);
     return {
         success: true,
         requestId: data?.id,
