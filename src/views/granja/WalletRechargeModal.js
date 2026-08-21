@@ -309,7 +309,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Pagar en línea con Wompi</span>
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con Wompi</span>
                 <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">+3% COMISIÓN</span>
               </div>
               <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere con comisiones por pasarela de pagos.</div>
@@ -628,7 +628,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
                 color: #059669; font-weight: 700; font-size: 0.85rem; text-decoration: underline;
                 background: none; border: none; padding: 4px 0; cursor: pointer; transition: color 0.15s;
               " onmouseover="this.style.color='#047857'" onmouseout="this.style.color='#059669'">
-                📥 Descarga el QR en tu celular
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Descarga el QR en tu celular
               </a>
             </div>
 
