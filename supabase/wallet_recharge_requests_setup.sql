@@ -52,6 +52,16 @@ CREATE INDEX IF NOT EXISTS idx_wallet_requests_reference ON public.wallet_reques
 CREATE INDEX IF NOT EXISTS idx_wallet_requests_type ON public.wallet_requests(request_type);
 
 -- 5. Asegurar estructura de wallet_transactions
+DO $$ BEGIN
+  ALTER TYPE transaction_type_enum ADD VALUE IF NOT EXISTS 'recharge';
+EXCEPTION WHEN OTHERS THEN null;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.wallet_transactions ALTER COLUMN type TYPE VARCHAR(50) USING type::VARCHAR;
+EXCEPTION WHEN OTHERS THEN null;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.wallet_transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
