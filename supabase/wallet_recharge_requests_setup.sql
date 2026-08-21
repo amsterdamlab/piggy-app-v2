@@ -193,10 +193,10 @@ BEGIN
 
       v_tx_desc := 'Recarga ' || v_method_label || ' [Ref: ' || COALESCE(NEW.reference, '') || ']';
       
-      -- Autorizar sesión para actualizar saldo evitando bloqueos de seguridad
+      -- Autorizar sesión para insertar transacción positiva respetando la veeduría
       PERFORM set_config('app.wallet_update_authorized', 'true', true);
       
-      -- 1. Insertar el movimiento oficial en wallet_transactions
+      -- 1. Insertar el movimiento oficial en wallet_transactions (El trigger de wallet_transactions actualiza profiles automáticamente)
       INSERT INTO public.wallet_transactions (
         user_id,
         amount,
@@ -217,11 +217,6 @@ BEGIN
         now()
       );
       
-      -- 2. Acreditar el saldo en profiles.wallet_balance
-      UPDATE public.profiles
-      SET wallet_balance = COALESCE(wallet_balance, 0) + NEW.amount
-      WHERE id = NEW.user_id;
-      
       PERFORM set_config('app.wallet_update_authorized', '', true);
       
       NEW.processed_at := now();
@@ -236,13 +231,9 @@ BEGIN
   ELSIF v_old_status = 'pending' AND v_new_status = 'rejected' THEN
     NEW.processed_at := now();
     
-    -- Si era un retiro de dinero que ya se había retenido, devolver saldo
+    -- Si era un retiro de dinero que ya se había retenido, devolver saldo insertando crédito
     IF NEW.request_type::text = 'withdrawal' THEN
       PERFORM set_config('app.wallet_update_authorized', 'true', true);
-      
-      UPDATE public.profiles
-      SET wallet_balance = COALESCE(wallet_balance, 0) + NEW.amount
-      WHERE id = NEW.user_id;
       
       INSERT INTO public.wallet_transactions (
         user_id, amount, type, description, wallet_type, created_at
@@ -252,19 +243,9 @@ BEGIN
       
       PERFORM set_config('app.wallet_update_authorized', '', true);
     
-    -- Si era un canje de consumo que ya se había retenido, devolver saldo
+    -- Si era un canje de consumo que ya se había retenido, devolver saldo insertando crédito
     ELSIF NEW.request_type::text = 'consumption' THEN
       PERFORM set_config('app.wallet_update_authorized', 'true', true);
-      
-      IF NEW.wallet_type = 'consumo' THEN
-        UPDATE public.profiles
-        SET referral_balance = COALESCE(referral_balance, 0) + NEW.amount
-        WHERE id = NEW.user_id;
-      ELSE
-        UPDATE public.profiles
-        SET wallet_balance = COALESCE(wallet_balance, 0) + NEW.amount
-        WHERE id = NEW.user_id;
-      END IF;
       
       INSERT INTO public.wallet_transactions (
         user_id, amount, type, description, wallet_type, created_at
