@@ -249,72 +249,72 @@ export async function openWalletRechargeInfo(liveStats = null) {
         </div>
 
         <!-- Scrollable Body Content (4 Botones en orden: Bre-B, QR, Wompi, Asistida) -->
-        <div style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; -webkit-overflow-scrolling:touch;">
+        <div style="flex:1; overflow-y:auto; padding:20px 20px 40px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
           
-          <!-- 1. BOTÓN: Transferencia Bre-B (Fondo #fff1f2, borde #74f651) -->
+          <!-- 1. BOTÓN: Transferencia Bre-B (Fondo #fff1f2, borde 2px #74f651) -->
           <button id="rch-breb-btn" style="
-            background: #fff1f2; border: 2.5px solid #74f651;
-            color: #0f172a; padding: 18px 20px; border-radius: 16px;
+            background: #fff1f2; border: 2px solid #74f651;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
             font-weight: 700; font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; gap: 14px;
+            display: flex; align-items: flex-start; gap: 14px;
             box-shadow: 0 4px 14px rgba(116,246,81,0.15);
-            text-align: left; transition: all 0.2s; position: relative; overflow: hidden;
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
           " onmouseover="this.style.background='#ffe4e6'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fff1f2'; this.style.transform='translateY(0)';">
-            <div style="width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
-              <img src="/logo_breb.png" alt="Bre-B" style="width:42px; height:42px; object-fit:contain; border-radius:8px;" onerror="this.onerror=null; this.src='/piggy-favicon.svg';" />
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid rgba(116,246,81,0.4); margin-top:2px;">
+              <img src="/logo_breb.png" alt="Bre-B" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggy-favicon.svg';" />
             </div>
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em;">Transferencia Bre-B</span>
-                <span style="background:white; color:#059669; border:1px solid #74f651; border-radius:6px; padding:2px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Transferencia Bre-B</span>
+                <span style="background:white; color:#059669; border:1px solid #74f651; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
               </div>
-              <div style="font-size:0.84rem; color:#334155; font-weight:500; line-height:1.35;">Transfiere desde cualquier banco con nuestra llave única.</div>
-              <div style="font-size:0.92rem; font-weight:850; margin-top:6px; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere desde cualquier banco con nuestra llave única.</div>
+              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
             </div>
           </button>
 
-          <!-- 2. BOTÓN: Paga con QR Code (Fondo #fff1f2, borde #b80049, logo_qr.png) -->
+          <!-- 2. BOTÓN: Paga con QR Code (Fondo #fff1f2, borde 2px #b80049, logo_qr.png) -->
           <button id="rch-qr-btn" style="
-            background: #fff1f2; border: 2.5px solid #b80049;
-            color: #0f172a; padding: 18px 20px; border-radius: 16px;
+            background: #fff1f2; border: 2px solid #b80049;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
             font-weight: 700; font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; gap: 14px;
+            display: flex; align-items: flex-start; gap: 14px;
             box-shadow: 0 4px 14px rgba(184,0,73,0.15);
-            text-align: left; transition: all 0.2s; position: relative; overflow: hidden;
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
           " onmouseover="this.style.background='#ffe4e6'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fff1f2'; this.style.transform='translateY(0)';">
-            <div style="width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
-              <img src="/logo_qr.png" alt="Código QR" style="width:42px; height:42px; object-fit:contain; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid rgba(184,0,73,0.3); margin-top:2px;">
+              <img src="/logo_qr.png" alt="Código QR" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
             </div>
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em;">Paga con QR Code</span>
-                <span style="background:white; color:#b80049; border:1px solid #fbcfe8; border-radius:6px; padding:2px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con QR Code</span>
+                <span style="background:white; color:#b80049; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
               </div>
-              <div style="font-size:0.84rem; color:#334155; font-weight:500; line-height:1.35;">Fácil y al instante desde la app de tu banco.</div>
-              <div style="font-size:0.92rem; font-weight:850; margin-top:6px; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Fácil y al instante desde la app de tu banco.</div>
+              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">Total a pagar: ${formatCOP(selectedAmount)}</div>
             </div>
           </button>
 
-          <!-- 3. BOTÓN: Wompi (Fondo blanco, borde negro #0f172a) -->
+          <!-- 3. BOTÓN: Wompi (Fondo blanco, borde 2px negro #0f172a) -->
           <button id="rch-wompi-btn" style="
             background: white; border: 2px solid #0f172a;
-            color: #0f172a; padding: 18px 20px; border-radius: 16px;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
             font-weight: 700; font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; gap: 14px;
+            display: flex; align-items: flex-start; gap: 14px;
             box-shadow: 0 4px 14px rgba(15,23,42,0.08);
-            text-align: left; transition: all 0.2s;
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
           " onmouseover="this.style.background='#f8fafc'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)';">
-            <div style="width:50px; height:50px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:#f8fafc; padding:4px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-              <img src="/logo_wompi.jpg" alt="Wompi" style="width:42px; height:42px; object-fit:contain; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:#f8fafc; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #e2e8f0; margin-top:2px;">
+              <img src="/logo_wompi.jpg" alt="Wompi" style="width:44px; height:44px; object-fit:contain; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
             </div>
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em;">Pagar en línea con Wompi</span>
-                <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:2px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">+3% COMISIÓN</span>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Pagar en línea con Wompi</span>
+                <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">+3% COMISIÓN</span>
               </div>
-              <div style="font-size:0.84rem; color:#334155; font-weight:500; line-height:1.35;">Transfiere con comisiones por pasarela de pagos.</div>
-              <div style="font-size:0.92rem; font-weight:850; margin-top:6px; color:#0f172a;">
-                Total a pagar: ${formatCOP(wompiTotal)} <span style="font-size:0.75rem; font-weight:600; color:#64748b;">(+${formatCOP(wompiFee)} tarifa)</span>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere con comisiones por pasarela de pagos.</div>
+              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">
+                Total a pagar: ${formatCOP(wompiTotal)} <span style="font-size:0.78rem; font-weight:600; color:#64748b;">(+${formatCOP(wompiFee)} tarifa)</span>
               </div>
             </div>
           </button>
@@ -322,16 +322,16 @@ export async function openWalletRechargeInfo(liveStats = null) {
           <!-- 4. BOTÓN: Recarga Asistida (Líneas limpias, sin flecha) -->
           <button id="rch-whatsapp-btn" style="
             background: white; border: 2px solid #e2e8f0; color: #1e293b;
-            padding: 16px 18px; border-radius: 16px; font-weight: 600; font-size: 0.95rem;
-            cursor: pointer; display: flex; align-items: center; gap: 14px; text-align: left;
-            transition: all 0.2s;
+            padding: 20px 18px; border-radius: 18px; font-weight: 600; font-size: 0.95rem;
+            cursor: pointer; display: flex; align-items: flex-start; gap: 14px; text-align: left;
+            transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
           " onmouseover="this.style.borderColor='#10B981'; this.style.background='#f0fdf4';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white';">
-            <div style="width:50px; height:50px; background:#f8fafc; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#334155;">
+            <div style="width:52px; height:52px; min-width:52px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#334155; margin-top:2px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </div>
-            <div style="flex:1;">
-              <div style="font-size:1.02rem; font-weight:750; color:#0f172a; margin-bottom:2px;">Recarga Asistida</div>
-              <div style="font-size:0.84rem; color:#64748b; font-weight:500; line-height:1.35;">Transferencia manual guiada con un asesor vía WhatsApp.</div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:1.05rem; font-weight:850; color:#0f172a; margin-bottom:6px; line-height:1.25;">Recarga Asistida</div>
+              <div style="font-size:0.86rem; color:#64748b; font-weight:500; line-height:1.4;">Transferencia manual guiada con un asesor vía WhatsApp.</div>
             </div>
           </button>
         </div>
