@@ -5,7 +5,7 @@ import { rechargeWallet, requestBreBRecharge, requestQRRecharge } from '../../se
 
 /**
  * Show the multi-step Wallet Recharge modal:
- * Step 1: Amount selector (Min $1.000.000 COP)
+ * Step 1: Amount selector (Min $200.000 COP)
  * Step 2: Payment method (Bre-B, Paga con QR, Wompi +3%, Assisted WhatsApp)
  * Step 3 (Bre-B): Hazlo Bre-B (@piggygranjamoral)
  * Step 3 (QR): Paga con QR (qr_code.jpg download + instructions)
@@ -75,7 +75,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
   };
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  /* ── QUICK AMOUNT PRESETS (Mínimo $1.000.000 COP) ── */
+  /* ── QUICK AMOUNT PRESETS ── */
   const PRESETS = [1000000, 2000000, 3000000, 5000000];
   let selectedAmount = 1000000;
 
@@ -92,7 +92,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
   };
 
   /* ─────────────────────────────────────────
-     STEP 1 — Amount selector (Min $1.000.000)
+     STEP 1 — Amount selector (Min $200.000)
   ───────────────────────────────────────── */
   const renderStep1 = () => {
     container.innerHTML = `
@@ -109,7 +109,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
             </div>
             <div>
               <div style="font-weight:800; font-size:1.15rem; color:#0f172a; line-height:1.2;">¿Cuánto quieres recargar?</div>
-              <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Monto mínimo: $1.000.000 COP</div>
+              <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Monto mínimo: $200.000 COP</div>
             </div>
           </div>
           <button id="rch-close" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
@@ -136,10 +136,10 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
           <!-- Custom amount -->
           <div style="margin-bottom:24px;">
-            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O ingresa un monto personalizado</label>
+            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O ingresa un monto personalizado (mín. $200.000)</label>
             <div style="position:relative;">
               <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
-              <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 1.000.000"
+              <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 500.000"
                 value="${formatThousands(selectedAmount)}"
                 style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
                 onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e2e8f0';" />
@@ -206,9 +206,9 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
     document.getElementById('rch-step1-next').addEventListener('click', () => {
       const customVal = parseFormattedNumber(document.getElementById('rch-custom-amount').value);
-      if (customVal >= 1000000) selectedAmount = customVal;
-      if (!selectedAmount || selectedAmount < 1000000) {
-        alert('El monto mínimo de recarga en Piggy es de $1.000.000 COP.');
+      if (customVal > 0) selectedAmount = customVal;
+      if (!selectedAmount || selectedAmount < 200000) {
+        alert('El monto mínimo de recarga en Piggy es de $200.000 COP.');
         return;
       }
       renderStep2();
@@ -770,7 +770,7 @@ export async function openWalletRechargeInfo(liveStats = null) {
 
     container.innerHTML = `
         <div style="background:linear-gradient(135deg,#059669,#047857); padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
-          <div style="font-size:44px; margin-bottom:8px;">⏳</div>
+          <div style="font-size:48px; margin-bottom:8px;">⏳</div>
           <div style="font-weight:900; font-size:0.9rem; opacity:0.9; margin-bottom:2px;">${methodTitle}</div>
           <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">¡Solicitud en Verificación!</h3>
           <p style="margin:0; font-size:0.85rem; opacity:0.92;">Hemos registrado tu reporte de pago</p>
