@@ -164,13 +164,17 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_tx_desc TEXT;
   v_method_label TEXT;
+  v_old_status TEXT;
+  v_new_status TEXT;
 BEGIN
+  v_old_status := LOWER(OLD.status::text);
+  v_new_status := LOWER(NEW.status::text);
+
   -- Detectar cambio de estado de 'pending' a 'approved' o 'processed'
-  IF (OLD.status = 'pending' OR OLD.status = 'PENDING') 
-     AND (NEW.status = 'approved' OR NEW.status = 'APPROVED' OR NEW.status = 'processed' OR NEW.status = 'PROCESSED') THEN
+  IF v_old_status = 'pending' AND (v_new_status = 'approved' OR v_new_status = 'processed') THEN
     
     -- 🟢 CASO 1: RECARGA DE SALDO (Bre-B, QR, etc.)
-    IF NEW.request_type = 'recharge' OR NEW.request_type = 'recharge_breb' OR NEW.request_type = 'recharge_qr' THEN
+    IF NEW.request_type::text IN ('recharge', 'recharge_breb', 'recharge_qr') THEN
       v_method_label := CASE 
         WHEN NEW.payment_method = 'BRE_B' THEN 'Bre-B'
         WHEN NEW.payment_method = 'QR_CODE' THEN 'Código QR'
@@ -214,17 +218,16 @@ BEGIN
       RAISE LOG 'Recarga % aprobada: % acreditados a usuario % [Ref: %]', NEW.payment_method, NEW.amount, NEW.user_id, NEW.reference;
     
     -- 🟢 CASO 2: RETIRO O CONSUMO PROCESADO
-    ELSIF NEW.request_type IN ('withdrawal', 'consumption') THEN
+    ELSIF NEW.request_type::text IN ('withdrawal', 'consumption') THEN
       NEW.processed_at := now();
     END IF;
 
   -- 🔴 CASO 3: SOLICITUD RECHAZADA
-  ELSIF (OLD.status = 'pending' OR OLD.status = 'PENDING') 
-        AND (NEW.status = 'rejected' OR NEW.status = 'REJECTED') THEN
+  ELSIF v_old_status = 'pending' AND v_new_status = 'rejected' THEN
     NEW.processed_at := now();
     
     -- Si era un retiro de dinero que ya se había retenido, devolver saldo
-    IF NEW.request_type = 'withdrawal' THEN
+    IF NEW.request_type::text = 'withdrawal' THEN
       PERFORM set_config('app.wallet_update_authorized', 'true', true);
       
       UPDATE public.profiles
@@ -240,7 +243,7 @@ BEGIN
       PERFORM set_config('app.wallet_update_authorized', '', true);
     
     -- Si era un canje de consumo que ya se había retenido, devolver saldo
-    ELSIF NEW.request_type = 'consumption' THEN
+    ELSIF NEW.request_type::text = 'consumption' THEN
       PERFORM set_config('app.wallet_update_authorized', 'true', true);
       
       IF NEW.wallet_type = 'consumo' THEN
