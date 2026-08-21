@@ -90,7 +90,12 @@ DROP POLICY IF EXISTS "Service can manage wallet requests" ON public.wallet_requ
 CREATE POLICY "Service can manage wallet requests" ON public.wallet_requests
   FOR ALL USING (true) WITH CHECK (true);
 
--- 7. Función RPC para registrar solicitudes de recarga desde el cliente de forma segura
+-- 7. Eliminar firmas anteriores y crear función RPC unificada
+DROP FUNCTION IF EXISTS public.create_recharge_request(NUMERIC, VARCHAR, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.create_recharge_request(NUMERIC, VARCHAR, TEXT);
+DROP FUNCTION IF EXISTS public.create_recharge_request(UUID, NUMERIC, VARCHAR, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.create_recharge_request(UUID, NUMERIC, VARCHAR, TEXT);
+
 CREATE OR REPLACE FUNCTION public.create_recharge_request(
   p_user_id UUID,
   p_amount NUMERIC,
