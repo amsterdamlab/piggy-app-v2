@@ -502,44 +502,24 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
 
 /**
  * Registrar una solicitud de recarga por Bre-B (Semi-automática).
- * Inserta un registro en wallet_transactions con estado 'PENDING' para que
- * el administrador verifique la transferencia y lo apruebe en Supabase.
+ * Inserta un registro en wallet_requests con estado 'pending' y la referencia única
+ * para que el administrador verifique la transferencia y la apruebe en Supabase.
  *
  * @param {Object} params
  * @param {number} params.amount - Monto a recargar en COP
  * @param {string} params.reference - Código de referencia único (ej: PGY-748291)
  * @param {string} [params.breBKey='@piggygranjamoral'] - Llave Bre-B utilizada
  * @param {Object} [params.mockState=null] - Estado mutable para mock mode
- * @returns {Promise<{ success: boolean, transactionId?: string, reason?: string }>}
+ * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
  */
 export async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {
-    const description = `Recarga Bre-B [Ref: ${reference}] — Pendiente ($${formatCOP(amount)}) [Llave: ${breBKey}]`;
-
     if (isUsingMockData()) {
         initMockState();
-
-        const newTransaction = {
-            id: `breb-${Date.now()}`,
-            amount: 0,
-            type: 'simulation_recharge',
-            description,
-            wallet_type: 'dinero',
-            payment_method: 'BRE_B',
-            simulation_status: 'PENDING',
-            created_at: new Date().toISOString(),
-        };
-
-        mockTransactions.unshift(newTransaction);
-        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-
-        if (mockState) {
-            mockState.transactions = mockTransactions;
-        }
-
         return {
             success: true,
-            transactionId: newTransaction.id,
-            status: 'PENDING'
+            requestId: `req-breb-${Date.now()}`,
+            reference,
+            status: 'pending'
         };
     }
 
@@ -548,71 +528,76 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
 
+    // 1. Intentar registrar a través de RPC seguro
+    try {
+        const { data, error } = await client.rpc('create_recharge_request', {
+            p_amount: amount,
+            p_payment_method: 'BRE_B',
+            p_reference: reference,
+            p_notes: `Llave Bre-B: ${breBKey}`
+        });
+
+        if (!error && data?.success) {
+            return {
+                success: true,
+                requestId: data.request_id,
+                reference: data.reference || reference,
+                status: 'pending'
+            };
+        }
+    } catch (rpcErr) {
+        console.warn('RPC create_recharge_request no disponible, procediendo con inserción directa en wallet_requests:', rpcErr);
+    }
+
+    // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
-        .from('wallet_transactions')
+        .from('wallet_requests')
         .insert({
             user_id: user.id,
-            amount: 0,
-            type: 'simulation_recharge',
-            description,
-            wallet_type: 'dinero',
+            request_type: 'recharge',
             payment_method: 'BRE_B',
-            simulation_status: 'PENDING',
+            reference: reference,
+            amount: amount,
+            status: 'pending',
+            wallet_type: 'dinero',
+            bank_name: 'Bancolombia',
+            notes: `Llave Bre-B: ${breBKey}`
         })
-        .select('id')
+        .select('id, reference, status')
         .single();
 
     if (error) {
-        console.error('Error insertando solicitud de recarga Bre-B en wallet_transactions:', error);
+        console.error('Error registrando solicitud Bre-B en wallet_requests:', error);
         return { success: false, reason: error.message };
     }
 
     return {
         success: true,
-        transactionId: data?.id,
-        status: 'PENDING'
+        requestId: data?.id,
+        reference: data?.reference || reference,
+        status: data?.status || 'pending'
     };
 }
 
 /**
  * Registrar una solicitud de recarga por Código QR.
- * Inserta un registro en wallet_transactions con estado 'PENDING' para que
- * el administrador verifique la transferencia y lo apruebe en Supabase.
+ * Inserta un registro en wallet_requests con estado 'pending' y la referencia única
+ * para que el administrador verifique la transferencia y la apruebe en Supabase.
  *
  * @param {Object} params
  * @param {number} params.amount - Monto a recargar en COP
  * @param {string} params.reference - Código de referencia único (ej: PGY-748291)
  * @param {Object} [params.mockState=null] - Estado mutable para mock mode
- * @returns {Promise<{ success: boolean, transactionId?: string, reason?: string }>}
+ * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
  */
 export async function requestQRRecharge({ amount, reference, mockState = null }) {
-    const description = `Recarga QR [Ref: ${reference}] — Pendiente ($${formatCOP(amount)})`;
-
     if (isUsingMockData()) {
         initMockState();
-
-        const newTransaction = {
-            id: `qr-${Date.now()}`,
-            amount: 0,
-            type: 'simulation_recharge',
-            description,
-            wallet_type: 'dinero',
-            payment_method: 'QR_CODE',
-            simulation_status: 'PENDING',
-            created_at: new Date().toISOString(),
-        };
-
-        mockTransactions.unshift(newTransaction);
-        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-
-        if (mockState) {
-            mockState.transactions = mockTransactions;
-        }
-
         return {
             success: true,
-            transactionId: newTransaction.id,
-            status: 'PENDING'
+            requestId: `req-qr-${Date.now()}`,
+            reference,
+            status: 'pending'
         };
     }
 
@@ -621,33 +606,56 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
 
+    // 1. Intentar registrar a través de RPC seguro
+    try {
+        const { data, error } = await client.rpc('create_recharge_request', {
+            p_amount: amount,
+            p_payment_method: 'QR_CODE',
+            p_reference: reference,
+            p_notes: 'Código QR Bancolombia'
+        });
+
+        if (!error && data?.success) {
+            return {
+                success: true,
+                requestId: data.request_id,
+                reference: data.reference || reference,
+                status: 'pending'
+            };
+        }
+    } catch (rpcErr) {
+        console.warn('RPC create_recharge_request no disponible, procediendo con inserción directa en wallet_requests:', rpcErr);
+    }
+
+    // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
-        .from('wallet_transactions')
+        .from('wallet_requests')
         .insert({
             user_id: user.id,
-            amount: 0,
-            type: 'simulation_recharge',
-            description,
-            wallet_type: 'dinero',
+            request_type: 'recharge',
             payment_method: 'QR_CODE',
-            simulation_status: 'PENDING',
+            reference: reference,
+            amount: amount,
+            status: 'pending',
+            wallet_type: 'dinero',
+            bank_name: 'Bancolombia',
+            notes: 'Código QR Bancolombia'
         })
-        .select('id')
+        .select('id, reference, status')
         .single();
 
     if (error) {
-        console.error('Error insertando solicitud de recarga QR en wallet_transactions:', error);
+        console.error('Error registrando solicitud QR en wallet_requests:', error);
         return { success: false, reason: error.message };
     }
 
     return {
         success: true,
-        transactionId: data?.id,
-        status: 'PENDING'
+        requestId: data?.id,
+        reference: data?.reference || reference,
+        status: data?.status || 'pending'
     };
 }
-
-
 
 /* ─── Create Wallet Request ─── */
 
