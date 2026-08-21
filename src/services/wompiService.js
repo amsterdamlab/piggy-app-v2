@@ -145,11 +145,14 @@ export async function openWompiWidget({ amountInCOP, userId, customerData = {} }
   }
 
   // Configuración del objeto para instanciar el Widget
+  const redirectUrl = window.location.origin;
+
   const widgetConfig = {
     currency,
     amountInCents,
     reference,
     publicKey,
+    redirectUrl,
     signature: {
       integrity: signatureHex
     }
