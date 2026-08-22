@@ -87,33 +87,38 @@ export function showWalletDrawer(firstName, stats) {
          <!-- Bonos de Consumo -->
          ${stats.referralBonus > 0 ? `
          <div style="
-            background: #F3E8FF;
-            border: 1px solid #E9D5FF;
+            background: linear-gradient(135deg, #910957 0%, #f22c75 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 16px 18px;
             border-radius: 14px;
             margin-bottom: 20px;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            box-shadow: 0 10px 25px -5px rgba(145, 9, 87, 0.35);
+            color: white;
          ">
-            <div style="display: flex; align-items: center; gap: 8px; color: #7C3AED; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.9); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
               ${renderIcon('meat', '', '18')}
               <span>BONOS DE CONSUMO</span>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 1.45rem; font-weight: 800; color: #1E1B4B; line-height: 1;">${stats.referralBonusFormatted}</div>
+              <div style="font-size: 1.45rem; font-weight: 800; color: #ffffff; line-height: 1;">${stats.referralBonusFormatted}</div>
               <button id="btn-canjear-carne-drawer" style="
-                background: #7C3AED;
+                background: #ffffff;
                 border: none;
-                color: white;
+                color: #910957;
                 font-size: 0.78rem;
-                font-weight: 700;
+                font-weight: 800;
                 padding: 8px 16px;
                 border-radius: 10px;
                 cursor: pointer;
-                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-                transition: opacity 0.2s;
-              " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Canjear por Carne</button>
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transition: transform 0.2s, opacity 0.2s;
+              " onmouseover="this.style.transform='translateY(-1px)'; this.style.opacity='0.95'" onmouseout="this.style.transform='translateY(0)'; this.style.opacity='1'">Canjear por Carne</button>
+            </div>
+            <div style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500; line-height: 1.3;">
+              *Aplican términos y condiciones. Consulta por Whatsapp.
             </div>
          </div>
          ` : ''}
@@ -122,7 +127,7 @@ export function showWalletDrawer(firstName, stats) {
          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
             <button id="btn-recargar-wallet-drawer" style="
                width: 100%;
-               background: linear-gradient(135deg, #10B981, #059669);
+               background: #ec4899;
                color: white;
                border: none;
                padding: 16px 20px;
@@ -134,9 +139,9 @@ export function showWalletDrawer(firstName, stats) {
                align-items: center;
                justify-content: center;
                gap: 10px;
-               box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+               box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
                transition: all 0.2s;
-            " onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
+            " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                Recargar mi Cuenta
             </button>

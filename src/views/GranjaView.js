@@ -416,7 +416,7 @@ export function renderPiggyCard(piggy, baseROI) {
         </div>
         <div>
           <div class="font-semibold text-primary" style="font-size:0.9rem;">
-            <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">CC:</span> ${formatCOP(projectedReturn)}
+            <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
           </div>
           ${extraRoi > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
         </div>

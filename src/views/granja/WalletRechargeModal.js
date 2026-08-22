@@ -111,8 +111,8 @@ export async function openWalletRechargeInfo(liveStats = null) {
         <!-- Sticky Header -->
         <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
           <div style="display:flex; align-items:center; gap:12px;">
-            <div style="width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,#10B981,#059669); display:flex; align-items:center; justify-content:center; color:white;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+            <div style="display:flex; align-items:center; justify-content:center; color:#2596be; flex-shrink:0;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
             </div>
             <div>
               <div style="font-weight:800; font-size:1.15rem; color:#0f172a; line-height:1.2;">¿Cuánto quieres recargar?</div>
@@ -129,9 +129,9 @@ export async function openWalletRechargeInfo(liveStats = null) {
               <button class="preset-btn" data-amount="${p}" style="
                 padding:16px 12px;
                 border-radius:14px;
-                border:2px solid ${selectedAmount === p ? '#10B981' : '#e5e7eb'};
-                background:${selectedAmount === p ? '#ecfdf5' : 'white'};
-                color:${selectedAmount === p ? '#059669' : '#374151'};
+                border:1.5px solid ${selectedAmount === p ? '#ec4899' : '#ffe4e6'};
+                background:${selectedAmount === p ? '#fce7ed' : '#fdf2f5'};
+                color:${selectedAmount === p ? '#910957' : '#0f172a'};
                 font-weight:800;
                 font-size:0.95rem;
                 cursor:pointer;
@@ -148,16 +148,16 @@ export async function openWalletRechargeInfo(liveStats = null) {
               <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 500.000"
                 value="${formatThousands(selectedAmount)}"
                 style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
-                onfocus="this.style.borderColor='#10B981';" onblur="this.style.borderColor='#e2e8f0';" />
+                onfocus="this.style.borderColor='#ec4899';" onblur="this.style.borderColor='#e2e8f0';" />
             </div>
           </div>
 
           <!-- CTA -->
           <button id="rch-step1-next" style="
-            width:100%; background:linear-gradient(135deg,#10B981,#059669); color:white; border:none;
+            width:100%; background:#ec4899; color:white; border:none;
             padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-            box-shadow:0 4px 14px rgba(16,185,129,0.35); transition:opacity 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
-          ">Continuar <span style="font-size:1.1rem;">→</span></button>
+            box-shadow:0 8px 20px -5px rgba(236, 72, 153, 0.5); transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Continuar <span style="font-size:1.1rem;">→</span></button>
 
           <!-- Términos y Condiciones -->
           <a href="terminos-y-condiciones.html" target="_blank" style="
@@ -173,13 +173,13 @@ export async function openWalletRechargeInfo(liveStats = null) {
       container.querySelectorAll('.preset-btn').forEach(b => {
         const bAmount = parseInt(b.dataset.amount);
         if (bAmount === amount) {
-          b.style.borderColor = '#10B981';
-          b.style.background = '#ecfdf5';
-          b.style.color = '#059669';
+          b.style.borderColor = '#ec4899';
+          b.style.background = '#fce7ed';
+          b.style.color = '#910957';
         } else {
-          b.style.borderColor = '#e5e7eb';
-          b.style.background = 'white';
-          b.style.color = '#374151';
+          b.style.borderColor = '#ffe4e6';
+          b.style.background = '#fdf2f5';
+          b.style.color = '#0f172a';
         }
       });
     };
