@@ -178,6 +178,8 @@ function renderProductCard(item) {
   const displayCategory = categoryLabels[categoryKey] || item.category;
   const isEstandar = categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard';
 
+  const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
+
   return `
     <div class="mcard animate-fade-in-up">
       ${!isEstandar ? `
@@ -191,7 +193,7 @@ function renderProductCard(item) {
       <div class="mcard__left">
         <div class="mcard__img-wrap ${!isEstandar ? 'js-img-category' : ''}"
              ${!isEstandar ? `data-category="${categoryKey}" style="cursor: pointer;"` : ''}>
-          <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
+          <img src="${imgSrc}" alt="${itemName}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         
         <button class="mcard__buy-btn" id="buy-${item.id}">
@@ -202,7 +204,7 @@ function renderProductCard(item) {
 
       <!-- Right Column: Details -->
       <div class="mcard__right">
-        <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${item.item_name}</h4>
+        <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
         <p class="mcard__desc">${item.description}</p>
 
         <!-- Info Row: Days Remaining + Weight -->

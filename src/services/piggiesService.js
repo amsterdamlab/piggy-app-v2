@@ -432,7 +432,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         const daysElapsed = item.daysAdvanced || item.days_advanced || Math.max(0, (currentMonth - 1) * 30);
         daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
     }
-    const finalName = customName || item.item_name;
+    const finalName = customName || item.piggy_name || item.item_name || item.name || 'Tu Piggy';
     const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
     const defaultPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
     const finalImageUrl = item.image_url || item.imageUrl || `assets/piggies/stage${stage}/et${stage}-${defaultPhotoNum}.jpg`;

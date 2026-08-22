@@ -198,8 +198,14 @@ function enrichItem(item) {
     const fallbackPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
     const resolvedImageUrl = item.image_url || defaultPhotoMap[item.id] || `assets/piggies/stage${stage}/et${stage}-${fallbackPhotoNum}.jpg`;
 
+    // Name (supports both piggy_name and item_name columns)
+    const piggyName = item.piggy_name || item.item_name || item.name || 'Piggy';
+
     return {
         ...item,
+        item_name: piggyName,
+        piggy_name: piggyName,
+        name: piggyName,
         price: price,
         category: rawCat,
         categoryLabel: catMeta.label,
