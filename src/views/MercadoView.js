@@ -143,28 +143,54 @@ function renderItems(items) {
  */
 function renderProductCard(item) {
   const currentMonth = item.currentMonth || 1;
-  const daysRemaining = item.daysRemaining;
-  const isAdvanced = currentMonth >= 2;
-  const daysSaved = item.cycleTotalDays - daysRemaining;
+  const daysRemaining = item.daysRemaining || (144 - (item.daysAdvanced || 0));
+  const daysSaved = item.daysAdvanced || Math.max(0, 144 - daysRemaining);
+  const isAdvanced = daysSaved > 0;
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
   let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
   if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
     imgSrc = '/' + imgSrc;
   }
 
+  const categoryLabels = {
+    estandar: 'Estandar',
+    standard: 'Estandar',
+    estandard: 'Estandar',
+    avanzado: 'Avanzado',
+    advanced: 'Avanzado',
+    avanzado30: 'Avanzado',
+    advanced30: 'Avanzado',
+    avanzado45: 'Avanzado',
+    advanced45: 'Avanzado',
+    avanzado60: 'Avanzado',
+    advanced60: 'Avanzado',
+    avanzado75: 'Avanzado',
+    advanced75: 'Avanzado',
+    avanzado90: 'Avanzado',
+    advanced90: 'Avanzado',
+    plus: 'Plus',
+    silver: 'Plus',
+    dorado: 'Dorado',
+    gold: 'Dorado',
+    premium: 'Premium',
+  };
+  const categoryKey = item.category?.toLowerCase() || 'estandar';
+  const displayCategory = categoryLabels[categoryKey] || item.category;
+  const isEstandar = categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard';
+
   return `
     <div class="mcard animate-fade-in-up">
-      ${item.category && item.category !== 'standard' ? `
-        <div class="mcard__ribbon mcard__ribbon--${item.category} js-ribbon" data-category="${item.category}" style="pointer-events: auto; cursor: pointer;">
-          <span style="pointer-events: auto;">${item.category === 'advanced' ? 'Advanced' : item.category} ⓘ</span>
+      ${!isEstandar ? `
+        <div class="mcard__ribbon mcard__ribbon--${categoryKey} js-ribbon" data-category="${categoryKey}" style="pointer-events: auto; cursor: pointer;">
+          <span style="pointer-events: auto;">${displayCategory} ⓘ</span>
         </div>
       ` : ''}
       ${isAdvanced ? `<span class="mcard__time-badge">⚡ Ahorra ${daysSaved} días</span>` : ''}
 
       <!-- Left Column: Image + Buy Button -->
       <div class="mcard__left">
-        <div class="mcard__img-wrap ${item.category && item.category !== 'standard' ? 'js-img-category' : ''}"
-             ${item.category && item.category !== 'standard' ? `data-category="${item.category}" style="cursor: pointer;"` : ''}>
+        <div class="mcard__img-wrap ${!isEstandar ? 'js-img-category' : ''}"
+             ${!isEstandar ? `data-category="${categoryKey}" style="cursor: pointer;"` : ''}>
           <img src="${imgSrc}" alt="${item.item_name}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         
@@ -179,16 +205,16 @@ function renderProductCard(item) {
         <h4 class="mcard__name">${item.item_name}</h4>
         <p class="mcard__desc">${item.description}</p>
 
-        <!-- Info Row: Month + Days Remaining + Weight -->
+        <!-- Info Row: Days Remaining + Weight -->
         <div class="mcard__info-row">
           <div class="mcard__info-item">
-            <span class="mcard__info-label">Mes</span>
-            <span class="mcard__info-value mcard__info-value--month">${currentMonth}</span>
+            <span class="mcard__info-label">Días restantes</span>
+            <span class="mcard__info-value mcard__info-value--days">${daysRemaining} d</span>
           </div>
 
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
-            <span class="mcard__info-label">Peso</span>
+            <span class="mcard__info-label">Peso aprox.</span>
             <span class="mcard__info-value">${item.current_weight || 15} kg</span>
           </div>
         </div>
@@ -619,30 +645,50 @@ export function showCheckoutModal(item) {
 }
 
 /**
- * Show premium, gold, silver, advanced category explanations in a custom popup modal.
+ * Show premium, dorado, plus, avanzado category explanations in a custom popup modal.
  */
 window.showCategoryInfo = (category) => {
   const existing = document.getElementById('category-info-popup');
   if (existing) existing.remove();
 
+  const normalized = (category || '').toLowerCase();
   const infoTexts = {
     premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
+    dorado: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
     gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
+    plus: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
     silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito será tu mejor aliado.'
+    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    avanzado30: 'Cerdito con 30 días de engorde avanzado (114 días restantes). Ahorra 1 mes de espera.',
+    avanzado45: 'Cerdito con 45 días de engorde avanzado (99 días restantes). Ahorra 1.5 meses de espera.',
+    avanzado60: 'Cerdito con 60 días de engorde avanzado (84 días restantes). Ahorra 2 meses de espera.',
+    avanzado75: 'Cerdito con 75 días de engorde avanzado (69 días restantes). Ahorra 2.5 meses de espera.',
+    avanzado90: 'Cerdito con 90 días de engorde avanzado (54 días restantes). Máximo ahorro de tiempo.',
+    estandar: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
+    standard: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
   };
 
-  const text = infoTexts[category.toLowerCase()] || '';
-  if (!text) return;
+  const text = infoTexts[normalized] || 'Cerdito exclusivo disponible en el mercado Piggy.';
 
   const colors = {
     premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
+    dorado: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
     gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    silver: { bg: 'linear-gradient(135deg, #BDC3C7, #7F8C8D)', color: '#FFF' },
-    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' }
+    plus: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
+    silver: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
+    avanzado: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado45: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado60: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado75: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado90: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    estandar: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' },
+    standard: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' }
   };
 
-  const theme = colors[category.toLowerCase()] || { bg: 'var(--color-primary)', color: '#FFF' };
+  const theme = colors[normalized] || { bg: 'var(--color-primary)', color: '#FFF' };
 
   const popup = document.createElement('div');
   popup.id = 'category-info-popup';

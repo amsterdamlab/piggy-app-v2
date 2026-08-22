@@ -31,16 +31,37 @@ function formatCountdown(remainingMs) {
  * Get gradient colors and icons based on piggy type.
  */
 function getTypeTheme(piggyType) {
+    const raw = (piggyType || 'avanzado30').toLowerCase();
     const themes = {
-        silver: {
-            gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
-            shadow:   'rgba(139,92,246,0.45)',
-            color:    '#6d28d9',
-            btnGrad:  'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            btnShadow:'rgba(139,92,246,0.3)',
+        plus: {
+            gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+            shadow:   'rgba(14,165,233,0.45)',
+            color:    '#0284c7',
+            btnGrad:  'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            btnShadow:'rgba(14,165,233,0.3)',
             icon:     '🌟',
-            badge:    '🌟 OFERTA FLASH · SILVER',
+            badge:    '🌟 OFERTA FLASH · PLUS',
             bonusIcon:'⭐',
+        },
+        silver: {
+            gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+            shadow:   'rgba(14,165,233,0.45)',
+            color:    '#0284c7',
+            btnGrad:  'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            btnShadow:'rgba(14,165,233,0.3)',
+            icon:     '🌟',
+            badge:    '🌟 OFERTA FLASH · PLUS',
+            bonusIcon:'⭐',
+        },
+        dorado: {
+            gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
+            shadow:   'rgba(234,179,8,0.5)',
+            color:    '#ca8a04',
+            btnGrad:  'linear-gradient(135deg, #eab308, #ca8a04)',
+            btnShadow:'rgba(234,179,8,0.4)',
+            icon:     '🥇',
+            badge:    '🥇 OFERTA FLASH · DORADO',
+            bonusIcon:'🏆',
         },
         gold: {
             gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
@@ -49,7 +70,7 @@ function getTypeTheme(piggyType) {
             btnGrad:  'linear-gradient(135deg, #eab308, #ca8a04)',
             btnShadow:'rgba(234,179,8,0.4)',
             icon:     '🥇',
-            badge:    '🥇 OFERTA FLASH · GOLD',
+            badge:    '🥇 OFERTA FLASH · DORADO',
             bonusIcon:'🏆',
         },
         premium: {
@@ -62,6 +83,16 @@ function getTypeTheme(piggyType) {
             badge:    '💎 OFERTA FLASH · PREMIUM',
             bonusIcon:'💎',
         },
+        avanzado30: {
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 30D',
+            bonusIcon:'📈',
+        },
         advanced30: {
             gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
             shadow:   'rgba(139,92,246,0.45)',
@@ -69,8 +100,28 @@ function getTypeTheme(piggyType) {
             btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
             btnShadow:'rgba(139,92,246,0.3)',
             icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · ADVANCED 30',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 30D',
             bonusIcon:'📈',
+        },
+        avanzado45: {
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 45D',
+            bonusIcon:'📈',
+        },
+        avanzado60: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 60D',
+            bonusIcon:'🚀',
         },
         advanced60: {
             gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
@@ -79,11 +130,31 @@ function getTypeTheme(piggyType) {
             btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
             btnShadow:'rgba(147,51,234,0.3)',
             icon:     '🚀',
-            badge:    '🚀 OFERTA FLASH · ADVANCED 60',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 60D',
             bonusIcon:'🚀',
         },
+        avanzado75: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 75D',
+            bonusIcon:'🚀',
+        },
+        avanzado90: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 90D',
+            bonusIcon:'⚡',
+        },
     };
-    return themes[piggyType] || themes['advanced30'];
+    return themes[raw] || themes['avanzado30'];
 }
 
 /**
@@ -463,7 +534,7 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${mission.piggy_label}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });

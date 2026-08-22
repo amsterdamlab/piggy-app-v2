@@ -271,7 +271,7 @@ function renderM5Banner(mission) {
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">🏆 MISIÓN 5 - CRECE TU GRANJA</div>
-                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy (Gold)</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy (Dorado)</div>
                     <div style="font-size:0.82rem; opacity:0.9;">Aprovecha esta oportunidad de tener en tu granja un piggy especial con extra de comisión. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
@@ -283,7 +283,7 @@ function renderM5Banner(mission) {
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#a16207; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Gold 🏆
+                            Comprar Piggy Dorado 🏆
                         </span>
                     </div>
                 </div>
@@ -366,7 +366,7 @@ function renderM8Banner(mission) {
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
-                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu 3er Piggy</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu Piggy Avanzado</div>
                     <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(60 días de engorde)</div>
                     <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)</div>
 
@@ -379,7 +379,7 @@ function renderM8Banner(mission) {
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#5b21b6; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Advanced &#9889;
+                            Comprar Piggy Avanzado &#9889;
                         </span>
                     </div>
                 </div>
@@ -403,10 +403,10 @@ function renderM9Banner(mission) {
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">🤝 MISIÓN 9</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Refiere y logra una compra</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">&#9989; Recompensa: <strong>$30.000 en tu Wallet</strong> cuando tu referido compre</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Obtén un bono de consumo extra en tu Wallet por tu primer referido efectivo</div>
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#059669; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Ir a Programa de Referidos →
+                            Ver Mi Enlace de Referidos →
                         </span>
                     </div>
                 </div>
@@ -417,26 +417,24 @@ function renderM9Banner(mission) {
 }
 
 function renderGenericBanner(mission) {
-    const btnLabel = mission.cta?.startsWith('#/') ? 'Ir a cumplir misión' : 'Completar misión';
-    const ctaAttr  = mission.cta ? `data-cta="${mission.cta}"` : '';
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-            <div class="banner banner--interactive" id="mission-banner" data-mission="${mission.id}" ${ctaAttr} style="
-                background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            <div class="banner banner--interactive" id="mission-banner" data-mission="${mission.id}" data-cta="${mission.cta || ''}" style="
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
                 border-radius: 16px; padding: 20px 24px; color: white;
                 position: relative; overflow: hidden; cursor: pointer;
-                box-shadow: 0 8px 25px -5px rgba(139,92,246,0.4);
+                box-shadow: 0 8px 25px -5px rgba(99,102,241,0.4);
             ">
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">
-                        ${mission.icon} NUEVA MISIÓN
-                    </div>
+                        text-transform:uppercase; margin-bottom:10px;">🎯 ${mission.title}</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title}</div>
-                    <div style="font-size:0.85rem; opacity:0.9;">&#10004; Recompensa: <strong>${mission.reward}</strong></div>
+                    <div style="font-size:0.82rem; opacity:0.9;">${mission.reward || ''}</div>
                     <div style="margin-top:14px;">
-                        <span style="background:white; color:#6d28d9; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">${btnLabel} &rarr;</span>
+                        <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Continuar Misión →
+                        </span>
                     </div>
                 </div>
                 <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.15; transform:rotate(-15deg);">${mission.icon}</div>
@@ -450,32 +448,49 @@ function renderGenericBanner(mission) {
 /**
  * Render the banner for an active M8/M9 flash mission.
  * Clicking opens FlashMissionModal.
- * Supports silver, gold, premium, advanced30, advanced60 with premium cycle-like design.
+ * Supports plus, dorado, premium, avanzado30..90.
  * @param {Object} mission - Active user_flash_missions record
  */
 function renderFlashMissionBanner(mission) {
+    const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
     const typeThemes = {
-        silver:     { gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6d28d9', icon: '🌟', label: 'Silver' },
-        gold:       { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Gold' },
-        premium:    { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎', label: 'Premium' },
-        advanced30: { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Advanced 30' },
-        advanced60: { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Advanced 60' },
+        plus:        { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟', label: 'Plus' },
+        silver:      { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟', label: 'Plus' },
+        dorado:      { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Dorado' },
+        gold:        { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Dorado' },
+        premium:     { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎', label: 'Premium' },
+        avanzado30:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (30d)' },
+        advanced30:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (30d)' },
+        avanzado45:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (45d)' },
+        advanced45:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (45d)' },
+        avanzado60:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (60d)' },
+        advanced60:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (60d)' },
+        avanzado75:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (75d)' },
+        advanced75:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (75d)' },
+        avanzado90:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '⚡', label: 'Avanzado (90d)' },
+        advanced90:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '⚡', label: 'Avanzado (90d)' },
     };
-    const t = typeThemes[mission.piggy_type] || typeThemes.advanced30;
+    const t = typeThemes[rawType] || typeThemes.avanzado30;
     const missionTitle = mission.mission_title || 'MISIÓN FLASH';
     
     let benefitText = '';
-    if (mission.piggy_type === 'advanced30') {
+    if (rawType.includes('30')) {
         benefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (Inicia en 2do Mes)';
-    } else if (mission.piggy_type === 'advanced60') {
+    } else if (rawType.includes('45')) {
+        benefitText = 'Piggy acelerado con <strong>45 días ahorrados</strong> (Inicia en 45 días)';
+    } else if (rawType.includes('60')) {
         benefitText = 'Piggy cuántico con <strong>60 días ahorrados</strong> (Inicia en 3er Mes)';
+    } else if (rawType.includes('75')) {
+        benefitText = 'Piggy cuántico con <strong>75 días ahorrados</strong> (69 días restantes)';
+    } else if (rawType.includes('90')) {
+        benefitText = 'Piggy cuántico con <strong>90 días ahorrados</strong> (54 días restantes)';
     } else {
         let roiBonus = 0;
-        if (mission.piggy_type === 'silver') roiBonus = 0.01;
-        if (mission.piggy_type === 'gold') roiBonus = 0.02;
-        if (mission.piggy_type === 'premium') roiBonus = 0.03;
+        if (rawType === 'plus' || rawType === 'silver') roiBonus = 0.01;
+        if (rawType === 'dorado' || rawType === 'gold') roiBonus = 0.02;
+        if (rawType === 'premium') roiBonus = 0.03;
         let extraPct = `+${(roiBonus * 100).toFixed(0)}%`;
-        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Comisión Comercial</strong>`;
+        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Margen Comercial</strong>`;
     }
 
     const remaining = mission.remainingMs || 0;
@@ -540,13 +555,17 @@ function renderFlashMissionBanner(mission) {
  * @param {Object} mission - Active cycle_completion_missions record
  */
 function renderCycleMissionBanner(mission) {
+    const rawType = (mission.piggy_type || 'plus').toLowerCase();
     const typeThemes = {
-        silver:  { gradient: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6d28d9', icon: '🌟' },
-        gold:    { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇' },
-        premium: { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎' },
+        plus:     { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟' },
+        silver:   { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟' },
+        dorado:   { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇' },
+        gold:     { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇' },
+        premium:  { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎' },
+        avanzado: { gradient: 'linear-gradient(135deg, #A855F7 0%, #8B5CF6 50%, #7E22CE 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#7E22CE', icon: '⚡' },
         advanced: { gradient: 'linear-gradient(135deg, #A855F7 0%, #8B5CF6 50%, #7E22CE 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#7E22CE', icon: '⚡' },
     };
-    const t        = typeThemes[mission.piggy_type] || typeThemes.silver;
+    const t        = typeThemes[rawType] || typeThemes.plus;
     const roiPct   = `+${((mission.extra_roi_bonus || 0) * 100).toFixed(0)}%`;
     const remaining = mission.remainingMs || 0;
     const hours    = String(Math.floor(remaining / 3600000)).padStart(2, '0');
@@ -657,39 +676,45 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Gold checkout modal for M5
+        // ── Special CTA: open Piggy Dorado checkout modal for M5
         if (ctaUrl === 'open_buy_gold') {
             try {
                 const items = await getMarketplaceItems();
-                const goldPiggy = items.find(i => i.category === 'gold' || i.item_name?.toLowerCase().includes('gold')) || items[0];
+                const goldPiggy = items.find(i => i.category === 'dorado' || i.category === 'gold' || i.item_name?.toLowerCase().includes('dorado') || i.item_name?.toLowerCase().includes('gold')) || items[0];
                 if (goldPiggy) showCheckoutModal(goldPiggy);
                 else navigateTo('mercado');
             } catch (err) {
-                console.warn('Error launching gold checkout:', err);
+                console.warn('Error launching dorado checkout:', err);
                 navigateTo('mercado');
             }
             return;
         }
 
-        // ── Special CTA: open Piggy Advanced (60 días) checkout modal for M8
+        // ── Special CTA: open Piggy Avanzado (60 días) checkout modal for M8
         if (ctaUrl === 'open_buy_advanced30') {
             try {
                 const items = await getMarketplaceItems();
                 const baseItem = items.find(i =>
-                    i.category === 'advanced30' ||
+                    i.category === 'avanzado60' ||
                     i.category === 'advanced60' ||
-                    (i.category === 'advanced' && (i.currentMonth === 3 || i.current_month === 3)) ||
-                    i.item_name?.toLowerCase().includes('advanced 30') ||
-                    i.item_name?.toLowerCase().includes('advanced30')
+                    i.category === 'avanzado30' ||
+                    i.category === 'advanced30' ||
+                    i.category === 'avanzado' ||
+                    i.category === 'advanced' ||
+                    i.item_name?.toLowerCase().includes('avanzado') ||
+                    i.item_name?.toLowerCase().includes('advanced')
                 ) || items[0];
 
                 if (baseItem) {
                     // Item independiente exclusivo para la Misión 8 ($1.300.000 / 60 días engorde)
                     const missionItem = {
                         ...baseItem,
-                        item_name: 'Piggy Advanced (60 días)',
+                        item_name: 'Piggy Avanzado (60 días)',
+                        category: 'avanzado60',
                         price: 1300000,
                         priceFormatted: '$1.300.000',
+                        daysAdvanced: 60,
+                        daysRemaining: 84,
                         currentMonth: 3,
                         current_month: 3,
                     };
@@ -698,7 +723,7 @@ export function attachMissionListeners() {
                     navigateTo('mercado');
                 }
             } catch (err) {
-                console.warn('Error launching advanced30 checkout:', err);
+                console.warn('Error launching avanzado checkout:', err);
                 navigateTo('mercado');
             }
             return;

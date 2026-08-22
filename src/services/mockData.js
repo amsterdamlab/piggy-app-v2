@@ -16,7 +16,7 @@ export const MOCK_PROFILE = {
     terms_accepted: true,
     habeas_data_accepted: true,
     referral_code: 'ALE582',
-    referral_balance: 30000,
+    referral_balance: 20000,
     created_at: '2026-01-15T10:00:00Z',
 };
 
@@ -55,43 +55,43 @@ export const MOCK_PIGGIES = [
 export const MOCK_MARKETPLACE = [
     {
         id: 'item-001',
-        item_name: 'Piggy Estándar',
+        item_name: 'Piggy Estandar',
         description: 'Comienza tu camino en el agro. Un cerdo de raza clásica con rendimiento sólido.',
         price: 1000000,
         extra_roi: 0,
         stock: 50,
         image_url: null,
-        category: 'standard',
+        category: 'estandar',
     },
     {
         id: 'item-002',
-        item_name: 'Piggy Premium',
-        description: 'Cerdo de raza premium con alimentación especial. Bono de +1% adicional.',
-        price: 1200000,
+        item_name: 'Piggy Plus',
+        description: 'Cerdo con comercialización en mercado plus. Bono de +1% adicional.',
+        price: 1000000,
         extra_roi: 0.01,
         stock: 20,
         image_url: null,
-        category: 'accelerator',
+        category: 'plus',
     },
     {
         id: 'item-003',
-        item_name: 'Piggy Elite',
-        description: 'Cerdo élite con genética superior y cuidado personalizado. Bono de +2% adicional.',
-        price: 1500000,
+        item_name: 'Piggy Dorado',
+        description: 'Cerdo con comercialización plus premium. Bono de +2% adicional.',
+        price: 1000000,
         extra_roi: 0.02,
         stock: 10,
         image_url: null,
-        category: 'accelerator',
+        category: 'dorado',
     },
     {
         id: 'item-004',
-        item_name: 'Acelerador Nutricional',
-        description: 'Suplemento premium que mejora el crecimiento. +1% al cerdo seleccionado.',
-        price: 150000,
-        extra_roi: 0.01,
-        stock: 100,
+        item_name: 'Piggy Premium',
+        description: 'Cerdo con comercialización exclusiva. Bono de +3% adicional.',
+        price: 1000000,
+        extra_roi: 0.03,
+        stock: 10,
         image_url: null,
-        category: 'booster',
+        category: 'premium',
     },
 ];
 
@@ -180,7 +180,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm1',
         title: 'Crea una cuenta nueva',
-        reward: 'Bono de consumo por valor de $30.000',
+        reward: 'Bono de consumo por valor de $20.000',
         is_completed: true,
         icon: '🎉',
         cta: null
@@ -414,4 +414,3 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
         description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
     };
 }
-

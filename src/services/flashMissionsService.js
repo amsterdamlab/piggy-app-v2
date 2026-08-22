@@ -114,34 +114,66 @@ export async function buyFlashMission(missionId, piggyName) {
 
     // Default label fallback if piggyName is missing
     const defaultLabels = {
-        silver: 'Piggy Silver',
-        gold: 'Piggy Gold',
+        plus: 'Piggy Plus',
+        silver: 'Piggy Plus',
+        dorado: 'Piggy Dorado',
+        gold: 'Piggy Dorado',
         premium: 'Piggy Premium',
-        advanced30: 'Piggy Advanced (30d)',
-        advanced60: 'Piggy Advanced (60d)',
+        avanzado30: 'Piggy Avanzado (30d)',
+        advanced30: 'Piggy Avanzado (30d)',
+        avanzado45: 'Piggy Avanzado (45d)',
+        advanced45: 'Piggy Avanzado (45d)',
+        avanzado60: 'Piggy Avanzado (60d)',
+        advanced60: 'Piggy Avanzado (60d)',
+        avanzado75: 'Piggy Avanzado (75d)',
+        advanced75: 'Piggy Avanzado (75d)',
+        avanzado90: 'Piggy Avanzado (90d)',
+        advanced90: 'Piggy Avanzado (90d)',
     };
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
         : (defaultLabels[mission.piggy_type] || mission.title || 'Piggy Flash');
 
-    // Calculate category, extra ROI bonus and duration based on piggy_type
-    let category = mission.piggy_type;
+    // Calculate category, extra ROI bonus, weight and duration based on piggy_type
+    const rawType = (mission.piggy_type || '').toLowerCase();
+    let category = rawType;
     let extraRoiBonus = 0;
-    let daysRemaining = 143; // Standard cycle duration
+    let daysRemaining = 144;
+    let weight = 15.0;
 
-    if (mission.piggy_type === 'advanced30') {
-        category = 'advanced';
+    if (rawType === 'advanced30' || rawType === 'avanzado30') {
+        category = 'avanzado30';
         extraRoiBonus = 0;
-        daysRemaining = 113; // Saves 30 days (starts at 2nd month)
-    } else if (mission.piggy_type === 'advanced60') {
-        category = 'advanced';
+        daysRemaining = 114;
+        weight = 35.0;
+    } else if (rawType === 'advanced45' || rawType === 'avanzado45') {
+        category = 'avanzado45';
         extraRoiBonus = 0;
-        daysRemaining = 83;  // Saves 60 days (starts at 3rd month)
-    } else if (mission.piggy_type === 'silver') {
+        daysRemaining = 99;
+        weight = 45.0;
+    } else if (rawType === 'advanced60' || rawType === 'avanzado60') {
+        category = 'avanzado60';
+        extraRoiBonus = 0;
+        daysRemaining = 84;
+        weight = 55.0;
+    } else if (rawType === 'advanced75' || rawType === 'avanzado75') {
+        category = 'avanzado75';
+        extraRoiBonus = 0;
+        daysRemaining = 69;
+        weight = 65.0;
+    } else if (rawType === 'advanced90' || rawType === 'avanzado90') {
+        category = 'avanzado90';
+        extraRoiBonus = 0;
+        daysRemaining = 54;
+        weight = 75.0;
+    } else if (rawType === 'plus' || rawType === 'silver') {
+        category = 'plus';
         extraRoiBonus = 0.01;
-    } else if (mission.piggy_type === 'gold') {
+    } else if (rawType === 'dorado' || rawType === 'gold') {
+        category = 'dorado';
         extraRoiBonus = 0.02;
-    } else if (mission.piggy_type === 'premium') {
+    } else if (rawType === 'premium') {
+        category = 'premium';
         extraRoiBonus = 0.03;
     }
 
@@ -158,7 +190,7 @@ export async function buyFlashMission(missionId, piggyName) {
             status:            'engorde',
             extra_roi_bonus:   extraRoiBonus,
             category:          category,
-            current_weight:    15.0,
+            current_weight:    weight,
             purchase_date:     new Date().toISOString(),
             end_date:          endDate,
         })

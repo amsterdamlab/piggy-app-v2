@@ -279,16 +279,15 @@ function enrichPiggyData(piggy) {
     const rawBonus = piggy.extra_roi_bonus ?? piggy.extra_roi ?? 0;
     const extraRoiBonus = parseFloat(rawBonus) || 0;
 
-    // Fixed cycle duration in days (4 months 3 weeks)
-    const CYCLE_TOTAL_DAYS = 143;
+    // Fixed cycle duration in days (144 days)
+    const CYCLE_TOTAL_DAYS = 144;
 
     // Calculate days remaining with fallback
     const endDateStr = piggy.end_date || piggy.endDate || piggy.purchase_date;
     let daysLeft = getDaysRemaining(endDateStr);
-    if (isNaN(daysLeft)) daysLeft = 143;
+    if (isNaN(daysLeft)) daysLeft = 144;
 
-    // Calculate progress based on REVERSE logic (143 - daysLeft)
-    // This allows piggies bought at "Month 3" to show correct 60% progress immediately
+    // Calculate progress based on REVERSE logic (144 - daysLeft)
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     let progress = Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100);
     if (isNaN(progress)) progress = 0;
@@ -425,11 +424,14 @@ export async function getDashboardStats(piggies = []) {
  * @param {string|null} contractUrl - Optional URL of the signed contract PDF
  */
 export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
-    // Calculate days remaining based on current_month (matches marketplaceService logic)
-    const CYCLE_TOTAL_DAYS = 143;
+    // Calculate days remaining based on daysRemaining, daysAdvanced, or current_month
+    const CYCLE_TOTAL_DAYS = 144;
     const currentMonth = item.currentMonth || item.current_month || 1;
-    const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
-    const daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
+    let daysRemaining = item.daysRemaining || item.days_remaining;
+    if (!daysRemaining || daysRemaining <= 0) {
+        const daysElapsed = item.daysAdvanced || item.days_advanced || Math.max(0, (currentMonth - 1) * 30);
+        daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
+    }
     const finalName = customName || item.item_name;
     const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
     const defaultPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
@@ -457,7 +459,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
-            category: item.category,
+            category: item.category || 'estandar',
             current_weight: item.current_weight || 15.0,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
             image_url: finalImageUrl,
@@ -482,7 +484,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         p_price: item.price,
         p_item_name: finalName,
         p_extra_roi: item.extra_roi || 0,
-        p_category: item.category || 'standard',
+        p_category: item.category || 'estandar',
         p_current_month: currentMonth,
         p_contract_url: contractUrl,
         p_contract_code: calculatedCode,

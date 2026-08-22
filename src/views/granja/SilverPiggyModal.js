@@ -14,14 +14,16 @@ import { openWalletDrawer } from './WalletBlock.js';
 
 /** Silver Piggy offer definition — precio igual al estándar pero con +1% ROI */
 const SILVER_PIGGY_ITEM = {
-    id: 'silver-m6-exclusive',
-    item_name: 'Piggy Silver',
-    description: 'Oferta exclusiva de misión. Un Piggy especial de raza Silver con bonificación adicional en tu Margen Comercial.',
+    id: 'plus-m6-exclusive',
+    item_name: 'Piggy Plus',
+    description: 'Oferta exclusiva de misión. Un Piggy especial de categoría Plus con bonificación adicional en tu Margen Comercial.',
     price: 1000000,         // mismo precio que el estándar
     extra_roi: 0.01,        // +1% extra sobre el ROI base de la granja
-    category: 'silver',
+    category: 'plus',
     currentMonth: 1,
     current_month: 1,
+    days_advanced: 0,
+    days_remaining: 144,
     stock: 1,               // oferta única por usuario
     current_weight: 15.0,
     priceFormatted: '$1.000.000',
@@ -116,7 +118,7 @@ export function showSilverPiggyModal(silverExpiry) {
 
                 <!-- Icon + Title -->
                 <div style="font-size:56px; margin-bottom:8px;">🌟</div>
-                <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">Piggy Silver</h2>
+                <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">Piggy Plus</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.9; line-height:1.4;">
                     Tu recompensa especial por llegar hasta aquí.<br>
                     <strong>+1% adicional</strong> en tu Margen Comercial.

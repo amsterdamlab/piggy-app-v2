@@ -29,18 +29,43 @@ function formatCountdown(remainingMs) {
  * Get visual theme based on piggy type.
  */
 function getTypeTheme(piggyType) {
+    const raw = (piggyType || 'plus').toLowerCase();
     const themes = {
-        silver: {
-            gradient:  'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%)',
-            shadow:    'rgba(139,92,246,0.5)',
-            color:     '#6d28d9',
-            btnGrad:   'linear-gradient(135deg, #6366f1, #4f46e5)',
-            btnShadow: 'rgba(99,102,241,0.4)',
+        plus: {
+            gradient:  'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+            shadow:    'rgba(14,165,233,0.5)',
+            color:     '#0284c7',
+            btnGrad:   'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            btnShadow: 'rgba(14,165,233,0.4)',
             icon:      '🌟',
-            bonusBg:   'linear-gradient(135deg, #ede9fe, #ddd6fe)',
-            bonusBorder:'#c4b5fd',
-            bonusColor: '#5b21b6',
+            bonusBg:   'linear-gradient(135deg, #e0f2fe, #bae6fd)',
+            bonusBorder:'#7dd3fc',
+            bonusColor: '#0369a1',
             badge:     '🌟 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+        },
+        silver: {
+            gradient:  'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+            shadow:    'rgba(14,165,233,0.5)',
+            color:     '#0284c7',
+            btnGrad:   'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            btnShadow: 'rgba(14,165,233,0.4)',
+            icon:      '🌟',
+            bonusBg:   'linear-gradient(135deg, #e0f2fe, #bae6fd)',
+            bonusBorder:'#7dd3fc',
+            bonusColor: '#0369a1',
+            badge:     '🌟 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+        },
+        dorado: {
+            gradient:  'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
+            shadow:    'rgba(234,179,8,0.5)',
+            color:     '#92400e',
+            btnGrad:   'linear-gradient(135deg, #eab308, #ca8a04)',
+            btnShadow: 'rgba(234,179,8,0.4)',
+            icon:      '🥇',
+            bonusBg:   'linear-gradient(135deg, #fffbeb, #fef3c7)',
+            bonusBorder:'#fde68a',
+            bonusColor: '#92400e',
+            badge:     '🥇 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
         },
         gold: {
             gradient:  'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
@@ -67,7 +92,7 @@ function getTypeTheme(piggyType) {
             badge:     '💎 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
         },
     };
-    return themes[piggyType] || themes['silver'];
+    return themes[raw] || themes['plus'];
 }
 
 /**
@@ -134,7 +159,7 @@ export function showCycleMissionModal(mission) {
                     pointer-events:none;"></div>
 
                 <!-- Badge -->
-                <div style="background:rgba(255,255,255,0.22); display:inline-block; padding:4px 14px;
+                <div style="background:rgba(255,255,225,0.22); display:inline-block; padding:4px 14px;
                     border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1.5px;
                     text-transform:uppercase; margin-bottom:12px;">
                     ${theme.badge}

@@ -19,7 +19,7 @@ const MISSION_DEFINITIONS = [
     {
         key: 'm1', sortOrder: 1,
         title: 'Obtén tu Bono de Bienvenida',
-        reward: 'Bono de consumo por valor de $30.000 en Tienda',
+        reward: 'Bono de consumo por valor de $20.000 en Tienda',
         icon: '🎁', cta: '#/gourmet',
         autoType: 'visited_gourmet',
         requires: null,
@@ -50,7 +50,7 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm5', sortOrder: 5,
-        title: 'Compra tu 2do Piggy (Gold)',
+        title: 'Compra tu 2do Piggy (Dorado)',
         reward: 'Aprovecha esta oportunidad de tener en tu granja un piggy especial con extra de comisión. (Por tiempo limitado)',
         icon: '🏆', cta: 'open_buy_gold',
         autoType: 'second_piggy',
@@ -108,7 +108,7 @@ function buildAutoCompletionMap(piggies, profile) {
     const referralStats    = AppState.get('referralStats') || {};
     const completedRefs    = referralStats.completedReferrals || 0;
     const visitedSections  = AppState.get('visitedSections') || {};
-    const pwaInstalled     = localStorage.setItem ? (localStorage.getItem('piggy_pwa_installed') === 'true') : false;
+    const pwaInstalled     = localStorage.getItem('piggy_pwa_installed') === 'true';
 
     // Profile bank data is completed if user has filled bank_name and bank_account_number
     const isProfileComplete = Boolean(profile?.bank_name && profile?.bank_account_number);
