@@ -102,17 +102,17 @@ export function showWalletDrawer(firstName, stats) {
               <span>BONOS DE CONSUMO</span>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 1.45rem; font-weight: 850; color: #be1260; line-height: 1;">${stats.referralBonusFormatted}</div>
+              <div style="font-size: 1.45rem; font-weight: 850; color: #000000; line-height: 1;">${stats.referralBonusFormatted}</div>
               <button id="btn-canjear-carne-drawer" style="
-                background: #ffffff;
-                border: 1px solid #fda4af;
-                color: #be1260;
+                background: #be1260;
+                border: 1px solid #be1260;
+                color: #ffffff;
                 font-size: 0.78rem;
                 font-weight: 800;
                 padding: 8px 16px;
                 border-radius: 10px;
                 cursor: pointer;
-                box-shadow: 0 2px 8px rgba(190, 18, 96, 0.08);
+                box-shadow: 0 2px 8px rgba(190, 18, 96, 0.2);
                 transition: transform 0.2s, opacity 0.2s;
               " onmouseover="this.style.transform='translateY(-1px)'; this.style.opacity='0.95'" onmouseout="this.style.transform='translateY(0)'; this.style.opacity='1'">Canjear por Carne</button>
             </div>
