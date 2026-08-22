@@ -87,38 +87,37 @@ export function showWalletDrawer(firstName, stats) {
          <!-- Bonos de Consumo -->
          ${stats.referralBonus > 0 ? `
          <div style="
-            background: linear-gradient(135deg, #910957 0%, #f22c75 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: #fff1f2;
+            border: 1px solid #ffe4e6;
             padding: 16px 18px;
             border-radius: 14px;
             margin-bottom: 20px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            box-shadow: 0 10px 25px -5px rgba(145, 9, 87, 0.35);
-            color: white;
+            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.06);
          ">
-            <div style="display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.9); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #be1260; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
               ${renderIcon('meat', '', '18')}
               <span>BONOS DE CONSUMO</span>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 1.45rem; font-weight: 800; color: #ffffff; line-height: 1;">${stats.referralBonusFormatted}</div>
+              <div style="font-size: 1.45rem; font-weight: 850; color: #be1260; line-height: 1;">${stats.referralBonusFormatted}</div>
               <button id="btn-canjear-carne-drawer" style="
                 background: #ffffff;
-                border: none;
-                color: #910957;
+                border: 1px solid #fda4af;
+                color: #be1260;
                 font-size: 0.78rem;
                 font-weight: 800;
                 padding: 8px 16px;
                 border-radius: 10px;
                 cursor: pointer;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 2px 8px rgba(190, 18, 96, 0.08);
                 transition: transform 0.2s, opacity 0.2s;
               " onmouseover="this.style.transform='translateY(-1px)'; this.style.opacity='0.95'" onmouseout="this.style.transform='translateY(0)'; this.style.opacity='1'">Canjear por Carne</button>
             </div>
-            <div style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.85); margin-top: 2px; font-weight: 500; line-height: 1.3;">
-              *Aplican términos y condiciones. Consulta por Whatsapp.
+            <div style="font-size: 0.72rem; color: #9f1239; margin-top: 2px; font-weight: 500; line-height: 1.3;">
+              *Aplican términos y condiciones de compra.
             </div>
          </div>
          ` : ''}
