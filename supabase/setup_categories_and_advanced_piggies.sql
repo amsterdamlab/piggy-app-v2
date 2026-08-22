@@ -1,5 +1,5 @@
 -- ==============================================================================
--- PIGGY APP — ESTANDARIZACIÓN DE CATEGORÍAS, DÍAS DE ENGORDE Y AUTOMATIZACIÓN (V2)
+-- PIGGY APP — ESTANDARIZACIÓN DE CATEGORÍAS, DÍAS DE ENGORDE Y AUTOMATIZACIÓN (V3)
 -- Ejecuta este script en Supabase SQL Editor
 -- ==============================================================================
 
@@ -189,20 +189,32 @@ FOR EACH ROW EXECUTE FUNCTION public.trg_auto_calc_marketplace_item();
 UPDATE public.marketplace SET category = category;
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 6. FUNCIÓN `buy_piggy` ACTUALIZADA (Basada en días de engorde exactos)
+-- 6. FUNCIÓN `buy_piggy` DEFINITIVA (Limpia sobrecargas previas y asegura permisos)
 -- ──────────────────────────────────────────────────────────────────────────────
-DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
-DROP FUNCTION IF EXISTS buy_piggy(uuid, uuid, numeric, text, numeric, text);
-DROP FUNCTION IF EXISTS buy_piggy(uuid, uuid, numeric, text, numeric, text, integer);
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT oid::regprocedure AS func_signature
+        FROM pg_proc
+        WHERE proname = 'buy_piggy'
+          AND pronamespace = 'public'::regnamespace
+    ) LOOP
+        EXECUTE 'DROP FUNCTION IF EXISTS ' || r.func_signature || ' CASCADE';
+    END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION buy_piggy(
   p_item_id uuid,
   p_user_id uuid,
   p_price numeric,
   p_item_name text,
-  p_extra_roi numeric,
-  p_category text,
-  p_current_month integer DEFAULT 1
+  p_extra_roi numeric DEFAULT 0,
+  p_category text DEFAULT 'estandar',
+  p_current_month integer DEFAULT 1,
+  p_contract_url text DEFAULT NULL,
+  p_contract_code text DEFAULT NULL
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -265,13 +277,14 @@ BEGIN
   INSERT INTO piggies (
     user_id, name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
-    purchase_date, end_date
+    purchase_date, end_date, contract_url, contract_code
   )
   VALUES (
     p_user_id, p_item_name, p_price, 'engorde',
     v_extra_roi, v_category, v_weight,
     NOW(),
-    NOW() + (v_days_remaining || ' days')::interval
+    NOW() + (v_days_remaining || ' days')::interval,
+    p_contract_url, p_contract_code
   )
   RETURNING id INTO v_new_piggy_id;
 
@@ -284,7 +297,8 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION buy_piggy TO authenticated;
-GRANT EXECUTE ON FUNCTION buy_piggy TO service_role;
+-- Otorgar permisos especificando la signatura unívoca
+GRANT EXECUTE ON FUNCTION buy_piggy(uuid, uuid, numeric, text, numeric, text, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION buy_piggy(uuid, uuid, numeric, text, numeric, text, integer, text, text) TO service_role;
 
 SELECT 'Base de datos configurada exitosamente con automatización de categorías y días de engorde' AS estado;
