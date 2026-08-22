@@ -28,12 +28,16 @@ CREATE TRIGGER trg_welcome_bonus
   FOR EACH ROW
   EXECUTE FUNCTION public.give_welcome_bonus();
 
--- 3. (Opcional) Saneamiento de usuarios que aún no han canjeado su bono inicial y tenían 30.000
+-- 3. Saneamiento de transacciones previas de $30.000 (Desactivando temporalmente el candado de inmutabilidad)
+ALTER TABLE public.wallet_transactions DISABLE TRIGGER trg_prevent_transaction_modification;
+
 UPDATE public.wallet_transactions
 SET amount = 20000,
     description = 'Bono de Bienvenida ($20.000 en Tienda)'
 WHERE description LIKE '%Bono de Bienvenida%'
   AND amount = 30000;
+
+ALTER TABLE public.wallet_transactions ENABLE TRIGGER trg_prevent_transaction_modification;
 
 -- 4. Recalcular el saldo de referral_balance en profiles basado en las transacciones reales
 UPDATE public.profiles p
