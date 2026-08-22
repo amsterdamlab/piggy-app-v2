@@ -202,7 +202,7 @@ function renderProductCard(item) {
 
       <!-- Right Column: Details -->
       <div class="mcard__right">
-        <h4 class="mcard__name">${item.item_name}</h4>
+        <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${item.item_name}</h4>
         <p class="mcard__desc">${item.description}</p>
 
         <!-- Info Row: Days Remaining + Weight -->
@@ -217,8 +217,15 @@ function renderProductCard(item) {
             <span class="mcard__info-label">Peso aprox.</span>
             <span class="mcard__info-value">${item.current_weight || 15} kg</span>
           </div>
-        </div>
 
+          ${(item.extra_roi && item.extra_roi > 0) ? `
+            <div class="mcard__info-divider"></div>
+            <div class="mcard__info-item">
+              <span class="mcard__info-label">Comisión</span>
+              <span class="mcard__info-value" style="color: #ec4899;">+${(item.extra_roi * 100).toFixed(0)}%</span>
+            </div>
+          ` : ''}
+        </div>
 
         <!-- Price Info -->
         <div class="mcard__price-row">
