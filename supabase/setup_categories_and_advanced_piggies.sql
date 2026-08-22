@@ -1,84 +1,118 @@
 -- ==============================================================================
--- PIGGY APP — ESTANDARIZACIÓN DE CATEGORÍAS, DÍAS DE ENGORDE Y AUTOMATIZACIÓN
+-- PIGGY APP — ESTANDARIZACIÓN DE CATEGORÍAS, DÍAS DE ENGORDE Y AUTOMATIZACIÓN (V2)
 -- Ejecuta este script en Supabase SQL Editor
 -- ==============================================================================
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 1. CREACIÓN DEL ENUM DE CATEGORÍAS (Para selección en lista / dropdown)
+-- 1. DESVINCULAR ENUMS ANTERIORES CONVIRTIENDO COLUMNAS TEMPORALMENTE A TEXT
+--    (Esto previene el error 22P02 al actualizar valores nuevos como 'plus', 'dorado', etc.)
 -- ──────────────────────────────────────────────────────────────────────────────
 DO $$
 BEGIN
-  -- Si no existe el tipo ENUM unificado, lo creamos
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'piggy_category_enum') THEN
-    CREATE TYPE public.piggy_category_enum AS ENUM (
-      'estandar',
-      'plus',
-      'dorado',
-      'premium',
-      'avanzado30',
-      'avanzado45',
-      'avanzado60',
-      'avanzado75',
-      'avanzado90'
-    );
-  ELSE
-    -- Agregar valores que falten si ya existía
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'estandar'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'plus'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'dorado'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'premium'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'avanzado30'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'avanzado45'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'avanzado60'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'avanzado75'; EXCEPTION WHEN others THEN END;
-    BEGIN ALTER TYPE public.piggy_category_enum ADD VALUE IF NOT EXISTS 'avanzado90'; EXCEPTION WHEN others THEN END;
+  -- Marketplace
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'marketplace' AND column_name = 'category') THEN
+    ALTER TABLE public.marketplace DROP CONSTRAINT IF EXISTS marketplace_category_check;
+    ALTER TABLE public.marketplace ALTER COLUMN category DROP DEFAULT;
+    ALTER TABLE public.marketplace ALTER COLUMN category TYPE TEXT USING category::text;
+  END IF;
+
+  -- Piggies
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'piggies' AND column_name = 'category') THEN
+    ALTER TABLE public.piggies DROP CONSTRAINT IF EXISTS piggies_category_check;
+    ALTER TABLE public.piggies ALTER COLUMN category DROP DEFAULT;
+    ALTER TABLE public.piggies ALTER COLUMN category TYPE TEXT USING category::text;
+  END IF;
+
+  -- User flash missions
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_flash_missions' AND column_name = 'piggy_type') THEN
+    ALTER TABLE public.user_flash_missions DROP CONSTRAINT IF EXISTS user_flash_missions_piggy_type_check;
+    ALTER TABLE public.user_flash_missions ALTER COLUMN piggy_type DROP DEFAULT;
+    ALTER TABLE public.user_flash_missions ALTER COLUMN piggy_type TYPE TEXT USING piggy_type::text;
+  END IF;
+
+  -- Exclusive piggy config
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'exclusive_piggy_config' AND column_name = 'piggy_type') THEN
+    ALTER TABLE public.exclusive_piggy_config DROP CONSTRAINT IF EXISTS exclusive_piggy_config_piggy_type_check;
+    ALTER TABLE public.exclusive_piggy_config ALTER COLUMN piggy_type TYPE TEXT USING piggy_type::text;
+  END IF;
+
+  -- Cycle completion missions
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cycle_completion_missions' AND column_name = 'piggy_type') THEN
+    ALTER TABLE public.cycle_completion_missions DROP CONSTRAINT IF EXISTS cycle_completion_missions_piggy_type_check;
+    ALTER TABLE public.cycle_completion_missions ALTER COLUMN piggy_type TYPE TEXT USING piggy_type::text;
   END IF;
 END $$;
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 2. ADAPTACIÓN DE COLUMNAS EN LA TABLA `marketplace`
+-- 2. ASEGURAR COLUMNAS DE DÍAS Y PESO EN `marketplace`
 -- ──────────────────────────────────────────────────────────────────────────────
--- Asegurar columnas para cálculo en días
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS days_advanced INTEGER DEFAULT 0;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS days_remaining INTEGER DEFAULT 144;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_month INTEGER DEFAULT 1;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 15.0;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS extra_roi NUMERIC DEFAULT 0.00;
 
--- Migración segura de valores antiguos de categoría en `marketplace`
-UPDATE public.marketplace SET category = 'estandar' WHERE category IN ('standard', 'estandard', 'estándar');
+-- ──────────────────────────────────────────────────────────────────────────────
+-- 3. MIGRACIÓN Y ESTANDARIZACIÓN DE VALORES EN TODAS LAS TABLAS
+-- ──────────────────────────────────────────────────────────────────────────────
+
+-- Tabla `marketplace`
+UPDATE public.marketplace SET category = 'estandar' WHERE category IN ('standard', 'estandard', 'estándar') OR category IS NULL;
 UPDATE public.marketplace SET category = 'plus' WHERE category IN ('silver', 'plata');
 UPDATE public.marketplace SET category = 'dorado' WHERE category IN ('gold', 'oro');
 UPDATE public.marketplace SET category = 'premium' WHERE category = 'premium';
 UPDATE public.marketplace SET category = 'avanzado30' WHERE category IN ('advanced', 'advanced30', 'avanzado') AND (current_month = 2 OR days_advanced = 30);
 UPDATE public.marketplace SET category = 'avanzado60' WHERE category IN ('advanced', 'advanced60') AND (current_month = 3 OR days_advanced = 60);
 
--- Convertir columna category al tipo ENUM en marketplace
-DO $$
-BEGIN
-  ALTER TABLE public.marketplace DROP CONSTRAINT IF EXISTS marketplace_category_check;
-  ALTER TABLE public.marketplace ALTER COLUMN category DROP DEFAULT;
-  ALTER TABLE public.marketplace ALTER COLUMN category TYPE public.piggy_category_enum 
-    USING (
-      CASE 
-        WHEN category::text IN ('plus', 'silver', 'plata') THEN 'plus'::public.piggy_category_enum
-        WHEN category::text IN ('dorado', 'gold', 'oro') THEN 'dorado'::public.piggy_category_enum
-        WHEN category::text IN ('premium') THEN 'premium'::public.piggy_category_enum
-        WHEN category::text IN ('avanzado30', 'advanced30') THEN 'avanzado30'::public.piggy_category_enum
-        WHEN category::text IN ('avanzado45', 'advanced45') THEN 'avanzado45'::public.piggy_category_enum
-        WHEN category::text IN ('avanzado60', 'advanced60') THEN 'avanzado60'::public.piggy_category_enum
-        WHEN category::text IN ('avanzado75', 'advanced75') THEN 'avanzado75'::public.piggy_category_enum
-        WHEN category::text IN ('avanzado90', 'advanced90') THEN 'avanzado90'::public.piggy_category_enum
-        ELSE 'estandar'::public.piggy_category_enum
-      END
-    );
-  ALTER TABLE public.marketplace ALTER COLUMN category SET DEFAULT 'estandar'::public.piggy_category_enum;
-EXCEPTION WHEN others THEN
-  RAISE NOTICE 'No se pudo convertir category a enum directamente, se mantiene como texto con constraint.';
-END $$;
+-- Tabla `piggies`
+UPDATE public.piggies SET category = 'estandar' WHERE category IN ('standard', 'estandard', 'estándar') OR category IS NULL;
+UPDATE public.piggies SET category = 'plus' WHERE category IN ('silver', 'plata');
+UPDATE public.piggies SET category = 'dorado' WHERE category IN ('gold', 'oro');
+UPDATE public.piggies SET category = 'premium' WHERE category = 'premium';
+UPDATE public.piggies SET category = 'avanzado30' WHERE category IN ('advanced', 'advanced30');
+UPDATE public.piggies SET category = 'avanzado60' WHERE category IN ('advanced60');
+
+-- Tabla `user_flash_missions`
+UPDATE public.user_flash_missions SET piggy_type = 'plus' WHERE piggy_type IN ('silver', 'plata');
+UPDATE public.user_flash_missions SET piggy_type = 'dorado' WHERE piggy_type IN ('gold', 'oro');
+UPDATE public.user_flash_missions SET piggy_type = 'avanzado30' WHERE piggy_type IN ('advanced', 'advanced30');
+UPDATE public.user_flash_missions SET piggy_type = 'avanzado60' WHERE piggy_type IN ('advanced60');
+
+-- Tabla `exclusive_piggy_config` (M10)
+UPDATE public.exclusive_piggy_config SET piggy_type = 'plus', piggy_label = 'Piggy Plus' WHERE piggy_type IN ('silver', 'plata');
+UPDATE public.exclusive_piggy_config SET piggy_type = 'dorado', piggy_label = 'Piggy Dorado' WHERE piggy_type IN ('gold', 'oro');
+
+-- Tabla `cycle_completion_missions`
+UPDATE public.cycle_completion_missions SET piggy_type = 'plus', piggy_label = 'Piggy Plus' WHERE piggy_type IN ('silver', 'plata');
+UPDATE public.cycle_completion_missions SET piggy_type = 'dorado', piggy_label = 'Piggy Dorado' WHERE piggy_type IN ('gold', 'oro');
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 3. TRIGGER AUTOMÁTICO PARA `marketplace`
+-- 4. CREAR EL TIPO ENUM UNIFICADO `piggy_category_enum`
+-- ──────────────────────────────────────────────────────────────────────────────
+DROP TYPE IF EXISTS public.piggy_type_enum CASCADE;
+DROP TYPE IF EXISTS public.piggy_category_enum CASCADE;
+
+CREATE TYPE public.piggy_category_enum AS ENUM (
+  'estandar',
+  'plus',
+  'dorado',
+  'premium',
+  'avanzado30',
+  'avanzado45',
+  'avanzado60',
+  'avanzado75',
+  'avanzado90'
+);
+
+-- Aplicar el tipo ENUM a las tablas para dropdown en panel de Supabase
+ALTER TABLE public.marketplace ALTER COLUMN category TYPE public.piggy_category_enum USING category::public.piggy_category_enum;
+ALTER TABLE public.marketplace ALTER COLUMN category SET DEFAULT 'estandar'::public.piggy_category_enum;
+
+ALTER TABLE public.user_flash_missions ALTER COLUMN piggy_type TYPE public.piggy_category_enum USING piggy_type::public.piggy_category_enum;
+ALTER TABLE public.user_flash_missions ALTER COLUMN piggy_type SET DEFAULT 'avanzado30'::public.piggy_category_enum;
+
+-- ──────────────────────────────────────────────────────────────────────────────
+-- 5. TRIGGER AUTOMÁTICO PARA `marketplace`
 --    Al insertar o editar un cerdo, calcula automáticamente:
 --    - extra_roi (+1%, +2%, +3%)
 --    - days_advanced (30, 45, 60, 75, 90)
@@ -94,7 +128,7 @@ DECLARE
 BEGIN
   v_cat := NEW.category::TEXT;
 
-  -- 1. Determinar días adelantados según la categoría elegida
+  -- 1. Determinar días adelantados y ROI según la categoría elegida
   IF v_cat = 'avanzado30' THEN
     NEW.days_advanced := 30;
     NEW.extra_roi := 0.00;
@@ -127,13 +161,13 @@ BEGIN
   -- 2. Asegurar que days_advanced esté dentro de límites válidos (0 a 140)
   NEW.days_advanced := GREATEST(0, LEAST(140, NEW.days_advanced));
 
-  -- 3. Calcular días restantes exactos
+  -- 3. Calcular días restantes exactos (Ciclo total 144 días)
   NEW.days_remaining := GREATEST(1, v_total_days - NEW.days_advanced);
 
-  -- 4. Calcular peso aproximado según los días adelantados (15 kg inicial -> 110 kg final en 144 días)
+  -- 4. Calcular peso aproximado según los días adelantados (15.0 kg inicial -> 110.0 kg final en 144 días)
   NEW.current_weight := ROUND((15.0 + (NEW.days_advanced::NUMERIC / v_total_days::NUMERIC) * (110.0 - 15.0)), 1);
 
-  -- 5. Calcular mes representativo para compatibilidad
+  -- 5. Calcular mes representativo para compatibilidad de vistas
   NEW.current_month := CASE
     WHEN NEW.days_advanced >= 120 THEN 5
     WHEN NEW.days_advanced >= 90 THEN 4
@@ -151,50 +185,11 @@ CREATE TRIGGER trg_calc_marketplace
 BEFORE INSERT OR UPDATE ON public.marketplace
 FOR EACH ROW EXECUTE FUNCTION public.trg_auto_calc_marketplace_item();
 
--- Forzar recalculo de items actuales en marketplace
+-- Forzar recalculo inmediato de items existentes en marketplace
 UPDATE public.marketplace SET category = category;
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 4. ADAPTACIÓN DE OTRAS TABLAS (`piggies`, `user_flash_missions`, `exclusive_piggy_config`, `cycle_completion_missions`)
--- ──────────────────────────────────────────────────────────────────────────────
-
--- Tabla `piggies`
-UPDATE public.piggies SET category = 'estandar' WHERE category IN ('standard', 'estandard', 'estándar');
-UPDATE public.piggies SET category = 'plus' WHERE category IN ('silver', 'plata');
-UPDATE public.piggies SET category = 'dorado' WHERE category IN ('gold', 'oro');
-UPDATE public.piggies SET category = 'premium' WHERE category = 'premium';
-UPDATE public.piggies SET category = 'avanzado30' WHERE category IN ('advanced', 'advanced30');
-UPDATE public.piggies SET category = 'avanzado60' WHERE category IN ('advanced60');
-
--- Tabla `user_flash_missions`
-DO $$
-BEGIN
-  -- Adaptar columna piggy_type para usar el nuevo enum si es posible
-  ALTER TABLE public.user_flash_missions DROP CONSTRAINT IF EXISTS user_flash_missions_piggy_type_check;
-  
-  UPDATE public.user_flash_missions SET piggy_type = 'plus'::public.piggy_type_enum WHERE piggy_type::text IN ('silver', 'plata');
-  UPDATE public.user_flash_missions SET piggy_type = 'dorado'::public.piggy_type_enum WHERE piggy_type::text IN ('gold', 'oro');
-  UPDATE public.user_flash_missions SET piggy_type = 'premium'::public.piggy_type_enum WHERE piggy_type::text = 'premium';
-  UPDATE public.user_flash_missions SET piggy_type = 'avanzado30'::public.piggy_type_enum WHERE piggy_type::text IN ('advanced', 'advanced30');
-  UPDATE public.user_flash_missions SET piggy_type = 'avanzado60'::public.piggy_type_enum WHERE piggy_type::text IN ('advanced60');
-EXCEPTION WHEN others THEN
-  -- Si falla por tipo enum previo, actualizar como texto
-  UPDATE public.user_flash_missions SET piggy_type = 'plus' WHERE piggy_type::text IN ('silver', 'plata');
-  UPDATE public.user_flash_missions SET piggy_type = 'dorado' WHERE piggy_type::text IN ('gold', 'oro');
-  UPDATE public.user_flash_missions SET piggy_type = 'avanzado30' WHERE piggy_type::text IN ('advanced', 'advanced30');
-  UPDATE public.user_flash_missions SET piggy_type = 'avanzado60' WHERE piggy_type::text IN ('advanced60');
-END $$;
-
--- Tabla `exclusive_piggy_config` (M10)
-UPDATE public.exclusive_piggy_config SET piggy_type = 'plus', piggy_label = 'Piggy Plus' WHERE piggy_type IN ('silver', 'plata');
-UPDATE public.exclusive_piggy_config SET piggy_type = 'dorado', piggy_label = 'Piggy Dorado' WHERE piggy_type IN ('gold', 'oro');
-
--- Tabla `cycle_completion_missions`
-UPDATE public.cycle_completion_missions SET piggy_type = 'plus', piggy_label = 'Piggy Plus' WHERE piggy_type IN ('silver', 'plata');
-UPDATE public.cycle_completion_missions SET piggy_type = 'dorado', piggy_label = 'Piggy Dorado' WHERE piggy_type IN ('gold', 'oro');
-
--- ──────────────────────────────────────────────────────────────────────────────
--- 5. FUNCIÓN `buy_piggy` ACTUALIZADA (Basada en días de engorde exactos)
+-- 6. FUNCIÓN `buy_piggy` ACTUALIZADA (Basada en días de engorde exactos)
 -- ──────────────────────────────────────────────────────────────────────────────
 DROP FUNCTION IF EXISTS buy_piggy(bigint, uuid, numeric, text, numeric, text);
 DROP FUNCTION IF EXISTS buy_piggy(uuid, uuid, numeric, text, numeric, text);
@@ -246,7 +241,7 @@ BEGIN
     v_weight := COALESCE(v_item.current_weight, 15.0);
   ELSIF v_item.days_advanced IS NOT NULL AND v_item.days_advanced > 0 THEN
     v_days_remaining := GREATEST(1, v_total_cycle_days - v_item.days_advanced);
-    v_weight := COALESCE(v_item.current_weight, ROUND((15.0 + (v_item.days_advanced::numeric / v_total_days::numeric) * (110.0 - 15.0)), 1));
+    v_weight := COALESCE(v_item.current_weight, ROUND((15.0 + (v_item.days_advanced::numeric / v_total_cycle_days::numeric) * (110.0 - 15.0)), 1));
   ELSE
     -- Cálculo fallback por categoría o mes
     IF v_category = 'avanzado30' THEN v_days_remaining := 114; v_weight := 35.0;
@@ -266,7 +261,7 @@ BEGIN
   SET stock = stock - 1
   WHERE id = p_item_id;
 
-  -- Crear el cerdito en la granja del usuario
+  -- Crear el cerdito en la granja del usuario con su fecha de fin calculada en días exactos
   INSERT INTO piggies (
     user_id, name, investment_amount, status,
     extra_roi_bonus, category, current_weight,
