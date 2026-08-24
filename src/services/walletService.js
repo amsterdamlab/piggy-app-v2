@@ -200,7 +200,7 @@ export async function ensureWelcomeBonusAssigned(userId) {
 /**
  * Deduct an amount from the user's wallet balance after a successful purchase.
  * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should
- * handle this atomically. Until then, we call this immediately after a confirmed purchase.
+ * handle this atomically. Until then, we call this practical safeguard immediately after a confirmed purchase.
  *
  * @param {number} amount - Amount in COP to deduct
  * @returns {{ success: boolean, newBalance?: number, reason?: string }}
@@ -576,11 +576,15 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
         console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
     }
 
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userName = profile?.full_name || 'Usuario';
+
     // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
         .from('wallet_requests')
         .insert({
             user_id: userId,
+            user_name: userName,
             request_type: 'recharge',
             payment_method: 'BRE_B',
             reference: reference,
@@ -679,11 +683,15 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
         console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
     }
 
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userName = profile?.full_name || 'Usuario';
+
     // 2. Inserción directa en tabla wallet_requests
     const { data, error } = await client
         .from('wallet_requests')
         .insert({
             user_id: userId,
+            user_name: userName,
             request_type: 'recharge',
             payment_method: 'QR_CODE',
             reference: reference,
