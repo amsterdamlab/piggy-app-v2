@@ -81,6 +81,21 @@ function authGuard(route) {
 }
 
 /**
+ * Smoothly scroll viewport and page containers to top.
+ */
+export function scrollToTop(smooth = true) {
+    const behavior = smooth ? 'smooth' : 'auto';
+    window.scrollTo({ top: 0, left: 0, behavior });
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior });
+    document.body.scrollTo({ top: 0, left: 0, behavior });
+    document.querySelectorAll('.page, .page__content, #app').forEach((el) => {
+        if (el && typeof el.scrollTo === 'function') {
+            el.scrollTo({ top: 0, left: 0, behavior });
+        }
+    });
+}
+
+/**
  * Handle route changes.
  */
 function handleRouteChange() {
@@ -94,6 +109,9 @@ function handleRouteChange() {
         currentCleanup();
         currentCleanup = null;
     }
+
+    // Reset scroll on view change
+    scrollToTop(false);
 
     // Find and execute route handler
     const handler = routes[route];
@@ -111,6 +129,21 @@ function handleRouteChange() {
  */
 export function initRouter() {
     window.addEventListener('hashchange', handleRouteChange);
+
+    // Scroll to top when tapping the current active bottom-nav tab without reloading
+    document.addEventListener('click', (e) => {
+        const navLink = e.target.closest('.bottom-nav__item, [data-nav-tab]');
+        if (!navLink) return;
+
+        const href = navLink.getAttribute('href') || '';
+        const targetRoute = href.replace(/^#\/?/, '').split('?')[0].split('/')[0];
+        const currentRoute = getCurrentRoute();
+
+        if (targetRoute && targetRoute === currentRoute) {
+            e.preventDefault();
+            scrollToTop(true);
+        }
+    });
 
     // Handle initial route
     handleRouteChange();
