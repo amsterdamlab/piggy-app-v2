@@ -42,7 +42,7 @@ const FALLBACK_TIPS = [
   {
     icon: '🤝',
     title: 'Refiere a un amigo y si compra su 1er Piggy',
-    reward: 'Obtén $30.000 en tu Wallet',
+    reward: 'Obtén $20.000 en tu Wallet',
     color: '#be123c',
     bgColor: '#fff1f2',
     borderColor: '#ffe4e6',

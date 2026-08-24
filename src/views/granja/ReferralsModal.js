@@ -72,7 +72,7 @@ export async function showReferralModal() {
     const referrals = stats?.referrals || [];
     const completedCount = stats?.completedReferrals || 0;
     const pendingCount = stats?.pendingReferrals || 0;
-    const currentTier = stats?.currentTier || { amount: 30000, label: '$30.000' };
+    const currentTier = stats?.currentTier || { amount: 20000, label: '$20.000' };
 
     // Saldo Comisiones = sum of commission_amount from completed referrals only
     const commissionsEarned = referrals
@@ -155,7 +155,7 @@ export async function showReferralModal() {
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥉 Bronce</span>
             <span style="text-align:center; color:#6b7280;">0 - 5</span>
-            <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$20.000</span>
           </div>
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥈 Plata</span>

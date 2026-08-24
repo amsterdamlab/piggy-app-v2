@@ -98,7 +98,7 @@ export function renderProfileView() {
             <!-- Banner Promocional Referidos -->
             <div class="profile-banner-referral">
                 <p class="profile-banner-referral__text">
-                    Gana Bonos de Consumo por <strong>$30.000</strong> invitando a tus amigos a registrarse y usar PIGGY APP.
+                    Gana Bonos de Consumo por <strong>$20.000</strong> invitando a tus amigos a registrarse y usar PIGGY APP.
                 </p>
                 <button class="profile-banner-referral__btn" id="btn-profile-invite-banner">
                     Invitar amigos →
@@ -165,7 +165,7 @@ export function renderProfileView() {
             <!-- Footer Institucional Centrado -->
             <div class="profile-footer">
                 <div style="text-align: center;">
-                    <div class="profile-footer__label">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</div>
+                    <div class="profile-footer__label" style="line-height: 1.45; margin-bottom: 12px;">RESPALDADO POR<br>GRANJA VILLA MORALES DEL VALLE SAS</div>
                     <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" class="profile-footer__valle-logo" onerror="this.style.display='none'" />
                 </div>
 

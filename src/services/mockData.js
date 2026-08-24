@@ -244,7 +244,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm9',
         title: 'Refiere y logra una compra',
-        reward: 'Obt&eacute;n $30.000 en tu Wallet',
+        reward: 'Obt&eacute;n $20.000 en tu Wallet',
         is_completed: false,
         icon: '&#129309;',
         cta: null

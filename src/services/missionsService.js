@@ -85,7 +85,7 @@ const MISSION_DEFINITIONS = [
     {
         key: 'm9', sortOrder: 9,
         title: 'Refiere y logra una compra',
-        reward: 'Obtén $30.000 en tu Wallet por tu primer referido efectivo',
+        reward: 'Obtén $20.000 en tu Wallet por tu primer referido efectivo',
         icon: '🤝', cta: 'open_referidos',
         autoType: 'first_referral_completed',
         requires: 'm8',
