@@ -45,6 +45,8 @@ async function loadPiggyDetail(piggyId) {
       getUserPiggies(),
     ]);
 
+    if (AppState.get('currentView') !== 'piggy') return;
+
     if (!piggy) {
       navigateTo('granja');
       return;

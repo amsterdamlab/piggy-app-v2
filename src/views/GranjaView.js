@@ -83,6 +83,8 @@ function renderRandomNotification(notif) {
   `;
 }
 
+let currentGranjaSessionId = 0;
+
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -91,10 +93,13 @@ export function renderGranjaView() {
   const profile = AppState.get('profile');
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
+  currentGranjaSessionId++;
+  const sessionId = currentGranjaSessionId;
+
   app.innerHTML = buildGranjaShell(firstName);
   attachGreetingActions();
 
-  loadGranjaData(firstName);
+  loadGranjaData(firstName, sessionId);
 
   return () => {
     // cleanup
@@ -128,18 +133,28 @@ function buildGranjaShell(firstName) {
 /**
  * Load data and update the dashboard.
  */
-async function loadGranjaData(firstName) {
+async function loadGranjaData(firstName, sessionId) {
   try {
+    const isSessionActive = () => {
+      const currentView = AppState.get('currentView');
+      const hash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'auth').toLowerCase();
+      const isGranjaOrReferidos = (currentView === 'granja' || currentView === 'referidos') &&
+        (hash === 'granja' || hash === 'referidos' || hash === '');
+      return sessionId === currentGranjaSessionId && isGranjaOrReferidos;
+    };
+
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
     // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
     // para calcular qué misiones están completadas. Si se ejecuta en paralelo
     // con getUserPiggies(), AppState todavía está vacío → race condition.
     const piggies = await getUserPiggies();
+    if (!isSessionActive()) return;
     AppState.set({ piggies });
 
     // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
     // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
     await detectAndCreateCycleMissions(piggies);
+    if (!isSessionActive()) return;
 
     // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
@@ -158,6 +173,8 @@ async function loadGranjaData(firstName) {
       getActiveNewsSlides(),
     ]);
 
+    if (!isSessionActive()) return;
+
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
     window._activeFlashMissions = flashMissions;
     window._activeCycleMissions = cycleMissions;
@@ -172,7 +189,11 @@ async function loadGranjaData(firstName) {
     stats.transactions           = transactions;
 
     const app = document.getElementById('app');
+    if (!app || !isSessionActive()) return;
+
     app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
+
+    if (!isSessionActive()) return;
 
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     showNewsBillboardModal(newsSlides);
@@ -182,6 +203,7 @@ async function loadGranjaData(firstName) {
     // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
   } catch (error) {
+    if (sessionId !== currentGranjaSessionId || (AppState.get('currentView') !== 'granja' && AppState.get('currentView') !== 'referidos')) return;
     console.error('Error loading granja data:', error);
     const section = document.getElementById('piggies-section');
     if (section) {
@@ -251,9 +273,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center;
-                    font-size: 18px;
-                    font-weight: 800;
+                    justify-content: center; 
+                    font-size: 18px; 
+                    font-weight: 800; 
                     padding-bottom: 2px;
                 ">+</div>
                 Compra un Nuevo Piggy

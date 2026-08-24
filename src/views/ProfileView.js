@@ -58,7 +58,7 @@ export function renderProfileView() {
     // If profile is empty in state, fetch fresh from Supabase
     if (!profile.full_name) {
         getProfile().then((freshProfile) => {
-            if (freshProfile && freshProfile.full_name) {
+            if (freshProfile && freshProfile.full_name && AppState.get('currentView') === 'perfil') {
                 AppState.set({ profile: freshProfile });
                 renderProfileView();
             }
