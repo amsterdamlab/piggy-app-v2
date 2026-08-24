@@ -41,7 +41,7 @@ function getTypeTheme(piggyType) {
             bonusBg:   'linear-gradient(135deg, #e0f2fe, #bae6fd)',
             bonusBorder:'#7dd3fc',
             bonusColor: '#0369a1',
-            badge:     '🌟 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+            badge:     'OFERTA POR CICLO COMPLETADO',
         },
         silver: {
             gradient:  'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
@@ -53,7 +53,7 @@ function getTypeTheme(piggyType) {
             bonusBg:   'linear-gradient(135deg, #e0f2fe, #bae6fd)',
             bonusBorder:'#7dd3fc',
             bonusColor: '#0369a1',
-            badge:     '🌟 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+            badge:     'OFERTA POR CICLO COMPLETADO',
         },
         dorado: {
             gradient:  'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
@@ -65,7 +65,7 @@ function getTypeTheme(piggyType) {
             bonusBg:   'linear-gradient(135deg, #fffbeb, #fef3c7)',
             bonusBorder:'#fde68a',
             bonusColor: '#92400e',
-            badge:     '🥇 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+            badge:     'OFERTA POR CICLO COMPLETADO',
         },
         gold: {
             gradient:  'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)',
@@ -77,7 +77,7 @@ function getTypeTheme(piggyType) {
             bonusBg:   'linear-gradient(135deg, #fffbeb, #fef3c7)',
             bonusBorder:'#fde68a',
             bonusColor: '#92400e',
-            badge:     '🥇 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+            badge:     'OFERTA POR CICLO COMPLETADO',
         },
         premium: {
             gradient:  'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)',
@@ -89,7 +89,7 @@ function getTypeTheme(piggyType) {
             bonusBg:   'linear-gradient(135deg, #fdf2f8, #fce7f3)',
             bonusBorder:'#fbcfe8',
             bonusColor: '#9d174d',
-            badge:     '💎 OFERTA POR CICLO · MISIÓN EXCLUSIVA',
+            badge:     'OFERTA POR CICLO COMPLETADO',
         },
     };
     return themes[raw] || themes['plus'];
@@ -141,16 +141,17 @@ export function showCycleMissionModal(mission) {
 
             <!-- Close -->
             <button id="cycle-modal-close" style="
-                position:absolute; top:12px; right:16px;
-                background:#f3f4f6; border:none; width:32px; height:32px;
-                border-radius:50%; cursor:pointer; font-size:18px; color:#6b7280;
+                position:absolute; top:14px; right:18px;
+                background:none; border:none; width:28px; height:28px;
+                cursor:pointer; font-size:24px; color:#6b7280;
                 display:flex; align-items:center; justify-content:center;
+                line-height:1; z-index:10;
             ">&times;</button>
 
             <!-- Premium Header -->
             <div style="
                 background: ${theme.gradient};
-                margin: 20px 20px 0; border-radius: 20px; padding: 28px 24px;
+                margin: 28px 20px 0; border-radius: 20px; padding: 28px 24px;
                 color: white; text-align: center; position: relative; overflow: hidden;
                 box-shadow: 0 12px 30px -5px ${theme.shadow};
             ">
@@ -173,11 +174,10 @@ export function showCycleMissionModal(mission) {
                 </div>
 
                 <!-- Icon + Name -->
-                <div style="font-size:56px; margin-bottom:8px;">${theme.icon}</div>
+                <img src="/piggy-favicon.svg" alt="Piggy" style="width: 56px; height: 56px; margin: 0 auto 8px auto; display: block; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));" />
                 <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${mission.piggy_label}</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.92; line-height:1.4;">
-                    Tu recompensa por completar el ciclo.<br>
-                    <strong>${roiPct} adicional de beneficio por canal de venta.</strong>
+                    Aprovecha esta oportunidad por tiempo limitado. Compra tu Piggy con <strong>${roiPct} adicional de beneficio por canal de venta</strong>.
                 </p>
 
                 <!-- Countdown -->
@@ -201,23 +201,9 @@ export function showCycleMissionModal(mission) {
             <!-- Body -->
             <div style="padding: 20px 20px 0;">
 
-                <!-- Benefit pill -->
-                <div style="
-                    background: ${theme.bonusBg};
-                    border: 1px solid ${theme.bonusBorder}; border-radius: 12px;
-                    padding: 10px 16px; margin-bottom: 20px;
-                    display: flex; align-items: center; gap: 10px;
-                ">
-                    <span style="font-size:22px;">📈</span>
-                    <div>
-                        <div style="font-weight:700; color:${theme.bonusColor}; font-size:0.85rem;">Beneficio exclusivo incluido</div>
-                        <div style="font-size:0.75rem; color:${theme.bonusColor}; opacity:0.8;">${roiPct} adicional de beneficio por canal de venta.</div>
-                    </div>
-                </div>
-
                 <!-- Name Input -->
                 <div style="margin-bottom: 16px;">
-                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
+                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px; text-align:center;">
                         Ponle un nombre a tu ${mission.piggy_label}
                     </label>
                     <input type="text" id="cycle-piggy-name"
@@ -311,13 +297,23 @@ export function showCycleMissionModal(mission) {
                         opacity: 0.5; pointer-events: none;
                         display: flex; align-items: center; justify-content: center; gap: 8px;
                     ">
-                        ${theme.icon} Comprar mi ${mission.piggy_label}
+                        <img src="/piggy-favicon.svg" alt="Piggy" style="width:20px; height:20px; vertical-align:middle; display:inline-block;" />
+                        <span>Comprar mi ${mission.piggy_label}</span>
                     </button>
                 </div>
 
                 <!-- Footer -->
-                <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem;">
-                    🔒 Transacción segura · Recompensa exclusiva de ciclo completado
+                <div class="checkout-footer" style="margin-top: 16px; padding-top: 12px; padding-bottom: 8px; display: flex; justify-content: center;">
+                    <div class="secure-badge" style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.78rem; font-weight: 600; align-items: center;">
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            Pagos seguros
+                        </span>
+                        <span style="display: flex; align-items: center; gap: 5px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            Cifrado SSL
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

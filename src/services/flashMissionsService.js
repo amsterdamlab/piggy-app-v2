@@ -232,6 +232,10 @@ export async function detectAndCreateCycleMissions(piggies) {
     if (isUsingMockData()) return;
     if (!piggies || piggies.length === 0) return;
 
+    // Fast-path: if no piggies completed their cycle, skip immediately (0ms, 0 DB queries)
+    const completedPiggies = piggies.filter(p => p.isComplete);
+    if (completedPiggies.length === 0) return;
+
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return;
@@ -250,29 +254,25 @@ export async function detectAndCreateCycleMissions(piggies) {
     const config = configs.find(c => userPiggyCount >= (c.min_piggies || 1));
     if (!config) return;
 
-    // Only process piggies that completed their cycle
-    const completedPiggies = piggies.filter(p => p.isComplete);
-    if (completedPiggies.length === 0) return;
-
     const expiresAt = new Date(Date.now() + ((config.duration_hours || 48) * 3600000)).toISOString();
 
-    for (const piggy of completedPiggies) {
-        // UNIQUE(piggy_id) will reject duplicates — we catch those silently
-        const { error } = await client
-            .from('cycle_completion_missions')
-            .insert({
-                user_id:         user.id,
-                piggy_id:        piggy.id,
-                piggy_type:      config.piggy_type,
-                piggy_label:     config.piggy_label,
-                extra_roi_bonus: config.extra_roi_bonus,
-                price:           config.price || 1000000,
-                expires_at:      expiresAt,
-            });
+    // Batch insert completed piggies
+    const inserts = completedPiggies.map(piggy => ({
+        user_id:         user.id,
+        piggy_id:        piggy.id,
+        piggy_type:      config.piggy_type,
+        piggy_label:     config.piggy_label,
+        extra_roi_bonus: config.extra_roi_bonus,
+        price:           config.price || 1000000,
+        expires_at:      expiresAt,
+    }));
 
-        if (error && !error.message?.includes('unique') && !error.code?.includes('23505')) {
-            console.warn(`detectAndCreateCycleMissions insert error for piggy ${piggy.id}:`, error.message);
-        }
+    try {
+        await client
+            .from('cycle_completion_missions')
+            .upsert(inserts, { onConflict: 'piggy_id', ignoreDuplicates: true });
+    } catch (err) {
+        console.warn('detectAndCreateCycleMissions error:', err);
     }
 }
 

@@ -587,11 +587,12 @@ function renderCycleMissionBanner(mission) {
                 <div style="background:rgba(255,255,255,0.18); display:inline-flex; align-items:center; gap:6px;
                     padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700;
                     letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">
-                    ${t.icon} CICLO COMPLETADO · RECOMPENSA EXCLUSIVA
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="background:white; border-radius:50%; padding:2px;"><polyline points="20 6 9 17 4 12"/></svg>
+                    CICLO COMPLETADO
                 </div>
 
-                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">🎉 ¡Tu Piggy terminó su ciclo!</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional de beneficio por canal de venta</strong></div>
+                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🎉 ¡Tu Piggy completó su ciclo!</div>
+                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional de beneficio por canal de venta</strong>.</div>
 
                 <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
@@ -610,7 +611,7 @@ function renderCycleMissionBanner(mission) {
 
                 <div style="margin-top:14px;">
                     <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                        Ver mi Recompensa ${t.icon}
+                        Ver Oferta
                     </span>
                 </div>
 

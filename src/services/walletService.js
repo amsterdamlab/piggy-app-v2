@@ -34,7 +34,7 @@ function initMockState() {
             mockTransactions = [
                 { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
                 { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
-                { id: '3', amount: 30000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
+                { id: '3', amount: 20000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
             ];
             localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
         }
@@ -70,6 +70,8 @@ function initMockState() {
  */
 export async function executeOptionARefundIfPending(userId) {
     if (isUsingMockData() || !userId) return;
+    if (sessionStorage.getItem(`opt_a_refund_${userId}`)) return;
+
     const client = getClient();
     try {
         const { data: existing } = await client
@@ -88,6 +90,7 @@ export async function executeOptionARefundIfPending(userId) {
             });
             console.log('✅ Reembolso de $2.000.000 COP acreditado exitosamente en DB.');
         }
+        sessionStorage.setItem(`opt_a_refund_${userId}`, 'done');
     } catch (e) {
         console.warn('Error applying Option A refund in DB:', e);
     }
@@ -130,7 +133,7 @@ export async function getWalletBalance() {
 export async function getReferralBonusBalance() {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || MOCK_PROFILE;
-        return profile?.referral_balance !== undefined ? profile.referral_balance : 30000;
+        return profile?.referral_balance !== undefined ? profile.referral_balance : 20000;
     }
 
     const client = getClient();
@@ -147,16 +150,16 @@ export async function getReferralBonusBalance() {
 }
 
 /**
- * Ensures the welcome bonus ($30.000) is assigned to the user's referral_balance in DB if not set yet.
+ * Ensures the welcome bonus ($20.000) is assigned to the user's referral_balance in DB if not set yet.
  */
 export async function ensureWelcomeBonusAssigned(userId) {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
         if (profile && !profile.referral_balance) {
-            profile.referral_balance = 30000;
+            profile.referral_balance = 20000;
             AppState.set({ profile: { ...profile } });
         }
-        return 30000;
+        return 20000;
     }
 
     const client = getClient();
@@ -174,19 +177,19 @@ export async function ensureWelcomeBonusAssigned(userId) {
             .from('wallet_transactions')
             .insert({
                 user_id: targetUserId,
-                amount: 30000,
+                amount: 20000,
                 type: 'credit',
-                description: 'Bono de Bienvenida ($30.000 en Tienda)',
+                description: 'Bono de Bienvenida ($20.000 en Tienda)',
                 wallet_type: 'consumo'
             });
 
         if (!error) {
-            console.log('🐷 Welcome consumption bonus ($30.000) assigned via transaction in DB!');
+            console.log('🎁 Welcome consumption bonus ($20.000) assigned via transaction in DB!');
             const currentProfile = AppState.get('profile');
             if (currentProfile && currentProfile.id === targetUserId) {
-                AppState.set({ profile: { ...currentProfile, referral_balance: 30000 } });
+                AppState.set({ profile: { ...currentProfile, referral_balance: 20000 } });
             }
-            return 30000;
+            return 20000;
         }
     }
     return data?.referral_balance || 0;
@@ -706,6 +709,8 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
         status: data?.status || 'pending'
     };
 }
+
+
 
 /* ─── Create Wallet Request ─── */
 
