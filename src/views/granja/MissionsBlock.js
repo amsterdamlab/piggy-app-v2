@@ -372,7 +372,7 @@ function renderM8Banner(mission) {
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
-                            <span>⏳</span>
+                            <span>&#9203;</span>
                             <span style="font-size:0.85rem; font-weight:800; font-family:monospace;">${remaining}</span>
                         </div>
                     ` : ''}
@@ -570,6 +570,7 @@ function renderCycleMissionBanner(mission) {
     const remaining = mission.remainingMs || 0;
     const hours    = String(Math.floor(remaining / 3600000)).padStart(2, '0');
     const mins     = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0');
+    const secs     = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
 
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
@@ -591,20 +592,19 @@ function renderCycleMissionBanner(mission) {
                     CICLO COMPLETADO
                 </div>
 
-                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🎉 ¡Tu Piggy completó su ciclo!</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional de beneficio por canal de venta</strong>.</div>
+                <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">¡Oferta Exclusiva!</div>
+                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> con <strong>${roiPct} adicional de beneficio por canal de venta</strong>.</div>
 
                 <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
                     padding:8px 14px; margin-top:10px; display:inline-flex;
                     align-items:center; gap:8px;">
-                    <span>⏳</span>
                     <div>
                         <div style="font-size:0.6rem; opacity:0.8; text-transform:uppercase; letter-spacing:1px;">Tiempo restante</div>
                         <div id="cycle-banner-countdown-${mission.id}"
                             data-expires-ms="${remaining}"
                             style="font-size:1rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
-                            ${hours}h ${mins}m
+                            ${hours}h ${mins}m ${secs}s
                         </div>
                     </div>
                 </div>
@@ -637,6 +637,24 @@ export function attachMissionListeners() {
 
     const missionBanner = document.getElementById('mission-banner');
     if (!missionBanner) return;
+
+    // Start live countdown for Cycle Mission if present
+    const cycleCountdownEl = document.querySelector('[id^="cycle-banner-countdown-"]');
+    if (cycleCountdownEl) {
+        let remMs = parseInt(cycleCountdownEl.dataset.expiresMs, 10) || 0;
+        _bannerCountdownInterval = setInterval(() => {
+            remMs = Math.max(0, remMs - 1000);
+            if (remMs <= 0) {
+                cycleCountdownEl.textContent = '¡Oferta vencida!';
+                clearInterval(_bannerCountdownInterval);
+                return;
+            }
+            const h = String(Math.floor(remMs / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((remMs % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((remMs % 60000) / 1000)).padStart(2, '0');
+            cycleCountdownEl.textContent = `${h}h ${m}m ${s}s`;
+        }, 1000);
+    }
 
     // Start live countdown for M6 if within silver window
     const missionId  = missionBanner.dataset.mission;

@@ -19,10 +19,11 @@ let _cycleCountdownInterval = null;
  * Format remaining milliseconds as "XXh XXm".
  */
 function formatCountdown(remainingMs) {
-    if (remainingMs <= 0) return '00h 00m';
+    if (remainingMs <= 0) return '00h 00m 00s';
     const hours   = Math.floor(remainingMs / 3600000);
     const minutes = Math.floor((remainingMs % 3600000) / 60000);
-    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`;
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
 }
 
 /**
@@ -118,7 +119,7 @@ export function showCycleMissionModal(mission) {
         premium: ['Diamante', 'Luxor', 'Elite', 'Apex', 'Prime', 'Titan', 'Legend', 'Crown'],
     };
     const names = (suggestedNames[mission.piggy_type] || suggestedNames.silver)
-        .sort(() => 0.5 - Math.random()).slice(0, 4);
+        .sort(() => 0.5 - Math.random()).slice(0, 3);
 
     document.body.style.overflow = 'hidden';
 
@@ -184,9 +185,8 @@ export function showCycleMissionModal(mission) {
                 <div style="
                     background: rgba(0,0,0,0.25); border-radius: 14px;
                     padding: 12px 20px; margin-top: 16px;
-                    display: flex; align-items: center; justify-content: center; gap: 8px;
+                    display: flex; align-items: center; justify-content: center;
                 ">
-                    <span style="font-size:18px;">⏳</span>
                     <div>
                         <div style="font-size:0.65rem; opacity:0.8; text-align:center; letter-spacing:1px; text-transform:uppercase;">Oferta disponible por</div>
                         <div id="cycle-countdown-time" style="font-size:1.3rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
@@ -237,17 +237,17 @@ export function showCycleMissionModal(mission) {
 
                     <!-- Balance -->
                     <div style="
-                        background: ${theme.gradient};
-                        border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
-                        color: white; display: flex; align-items: center; justify-content: space-between;
+                        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+                        border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
+                        color: white; position: relative; overflow: hidden;
                     ">
-                        <div>
-                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Wallet</div>
-                            <div id="cycle-balance-display" style="font-size:1.5rem; font-weight:800;">
-                                <span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
-                            </div>
+                        <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+                        <div id="cycle-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
+                            <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
                         </div>
-                        <div style="font-size:40px; opacity:0.3;">💰</div>
+                        <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.15; color:white;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        </div>
                     </div>
 
                     <!-- Insufficient -->
@@ -297,7 +297,7 @@ export function showCycleMissionModal(mission) {
                         opacity: 0.5; pointer-events: none;
                         display: flex; align-items: center; justify-content: center; gap: 8px;
                     ">
-                        <img src="/piggy-favicon.svg" alt="Piggy" style="width:20px; height:20px; vertical-align:middle; display:inline-block;" />
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
                         <span>Comprar mi ${mission.piggy_label}</span>
                     </button>
                 </div>
@@ -370,7 +370,7 @@ export function showCycleMissionModal(mission) {
 
     // Live countdown
     _cycleCountdownInterval = setInterval(() => {
-        remaining = Math.max(0, remaining - 30000);
+        remaining = Math.max(0, remaining - 1000);
         const el = document.getElementById('cycle-countdown-time');
         if (!el) { clearInterval(_cycleCountdownInterval); return; }
         if (remaining <= 0) {
@@ -379,7 +379,7 @@ export function showCycleMissionModal(mission) {
         } else {
             el.textContent = formatCountdown(remaining);
         }
-    }, 30000);
+    }, 1000);
 
     // Close
     const close = () => {
