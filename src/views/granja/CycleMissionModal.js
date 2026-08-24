@@ -159,7 +159,7 @@ export function showCycleMissionModal(mission) {
                     pointer-events:none;"></div>
 
                 <!-- Badge -->
-                <div style="background:rgba(255,255,225,0.22); display:inline-block; padding:4px 14px;
+                <div style="background:rgba(255,255,255,0.22); display:inline-block; padding:4px 14px;
                     border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1.5px;
                     text-transform:uppercase; margin-bottom:12px;">
                     ${theme.badge}
@@ -177,7 +177,7 @@ export function showCycleMissionModal(mission) {
                 <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${mission.piggy_label}</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.92; line-height:1.4;">
                     Tu recompensa por completar el ciclo.<br>
-                    <strong>${roiPct} adicional</strong> en tu Margen Comercial.
+                    <strong>${roiPct} adicional de beneficio por canal de venta.</strong>
                 </p>
 
                 <!-- Countdown -->
@@ -211,7 +211,7 @@ export function showCycleMissionModal(mission) {
                     <span style="font-size:22px;">📈</span>
                     <div>
                         <div style="font-weight:700; color:${theme.bonusColor}; font-size:0.85rem;">Beneficio exclusivo incluido</div>
-                        <div style="font-size:0.75rem; color:${theme.bonusColor}; opacity:0.8;">${roiPct} adicional sobre tu ROI base de granja.</div>
+                        <div style="font-size:0.75rem; color:${theme.bonusColor}; opacity:0.8;">${roiPct} adicional de beneficio por canal de venta.</div>
                     </div>
                 </div>
 
@@ -414,42 +414,35 @@ export function showCycleMissionModal(mission) {
         });
     }
 
-    // Confirm Purchase
-    confirmBtn.addEventListener('click', async () => {
+    // Confirm Purchase -> Navigate to Digital Contract Signing
+    confirmBtn.addEventListener('click', () => {
         const customName = nameInput.value.trim();
-        if (customName.length < 3 || currentBalance < price) return;
-
-        confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
-        confirmBtn.style.pointerEvents = 'none';
-
-        try {
-            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
-            const deductResult = await deductWalletBalance(price);
-            if (!deductResult.success) {
-                throw new Error(
-                    deductResult.reason === 'insufficient_balance'
-                        ? 'Saldo insuficiente en tu Wallet.'
-                        : 'No se pudo procesar el pago. Intenta de nuevo.'
-                );
-            }
-
-            // Wallet descontada ✅ — ahora crear el piggy
-            const result = await buyCycleCompletionMission(mission.id, customName);
-            if (!result.success) throw new Error(result.error || 'Error al registrar el piggy');
-
-            close();
-            // Navegar al piggy recién comprado: la URL #/piggy/{id} activa PiggyDetailView.
-            // Al volver atrás, el dashboard recarga desde BD sin la misión.
-            if (result.piggy && result.piggy.id) {
-                window.location.hash = `#/piggy/${result.piggy.id}`;
-            } else {
-                navigateTo('granja');
-            }
-        } catch (error) {
-            console.error('Cycle mission purchase error:', error);
-            alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar mi ${mission.piggy_label}`;
-            confirmBtn.style.pointerEvents = 'auto';
+        if (customName.length < 3) {
+            nameError.style.opacity = '1';
+            nameInput.focus();
+            return;
         }
+
+        if (currentBalance < price) return;
+
+        // Structure pending marketplace item for ContratoView
+        const pendingItem = {
+            id: `cycle-${mission.id}`,
+            name: customName,
+            item_name: mission.piggy_label,
+            category: mission.piggy_type,
+            price: price,
+            extra_roi: mission.extra_roi_bonus || 0,
+            extra_roi_bonus: mission.extra_roi_bonus || 0,
+            cycle_mission_id: mission.id,
+            is_cycle_mission: true,
+        };
+
+        // Save pending purchase details in session
+        sessionStorage.setItem('pending_piggy_name', customName);
+        sessionStorage.setItem('pending_marketplace_item', JSON.stringify(pendingItem));
+
+        close();
+        navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${price}&cycleMissionId=${encodeURIComponent(mission.id)}`);
     });
 }

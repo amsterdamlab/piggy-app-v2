@@ -372,7 +372,7 @@ function renderM8Banner(mission) {
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
-                            <span>&#9203;</span>
+                            <span>⏳</span>
                             <span style="font-size:0.85rem; font-weight:800; font-family:monospace;">${remaining}</span>
                         </div>
                     ` : ''}
@@ -591,7 +591,7 @@ function renderCycleMissionBanner(mission) {
                 </div>
 
                 <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">🎉 ¡Tu Piggy terminó su ciclo!</div>
-                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional</strong></div>
+                <div style="font-size:0.82rem; opacity:0.92;">Obtén un <strong>${mission.piggy_label}</strong> exclusivo con <strong>${roiPct} adicional de beneficio por canal de venta</strong></div>
 
                 <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;

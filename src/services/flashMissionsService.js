@@ -221,7 +221,8 @@ export async function buyFlashMission(missionId, piggyName) {
 
 /**
  * Detect completed piggies and auto-create M10 missions for them.
- * Requires the user to have at least `config.min_piggies` total piggies.
+ * Evaluates user's total piggies against tiered exclusive_piggy_config rows.
+ * Selects highest tier matching user's piggy count (e.g. 1 -> Plus, 2 -> Dorado, >=3 -> Premium).
  * The UNIQUE(piggy_id) DB constraint prevents duplicate M10 missions.
  * Safe to call on every dashboard load — inserts are idempotent.
  * @param {Array} piggies - Enriched array from getUserPiggies()
@@ -235,17 +236,19 @@ export async function detectAndCreateCycleMissions(piggies) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return;
 
-    // Fetch the exclusive piggy config (must be enabled)
-    const { data: config, error: configError } = await client
+    // Fetch the exclusive piggy configs (all enabled rows, ordered by min_piggies DESC)
+    const { data: configs, error: configError } = await client
         .from('exclusive_piggy_config')
         .select('*')
         .eq('is_enabled', true)
-        .maybeSingle();
+        .order('min_piggies', { ascending: false });
 
-    if (configError || !config) return; // M10 disabled or config missing
+    if (configError || !configs || configs.length === 0) return; // M10 disabled or config missing
 
-    // Check minimum piggies requirement
-    if (piggies.length < (config.min_piggies || 3)) return;
+    const userPiggyCount = piggies.length;
+    // Find highest tier matching user's piggy count (e.g. >= 3 -> Tier 3, >= 2 -> Tier 2, >= 1 -> Tier 1)
+    const config = configs.find(c => userPiggyCount >= (c.min_piggies || 1));
+    if (!config) return;
 
     // Only process piggies that completed their cycle
     const completedPiggies = piggies.filter(p => p.isComplete);
@@ -310,9 +313,11 @@ export async function getActiveCycleMissions() {
  * Creates the piggy in the DB and marks the mission as completed.
  * @param {string} missionId - ID of the cycle_completion_missions row
  * @param {string} piggyName - Custom name given by user
+ * @param {string} [contractUrl] - PDF contract URL if signed
+ * @param {string} [contractCode] - Transaction contract code
  * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}
  */
-export async function buyCycleCompletionMission(missionId, piggyName) {
+export async function buyCycleCompletionMission(missionId, piggyName, contractUrl = null, contractCode = null) {
     if (isUsingMockData()) return { success: false, error: 'Mock mode' };
 
     const client = getClient();
@@ -340,21 +345,25 @@ export async function buyCycleCompletionMission(missionId, piggyName) {
         ? piggyName.trim()
         : mission.piggy_label;
 
+    const insertPayload = {
+        user_id:           user.id,
+        name:              finalName,
+        full_name:         profile?.full_name || '',
+        investment_amount: mission.price || 1000000,
+        status:            'engorde',
+        extra_roi_bonus:   mission.extra_roi_bonus || 0,
+        category:          mission.piggy_type,
+        current_weight:    15.0,
+        purchase_date:     new Date().toISOString(),
+        end_date:          new Date(Date.now() + (143 * 24 * 3600000)).toISOString(),
+    };
+    if (contractUrl) insertPayload.contract_url = contractUrl;
+    if (contractCode) insertPayload.contract_code = contractCode;
+
     // Create the exclusive piggy
     const { data: newPiggy, error: piggyError } = await client
         .from('piggies')
-        .insert({
-            user_id:           user.id,
-            name:              finalName,
-            full_name:         profile?.full_name || '',
-            investment_amount: mission.price || 1000000,
-            status:            'engorde',
-            extra_roi_bonus:   mission.extra_roi_bonus || 0,
-            category:          mission.piggy_type,
-            current_weight:    15.0,
-            purchase_date:     new Date().toISOString(),
-            end_date:          new Date(Date.now() + (143 * 24 * 3600000)).toISOString(),
-        })
+        .insert(insertPayload)
         .select()
         .single();
 

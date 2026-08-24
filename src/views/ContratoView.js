@@ -8,6 +8,7 @@ import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 import { adoptPiggy, buyMarketplaceItem } from '../services/piggiesService.js';
+import { buyCycleCompletionMission } from '../services/flashMissionsService.js';
 import { deductWalletBalance, getWalletBalance } from '../services/walletService.js';
 import { openSignatureModal } from '../components/SignatureModal.js';
 import { stampAndUploadContract, preloadPDFLib } from '../services/contractService.js';
@@ -336,7 +337,19 @@ function attachContratoListeners() {
 
             // 2. Register Piggy in DB
             let newPiggy;
-            if (currentMarketplaceItem) {
+            if (currentMarketplaceItem?.is_cycle_mission || currentMarketplaceItem?.cycle_mission_id) {
+                const missionId = currentMarketplaceItem.cycle_mission_id || currentMarketplaceItem.id?.replace('cycle-', '');
+                const result = await buyCycleCompletionMission(
+                    missionId,
+                    currentPiggyName,
+                    contractResult?.contractUrl,
+                    contractResult?.contractCode
+                );
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al registrar el piggy exclusivo de ciclo');
+                }
+                newPiggy = result.piggy;
+            } else if (currentMarketplaceItem) {
                 newPiggy = await buyMarketplaceItem(currentMarketplaceItem, currentPiggyName, contractResult?.contractUrl, contractResult?.contractCode);
             } else {
                 newPiggy = await adoptPiggy(currentPiggyName, contractResult?.contractUrl);
