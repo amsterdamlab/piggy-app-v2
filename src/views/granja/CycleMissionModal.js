@@ -132,6 +132,56 @@ export function showCycleMissionModal(mission) {
     `;
 
     modal.innerHTML = `
+        <style>
+          @keyframes pulseGlow7s {
+            0%, 78%, 100% {
+              transform: scale(1);
+              box-shadow: 0 6px 20px -4px ${theme.btnShadow};
+            }
+            83% {
+              transform: scale(1.03);
+              box-shadow: 0 12px 28px ${theme.shadow}, 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+            88% {
+              transform: scale(0.99);
+              box-shadow: 0 6px 20px -4px ${theme.btnShadow};
+            }
+            93% {
+              transform: scale(1.02);
+              box-shadow: 0 10px 24px ${theme.shadow};
+            }
+          }
+          @keyframes shineSweep7s {
+            0%, 75% {
+              left: -120%;
+            }
+            88%, 100% {
+              left: 220%;
+            }
+          }
+          .btn-pulse-glow-7s {
+            position: relative !important;
+            overflow: hidden !important;
+            animation: pulseGlow7s 7s infinite ease-in-out !important;
+          }
+          .btn-pulse-glow-7s::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -120%;
+            width: 60%;
+            height: 200%;
+            background: linear-gradient(
+              90deg, 
+              rgba(255, 255, 255, 0) 0%, 
+              rgba(255, 255, 255, 0.55) 50%, 
+              rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(25deg);
+            animation: shineSweep7s 7s infinite ease-in-out;
+            pointer-events: none;
+          }
+        </style>
         <div class="animate-fade-in-up" style="
             background: white; border-radius: 28px 28px 0 0;
             width: 100%; max-width: 480px; max-height: 88dvh;
@@ -289,7 +339,7 @@ export function showCycleMissionModal(mission) {
                     </div>
 
                     <!-- Confirm Button -->
-                    <button id="cycle-confirm-btn" style="
+                    <button id="cycle-confirm-btn" class="btn-pulse-glow-7s" style="
                         width: 100%; background: ${theme.btnGrad};
                         color: white; border: none; padding: 14px 20px;
                         border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
