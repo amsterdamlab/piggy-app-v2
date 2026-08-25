@@ -1,6 +1,6 @@
 /**
- * Reusable vertical loading component with Piggy logo, spinner, and message.
- * Matches the original boot screen design.
+ * Reusable vertical loading component with Piggy logo and message.
+ * Matches the boot screen design with pulse animation.
  * 
  * @param {string} message - Message to display below loader.
  * @returns {string} HTML string for the loader.
@@ -24,7 +24,6 @@ export function renderPiggyLoader(message = 'Cargando...') {
         animation: pulse-logo 2s infinite ease-in-out;
         margin-bottom: 4px;
       " alt="Piggy App" onerror="this.onerror=null; this.src='/pig2.jpg';" />
-      <div class="spinner"></div>
       <div style="
         font-size: var(--text-sm);
         color: var(--color-text-muted);

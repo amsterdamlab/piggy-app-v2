@@ -1,109 +1,100 @@
-/* ============================================
-   PIGGY APP — Main Entry Point
-   Initializes the SPA and wires up all modules
-   ============================================ */
+/* ==========================================================================
+   PIGGY APP — Main Application Entry Point
+   Initializes Supabase, Router, State, Bottom Navigation & Global UI.
+   ========================================================================== */
 
-// Styles
-import './styles/global.css';
+import './styles/tokens.css';
 import './styles/components.css';
-import './styles/auth.css';
-import './styles/granja.css';
-import './styles/mercado.css';
-import './styles/aliados.css';
-import './styles/piggy-detail.css';
-import './styles/adopcion.css';
-import './styles/header.css';
-import './styles/perfil.css';
-import './styles/contrato.css';
+import './styles/global.css';
+import './styles/layout.css';
 
-// Core
-import { AppState } from './state.js';
-import { registerRoute, initRouter, navigateTo } from './router.js';
 import { initSupabase } from './services/supabase.js';
-import { checkSession } from './services/authService.js';
+import { initAuth, onAuthStateChange } from './services/authService.js';
+import { AppState } from './state.js';
+import { initRouter, navigateTo } from './router.js';
+import { renderBottomNav, updateActiveTab } from './components/BottomNav.js';
+import { renderHeader } from './components/Header.js';
+import { showToast } from './components/Toast.js';
 
-// Views
-import { renderAuthView } from './views/AuthView.js';
-import { renderGranjaView } from './views/GranjaView.js';
-import { renderMercadoView } from './views/MercadoView.js';
-import { renderAliadosView } from './views/AliadosView.js';
-import { renderPiggyDetailView } from './views/PiggyDetailView.js';
-import { renderAdopcionView } from './views/AdopcionView.js';
-import { renderContratoView } from './views/ContratoView.js';
-import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
-import { renderReferidosView } from './views/ReferidosView.js';
-import { renderProfileView } from './views/ProfileView.js';
-import { renderDescargarView } from './views/DescargarView.js';
-
-// Services
-import { initPWAListener } from './services/pwaService.js';
-
-// Components
-import { renderTopNav, removeTopNav } from './components/TopNav.js';
-import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
-import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppModal.js';
+// Global error handler for uncaught promises (e.g. mock failures)
+window.addEventListener('unhandledrejection', (event) => {
+  console.warn('⚠️ Unhandled Promise Rejection:', event.reason);
+  // Prevent default browser crash behavior if it's a known non-critical error
+  if (event.reason?.message?.includes('mock') || event.reason?.message?.includes('network')) {
+    event.preventDefault();
+  }
+});
 
 /**
- * Boot the application.
+ * Bootstrap the entire application.
  */
 async function boot() {
-  console.log('🐷 Piggy App — Booting...');
+  console.log('🐷 Piggy App initializing...');
 
-  // Initialize PWA install prompt listener
-  initPWAListener();
+  // 1. Initialize Supabase client
+  try {
+    initSupabase();
+  } catch (error) {
+    console.warn('⚠️ Supabase init warning (continuing with offline/mock fallback):', error.message);
+  }
+
+  // 2. Setup state listeners for reactive UI updates
+  setupStateSubscriptions();
+
+  // 3. Render persistent shell (Header + Nav)
+  renderHeader();
+  renderBottomNav();
 
   // Show loading screen
   showLoadingScreen();
 
-  // Initialize Supabase
-  await initSupabase();
+  // 4. Initialize Auth (fetches session + profile)
+  try {
+    await initAuth();
+  } catch (error) {
+    console.warn('⚠️ Auth init fallback:', error.message);
+    AppState.set({ authLoading: false });
+  }
 
-  // Register routes
-  registerRoute('auth', renderAuthView);
-  registerRoute('granja', renderGranjaView);
-  registerRoute('mercado', renderMercadoView);
-  registerRoute('aliados', renderAliadosView);
-  registerRoute('piggy', renderPiggyDetailView);
-  registerRoute('adopcion', renderAdopcionView);
-  registerRoute('contrato', renderContratoView);
-  registerRoute('gourmet', renderPiggyGourmetView);
-  registerRoute('referidos', renderReferidosView);
-  registerRoute('perfil', renderProfileView);
-  registerRoute('descargar', renderDescargarView);
+  // 5. Listen for auth changes (login, logout, token refresh)
+  onAuthStateChange((event, session) => {
+    console.log('🔄 Auth state event:', event);
 
-  // Subscribe to state changes
-  AppState.subscribe((state, previous) => {
-    // TopNav visibility
-    if (state.isAuthenticated && !previous.isAuthenticated) {
-      renderTopNav();
-    } else if (!state.isAuthenticated && previous.isAuthenticated) {
-      removeTopNav();
-    }
-
-    // Legal modal
-    if (state.showLegalModal && !previous.showLegalModal) {
-      renderLegalModal();
-    }
-    if (!state.showLegalModal && previous.showLegalModal) {
-      removeLegalModal();
-    }
-
-    // WhatsApp onboarding modal (post Google login)
-    if (state.showWhatsAppModal && !previous.showWhatsAppModal) {
-      renderWhatsAppModal();
-    }
-    if (!state.showWhatsAppModal && previous.showWhatsAppModal) {
-      removeWhatsAppModal();
+    if (event === 'SIGNED_OUT') {
+      navigateTo('login');
+      showToast('Sesión cerrada correctamente', 'info');
     }
   });
 
-  // Check existing session
-  await checkSession();
-
-  // Start router
+  // 6. Initialize Router (handles deep linking & initial route)
   initRouter();
 
-  console.log('🐷 Piggy App — Ready!');
+  // 7. Register Service Worker for PWA (if supported)
+  registerServiceWorker();
+
+  console.log('🚀 Piggy App ready!');
+}
+
+/**
+ * Subscribe to state changes to update the UI reactively.
+ */
+function setupStateSubscriptions() {
+  // Update bottom nav active state on route changes
+  AppState.subscribe('currentRoute', (route) => {
+    updateActiveTab(route);
+  });
+
+  // Re-render header when user profile changes
+  AppState.subscribe('profile', () => {
+    renderHeader();
+  });
+
+  // Listen for global toasts
+  AppState.subscribe('toast', (toast) => {
+    if (toast) {
+      showToast(toast.message, toast.type, toast.duration);
+    }
+  });
 }
 
 /**
@@ -128,7 +119,6 @@ function showLoadingScreen() {
         animation: pulse-logo 2s infinite ease-in-out;
         margin-bottom: 8px;
       " alt="Piggy App" onerror="this.onerror=null; this.src='pig2.jpg';" />
-      <div class="spinner"></div>
       <div style="
         font-size: var(--text-sm);
         color: var(--color-text-muted);
@@ -153,18 +143,34 @@ boot().catch((error) => {
         justify-content: center;
         min-height: 100dvh;
         gap: 16px;
-        padding: 24px;
+        color: var(--color-primary);
         text-align: center;
+        padding: 24px;
       ">
-        <div style="font-size: 48px;">😢</div>
-        <h2>Error al cargar la aplicación</h2>
-        <p style="color: var(--color-text-muted); font-size: var(--text-sm);">
-          Por favor recarga la página. Si el problema persiste, contacta soporte.
+        <h2 style="font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--color-text);">
+          Algo no salió como esperábamos
+        </h2>
+        <p style="color: var(--color-text-muted); max-width: 360px;">
+          Por favor recarga la página para intentar nuevamente.
         </p>
-        <button class="btn btn--primary" onclick="location.reload()">
-          Recargar
+        <button class="btn btn--primary" onclick="window.location.reload()">
+          Recargar App
         </button>
       </div>
     `;
   }
 });
+
+/**
+ * Register the PWA Service Worker for offline capabilities and caching.
+ */
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => console.log('📦 ServiceWorker registered:', reg.scope))
+        .catch((err) => console.warn('⚠️ ServiceWorker registration failed:', err));
+    });
+  }
+}
