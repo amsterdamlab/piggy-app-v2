@@ -206,7 +206,11 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                      const badgeColor = isDebit ? '#dc2626' : '#059669';
                      const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
                      const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
-                     const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`;
+                     const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+                     <path d="M13 5v2"/>
+                     <path d="M13 17v2"/>
+                     <path d="M13 11v2"/>
+                   </svg>`;
                      const accountType = isConsumo ? couponIcon : bellIcon;
                      const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -248,7 +252,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
   const closeDrawer = () => {
     modal.remove();
-    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
       document.body.style.overflow = '';
     }
   };
@@ -292,6 +296,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
     const referralBonusStr = formatCOP(stats.referralBonus);
     const msg = `🥩 *PIGGY APP — Canje de Bonos de Consumo (Referidos)*\n\n👤 *Usuario:* ${userName}\n\n🎁 Hola, deseo canjear mi saldo de bonos de consumo (${referralBonusStr}) por productos de carne.\n\n⚡ Por favor, indícame los pasos a seguir.`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+    openMeatRedemptionModal({ referralBonus: stats.referralBonus, userName });
   });
 
   if (autoOpenRecharge) {
@@ -299,6 +304,135 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
   } else if (autoOpenWithdrawal) {
     openWalletWithdrawalSubscreen(subscreenContainer, stats?.saldoDisponible || 0, updateDrawerState, closeDrawer);
   }
+}
+
+/**
+ * Show the Meat Redemption pending popup (identical to Bre-B / QR confirmation design).
+ */
+export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario' } = {}) {
+  const existing = document.getElementById('meat-redemption-modal');
+  if (existing) existing.remove();
+
+  document.body.style.overflow = 'hidden';
+
+  const refId = 'PGY-CRN-' + Math.floor(100000 + Math.random() * 900000);
+  const referralBonusStr = formatCOP(referralBonus);
+
+  const modal = document.createElement('div');
+  modal.id = 'meat-redemption-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100vw';
+  modal.style.height = '100dvh';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
+  modal.style.zIndex = '99999';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '0';
+
+  const container = document.createElement('div');
+  container.className = 'animate-scale-in';
+  container.style.width = '100%';
+  container.style.maxWidth = '520px';
+  container.style.height = '100dvh';
+  container.style.maxHeight = '100dvh';
+  container.style.background = 'white';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.overflow = 'hidden';
+  container.style.position = 'relative';
+  container.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)';
+
+  container.innerHTML = `
+      <div style="background:linear-gradient(135deg,#16a34a,#15803d); padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
+        <div style="margin-bottom:12px;">
+          <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:900; font-size:0.9rem; opacity:0.9; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              <path d="M13 5v2"/>
+              <path d="M13 17v2"/>
+              <path d="M13 11v2"/>
+            </svg>
+            <span>CANJE POR CARNE</span>
+          </div>
+        </div>
+        <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">¡Solicitud en Proceso!</h3>
+        <p style="margin:0; font-size:0.85rem; opacity:0.92;">Estamos listos para atender tu pedido</p>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
+            <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${refId}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Saldo en Bonos</span>
+            <span style="font-size:0.95rem; font-weight:850; color:#be1260;">${referralBonusStr}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Tipo de Canje</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Cortes Gourmet y Carne</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
+            <span style="font-size:0.78rem; font-weight:800; background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:8px;">EN ATENCIÓN</span>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; line-height:1.45; display:flex; align-items:flex-start; gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Ya nos pondremos en contacto contigo para coordinar tu compra y gestionar la entrega de tus productos de carne.</span>
+        </div>
+
+        <button id="meat-redemption-close" style="
+          width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
+          padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Ir a Mi Granja</span>
+        </button>
+      </div>
+
+      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Canjes seguros · Piggy App</span>
+        </p>
+      </div>
+  `;
+
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+
+  const closeModal = () => {
+    modal.remove();
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
+      document.body.style.overflow = '';
+    }
+  };
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.getElementById('meat-redemption-close')?.addEventListener('click', () => {
+    closeModal();
+    window.location.href = '/#/granja';
+    window.location.reload();
+  });
 }
 
 /**
