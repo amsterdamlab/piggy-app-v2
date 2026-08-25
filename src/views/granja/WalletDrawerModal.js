@@ -148,7 +148,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                   border: none;
                   padding: 16px 20px;
                   border-radius: 14px;
-                  font-weight: 800;
+                  font-weight: 850;
                   font-size: 1rem;
                   cursor: pointer;
                   display: flex;
@@ -300,7 +300,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
     const msg = `🥩 *PIGGY APP — Canje de Bonos de Consumo (Referidos)*\n\n👤 *Usuario:* ${userName}\n\n🎫 *Referencia:* #${refId}\n\n🎁 Hola, deseo canjear mi saldo de bonos de consumo (${referralBonusStr}) por productos de carne.\n\n⚡ Por favor, indícame los pasos a seguir.`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-    openMeatRedemptionModal({ referralBonus, userName, refId });
+    openMeatRedemptionModal({ amount: referralBonus, userName, refId });
   });
 
   if (autoOpenRecharge) {
@@ -313,14 +313,15 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 /**
  * Show the Meat Redemption pending popup (identical to Bre-B / QR confirmation design).
  */
-export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario', refId = null } = {}) {
+export function openMeatRedemptionModal({ amount = null, referralBonus = 0, userName = 'Usuario', refId = null } = {}) {
   const existing = document.getElementById('meat-redemption-modal');
   if (existing) existing.remove();
 
   document.body.style.overflow = 'hidden';
 
   const finalRefId = refId || ('PGY-CRN-' + Math.floor(100000 + Math.random() * 900000));
-  const referralBonusStr = formatCOP(referralBonus);
+  const displayAmount = amount !== null && amount !== undefined ? amount : referralBonus;
+  const displayAmountStr = formatCOP(displayAmount);
 
   const modal = document.createElement('div');
   modal.id = 'meat-redemption-modal';
@@ -381,8 +382,8 @@ export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario
             <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${finalRefId}</span>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Saldo en Bonos</span>
-            <span style="font-size:0.95rem; font-weight:850; color:#be1260;">${referralBonusStr}</span>
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Monto a Canjear</span>
+            <span style="font-size:0.95rem; font-weight:850; color:#be1260;">${displayAmountStr}</span>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Tipo de Canje</span>
