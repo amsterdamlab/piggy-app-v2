@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -230,10 +230,6 @@ function renderOfferCard(offer, index) {
             position: absolute;
             top: 8px;
             left: 12px;
-            right: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             z-index: 2;
           ">
             <span style="
@@ -246,18 +242,6 @@ function renderOfferCard(offer, index) {
               letter-spacing: 0.2px;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
             ">${offer.tag ? offer.tag.replace(/^[^\w\s]+/, '').trim() : 'Granja Valle Morales'}</span>
-            
-            ${discount > 0 ? `
-              <div style="
-                background: #fffbeb;
-                color: #b45309;
-                font-size: 0.72rem;
-                font-weight: 850;
-                padding: 4px 10px;
-                border-radius: 9999px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-              ">-${discount}%</div>
-            ` : ''}
           </div>
 
           <!-- Title Overlay -->
