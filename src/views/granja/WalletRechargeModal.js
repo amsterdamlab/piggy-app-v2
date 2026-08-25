@@ -2,6 +2,7 @@ import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
 import { openWompiWidget, getWompiEnvironment } from '../../services/wompiService.js';
 import { rechargeWallet, requestBreBRecharge, requestQRRecharge } from '../../services/walletService.js';
+import { openWalletDrawer } from './WalletDrawerModal.js';
 
 /**
  * Show the multi-step Wallet Recharge modal:
@@ -74,13 +75,16 @@ export async function openWalletRechargeInfo(liveStats = null) {
   modal.appendChild(container);
   document.body.appendChild(modal);
 
-  const close = () => {
+  const close = (returnToDrawer = true) => {
     modal.remove();
     if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
       document.body.style.overflow = '';
     }
+    if (returnToDrawer) {
+      openWalletDrawer();
+    }
   };
-  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(true); });
 
   /* ── QUICK AMOUNT PRESETS (Mínimo $1.000.000 COP) ── */
   const PRESETS = [1000000, 2000000, 3000000, 5000000];
@@ -502,489 +506,489 @@ export async function openWalletRechargeInfo(liveStats = null) {
             " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
               <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-              </svg>
-              Ya transferí
-            </button>
-            <p style="margin:8px 0 0 0; font-size:0.78rem; color:#64748b; text-align:center; line-height:1.4;">
-              Una vez hayas hecho la transferencia, oprime este botón para enviarnos el comprobante de pago.
-            </p>
-          </div>
-
-          <!-- Pasos para transferir -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px;">
-            <div style="font-size:0.75rem; font-weight:800; color:#334155; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
-              ¿Cómo hacer tu pago?
-            </div>
-            <div style="display:flex; flex-direction:column; gap:10px; font-size:0.8rem; color:#475569; line-height:1.4;">
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">1</span>
-                <span>Abre la app de tu banco (Bancolombia, Nequi, Daviplata, Nu, etc.).</span>
-              </div>
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">2</span>
-                <span>Selecciona transferir por <strong>Bre-B</strong> y pega la llave <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:700; color:#0f172a;">${OFFICIAL_BRE_B_KEY}</code> por el valor de <strong>${formatCOP(selectedAmount)}</strong>.</span>
-              </div>
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">3</span>
-                <span>Oprime el botón <strong>Ya transferí</strong> para enviarnos tu comprobante.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Pagos instantaneos y seguros con Llave Bre-B</span>
+            </svg>
+            Ya transferí
+          </button>
+          <p style="margin:8px 0 0 0; font-size:0.78rem; color:#64748b; text-align:center; line-height:1.4;">
+            Una vez hayas hecho la transferencia, oprime este botón para enviarnos el comprobante de pago.
           </p>
         </div>
-    `;
 
-    document.getElementById('rch-close').addEventListener('click', close);
-    document.getElementById('rch-breb-back').addEventListener('click', renderStep2);
+        <!-- Pasos para transferir -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px;">
+          <div style="font-size:0.75rem; font-weight:800; color:#334155; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
+            ¿Cómo hacer tu pago?
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:0.8rem; color:#475569; line-height:1.4;">
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">1</span>
+              <span>Abre la app de tu banco (Bancolombia, Nequi, Daviplata, Nu, etc.).</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">2</span>
+              <span>Selecciona transferir por <strong>Bre-B</strong> y pega la llave <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:700; color:#0f172a;">${OFFICIAL_BRE_B_KEY}</code> por el valor de <strong>${formatCOP(selectedAmount)}</strong>.</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">3</span>
+              <span>Oprime el botón <strong>Ya transferí</strong> para enviarnos tu comprobante.</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    // Copiado exclusivo de la llave (SOLO @piggygranjamoral) al pulsar en la caja o el texto
-    document.getElementById('btn-copy-breb-box').addEventListener('click', () => {
-      navigator.clipboard.writeText(OFFICIAL_BRE_B_KEY).then(() => {
-        const toast = document.getElementById('toast-copy-breb');
-        if (toast) {
-          toast.style.display = 'block';
-          setTimeout(() => { toast.style.display = 'none'; }, 3000);
-        }
+      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Pagos instantaneos y seguros con Llave Bre-B</span>
+        </p>
+      </div>
+  `;
+
+  document.getElementById('rch-close').addEventListener('click', close);
+  document.getElementById('rch-breb-back').addEventListener('click', renderStep2);
+
+  // Copiado exclusivo de la llave (SOLO @piggygranjamoral) al pulsar en la caja o el texto
+  document.getElementById('btn-copy-breb-box').addEventListener('click', () => {
+    navigator.clipboard.writeText(OFFICIAL_BRE_B_KEY).then(() => {
+      const toast = document.getElementById('toast-copy-breb');
+      if (toast) {
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+      }
+    });
+  });
+
+  // Acción "Ya transferí" Bre-B
+  document.getElementById('btn-breb-ya-transferi').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-breb-ya-transferi');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
+
+    try {
+      const res = await requestBreBRecharge({
+        amount: selectedAmount,
+        reference: breBRef,
+        breBKey: OFFICIAL_BRE_B_KEY,
+        mockState
       });
-    });
 
-    // Acción "Ya transferí" Bre-B
-    document.getElementById('btn-breb-ya-transferi').addEventListener('click', async () => {
-      const btn = document.getElementById('btn-breb-ya-transferi');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
-
-      try {
-        const res = await requestBreBRecharge({
-          amount: selectedAmount,
-          reference: breBRef,
-          breBKey: OFFICIAL_BRE_B_KEY,
-          mockState
-        });
-
-        if (res && res.success === false) {
-          throw new Error(res.reason || 'Error al registrar solicitud');
-        }
-
-        const msg = `🐷 *PIGGY APP — Comprobante de Recarga Bre-B*\n\n` +
-          `👤 *Usuario:* ${userName}\n` +
-          `💵 *Monto:* ${formatCOP(selectedAmount)} COP\n` +
-          `🔑 *Llave:* ${OFFICIAL_BRE_B_KEY}\n` +
-          `🎫 *Referencia:* #${breBRef}\n` +
-          `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-          `Hola, acabo de realizar la transferencia por Bre-B. Adjunto mi comprobante para que acrediten mi saldo en la Cuenta Agro.`;
-
-        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-        renderStep5Pending({ refId: breBRef, method: 'BRE_B' });
-      } catch (err) {
-        console.error('Error registrando recarga Bre-B:', err);
-        btn.disabled = false;
-        btn.innerHTML = 'Ya transferí';
-        alert('Hubo un inconveniente registrando tu solicitud. Por favor intenta de nuevo.');
+      if (res && res.success === false) {
+        throw new Error(res.reason || 'Error al registrar solicitud');
       }
-    });
-  };
 
-  /* ─────────────────────────────────────────
-     STEP 3 (QR) — Paga con QR (qr_code.jpg)
-  ───────────────────────────────────────── */
-  const renderStep3QR = () => {
-    const qrRef = 'PGY-QR-' + Math.floor(100000 + Math.random() * 900000);
+      const msg = `🐷 *PIGGY APP — Comprobante de Recarga Bre-B*\n\n` +
+        `👤 *Usuario:* ${userName}\n` +
+        `💵 *Monto:* ${formatCOP(selectedAmount)} COP\n` +
+        `🔑 *Llave:* ${OFFICIAL_BRE_B_KEY}\n` +
+        `🎫 *Referencia:* #${breBRef}\n` +
+        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+        `Hola, acabo de realizar la transferencia por Bre-B. Adjunto mi comprobante para que acrediten mi saldo en la Cuenta Agro.`;
 
-    container.innerHTML = `
-        <!-- Header Limpio: Paga con QR -->
-        <div style="padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-            <button id="rch-qr-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
-              ← Volver a Métodos de Pago
-            </button>
-            <button id="rch-close" style="background:transparent; border:none; padding:0; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
-          </div>
-          
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      renderStep5Pending({ refId: breBRef, method: 'BRE_B' });
+    } catch (err) {
+      console.error('Error registrando recarga Bre-B:', err);
+      btn.disabled = false;
+      btn.innerHTML = 'Ya transferí';
+      alert('Hubo un inconveniente registrando tu solicitud. Por favor intenta de nuevo.');
+    }
+  });
+};
+
+/* ─────────────────────────────────────────
+   STEP 3 (QR) — Paga con QR (qr_code.jpg)
+───────────────────────────────────────── */
+const renderStep3QR = () => {
+  const qrRef = 'PGY-QR-' + Math.floor(100000 + Math.random() * 900000);
+
+  container.innerHTML = `
+      <!-- Header Limpio: Paga con QR -->
+      <div style="padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <button id="rch-qr-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
+            ← Volver a Métodos de Pago
+          </button>
+          <button id="rch-close" style="background:transparent; border:none; padding:0; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">✕</button>
+        </div>
+        
+        <div>
+          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Paga con QR</h2>
+          <div style="font-size:0.82rem; color:#64748b;">Fácil y al instante desde la app de tu banco.</div>
+        </div>
+      </div>
+
+      <!-- Scrollable Body Content -->
+      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
+        
+        <!-- Resumen de Monto -->
+        <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border:1px solid #a7f3d0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
           <div>
-            <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Paga con QR</h2>
-            <div style="font-size:0.82rem; color:#64748b;">Fácil y al instante desde la app de tu banco.</div>
+            <div style="font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Monto Exacto a Transferir</div>
+            <div style="font-size:1.4rem; font-weight:900; color:#065f46;">${formatCOP(selectedAmount)}</div>
+          </div>
+          <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+            <img src="/logo_qr.png" alt="QR" style="width:34px; height:34px; object-fit:contain;" onerror="this.style.display='none';" />
           </div>
         </div>
 
-        <!-- Scrollable Body Content -->
-        <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
+        <!-- RECUADRO DE CÓDIGO QR -->
+        <div style="background:white; border:2px solid #e2e8f0; border-radius:16px; padding:18px; text-align:center; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
+          <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">
+            Código QR Oficial Bancolombia
+          </div>
           
-          <!-- Resumen de Monto -->
-          <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border:1px solid #a7f3d0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
-            <div>
-              <div style="font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Monto Exacto a Transferir</div>
-              <div style="font-size:1.4rem; font-weight:900; color:#065f46;">${formatCOP(selectedAmount)}</div>
-            </div>
-            <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
-              <img src="/logo_qr.png" alt="QR" style="width:34px; height:34px; object-fit:contain;" onerror="this.style.display='none';" />
-            </div>
+          <div style="display:inline-block; padding:12px; background:white; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:10px; min-width:210px; min-height:210px;">
+            <img src="/qr_code.jpeg" alt="Código QR de Pago" loading="eager" decoding="async" style="width:210px; height:210px; object-fit:contain; display:block; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
           </div>
 
-          <!-- RECUADRO DE CÓDIGO QR -->
-          <div style="background:white; border:2px solid #e2e8f0; border-radius:16px; padding:18px; text-align:center; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.04);">
-            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase; margin-bottom:12px; letter-spacing:0.5px;">
-              Código QR Oficial Bancolombia
-            </div>
-            
-            <div style="display:inline-block; padding:12px; background:white; border:1.5px solid #cbd5e1; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.06); margin-bottom:10px; min-width:210px; min-height:210px;">
-              <img src="/qr_code.jpeg" alt="Código QR de Pago" loading="eager" decoding="async" style="width:210px; height:210px; object-fit:contain; display:block; border-radius:8px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
-            </div>
-
-            <!-- Botón en texto subrayado para descargar el QR -->
-            <div>
-              <a href="/qr_code.jpeg" download="QR_Piggy_App.jpeg" target="_blank" id="btn-download-qr" style="
-                display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-                color: #059669; font-weight: 700; font-size: 0.85rem; text-decoration: underline;
-                background: none; border: none; padding: 4px 0; cursor: pointer; transition: color 0.15s;
-              " onmouseover="this.style.color='#047857'" onmouseout="this.style.color='#059669'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Descarga el QR en tu celular
-              </a>
-            </div>
-
-            <div style="font-size:0.75rem; color:#64748b; margin-top:12px; line-height:1.4;">
-              <strong>Titular:</strong> Granja Villa Morales del Valle SAS &nbsp;·&nbsp; <strong>Cuenta:</strong> Bancolombia
-            </div>
+          <!-- Botón en texto subrayado para descargar el QR -->
+          <div>
+            <a href="/qr_code.jpeg" download="QR_Piggy_App.jpeg" target="_blank" id="btn-download-qr" style="
+              display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+              color: #059669; font-weight: 700; font-size: 0.85rem; text-decoration: underline;
+              background: none; border: none; padding: 4px 0; cursor: pointer; transition: color 0.15s;
+            " onmouseover="this.style.color='#047857'" onmouseout="this.style.color='#059669'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Descarga el QR en tu celular
+            </a>
           </div>
 
-          <!-- BOTÓN "YA TRANSFERÍ" (Ubicado justo debajo del QR) -->
-          <div style="margin-bottom:20px;">
-            <button id="btn-qr-ya-transferi" style="
-              width: 100%;
-              background: #22c55e;
-              color: white;
-              border: none;
-              padding: 16px 20px;
-              border-radius: 9999px;
-              font-weight: 850;
-              font-size: 1.05rem;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 10px;
-              box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
-              transition: all 0.2s;
-            " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
-              <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-              </svg>
-              Ya transferí
-            </button>
-            <p style="margin:8px 0 0 0; font-size:0.78rem; color:#64748b; text-align:center; line-height:1.4;">
-              Una vez hayas hecho la transferencia, oprime este botón para enviarnos el comprobante de pago.
-            </p>
-          </div>
-
-          <!-- Pasos para pagar con QR -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px;">
-            <div style="font-size:0.75rem; font-weight:800; color:#334155; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
-              ¿Cómo pagar con Código QR?
-            </div>
-            <div style="display:flex; flex-direction:column; gap:10px; font-size:0.8rem; color:#475569; line-height:1.4;">
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">1</span>
-                <span>Descarga o escanea el código QR desde la app de tu banco (Bancolombia, Nequi, Daviplata, etc.).</span>
-              </div>
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">2</span>
-                <span>Ingresa el monto exacto: <strong>${formatCOP(selectedAmount)}</strong>.</span>
-              </div>
-              <div style="display:flex; gap:10px; align-items:flex-start;">
-                <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">3</span>
-                <span>Oprime el botón <strong>Ya transferí</strong> para enviarnos tu comprobante de pago.</span>
-              </div>
-            </div>
+          <div style="font-size:0.75rem; color:#64748b; margin-top:12px; line-height:1.4;">
+            <strong>Titular:</strong> Granja Villa Morales del Valle SAS &nbsp;·&nbsp; <strong>Cuenta:</strong> Bancolombia
           </div>
         </div>
 
-        <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Pagos instantaneos y seguros con QR</span>
+        <!-- BOTÓN "YA TRANSFERÍ" (Ubicado justo debajo del QR) -->
+        <div style="margin-bottom:20px;">
+          <button id="btn-qr-ya-transferi" style="
+            width: 100%;
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 9999px;
+            font-weight: 850;
+            font-size: 1.05rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+            transition: all 0.2s;
+          " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+            </svg>
+            Ya transferí
+          </button>
+          <p style="margin:8px 0 0 0; font-size:0.78rem; color:#64748b; text-align:center; line-height:1.4;">
+            Una vez hayas hecho la transferencia, oprime este botón para enviarnos el comprobante de pago.
           </p>
         </div>
-    `;
 
-    document.getElementById('rch-close').addEventListener('click', close);
-    document.getElementById('rch-qr-back').addEventListener('click', renderStep2);
+        <!-- Pasos para pagar con QR -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px;">
+          <div style="font-size:0.75rem; font-weight:800; color:#334155; text-transform:uppercase; margin-bottom:10px; letter-spacing:0.5px;">
+            ¿Cómo pagar con Código QR?
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:0.8rem; color:#475569; line-height:1.4;">
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">1</span>
+              <span>Descarga o escanea el código QR desde la app de tu banco (Bancolombia, Nequi, Daviplata, etc.).</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">2</span>
+              <span>Ingresa el monto exacto: <strong>${formatCOP(selectedAmount)}</strong>.</span>
+            </div>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="background:#e2e8f0; color:#0f172a; font-weight:800; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">3</span>
+              <span>Oprime el botón <strong>Ya transferí</strong> para enviarnos tu comprobante de pago.</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    // Acción "Ya transferí" QR
-    document.getElementById('btn-qr-ya-transferi').addEventListener('click', async () => {
-      const btn = document.getElementById('btn-qr-ya-transferi');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
+      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Pagos instantaneos y seguros con QR</span>
+        </p>
+      </div>
+  `;
 
-      try {
-        const res = await requestQRRecharge({
-          amount: selectedAmount,
-          reference: qrRef,
-          mockState
-        });
+  document.getElementById('rch-close').addEventListener('click', close);
+  document.getElementById('rch-qr-back').addEventListener('click', renderStep2);
 
-        if (res && res.success === false) {
-          throw new Error(res.reason || 'Error al registrar solicitud');
-        }
+  // Acción "Ya transferí" QR
+  document.getElementById('btn-qr-ya-transferi').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-qr-ya-transferi');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Registrando solicitud...';
 
-        const msg = `🐷 *PIGGY APP — Comprobante de Recarga con Código QR*\n\n` +
-          `👤 *Usuario:* ${userName}\n` +
-          `💵 *Monto:* ${formatCOP(selectedAmount)} COP\n` +
-          `🎫 *Referencia:* #${qrRef}\n` +
-          `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-          `Hola, acabo de realizar el pago mediante el Código QR. Adjunto mi comprobante para que acrediten mi saldo en la Cuenta Agro.`;
+    try {
+      const res = await requestQRRecharge({
+        amount: selectedAmount,
+        reference: qrRef,
+        mockState
+      });
 
-        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-        renderStep5Pending({ refId: qrRef, method: 'QR_CODE' });
-      } catch (err) {
-        console.error('Error registrando recarga QR:', err);
-        btn.disabled = false;
-        btn.innerHTML = 'Ya transferí';
-        alert('Hubo un inconveniente registrando tu solicitud. Por favor intenta de nuevo.');
+      if (res && res.success === false) {
+        throw new Error(res.reason || 'Error al registrar solicitud');
       }
-    });
-  };
 
-  /* ─────────────────────────────────────────
-     STEP 4 — Wompi Processing animation
-  ───────────────────────────────────────── */
-  const renderStep4Processing = (wompiTotalAmount) => {
-    container.innerHTML = `
-        <div style="background:linear-gradient(135deg,#6C14D0,#9B1DBA); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
-          <div style="font-weight:900; font-size:1.15rem; color:white; display:flex; align-items:center; gap:6px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      const msg = `🐷 *PIGGY APP — Comprobante de Recarga con Código QR*\n\n` +
+        `👤 *Usuario:* ${userName}\n` +
+        `💵 *Monto:* ${formatCOP(selectedAmount)} COP\n` +
+        `🎫 *Referencia:* #${qrRef}\n` +
+        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+        `Hola, acabo de realizar el pago mediante el Código QR. Adjunto mi comprobante para que acrediten mi saldo en la Cuenta Agro.`;
+
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      renderStep5Pending({ refId: qrRef, method: 'QR_CODE' });
+    } catch (err) {
+      console.error('Error registrando recarga QR:', err);
+      btn.disabled = false;
+      btn.innerHTML = 'Ya transferí';
+      alert('Hubo un inconveniente registrando tu solicitud. Por favor intenta de nuevo.');
+    }
+  });
+};
+
+/* ─────────────────────────────────────────
+   STEP 4 — Wompi Processing animation
+───────────────────────────────────────── */
+const renderStep4Processing = (wompiTotalAmount) => {
+  container.innerHTML = `
+      <div style="background:linear-gradient(135deg,#6C14D0,#9B1DBA); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div style="font-weight:900; font-size:1.15rem; color:white; display:flex; align-items:center; gap:6px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>wompi</span>
+        </div>
+        <div style="font-size:0.75rem; color:white; opacity:0.85; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px;">by Bancolombia</div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center;">
+        <div style="width:74px; height:74px; margin:0 auto 24px;">
+          <div style="width:74px; height:74px; border:4px solid #ede9fe; border-top-color:#6C14D0; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+        </div>
+        <h3 style="margin:0 0 8px; font-size:1.25rem; font-weight:800; color:#0f172a;">Iniciando pago en línea...</h3>
+        <p style="margin:0; font-size:0.88rem; color:#64748b; line-height:1.5; max-width:320px;">
+          Conectando con la pasarela de Wompi para tu pago de <strong style="color:#6C14D0;">${formatCOP(wompiTotalAmount)}</strong>.<br><br>
+          Abono a tu Wallet: <strong style="color:#059669;">${formatCOP(selectedAmount)}</strong>.
+        </p>
+      </div>
+      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Transacción cifrada con SSL · Wompi by Bancolombia</span>
+        </p>
+      </div>
+  `;
+
+  if (!document.getElementById('wompi-spin-style')) {
+    const style = document.createElement('style');
+    style.id = 'wompi-spin-style';
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+  }
+};
+
+/* ─────────────────────────────────────────
+   STEP 5 (Pending Receipt) — Bre-B & QR
+───────────────────────────────────────── */
+const renderStep5Pending = ({ refId, method = 'BRE_B' }) => {
+  const isBreB = method === 'BRE_B';
+  const methodLabel = isBreB ? `Llave Bre-B (${OFFICIAL_BRE_B_KEY})` : 'Código QR Bancolombia';
+
+  container.innerHTML = `
+      <div style="background:linear-gradient(135deg,#16a34a,#15803d); padding:28px 24px; text-align:center; colorwhite; flex-shrink:0;">
+        <div style="margin-bottom:12px;">
+          <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:900; font-size:0.9rem; opacity:0.9; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+            ${isBreB ? `
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>BRE-B COLOMBIA</span>
+            ` : `
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+              <span>CÓDIGO QR</span>
+            `}
+          </div>
+        </div>
+        <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">¡Solicitud en Verificación!</h3>
+        <p style="margin:0; font-size:0.85rem; opacity:0.92;">Hemos registrado tu reporte de pago</p>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
+            <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${refId}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Monto a acreditar</span>
+            <span style="font-size:0.95rem; font-weight:850; color:#059669;">${formatCOP(selectedAmount)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Método</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">${methodLabel}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
+            <span style="font-size:0.78rem; font-weight:800; background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:8px;">PENDIENTE DE REVISIÓN</span>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; line-height:1.45; display:flex; align-items:flex-start; gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>En cuanto nuestro equipo valide el comprobante con la cuenta bancaria, el saldo se sumará automáticamente a tu <strong>Cuenta Agro</strong>.</span>
+        </div>
+
+        <button id="pending-result-close" style="
+          width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
+          padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Ir a Mi Granja</span>
+        </button>
+      </div>
+
+      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Cuentas Agro seguras · Piggy App</span>
+        </p>
+      </div>
+  `;
+
+  document.getElementById('pending-result-close').addEventListener('click', () => {
+    close(false);
+    window.location.href = '/#/granja';
+    window.location.reload();
+  });
+};
+
+/* ─────────────────────────────────────────
+   STEP 5 — Wompi Result (success or failure)
+───────────────────────────────────────── */
+const renderStep5Result = (result) => {
+  const isApproved = result.success;
+  const refId = (result.transactionId || Date.now().toString()).slice(-10).toUpperCase();
+  const now = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  container.innerHTML = `
+      <!-- Wompi Result Header -->
+      <div style="background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#dc2626,#b91c1c)'}; padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
+        <div style="margin-bottom:12px;">
+          <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
+            ${isApproved ? `
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ` : `
+              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            `}
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:900; font-size:0.95rem; opacity:0.85; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <span>wompi</span>
           </div>
-          <div style="font-size:0.75rem; color:white; opacity:0.85; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px;">by Bancolombia</div>
         </div>
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center;">
-          <div style="width:74px; height:74px; margin:0 auto 24px;">
-            <div style="width:74px; height:74px; border:4px solid #ede9fe; border-top-color:#6C14D0; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-          </div>
-          <h3 style="margin:0 0 8px; font-size:1.25rem; font-weight:800; color:#0f172a;">Iniciando pago en línea...</h3>
-          <p style="margin:0; font-size:0.88rem; color:#64748b; line-height:1.5; max-width:320px;">
-            Conectando con la pasarela de Wompi para tu pago de <strong style="color:#6C14D0;">${formatCOP(wompiTotalAmount)}</strong>.<br><br>
-            Abono a tu Wallet: <strong style="color:#059669;">${formatCOP(selectedAmount)}</strong>.
-          </p>
-        </div>
-        <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Transacción cifrada con SSL · Wompi by Bancolombia</span>
-          </p>
-        </div>
-    `;
+        <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">${isApproved ? '¡Pago Aprobado!' : 'Pago Rechazado'}</h3>
+        <p style="margin:0; font-size:0.85rem; opacity:0.9;">${isApproved ? 'Tu recarga fue procesada exitosamente' : 'Tu pago no pudo ser procesado'}</p>
+      </div>
 
-    if (!document.getElementById('wompi-spin-style')) {
-      const style = document.createElement('style');
-      style.id = 'wompi-spin-style';
-      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-      document.head.appendChild(style);
+      <!-- Scrollable Receipt Body -->
+      <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
+            <span style="font-size:0.8rem; color:#0f172a; font-weight:800; font-family:monospace;">#${refId}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Saldo acreditado</span>
+            <span style="font-size:0.9rem; font-weight:800; color:${isApproved ? '#16a34a' : '#dc2626'};">${isApproved ? '+' : ''}${formatCOP(selectedAmount)}</span>
+          </div>
+          ${result.totalPaid ? `
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Total pagado (con 3%)</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#475569;">${formatCOP(result.totalPaid)}</span>
+          </div>
+          ` : ''}
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Pasarela</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Wompi Colombia</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
+            <span style="font-size:0.78rem; font-weight:800; background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#16a34a' : '#dc2626'}; padding:4px 10px; border-radius:8px;">${isApproved ? 'APROBADO' : 'RECHAZADO'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Fecha</span>
+            <span style="font-size:0.82rem; color:#334155; font-weight:600;">${now}</span>
+          </div>
+          ${isApproved && result.newBalance !== undefined ? `
+          <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:700;">Nuevo saldo</span>
+            <span style="font-size:1.05rem; font-weight:900; color:#059669;">${formatCOP(result.newBalance)}</span>
+          </div>
+          ` : ''}
+        </div>
+
+        ${!isApproved ? `
+        <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#9a3412; line-height:1.4;">
+          💡 El pago no pudo completarse. Puedes intentarlo con otro medio o utilizar <strong>Bre-B / QR (0% comisión)</strong>.
+          ${result.reason && result.reason !== 'simulated_rejected' ? `
+          <div style="margin-top:10px; padding:10px; background:#fef2f2; border:1px solid #fee2e2; border-radius:8px; color:#991b1b; font-size:0.75rem; word-break:break-all;">
+            <strong>Detalle:</strong> ${result.reason}
+          </div>
+          ` : ''}
+        </div>
+        ` : `
+        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; font-weight:600; display:flex; align-items:center; gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Tu saldo en Cuenta Agro ha sido acreditado exitosamente.</span>
+        </div>
+        `}
+
+        <button id="wompi-result-close" style="
+          width:100%; background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#6C14D0,#9B1DBA)'}; color:white; border:none;
+          padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px ${isApproved ? 'rgba(22,163,74,0.35)' : 'rgba(108,20,208,0.35)'}; transition:opacity 0.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
+        ">${isApproved ? `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Ir a Mi Granja</span>
+        ` : `
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          <span>Intentar de nuevo</span>
+        `}</button>
+      </div>
+
+      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Cuentas Agro seguras · Piggy App</span>
+        </p>
+      </div>
+  `;
+
+  document.getElementById('wompi-result-close').addEventListener('click', () => {
+    if (!isApproved) {
+      renderStep1();
+      return;
     }
-  };
+    close(false);
+    window.location.href = '/#/granja';
+    window.location.reload();
+  });
+};
 
-  /* ─────────────────────────────────────────
-     STEP 5 (Pending Receipt) — Bre-B & QR
-  ───────────────────────────────────────── */
-  const renderStep5Pending = ({ refId, method = 'BRE_B' }) => {
-    const isBreB = method === 'BRE_B';
-    const methodLabel = isBreB ? `Llave Bre-B (${OFFICIAL_BRE_B_KEY})` : 'Código QR Bancolombia';
-
-    container.innerHTML = `
-        <div style="background:linear-gradient(135deg,#16a34a,#15803d); padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
-          <div style="margin-bottom:12px;">
-            <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-          </div>
-          <div style="margin-bottom:8px;">
-            <div style="font-weight:900; font-size:0.9rem; opacity:0.9; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
-              ${isBreB ? `
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <span>BRE-B COLOMBIA</span>
-              ` : `
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
-                <span>CÓDIGO QR</span>
-              `}
-            </div>
-          </div>
-          <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">¡Solicitud en Verificación!</h3>
-          <p style="margin:0; font-size:0.85rem; opacity:0.92;">Hemos registrado tu reporte de pago</p>
-        </div>
-
-        <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
-              <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
-              <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${refId}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Monto a acreditar</span>
-              <span style="font-size:0.95rem; font-weight:850; color:#059669;">${formatCOP(selectedAmount)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Método</span>
-              <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">${methodLabel}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
-              <span style="font-size:0.78rem; font-weight:800; background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:8px;">PENDIENTE DE REVISIÓN</span>
-            </div>
-          </div>
-
-          <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; line-height:1.45; display:flex; align-items:flex-start; gap:10px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>En cuanto nuestro equipo valide el comprobante con la cuenta bancaria, el saldo se sumará automáticamente a tu <strong>Cuenta Agro</strong>.</span>
-          </div>
-
-          <button id="pending-result-close" style="
-            width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
-            padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-            box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
-            display:flex; align-items:center; justify-content:center; gap:8px;
-          ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <span>Ir a Mi Granja</span>
-          </button>
-        </div>
-
-        <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Cuentas Agro seguras · Piggy App</span>
-          </p>
-        </div>
-    `;
-
-    document.getElementById('pending-result-close').addEventListener('click', () => {
-      close();
-      window.location.href = '/#/granja';
-      window.location.reload();
-    });
-  };
-
-  /* ─────────────────────────────────────────
-     STEP 5 — Wompi Result (success or failure)
-  ───────────────────────────────────────── */
-  const renderStep5Result = (result) => {
-    const isApproved = result.success;
-    const refId = (result.transactionId || Date.now().toString()).slice(-10).toUpperCase();
-    const now = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-    container.innerHTML = `
-        <!-- Wompi Result Header -->
-        <div style="background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#dc2626,#b91c1c)'}; padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
-          <div style="margin-bottom:12px;">
-            <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
-              ${isApproved ? `
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              ` : `
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              `}
-            </div>
-          </div>
-          <div style="margin-bottom:8px;">
-            <div style="font-weight:900; font-size:0.95rem; opacity:0.85; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <span>wompi</span>
-            </div>
-          </div>
-          <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">${isApproved ? '¡Pago Aprobado!' : 'Pago Rechazado'}</h3>
-          <p style="margin:0; font-size:0.85rem; opacity:0.9;">${isApproved ? 'Tu recarga fue procesada exitosamente' : 'Tu pago no pudo ser procesado'}</p>
-        </div>
-
-        <!-- Scrollable Receipt Body -->
-        <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
-              <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
-              <span style="font-size:0.8rem; color:#0f172a; font-weight:800; font-family:monospace;">#${refId}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Saldo acreditado</span>
-              <span style="font-size:0.9rem; font-weight:800; color:${isApproved ? '#16a34a' : '#dc2626'};">${isApproved ? '+' : ''}${formatCOP(selectedAmount)}</span>
-            </div>
-            ${result.totalPaid ? `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Total pagado (con 3%)</span>
-              <span style="font-size:0.85rem; font-weight:700; color:#475569;">${formatCOP(result.totalPaid)}</span>
-            </div>
-            ` : ''}
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Pasarela</span>
-              <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Wompi Colombia</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
-              <span style="font-size:0.78rem; font-weight:800; background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#16a34a' : '#dc2626'}; padding:4px 10px; border-radius:8px;">${isApproved ? 'APROBADO' : 'RECHAZADO'}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Fecha</span>
-              <span style="font-size:0.82rem; color:#334155; font-weight:600;">${now}</span>
-            </div>
-            ${isApproved && result.newBalance !== undefined ? `
-            <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:700;">Nuevo saldo</span>
-              <span style="font-size:1.05rem; font-weight:900; color:#059669;">${formatCOP(result.newBalance)}</span>
-            </div>
-            ` : ''}
-          </div>
-
-          ${!isApproved ? `
-          <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#9a3412; line-height:1.4;">
-            💡 El pago no pudo completarse. Puedes intentarlo con otro medio o utilizar <strong>Bre-B / QR (0% comisión)</strong>.
-            ${result.reason && result.reason !== 'simulated_rejected' ? `
-            <div style="margin-top:10px; padding:10px; background:#fef2f2; border:1px solid #fee2e2; border-radius:8px; color:#991b1b; font-size:0.75rem; word-break:break-all;">
-              <strong>Detalle:</strong> ${result.reason}
-            </div>
-            ` : ''}
-          </div>
-          ` : `
-          <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; font-weight:600; display:flex; align-items:center; gap:10px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Tu saldo en Cuenta Agro ha sido acreditado exitosamente.</span>
-          </div>
-          `}
-
-          <button id="wompi-result-close" style="
-            width:100%; background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#6C14D0,#9B1DBA)'}; color:white; border:none;
-            padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-            box-shadow:0 4px 14px ${isApproved ? 'rgba(22,163,74,0.35)' : 'rgba(108,20,208,0.35)'}; transition:opacity 0.2s;
-            display:flex; align-items:center; justify-content:center; gap:8px;
-          ">${isApproved ? `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            <span>Ir a Mi Granja</span>
-          ` : `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-            <span>Intentar de nuevo</span>
-          `}</button>
-        </div>
-
-        <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Cuentas Agro seguras · Piggy App</span>
-          </p>
-        </div>
-    `;
-
-    document.getElementById('wompi-result-close').addEventListener('click', () => {
-      if (!isApproved) {
-        renderStep1();
-        return;
-      }
-      close();
-      window.location.href = '/#/granja';
-      window.location.reload();
-    });
-  };
-
-  // Kick off the flow at Step 1
-  renderStep1();
+// Kick off the flow at Step 1
+renderStep1();
 }

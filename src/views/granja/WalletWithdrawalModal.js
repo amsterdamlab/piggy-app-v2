@@ -6,6 +6,8 @@
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
 import { createWalletRequest, notifyAdminViaWhatsApp, convertBalanceToConsumptionBonus } from '../../services/walletService.js';
+import { getProfile } from '../../services/authService.js';
+import { openWalletDrawer } from './WalletDrawerModal.js';
 import { navigateTo } from '../../router.js';
 
 /**
@@ -14,15 +16,26 @@ import { navigateTo } from '../../router.js';
  * Step 2a (Dinero): Verify profile bank details + amount -> WhatsApp
  * Step 2b (Consumo): Enter amount -> "Canjear a Bonos de Consumo" -> Instant credit
  */
-export function showRetiroSaldoModal(availableAmount) {
+export async function showRetiroSaldoModal(availableAmount) {
   const existing = document.getElementById('retiro-modal');
   if (existing) existing.remove();
 
   document.body.style.overflow = 'hidden';
 
-  const profile = AppState.get('profile') || {};
+  // Fetch fresh profile from Supabase to guarantee 100% sync with DB
+  let profile = AppState.get('profile') || {};
+  try {
+    const fresh = await getProfile();
+    if (fresh) {
+      profile = fresh;
+      AppState.set({ profile: fresh });
+    }
+  } catch (e) {
+    console.warn('No se pudo refrescar el perfil en retiro:', e);
+  }
+
   const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  const userPhone = profile?.phone_number || '';
+  const userPhone = profile?.whatsapp || profile?.phone_number || '';
   const minAmount = 10000;
 
   const modal = document.createElement('div');
@@ -59,14 +72,17 @@ export function showRetiroSaldoModal(availableAmount) {
   modal.appendChild(container);
   document.body.appendChild(modal);
 
-  const safeRemove = () => {
+  const safeRemove = (returnToDrawer = true) => {
     modal.remove();
     if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
       document.body.style.overflow = '';
     }
+    if (returnToDrawer) {
+      openWalletDrawer();
+    }
   };
 
-  modal.addEventListener('click', (e) => { if (e.target === modal) safeRemove(); });
+  modal.addEventListener('click', (e) => { if (e.target === modal) safeRemove(true); });
 
   /* ─────────────────────────────────────────
      STEP 1 — Destino del Retiro (Dinero / Consumo)
@@ -77,11 +93,10 @@ export function showRetiroSaldoModal(availableAmount) {
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
-              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
-              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
-              <path d="m11 15-3-3 3-3"/>
-              <path d="M8 12h8"/>
+              <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
+              <rect x="6" y="8" width="12" height="12" rx="2" />
+              <path d="M 12 11 v 6" />
+              <path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" />
             </svg>
           </div>
           <div>
@@ -168,10 +183,10 @@ export function showRetiroSaldoModal(availableAmount) {
   const renderStep2Dinero = () => {
     const curProfile = AppState.get('profile') || profile || {};
     const userBank = curProfile.bank_name || '';
-    const userAccount = curProfile.bank_account_number || '';
+    const userAccount = curProfile.bank_account_number || curProfile.bank_breve_key || '';
     const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
     const userCedula = curProfile.cedula || curProfile.document_id || '';
-    const hasBankData = Boolean(userBank && userAccount);
+    const hasBankData = Boolean(userBank || userAccount);
 
     return `
       <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
@@ -216,8 +231,8 @@ export function showRetiroSaldoModal(availableAmount) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M5 6l7-3 7 3"/><path d="M4 10v11"/><path d="M20 10v11"/><path d="M8 14v4"/><path d="M12 14v4"/><path d="M16 14v4"/></svg>
                   </div>
                   <div>
-                    <div style="font-size:0.95rem; font-weight:800; color:#0f172a;">${userBank}</div>
-                    <div style="font-size:0.78rem; color:#64748b;">${userAccountType} • <strong>${userAccount}</strong></div>
+                    <div style="font-size:0.95rem; font-weight:800; color:#0f172a;">${userBank || 'Cuenta Registrada'}</div>
+                    <div style="font-size:0.78rem; color:#64748b;">${userAccountType} • <strong>${userAccount || 'Registrada'}</strong></div>
                   </div>
                 </div>
                 <button type="button" id="btn-goto-profile-edit" style="background:none; border:none; color:#be1260; font-size:0.78rem; font-weight:700; text-decoration:underline; cursor:pointer; padding:4px;">Cambiar</button>
@@ -311,22 +326,18 @@ export function showRetiroSaldoModal(availableAmount) {
           Canjear a Bonos de Consumo
         </button>
 
-        <!-- Rayo en SVG de líneas y texto actualizado -->
-        <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
-          <div style="width:32px; height:32px; border-radius:8px; background:white; border:1px solid #fecdd3; display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-          </div>
-          <div style="font-size:0.78rem; color:#9f1239; font-weight:600; line-height:1.4;">
-            El saldo se debitará y pasará a tu disponibilidad de Bonos de Consumo.
-          </div>
-        </div>
+        <!-- Rayo en SVG de líneas y texto en gris -->
+        <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:6px; line-height:1.4;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          <span>El saldo se debitará y pasará a tu disponibilidad de Bonos de Consumo.</span>
+        </p>
       </div>
   `;
 
   const attachClose = (onBack) => {
-    document.getElementById('retiro-close')?.addEventListener('click', safeRemove);
+    document.getElementById('retiro-close')?.addEventListener('click', () => safeRemove(true));
     if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
   };
 
@@ -343,7 +354,7 @@ export function showRetiroSaldoModal(availableAmount) {
 
     // Links a Mi Perfil (subscreen datos)
     const handleGotoProfile = () => {
-      safeRemove();
+      safeRemove(false);
       navigateTo('perfil');
       setTimeout(() => {
         window.location.hash = '#/perfil?subscreen=datos';
@@ -365,7 +376,7 @@ export function showRetiroSaldoModal(availableAmount) {
     document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
       const curProfile = AppState.get('profile') || profile || {};
       const userBank = curProfile.bank_name || '';
-      const userAccount = curProfile.bank_account_number || '';
+      const userAccount = curProfile.bank_account_number || curProfile.bank_breve_key || '';
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
 
@@ -379,7 +390,7 @@ export function showRetiroSaldoModal(availableAmount) {
         errDiv.style.display = 'block';
         return;
       }
-      if (!userBank || !userAccount) {
+      if (!userBank && !userAccount) {
         errDiv.textContent = 'Por favor registra tu cuenta bancaria en Mi Perfil para continuar.';
         errDiv.style.display = 'block';
         return;
@@ -391,7 +402,7 @@ export function showRetiroSaldoModal(availableAmount) {
 
       errDiv.style.display = 'none';
       
-      const res = await createWalletRequest('withdrawal', amount, userBank);
+      const res = await createWalletRequest('withdrawal', amount, userBank || 'Banco Registrado');
       if (!res.success) {
         errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
         errDiv.style.display = 'block';
@@ -406,9 +417,9 @@ export function showRetiroSaldoModal(availableAmount) {
         return;
       }
 
-      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank, res.requestId);
-      showWalletRequestSuccess('withdrawal', amount, userBank, res.requestId);
-      safeRemove();
+      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.requestId);
+      showWalletRequestSuccess('withdrawal', amount, userBank || 'Banco Registrado', res.requestId);
+      safeRemove(false);
     });
   };
 
@@ -455,7 +466,7 @@ export function showRetiroSaldoModal(availableAmount) {
       }
 
       showConsumptionConversionSuccess(amount);
-      safeRemove();
+      safeRemove(false);
     });
   };
 
