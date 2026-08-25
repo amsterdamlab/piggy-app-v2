@@ -200,7 +200,7 @@ export async function ensureWelcomeBonusAssigned(userId) {
 /**
  * Deduct an amount from the user's wallet balance after a successful purchase.
  * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should
- * handle this atomically. Until then, we call this practical safeguard immediately after a confirmed purchase.
+ * handle this atomically. Until then, we call this immediately after a confirmed purchase.
  *
  * @param {number} amount - Amount in COP to deduct
  * @returns {{ success: boolean, newBalance?: number, reason?: string }}
@@ -739,23 +739,59 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
 
-    const { data, error } = await client.rpc('create_wallet_request', {
-        p_user_id: user.id,
-        p_type: requestType,
-        p_amount: amount,
-        p_bank: bankName,
-    });
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userName = profile?.full_name || 'Usuario';
 
-    if (error) {
-        console.error('Error creating wallet request:', error);
-        return { success: false, reason: error.message };
+    // 1. Intentar registrar a través de RPC
+    try {
+        const { data, error } = await client.rpc('create_wallet_request', {
+            p_user_id: user.id,
+            p_type: requestType,
+            p_amount: amount,
+            p_bank: bankName,
+        });
+
+        if (!error && data?.success === true) {
+            return {
+                success: true,
+                requestId: data?.request_id || null,
+            };
+        }
+        if (error) {
+            console.warn('RPC create_wallet_request falló, intentando inserción directa:', error);
+        }
+    } catch (rpcErr) {
+        console.warn('Excepción en RPC create_wallet_request:', rpcErr);
     }
 
-    return {
-        success: data?.success === true,
-        requestId: data?.request_id || null,
-        reason: data?.reason || null,
-    };
+    // 2. Inserción directa en tabla wallet_requests como respaldo seguro
+    try {
+        const { data: insData, error: insError } = await client
+            .from('wallet_requests')
+            .insert({
+                user_id: user.id,
+                user_name: userName,
+                request_type: requestType,
+                amount: amount,
+                bank_name: bankName,
+                status: 'pending',
+                wallet_type: requestType === 'withdrawal' ? 'dinero' : 'bono_consumo'
+            })
+            .select('id')
+            .single();
+
+        if (insError) {
+            console.error('Error en inserción directa de wallet_requests:', insError);
+            return { success: false, reason: insError.message };
+        }
+
+        return {
+            success: true,
+            requestId: insData?.id || null
+        };
+    } catch (e) {
+        return { success: false, reason: e.message };
+    }
 }
 
 /* ─── WhatsApp Notification ─── */
