@@ -12,4 +12,196 @@ const WHATSAPP_PHONE = '573154870448';
 /* ─── Default Offers (Fallback / Mock Mode with Real Image URLs) ─── */
 
 const DEFAULT_OFFERS = [
-    {\n        id: 'cerdo-entero-especial',\n        name: 'Cerdo entero disponible',\n        description: 'Compra cerdo en etapa final de engorde o en canal entero o despostado con precios exclusivos de granja por ser parte de Piggy App.',\n        original_price: null,\n        price: 950000,\n        tag: '✨ Exclusivo Granja',\n        emoji: '🐷',\n        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',\n        is_active: true,\n        sort_order: 1,\n    },\n    {\n        id: 'combo-parrilla',\n        name: 'Combo Parrillero Familiar',\n        description: '3kg Costilla de cerdo + 2kg Chorizo artesanal + 1kg Chicharrón',\n        original_price: 185000,\n        price: 149000,\n        tag: '🔥 Más vendido',\n        emoji: '🥩',\n        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',\n        is_active: true,\n        sort_order: 2,\n    },\n    {\n        id: 'combo-premium',\n        name: 'Combo Premium Mixto',\n        description: '2kg Lomo de cerdo + 2kg Pechuga de pollo + 1.5kg Carne de res molida',\n        original_price: 210000,\n        price: 178000,\n        tag: '⭐ Premium',\n        emoji: '🍖',\n        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',\n        is_active: true,\n        sort_order: 3,\n    },\n    {\n        id: 'combo-semanal',\n        name: 'Combo Semanal Hogar',\n        description: '2kg Pernil de cerdo + 2kg Muslo de pollo + 1kg Carne para guisar',\n        original_price: 160000,\n        price: 135000,\n        tag: '💰 Ahorra más',\n        emoji: '🐔',\n        image_url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80',\n        is_active: true,\n        sort_order: 4,\n    },\n];\n\n/* ─── Public API ─── */\n\n/**\n * Fetch all active gourmet offers from DB (or fallback).\n * Returns offers sorted by `sort_order`.\n */\nexport async function getGourmetOffers() {\n    let baseOffers = [];\n    if (isUsingMockData()) {\n        baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);\n    } else {\n        try {\n            const client = getClient();\n            const { data, error } = await client\n                .from('gourmet_offers')\n                .select('*')\n                .eq('is_active', true)\n                .order('sort_order', { ascending: true });\n\n            if (error) throw error;\n            baseOffers = data && data.length > 0 ? data : DEFAULT_OFFERS.filter(o => o.is_active);\n        } catch (err) {\n            console.warn(' 🐷 GourmetService: Error fetching offers, using defaults', err);\n            baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);\n        }\n    }\n    return baseOffers;\n}\n\n/**\n * Fetch ALL gourmet offers (including inactive) for admin.\n */\nexport async function getAllGourmetOffers() {\n    if (isUsingMockData()) {\n        return [...DEFAULT_OFFERS];\n    }\n\n    try {\n        const client = getClient();\n        const { data, error } = await client\n            .from('gourmet_offers')\n            .select('*')\n            .order('sort_order', { ascending: true });\n\n        if (error) throw error;\n        return data || DEFAULT_OFFERS;\n    } catch (err) {\n        console.warn(' 🐷 GourmetService: Error fetching all offers', err);\n        return DEFAULT_OFFERS;\n    }\n}\n\n/**\n * Create a new gourmet offer.\n */\nexport async function createGourmetOffer(offerData) {\n    if (isUsingMockData()) {\n        const newOffer = { ...offerData, id: `offer-${Date.now()}` };\n        DEFAULT_OFFERS.push(newOffer);\n        return newOffer;\n    }\n\n    const client = getClient();\n    const { data, error } = await client\n        .from('gourmet_offers')\n        .insert(offerData)\n        .select()\n        .single();\n\n    if (error) throw new Error(error.message);\n    return data;\n}\n\n/**\n * Update an existing gourmet offer by ID.\n */\nexport async function updateGourmetOffer(offerId, updates) {\n    if (isUsingMockData()) {\n        const index = DEFAULT_OFFERS.findIndex(o => o.id === offerId);\n        if (index === -1) throw new Error('Offer not found');\n        DEFAULT_OFFERS[index] = { ...DEFAULT_OFFERS[index], ...updates };\n        return DEFAULT_OFFERS[index];\n    }\n\n    const client = getClient();\n    const { data, error } = await client\n        .from('gourmet_offers')\n        .update(updates)\n        .eq('id', offerId)\n        .select()\n        .single();\n\n    if (error) throw new Error(error.message);\n    return data;\n}\n\n/**\n * Toggle the `is_active` status of an offer.\n */\nexport async function toggleGourmetOffer(offerId, isActive) {\n    return updateGourmetOffer(offerId, { is_active: isActive });\n}\n\n/**\n * Delete a gourmet offer.\n */\nexport async function deleteGourmetOffer(offerId) {\n    if (isUsingMockData()) {\n        const index = DEFAULT_OFFERS.findIndex(o => o.id === offerId);\n        if (index !== -1) DEFAULT_OFFERS.splice(index, 1);\n        return true;\n    }\n\n    const client = getClient();\n    const { error } = await client\n        .from('gourmet_offers')\n        .delete()\n        .eq('id', offerId);\n\n    if (error) throw new Error(error.message);\n    return true;\n}\n\n/* ─── Helpers ─── */\n\n/**\n * Format COP currency for gourmet prices.\n */\nexport function formatGourmetPrice(value) {\n    return '$' + value.toLocaleString('es-CO');\n}\n\n/**\n * Build WhatsApp purchase link for a gourmet offer.\n */\nexport function buildGourmetWhatsAppLink(offer) {\n    const profile = AppState.get('profile');\n    const userName = profile?.full_name || 'Usuario';\n    const message = encodeURIComponent(\n        `¡Hola! 👋 Mi nombre es *${userName}*, vengo de *Piggy App* y quiero comprar el combo *${offer.name}* por valor de *${formatGourmetPrice(offer.price)}*.\\n\\n¿Me podrías confirmar la entrega por favor? ¡Muchas gracias!`\n    );\n    return `https://wa.me/${WHATSAPP_PHONE}?text=${message}`;\n}\n
+    {
+        id: 'cerdo-entero-especial',
+        name: 'Cerdo entero disponible',
+        description: 'Compra cerdo en etapa final de engorde o en canal entero o despostado con precios exclusivos de granja por ser parte de Piggy App.',
+        original_price: null,
+        price: 950000,
+        tag: '✨ Exclusivo Granja',
+        emoji: '🐷',
+        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+        is_active: true,
+        sort_order: 1,
+    },
+    {
+        id: 'combo-parrilla',
+        name: 'Combo Parrillero Familiar',
+        description: '3kg Costilla de cerdo + 2kg Chorizo artesanal + 1kg Chicharrón',
+        original_price: 185000,
+        price: 149000,
+        tag: '🔥 Más vendido',
+        emoji: '🥩',
+        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+        is_active: true,
+        sort_order: 2,
+    },
+    {
+        id: 'combo-premium',
+        name: 'Combo Premium Mixto',
+        description: '2kg Lomo de cerdo + 2kg Pechuga de pollo + 1.5kg Carne de res molida',
+        original_price: 210000,
+        price: 178000,
+        tag: '⭐ Premium',
+        emoji: '🍖',
+        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+        is_active: true,
+        sort_order: 3,
+    },
+    {
+        id: 'combo-semanal',
+        name: 'Combo Semanal Hogar',
+        description: '2kg Pernil de cerdo + 2kg Muslo de pollo + 1kg Carne para guisar',
+        original_price: 160000,
+        price: 135000,
+        tag: '💰 Ahorra más',
+        emoji: '🐔',
+        image_url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80',
+        is_active: true,
+        sort_order: 4,
+    },
+];
+
+/* ─── Public API ─── */
+
+/**
+ * Fetch all active gourmet offers from DB (or fallback).
+ * Returns offers sorted by `sort_order`.
+ */
+export async function getGourmetOffers() {
+    let baseOffers = [];
+    if (isUsingMockData()) {
+        baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
+    } else {
+        try {
+            const client = getClient();
+            const { data, error } = await client
+                .from('gourmet_offers')
+                .select('*')
+                .eq('is_active', true)
+                .order('sort_order', { ascending: true });
+
+            if (error) throw error;
+            baseOffers = data && data.length > 0 ? data : DEFAULT_OFFERS.filter(o => o.is_active);
+        } catch (err) {
+            console.warn(' 🐷 GourmetService: Error fetching offers, using defaults', err);
+            baseOffers = DEFAULT_OFFERS.filter(o => o.is_active);
+        }
+    }
+    return baseOffers;
+}
+
+/**
+ * Fetch ALL gourmet offers (including inactive) for admin.
+ */
+export async function getAllGourmetOffers() {
+    if (isUsingMockData()) {
+        return [...DEFAULT_OFFERS];
+    }
+
+    try {
+        const client = getClient();
+        const { data, error } = await client
+            .from('gourmet_offers')
+            .select('*')
+            .order('sort_order', { ascending: true });
+
+        if (error) throw error;
+        return data || DEFAULT_OFFERS;
+    } catch (err) {
+        console.warn(' 🐷 GourmetService: Error fetching all offers', err);
+        return DEFAULT_OFFERS;
+    }
+}
+
+/**
+ * Create a new gourmet offer.
+ */
+export async function createGourmetOffer(offerData) {
+    if (isUsingMockData()) {
+        const newOffer = { ...offerData, id: `offer-${Date.now()}` };
+        DEFAULT_OFFERS.push(newOffer);
+        return newOffer;
+    }
+
+    const client = getClient();
+    const { data, error } = await client
+        .from('gourmet_offers')
+        .insert(offerData)
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+}
+
+/**
+ * Update an existing gourmet offer by ID.
+ */
+export async function updateGourmetOffer(offerId, updates) {
+    if (isUsingMockData()) {
+        const index = DEFAULT_OFFERS.findIndex(o => o.id === offerId);
+        if (index === -1) throw new Error('Offer not found');
+        DEFAULT_OFFERS[index] = { ...DEFAULT_OFFERS[index], ...updates };
+        return DEFAULT_OFFERS[index];
+    }
+
+    const client = getClient();
+    const { data, error } = await client
+        .from('gourmet_offers')
+        .update(updates)
+        .eq('id', offerId)
+        .select()
+        .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+}
+
+/**
+ * Toggle the `is_active` status of an offer.
+ */
+export async function toggleGourmetOffer(offerId, isActive) {
+    return updateGourmetOffer(offerId, { is_active: isActive });
+}
+
+/**
+ * Delete a gourmet offer.
+ */
+export async function deleteGourmetOffer(offerId) {
+    if (isUsingMockData()) {
+        const index = DEFAULT_OFFERS.findIndex(o => o.id === offerId);
+        if (index !== -1) DEFAULT_OFFERS.splice(index, 1);
+        return true;
+    }
+
+    const client = getClient();
+    const { error } = await client
+        .from('gourmet_offers')
+        .delete()
+        .eq('id', offerId);
+
+    if (error) throw new Error(error.message);
+    return true;
+}
+
+/* ─── Helpers ─── */
+
+/**
+ * Format COP currency for gourmet prices.
+ */
+export function formatGourmetPrice(value) {
+    return '$' + value.toLocaleString('es-CO');
+}
+
+/**
+ * Build WhatsApp purchase link for a gourmet offer.
+ */
+export function buildGourmetWhatsAppLink(offer) {
+    const profile = AppState.get('profile');
+    const userName = profile?.full_name || 'Usuario';
+    const message = encodeURIComponent(
+        `¡Hola! 👋 Mi nombre es *${userName}*, vengo de *Piggy App* y quiero comprar el combo *${offer.name}* por valor de *${formatGourmetPrice(offer.price)}*.\n\n¿Me podrías confirmar la entrega por favor? ¡Muchas gracias!`
+    );
+    return `https://wa.me/${WHATSAPP_PHONE}?text=${message}`;
+}
