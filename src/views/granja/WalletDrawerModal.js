@@ -140,7 +140,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
             ` : ''}
 
             <!-- Main Action Buttons -->
-            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;\">
                <button id="btn-recargar-wallet-drawer" style="
                   width: 100%;
                   background: #ec4899;
@@ -206,11 +206,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                      const badgeColor = isDebit ? '#dc2626' : '#059669';
                      const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
                      const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
-                     const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-                     <path d="M13 5v2"/>
-                     <path d="M13 17v2"/>
-                     <path d="M13 11v2"/>
-                   </svg>`;
+                     const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`;
                      const accountType = isConsumo ? couponIcon : bellIcon;
                      const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
                         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -252,7 +248,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
   const closeDrawer = () => {
     modal.remove();
-    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
       document.body.style.overflow = '';
     }
   };
@@ -398,8 +394,7 @@ export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario
         <button id="meat-redemption-close" style="
           width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
           padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
-          display:flex; align-items:center; justify-content:center; gap:8px;
+          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;\n          display:flex; align-items:center; justify-content:center; gap:8px;
         ">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span>Ir a Mi Granja</span>
