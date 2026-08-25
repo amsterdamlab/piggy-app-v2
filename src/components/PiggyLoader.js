@@ -1,45 +1,36 @@
 /**
- * Reusable vertical loading component with Piggy logo, spinner, and name.
+ * Reusable vertical loading component with Piggy logo, spinner, and message.
+ * Matches the original boot screen design.
  * 
  * @param {string} message - Message to display below loader.
  * @returns {string} HTML string for the loader.
  */
 export function renderPiggyLoader(message = 'Cargando...') {
   return `
-    <div class="piggy-loader animate-fade-in" style="
+    <div style="
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 36px 20px;
+      padding: 40px 20px;
+      gap: 16px;
+      color: var(--color-primary);
       width: 100%;
-      text-align: center;
-      gap: 12px;
     ">
+      <img src="/piggy-loading-logo.png" style="
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        animation: pulse-logo 2s infinite ease-in-out;
+        margin-bottom: 4px;
+      " alt="Piggy App" onerror="this.onerror=null; this.src='/pig2.jpg';" />
+      <div class="spinner"></div>
       <div style="
-        width: 72px;
-        height: 72px;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        font-weight: var(--font-medium);
       ">
-        <img 
-          src="/piggy-loading-logo.png" 
-          alt="Piggy Logo" 
-          style="
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            animation: pulse-logo 2s infinite ease-in-out;
-          "
-          onerror="this.onerror=null; this.src='/piggyapp_logo1.png';"
-        />
-      </div>
-      <div class="spinner" style="width: 28px; height: 28px; border-width: 2.5px;"></div>
-      <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
-        <span style="font-size: 1.1rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Piggy</span>
-        <span style="font-size: 0.82rem; font-weight: 600; color: #64748b;">${message}</span>
+        ${message}
       </div>
     </div>
   `;
