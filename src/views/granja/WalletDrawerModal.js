@@ -106,7 +106,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                border-radius: 14px;
                margin-bottom: 20px;
                display: flex;
-               align-items: flex-start;
+               align-items: center;
                justify-content: space-between;
                box-shadow: 0 4px 14px rgba(190, 18, 96, 0.06);
             ">
