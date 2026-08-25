@@ -19,7 +19,7 @@ import { navigateTo } from '../../router.js';
  * @param {Function} onUpdated - Callback when balance changes
  * @param {Function} onCloseAll - Callback to close the entire wallet drawer
  */
-export async function openWalletWithdrawalSubscreen(mountContainer, availableAmount, onUpdated = null, onCloseAll = null) {
+export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, onUpdated = null, onCloseAll = null) {
   if (!mountContainer) return;
   mountContainer.innerHTML = '';
 
@@ -28,21 +28,31 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
   subscreen.style.pointerEvents = 'auto';
   mountContainer.appendChild(subscreen);
 
-  // Fetch fresh profile from Supabase to guarantee 100% sync with DB
+  // Profile data from local AppState for instantaneous rendering
   let profile = AppState.get('profile') || {};
-  try {
-    const fresh = await getProfile();
+
+  // Fetch fresh profile in background to keep 100% sync with Supabase
+  getProfile().then(fresh => {
     if (fresh) {
       profile = fresh;
       AppState.set({ profile: fresh });
     }
-  } catch (e) {
-    console.warn('No se pudo refrescar el perfil en retiro:', e);
-  }
+  }).catch(e => console.warn('Background profile refresh error:', e));
 
   const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
   const userPhone = profile?.whatsapp || profile?.phone_number || '';
-  const minAmount = 10000;
+  const minAmount = 50000;
+
+  const formatThousands = (num) => {
+    if (!num && num !== 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const parseFormattedNumber = (val) => {
+    if (!val) return 0;
+    const digits = String(val).replace(/\D/g, '');
+    return parseInt(digits, 10) || 0;
+  };
 
   const closeSubscreen = () => {
     subscreen.remove();
@@ -136,7 +146,7 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
       <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
         <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0; display:flex; align-items:center; justify-content:center; gap:5px;">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Retiros y transacciones seguras respaldadas por Piggy App</span>
+          <span>Transferencias 100% seguras en Piggy App.</span>
         </p>
       </div>
   `;
@@ -171,11 +181,11 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
       <!-- Scrollable Body Content -->
       <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
         
-        <!-- Recuadro Banco Destino -->
+        <!-- Recuadro Datos Bancarios -->
         <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <span style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">
-              Banco Destino Registrado
+              DATOS BANCARIOS
             </span>
             <span style="background:#ecfdf5; color:#059669; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:6px;">
               ${hasBankData ? 'VINCULADO' : 'PENDIENTE'}
@@ -183,17 +193,19 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
           </div>
 
           ${hasBankData ? `
-            <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
               <div style="display:flex; align-items:center; justify-content:space-between;">
-                <span style="font-size:1rem; font-weight:850; color:#0f172a;">${userBank || 'Banco Registrado'}</span>
-                <span style="font-size:0.8rem; font-weight:700; color:#64748b;">${userAccountType}</span>
+                <span style="font-size:0.88rem; font-weight:700; color:#64748b;">${userAccountType}:</span>
+                <span style="font-size:0.98rem; font-weight:850; color:#0f172a;">${userBank || 'Banco Registrado'}</span>
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#334155;">
-                <span><strong>No. Cuenta / Llave:</strong> <code style="background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:700; color:#0f172a;">${userAccount || 'No registrada'}</code></span>
+                <span style="color:#64748b; font-weight:600;">No. Cuenta / Llave:</span>
+                <code style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-weight:700; color:#0f172a;">${userAccount || 'No registrada'}</code>
               </div>
               ${userCedula ? `
-              <div style="font-size:0.82rem; color:#64748b;">
-                <strong>C.C:</strong> ${userCedula}
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; color:#64748b;">
+                <span style="font-weight:600;">Cédula (C.C):</span>
+                <strong style="color:#334155;">${userCedula}</strong>
               </div>
               ` : ''}
               <div style="margin-top:6px; padding-top:8px; border-top:1px dashed #cbd5e1; text-align:right;">
@@ -216,19 +228,19 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
           `}
         </div>
 
-        <!-- Monto a Retirar -->
+        <!-- Monto a Retirar con Botón TODO interior -->
         <div style="margin-bottom:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="font-size:0.78rem; font-weight:700; color:#475569;">¿Cuánto deseas retirar?</label>
-            <button id="btn-todo-retiro" style="background:none; border:none; font-size:0.78rem; font-weight:800; color:#059669; cursor:pointer; padding:0; text-decoration:underline;">
-              Retirar Todo (${formatCOP(availableAmount)})
-            </button>
-          </div>
-          <div style="position:relative;">
-            <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
-            <input type="number" id="retiro-amount" placeholder="Ej: 500000" min="${minAmount}" max="${availableAmount}"
-              style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
+          <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">¿Cuánto deseas retirar?</label>
+          <div style="position:relative; display:flex; align-items:center;">
+            <span style="position:absolute; left:16px; font-weight:800; color:#9ca3af; font-size:1rem; pointer-events:none;">$</span>
+            <input type="text" inputmode="numeric" id="retiro-amount" placeholder="Ej: 500.000"
+              style="width:100%; padding:14px 75px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
               onfocus="this.style.borderColor='#be1260';" onblur="this.style.borderColor='#e2e8f0';" />
+            <button type="button" id="btn-todo-retiro" style="
+              position:absolute; right:10px; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1;
+              border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:800; cursor:pointer;
+              transition:all 0.15s;
+            " onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">TODO</button>
           </div>
           <div id="retiro-amount-error" style="color:#dc2626; font-size:0.75rem; font-weight:600; margin-top:6px; display:none;"></div>
           <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Monto mínimo de retiro: <strong>${formatCOP(minAmount)}</strong>.</div>
@@ -268,7 +280,7 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
       <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
         <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Transferencias bancarias seguras respaldadas por Piggy App</span>
+          <span>Transferencias 100% seguras en Piggy App.</span>
         </p>
       </div>
     `;
@@ -306,26 +318,27 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
               <path d="M13 11v2"/>
             </svg>
           </div>
-          <div style="font-size:0.85rem; color:#9f1239; line-height:1.4;">
-            El saldo que transfieras se convertirá en <strong>Bonos de Consumo</strong> disponibles de inmediato para compras de carne y productos de granja.
+          <div style="font-size:0.85rem; color:#9f1239; line-height:1.45;">
+            El saldo que transfieras se convertirá en <strong>Bonos de Consumo</strong> disponibles de inmediato para compras de carne en <strong>Granja Valle Morales</strong>.
           </div>
         </div>
 
-        <!-- Monto a Canjear -->
+        <!-- Monto a Canjear con Botón TODO interior -->
         <div style="margin-bottom:20px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <label style="font-size:0.78rem; font-weight:700; color:#475569;">Monto a convertir</label>
-            <button id="btn-todo-consumo" style="background:none; border:none; font-size:0.78rem; font-weight:800; color:#059669; cursor:pointer; padding:0; text-decoration:underline;">
-              Canjear Todo (${formatCOP(availableAmount)})
-            </button>
-          </div>
-          <div style="position:relative;">
-            <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
-            <input type="number" id="consumo-amount" placeholder="Ej: 100000" min="${minAmount}" max="${availableAmount}"
-              style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
+          <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">Monto a convertir</label>
+          <div style="position:relative; display:flex; align-items:center;">
+            <span style="position:absolute; left:16px; font-weight:800; color:#9ca3af; font-size:1rem; pointer-events:none;">$</span>
+            <input type="text" inputmode="numeric" id="consumo-amount" placeholder="Ej: 100.000"
+              style="width:100%; padding:14px 75px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
               onfocus="this.style.borderColor='#be1260';" onblur="this.style.borderColor='#e2e8f0';" />
+            <button type="button" id="btn-todo-consumo" style="
+              position:absolute; right:10px; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1;
+              border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:800; cursor:pointer;
+              transition:all 0.15s;
+            " onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">TODO</button>
           </div>
           <div id="consumo-amount-error" style="color:#dc2626; font-size:0.75rem; font-weight:600; margin-top:6px; display:none;"></div>
+          <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Monto mínimo de canje: <strong>${formatCOP(minAmount)}</strong>.</div>
         </div>
 
         <!-- BOTÓN CANJEAR -->
@@ -351,11 +364,9 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
       </div>
 
       <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-        <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:6px; line-height:1.4;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-          </svg>
-          <span>El saldo se debitará y pasará a tu disponibilidad de Bonos de Consumo.</span>
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Transferencias 100% seguras en Piggy App.</span>
         </p>
       </div>
   `;
@@ -394,11 +405,22 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
     document.getElementById('btn-goto-profile-setup')?.addEventListener('click', handleGotoProfile);
     document.getElementById('btn-goto-profile-edit')?.addEventListener('click', handleGotoProfile);
 
-    // Setup the "Todo" button dynamically
+    // Formatting with thousands dots
+    const input = document.getElementById('retiro-amount');
+    input?.addEventListener('input', (e) => {
+      const raw = e.target.value.replace(/\D/g, '');
+      if (!raw) {
+        e.target.value = '';
+        return;
+      }
+      const num = parseInt(raw, 10);
+      e.target.value = formatThousands(num);
+    });
+
+    // Setup the "TODO" button inside the input
     document.getElementById('btn-todo-retiro')?.addEventListener('click', () => {
-      const input = document.getElementById('retiro-amount');
       if (input) {
-        input.value = availableAmount;
+        input.value = formatThousands(availableAmount);
         input.dispatchEvent(new Event('input'));
       }
     });
@@ -408,7 +430,7 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
       const userBank = curProfile.bank_name || '';
       const userAccount = curProfile.bank_account_number || curProfile.bank_breve_key || '';
       const errDiv = document.getElementById('retiro-amount-error');
-      const amount = parseFloat(document.getElementById('retiro-amount')?.value || 0);
+      const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
       if (!amount || amount < minAmount) {
         errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
@@ -457,18 +479,28 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
     subscreen.innerHTML = renderStep2Consumo();
     attachClose(goToStep1);
 
-    // Setup the "Todo" button dynamically
+    const input = document.getElementById('consumo-amount');
+    input?.addEventListener('input', (e) => {
+      const raw = e.target.value.replace(/\D/g, '');
+      if (!raw) {
+        e.target.value = '';
+        return;
+      }
+      const num = parseInt(raw, 10);
+      e.target.value = formatThousands(num);
+    });
+
+    // Setup the "TODO" button inside the input
     document.getElementById('btn-todo-consumo')?.addEventListener('click', () => {
-      const input = document.getElementById('consumo-amount');
       if (input) {
-        input.value = availableAmount;
+        input.value = formatThousands(availableAmount);
         input.dispatchEvent(new Event('input'));
       }
     });
 
     document.getElementById('retiro-confirm-consumo')?.addEventListener('click', async () => {
       const errDiv = document.getElementById('consumo-amount-error');
-      const amount = parseFloat(document.getElementById('consumo-amount')?.value || 0);
+      const amount = parseFormattedNumber(document.getElementById('consumo-amount')?.value);
       if (!amount || amount < minAmount) {
         errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
         errDiv.style.display = 'block';
@@ -500,6 +532,7 @@ export async function openWalletWithdrawalSubscreen(mountContainer, availableAmo
     });
   };
 
+  // Immediate synchronous render for instantaneous 0ms transition
   goToStep1();
 }
 
