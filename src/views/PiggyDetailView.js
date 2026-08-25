@@ -74,7 +74,7 @@ async function loadPiggyDetail(piggyId) {
             </div>
             <h2 class="piggy-detail__name">${piggy.name}</h2>
             <div style="display: flex; align-items: center; justify-content: center; margin-top: 4px; margin-bottom: 6px;">
-              <span class="badge badge--primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; padding: 6px 14px; letter-spacing: 0.3px;">
+              <span class="badge badge--primary" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.85rem; padding: 6px 14px; letter-spacing: 0.3px; background: #FCE4EC; color: #E91E63; border-radius: 9999px;">
                 <span style="display: inline-flex; align-items: center; color: currentColor;">${renderIcon('tag', '', '14')}</span>
                 <span>${piggy.displayCode || piggy.contract_code || '#000000'}</span>
               </span>
@@ -84,27 +84,27 @@ async function loadPiggyDetail(piggyId) {
           <!-- Progress section -->
           <div class="section animate-fade-in-up" style="animation-delay:0.1s;">
             <h3 class="section__title" style="margin-bottom: 12px;">Ciclo de Engorde</h3>
-            <div class="piggy-detail__progress-card card">
-              <div class="piggy-card__progress-header">
-                <span class="text-sm text-muted">Progreso general</span>
-                <span class="text-md font-bold text-primary">${piggy.progress}%</span>
+            <div class="piggy-detail__progress-card card" style="background: white; border: 1px solid #f1f5f9; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);">
+              <div class="piggy-card__progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="text-sm text-muted" style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Progreso general</span>
+                <span class="text-md font-bold text-primary" style="font-size: 1rem; font-weight: 800; color: #E91E63;">${piggy.progress}%</span>
               </div>
-              <div class="progress" style="height: 12px;">
-                <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
+              <div class="progress" style="height: 12px; background: #FCE4EC; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
+                <div class="progress__bar" style="width: ${piggy.progress}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #E91E63 0%, #FF4081 100%)'}; border-radius: 9999px; transition: width 0.8s ease-out; min-width: ${piggy.progress > 0 ? '6px' : '0'};"></div>
               </div>
-              <div class="grid-2 mt-md">
-                <div class="piggy-detail__metric">
-                  ${renderIcon('clock', '', '16')}
+              <div class="grid-2 mt-md" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                <div class="piggy-detail__metric" style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #E91E63; display: flex; align-items: center;">${renderIcon('clock', '', '18')}</span>
                   <div>
-                    <div class="text-xs text-muted">Tiempo restante</div>
-                    <div class="font-semibold">${piggy.daysLeft} días</div>
+                    <div class="text-xs text-muted" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Tiempo restante</div>
+                    <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.daysLeft} días</div>
                   </div>
                 </div>
-                <div class="piggy-detail__metric">
-                  <span style="font-size:16px;">⚖️</span>
+                <div class="piggy-detail__metric" style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 18px;">⚖️</span>
                   <div>
-                    <div class="text-xs text-muted">Peso estimado</div>
-                    <div class="font-semibold">${piggy.currentWeight} kg</div>
+                    <div class="text-xs text-muted" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Peso estimado</div>
+                    <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
                   </div>
                 </div>
               </div>
@@ -112,8 +112,8 @@ async function loadPiggyDetail(piggyId) {
               <!-- Etapa de Desarrollo en Tiempo Real -->
               ${piggy.growthStage ? `
                 <div style="
-                  margin-top: 14px;
-                  padding-top: 12px;
+                  margin-top: 16px;
+                  padding-top: 14px;
                   border-top: 1px solid #f1f5f9;
                 ">
                   <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
@@ -139,11 +139,11 @@ async function loadPiggyDetail(piggyId) {
           <!-- Financial info -->
           <div class="section animate-fade-in-up" style="animation-delay:0.2s;">
             <h3 class="section__title" style="margin-bottom: 12px;">Información Comercial</h3>
-            <div class="card">
+            <div class="card" style="background: white; border: 1px solid #f1f5f9; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);">
               <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">ID / Radicado</span>
                 <span class="font-semibold" style="display:flex;align-items:center;gap:5px;">
-                  <span style="color:var(--color-primary, #ec4899);display:inline-flex;">${renderIcon('tag', '', '14')}</span>
+                  <span style="color:#E91E63;display:inline-flex;">${renderIcon('tag', '', '14')}</span>
                   ${piggy.displayCode || piggy.contract_code}
                 </span>
               </div>
@@ -162,7 +162,7 @@ async function loadPiggyDetail(piggyId) {
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
                   <span class="text-sm text-muted">Beneficio Canal de Venta</span>
-                  <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
+                  <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px; color: #E91E63;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
                 </div>
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
@@ -172,7 +172,7 @@ async function loadPiggyDetail(piggyId) {
               </div>
               <div class="piggy-detail__finance-row">
                 <span class="font-semibold">Total Beneficio</span>
-                <span class="font-bold text-primary" style="font-size:var(--text-lg);">${formatCOP(projectedReturn)}</span>
+                <span class="font-bold text-primary" style="font-size:var(--text-lg); color: #E91E63;">${formatCOP(projectedReturn)}</span>
               </div>
             </div>
           </div>

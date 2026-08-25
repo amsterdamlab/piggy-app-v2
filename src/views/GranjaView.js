@@ -415,7 +415,7 @@ export function renderPiggyCard(piggy, baseROI) {
     " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.08)'"
        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.04)'">
       <div class="piggy-card__header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-        <div class="piggy-card__avatar" style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #fce7f3; flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div class="piggy-card__avatar" style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #FCE4EC; flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
           <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
         <div class="piggy-card__info" style="flex: 1; min-width: 0;">
@@ -423,7 +423,7 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="piggy-card__status">
             ${piggy.isComplete
               ? '<span class="badge badge--success" style="background: #ecfdf5; color: #059669; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">✓ Completado</span>'
-              : `<span class="badge badge--primary" style="background: #fce7f3; color: #be1260; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">${piggy.daysLeft} días restantes</span>`
+              : `<span class="badge badge--primary" style="background: #FCE4EC; color: #E91E63; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">${piggy.daysLeft} días restantes</span>`
             }
           </div>
         </div>
@@ -435,10 +435,10 @@ export function renderPiggyCard(piggy, baseROI) {
       <div class="piggy-card__progress" style="margin-bottom: 14px;">
         <div class="piggy-card__progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <span class="text-sm text-muted" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Progreso del ciclo</span>
-          <span class="text-sm font-semibold" style="font-size: 0.85rem; font-weight: 800; color: #be1260;">${progressPercent}%</span>
+          <span class="text-sm font-semibold" style="font-size: 0.85rem; font-weight: 800; color: #E91E63;">${progressPercent}%</span>
         </div>
-        <div class="progress" style="height: 10px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
-          <div class="progress__bar" style="width: ${progressPercent}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #ec4899, #be1260)'}; border-radius: 9999px; transition: width 0.8s ease-out;"></div>
+        <div class="progress" style="height: 10px; background: #FCE4EC; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
+          <div class="progress__bar" style="width: ${progressPercent}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #E91E63 0%, #FF4081 100%)'}; border-radius: 9999px; transition: width 0.8s ease-out; min-width: ${progressPercent > 0 ? '6px' : '0'};"></div>
         </div>
       </div>
 
@@ -448,7 +448,7 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
         </div>
         <div style="text-align: right;">
-          <div class="font-semibold text-primary" style="font-size: 0.95rem; font-weight: 800; color: #be1260;">
+          <div class="font-semibold text-primary" style="font-size: 0.95rem; font-weight: 800; color: #E91E63;">
             <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
           </div>
           ${extraRoi > 0 ? `<div class="text-xs" style="font-size: 10px; color: #b45309; margin-top: 2px; font-weight: 700;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
