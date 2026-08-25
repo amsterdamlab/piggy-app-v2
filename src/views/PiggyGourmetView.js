@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -108,36 +108,35 @@ async function loadGourmetOffers() {
     if (bonusContainer && userStats.referralBonus > 0) {
       bonusContainer.innerHTML = `
         <div class="animate-fade-in-up" style="
-          background: #fff1f2;
-          border: 1px solid #ffe4e6;
-          border-radius: 16px;
+          background: linear-gradient(135deg, #fffdf2 0%, #fef8db 50%, #fef3c7 100%);
+          border: 1.5px solid #fbbf24;
+          border-radius: 18px;
           padding: 16px 18px;
           margin-bottom: 20px;
-          display: flex;
-          align-items: center;
-          gap: 14px;
+          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.22), 0 0 12px rgba(251, 191, 36, 0.18);
+          position: relative;
         ">
-          <div style="
-            width: 44px; height: 44px; border-radius: 12px;
-            background: white; border: 1px solid #fecdd3;
-            display: flex; align-items: center; justify-content: center;
-            color: #be1260; flex-shrink: 0;
-          ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 12v10H4V12"/>
-              <path d="M2 7h20v5H2z"/>
-              <path d="M12 22V7"/>
-              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-            </svg>
-          </div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 800; color: #881337; font-size: 0.92rem; line-height: 1.3;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <div style="
+              width: 38px; height: 38px; border-radius: 11px;
+              background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+              display: flex; align-items: center; justify-content: center;
+              color: white; flex-shrink: 0; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+            ">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12v10H4V12"/>
+                <path d="M2 7h20v5H2z"/>
+                <path d="M12 22V7"/>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            </div>
+            <div style="font-weight: 850; color: #78350f; font-size: 0.95rem; line-height: 1.3; flex: 1;">
               Tienes Bonos de Consumo por ${formatGourmetPrice(userStats.referralBonus)}
             </div>
-            <div style="font-size: 0.76rem; color: #9f1239; margin-top: 2px;">
-              Aprovéchalos y redímelos en compras iguales o superiores a <strong>$150.000</strong>.
-            </div>
+          </div>
+          <div style="font-size: 0.78rem; color: #92400e; line-height: 1.45; width: 100%; border-top: 1px dashed #fde68a; padding-top: 8px;">
+            Aprovéchalos y redímelos en compras iguales o superiores a <strong>$150.000</strong>.
           </div>
         </div>
       `;
@@ -349,10 +348,10 @@ function renderCustomOrderSection() {
           display: flex; align-items: center; justify-content: center;
           color: #be1260; flex-shrink: 0; box-shadow: 0 2px 8px rgba(190, 18, 96, 0.08);
         ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3c-5 0-9 4.5-9 10 0 5.5 4.5 8 9.5 8 5 0 8.5-3.5 8.5-7.5 0-4-3-5-4.5-6C15 6.5 15.5 3 12 3z"/>
-            <path d="M11.8 5.2C8 5.2 4.8 8.8 4.8 13.2c0 4 3.7 6 7.4 6 3.8 0 7-3 7-6 0-3-2.4-4-4-5-1.4-1-1-3-3.4-3z"/>
-            <circle cx="10" cy="14" r="1.8"/>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
         </div>
         <div style="flex: 1; min-width: 0;">
@@ -360,32 +359,32 @@ function renderCustomOrderSection() {
             Personaliza tu pedido
           </h3>
           <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.45;">
-            ¿Deseas cortes específicos, porciones por libra o combos especiales? Escríbenos y con gusto armamos tu pedido directo con nuestro asesor.
+            ¿Quieres armar los combos a tu medida? Escríbenos y con gusto te enviamos todos los productos que manejamos en cerdo, pollo, y res.
           </p>
         </div>
       </div>
 
       <button id="btn-custom-order-wa" style="
         width: 100%;
-        background: #be1260;
+        background: #22c55e;
         color: white;
         border: none;
-        padding: 13px 20px;
-        border-radius: 12px;
+        padding: 16px 20px;
+        border-radius: 9999px;
         font-weight: 800;
-        font-size: 0.92rem;
+        font-size: 1.05rem;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        box-shadow: 0 4px 12px rgba(190, 18, 96, 0.25);
+        gap: 10px;
+        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
         transition: all 0.2s;
-      " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+      " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
         </svg>
-        Personalizar por WhatsApp
+        Contactar Asesor
       </button>
     </div>
   `;
@@ -418,11 +417,9 @@ function openGourmetCheckoutModal(offer, userStats) {
 
   const isBonusEligible = offer.price >= 150000;
   const userBonus = userStats.referralBonus || 0;
-  const userWallet = userStats.walletBalance || 0;
 
   // Initial payment selections
   let useBonus = isBonusEligible && userBonus > 0;
-  let useWallet = userWallet > 0;
 
   const calculateTotals = () => {
     let appliedBonus = 0;
@@ -430,24 +427,17 @@ function openGourmetCheckoutModal(offer, userStats) {
       appliedBonus = Math.min(userBonus, offer.price);
     }
 
-    let remainingAfterBonus = Math.max(0, offer.price - appliedBonus);
-
-    let appliedWallet = 0;
-    if (useWallet && userWallet > 0) {
-      appliedWallet = Math.min(userWallet, remainingAfterBonus);
-    }
-
-    let cashDue = Math.max(0, remainingAfterBonus - appliedWallet);
+    let cashDue = Math.max(0, offer.price - appliedBonus);
 
     return {
       appliedBonus,
-      appliedWallet,
+      appliedWallet: 0,
       cashDue
     };
   };
 
   const renderContent = () => {
-    const { appliedBonus, appliedWallet, cashDue } = calculateTotals();
+    const { appliedBonus, cashDue } = calculateTotals();
 
     return `
       <div class="animate-scale-in" style="
@@ -477,103 +467,47 @@ function openGourmetCheckoutModal(offer, userStats) {
         <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:18px;">
           
           <!-- Selected Combo Summary -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; gap:12px;">
-            <div style="min-width:0; flex:1;">
-              <span style="font-size:0.7rem; font-weight:800; color:#be1260; text-transform:uppercase; letter-spacing:0.4px;">COMBO SELECCIONADO</span>
-              <h4 style="margin:2px 0 4px; font-size:0.98rem; font-weight:800; color:#0f172a; line-height:1.25;">${offer.name}</h4>
-              <div style="font-size:0.78rem; color:#64748b;">${offer.description}</div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="width:100%;">
+              <h4 style="margin:0 0 6px; font-size:1.05rem; font-weight:850; color:#0f172a; line-height:1.3;">${offer.name}</h4>
+              <div style="font-size:0.82rem; color:#64748b; line-height:1.45;">${offer.description}</div>
             </div>
-            <div style="text-align:right; flex-shrink:0;">
-              <div style="font-size:1.2rem; font-weight:850; color:#0f172a;">${formatGourmetPrice(offer.price)}</div>
+            <div style="border-top:1px dashed #e2e8f0; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.82rem; font-weight:700; color:#64748b;">Precio:</span>
+              <div style="font-size:1.25rem; font-weight:850; color:#0f172a;">${formatGourmetPrice(offer.price)}</div>
             </div>
           </div>
 
-          <!-- Métodos de Pago Section -->
-          <div>
-            <div style="font-size:0.82rem; font-weight:800; color:#475569; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.4px;">
-              Métodos de Pago
-            </div>
-
-            <div style="display:flex; flex-direction:column; gap:10px;">
-              
-              <!-- 1. Saldo Cuenta Agro -->
-              <label style="
-                background: ${userWallet > 0 ? '#f0fdf4' : '#f8fafc'};
-                border: 1.5px solid ${userWallet > 0 ? (useWallet ? '#16a34a' : '#bbf7d0') : '#e2e8f0'};
-                border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-                cursor: ${userWallet > 0 ? 'pointer' : 'default'}; opacity: ${userWallet > 0 ? '1' : '0.6'};
-                transition: all 0.2s;
-              ">
-                <div style="display:flex; align-items:center; gap:12px; min-width:0;">
-                  <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#16a34a; flex-shrink:0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Saldo Cuenta Agro</div>
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Disponible: ${formatGourmetPrice(userWallet)}</div>
-                  </div>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:8px;">
-                  ${userWallet > 0 ? `
-                    <input type="checkbox" id="chk-use-wallet" ${useWallet ? 'checked' : ''} style="width:18px; height:18px; accent-color:#16a34a; cursor:pointer;" />
-                  ` : `
-                    <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin saldo</span>
-                  `}
-                </div>
-              </label>
-
-              <!-- 2. Bono de Consumo -->
-              <label style="
-                background: ${isBonusEligible && userBonus > 0 ? '#fff1f2' : '#f8fafc'};
-                border: 1.5px solid ${isBonusEligible && userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
-                border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-                cursor: ${isBonusEligible && userBonus > 0 ? 'pointer' : 'default'}; opacity: ${isBonusEligible && userBonus > 0 ? '1' : '0.75'};
-                transition: all 0.2s;
-              ">
-                <div style="display:flex; align-items:center; gap:12px; min-width:0;">
-                  <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Bono de Consumo</div>
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Disponible: ${formatGourmetPrice(userBonus)}</div>
-                  </div>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:8px;">
-                  ${!isBonusEligible ? `
-                    <span style="font-size:0.68rem; font-weight:800; color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px;">Aplica en compras ≥ $150.000</span>
-                  ` : userBonus > 0 ? `
-                    <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
-                  ` : `
-                    <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
-                  `}
-                </div>
-              </label>
-
-              <!-- 3. Pago Contra Entrega -->
-              <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between;">
-                <div style="display:flex; align-items:center; gap:12px; min-width:0;">
-                  <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#475569; flex-shrink:0;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Efectivo o Transferencia</div>
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Pagas al recibir tu pedido en domicilio</div>
-                  </div>
-                </div>
-                <span style="font-size:0.72rem; font-weight:800; color:#059669; background:#ecfdf5; padding:3px 8px; border-radius:6px;">HABILITADO</span>
+          <!-- Bono de Consumo Option -->
+          <label style="
+            background: ${isBonusEligible && userBonus > 0 ? '#fff1f2' : '#f8fafc'};
+            border: 1.5px solid ${isBonusEligible && userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
+            border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+            cursor: ${isBonusEligible && userBonus > 0 ? 'pointer' : 'default'}; opacity: ${isBonusEligible && userBonus > 0 ? '1' : '0.75'};
+            transition: all 0.2s;
+          ">
+            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+              <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                </svg>
               </div>
-
+              <div>
+                <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Bono de Consumo</div>
+                <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Disponible: ${formatGourmetPrice(userBonus)}</div>
+              </div>
             </div>
-          </div>
+
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${!isBonusEligible ? `
+                <span style="font-size:0.68rem; font-weight:800; color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px;">Aplica en compras ≥ $150.000</span>
+              ` : userBonus > 0 ? `
+                <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
+              ` : `
+                <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
+              `}
+            </div>
+          </label>
 
           <!-- Desglose de Liquidación -->
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px;">
@@ -584,24 +518,17 @@ function openGourmetCheckoutModal(offer, userStats) {
 
             ${appliedBonus > 0 ? `
               <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#be1260;">
-                <span>Descuento Bono de Consumo:</span>
+                <span>Descuento Bono:</span>
                 <strong>-${formatGourmetPrice(appliedBonus)}</strong>
-              </div>
-            ` : ''}
-
-            ${appliedWallet > 0 ? `
-              <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#16a34a;">
-                <span>Pago con Cuenta Agro:</span>
-                <strong>-${formatGourmetPrice(appliedWallet)}</strong>
               </div>
             ` : ''}
 
             <div style="height:1px; background:#e2e8f0; margin:4px 0;"></div>
 
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.92rem; font-weight:800; color:#0f172a;">Total contra entrega:</span>
-              <span style="font-size:1.3rem; font-weight:850; color:${cashDue > 0 ? '#0f172a' : '#16a34a'};">
-                ${cashDue > 0 ? formatGourmetPrice(cashDue) : '$0 (Cubierto al 100%)'}
+              <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">Total:</span>
+              <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">
+                ${formatGourmetPrice(cashDue)}
               </span>
             </div>
           </div>
@@ -612,25 +539,25 @@ function openGourmetCheckoutModal(offer, userStats) {
         <div style="padding:16px 20px; border-top:1px solid #f1f5f9; background:white; flex-shrink:0;">
           <button id="btn-confirm-gourmet-order" style="
             width: 100%;
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            background: #22c55e;
             color: white;
             border: none;
             padding: 16px 20px;
-            border-radius: 14px;
-            font-weight: 850;
-            font-size: 1rem;
+            border-radius: 9999px;
+            font-weight: 800;
+            font-size: 1.05rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
             transition: all 0.2s;
-          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+          " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
             </svg>
-            Confirmar Pedido por WhatsApp
+            Confirmar Pedido
           </button>
         </div>
       </div>
@@ -654,14 +581,6 @@ function openGourmetCheckoutModal(offer, userStats) {
     if (bonusChk) {
       bonusChk.addEventListener('change', (e) => {
         useBonus = e.target.checked;
-        updateModalDOM();
-      });
-    }
-
-    const walletChk = document.getElementById('chk-use-wallet');
-    if (walletChk) {
-      walletChk.addEventListener('change', (e) => {
-        useWallet = e.target.checked;
         updateModalDOM();
       });
     }
