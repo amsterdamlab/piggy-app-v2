@@ -718,6 +718,80 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
     };
 }
 
+/**
+ * Registrar una solicitud de canje por carne (Bonos de Consumo).
+ * Inserta un registro en wallet_requests con request_type 'consumption', estado 'pending' y referencia.
+ *
+ * @param {Object} params
+ * @param {number} params.amount - Monto a canjear en COP (saldo de bonos)
+ * @param {string} params.reference - Código de referencia único (ej: PGY-CRN-748291)
+ * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
+ */
+export async function requestMeatRedemption({ amount, reference }) {
+    if (isUsingMockData()) {
+        return {
+            success: true,
+            requestId: `req-crn-${Date.now()}`,
+            reference,
+            status: 'pending'
+        };
+    }
+
+    const client = getClient();
+    if (!client) {
+        return { success: false, reason: 'no_supabase_client' };
+    }
+
+    let userId = null;
+    try {
+        const { data: authData } = await client.auth.getUser();
+        userId = authData?.user?.id;
+    } catch (e) {
+        console.warn('No se pudo obtener usuario de auth.getUser:', e);
+    }
+
+    if (!userId) {
+        const profile = AppState.get('profile') || AppState.get('currentUser');
+        userId = profile?.id;
+    }
+
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userName = profile?.full_name || 'Usuario';
+
+    try {
+        const { data, error } = await client
+            .from('wallet_requests')
+            .insert({
+                user_id: userId,
+                user_name: userName,
+                request_type: 'consumption',
+                reference: reference,
+                amount: amount || 0,
+                status: 'pending',
+                wallet_type: 'bono_consumo',
+                notes: 'Canje de bonos por productos de carne'
+            })
+            .select('id, reference, status')
+            .single();
+
+        if (error) {
+            console.error('Error registrando canje de carne en wallet_requests:', error);
+            return { success: false, reason: error.message };
+        }
+
+        console.log('✅ Solicitud de canje de carne registrada exitosamente en wallet_requests:', data);
+        return {
+            success: true,
+            requestId: data?.id,
+            reference: data?.reference || reference,
+            status: data?.status || 'pending'
+        };
+    } catch (e) {
+        console.error('Excepción al registrar canje de carne en wallet_requests:', e);
+        return { success: false, reason: e.message };
+    }
+}
+
 /* ─── Create Wallet Request ─── */
 
 /**
