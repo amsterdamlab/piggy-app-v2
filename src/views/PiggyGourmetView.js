@@ -33,7 +33,7 @@ export function renderPiggyGourmetView() {
         <div class="animate-fade-in" style="margin-bottom:24px;">
           <h2 style="font-size: var(--text-3xl); font-weight: var(--font-extrabold); color: var(--color-text-primary); margin: 0 0 var(--space-xs) 0;">Tienda</h2>
           <p style="font-size: var(--text-sm); color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin: 0;">
-            Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad. Paga con tu Cuenta Agro, redime tus Bonos de Consumo o paga contra entrega.
+            Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad directo desde Granja Valle Morales. <strong>¡Haz tu pedido aquí!</strong>
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -136,7 +136,7 @@ async function loadGourmetOffers() {
             </div>
           </div>
           <div style="font-size: 0.78rem; color: #92400e; line-height: 1.45; width: 100%; border-top: 1px dashed #fde68a; padding-top: 8px;">
-            Aprovéchalos y redímelos en compras iguales o superiores a <strong>$150.000</strong>.
+            <strong>TC:</strong> Redímelos en compras iguales o superiores a $150.000.
           </div>
         </div>
       `;

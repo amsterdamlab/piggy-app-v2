@@ -6,6 +6,7 @@
 import { formatCOP } from '../../services/mockData.js';
 import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
+import { navigateTo } from '../../router.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, requestMeatRedemption } from '../../services/walletService.js';
 import { getDashboardStats } from '../../services/piggiesService.js';
 import { openWalletRechargeSubscreen, openWalletRechargeInfo } from './WalletRechargeModal.js';
@@ -101,67 +102,64 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
             <div id="drawer-bonos-consumo-card" style="
                background: #fff1f2;
                border: 1px solid #ffe4e6;
-               padding: 16px 18px;
+               padding: 14px 18px;
                border-radius: 14px;
                margin-bottom: 20px;
                display: flex;
-               flex-direction: column;
-               gap: 10px;
+               align-items: flex-start;
+               justify-content: space-between;
                box-shadow: 0 4px 14px rgba(190, 18, 96, 0.06);
             ">
-               <div style="color: #be1260; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px;">
-                 BONOS DE CONSUMO
+               <div style="display: flex; flex-direction: column; gap: 4px;">
+                 <div style="color: #be1260; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2;">
+                   BONOS DE CONSUMO
+                 </div>
+                 <div style="font-size: 1.45rem; font-weight: 850; color: #000000; line-height: 1.1;" id="drawer-bonos-balance">${stats.referralBonusFormatted}</div>
                </div>
-               <div style="display: flex; align-items: center; justify-content: space-between;">
-                 <div style="font-size: 1.22rem; font-weight: 850; color: #000000; line-height: 1;" id="drawer-bonos-balance">${stats.referralBonusFormatted}</div>
-                 <button id="btn-canjear-carne-drawer" style="
-                   background: #be1260;
-                   border: 1px solid #be1260;
-                   color: #ffffff;
-                   font-size: 0.8rem;
-                   font-weight: 800;
-                   padding: 8px 16px;
-                   border-radius: 10px;
-                   cursor: pointer;
-                   display: inline-flex;
-                   align-items: center;
-                   gap: 6px;
-                   box-shadow: 0 2px 8px rgba(190, 18, 96, 0.2);
-                   transition: transform 0.2s, opacity 0.2s;
-                 " onmouseover="this.style.transform='translateY(-1px)'; this.style.opacity='0.95'" onmouseout="this.style.transform='translateY(0)'; this.style.opacity='1'">
-                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                     <line x1="3" y1="6" x2="21" y2="6"/>
-                     <path d="M16 10a4 4 0 0 1-8 0"/>
-                   </svg>
-                   <span>Redimir</span>
-                 </button>
-               </div>
-               <div style="font-size: 0.65rem; color: #475569; margin-top: 2px; font-weight: 500; line-height: 1.3;">
-                 *Aplican términos y condiciones de compra.
-               </div>
+               <button id="btn-canjear-carne-drawer" style="
+                 background: #be1260;
+                 border: 1px solid #be1260;
+                 color: #ffffff;
+                 font-size: 0.82rem;
+                 font-weight: 800;
+                 padding: 7px 15px;
+                 border-radius: 10px;
+                 cursor: pointer;
+                 display: inline-flex;
+                 align-items: center;
+                 gap: 6px;
+                 box-shadow: 0 2px 8px rgba(190, 18, 96, 0.2);
+                 transition: transform 0.2s, opacity 0.2s;
+               " onmouseover="this.style.transform='translateY(-1px)'; this.style.opacity='0.95'" onmouseout="this.style.transform='translateY(0)'; this.style.opacity='1'">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                   <line x1="3" y1="6" x2="21" y2="6"/>
+                   <path d="M16 10a4 4 0 0 1-8 0"/>
+                 </svg>
+                 <span>Redimir</span>
+               </button>
             </div>
             ` : ''}
 
             <!-- Main Action Buttons -->
             <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
                <button id="btn-recargar-wallet-drawer" style="
-                  width: 100%;
-                  background: #ec4899;
-                  color: white;
-                  border: none;
-                  padding: 16px 20px;
-                  border-radius: 14px;
-                  font-weight: 800;
-                  font-size: 1rem;
-                  cursor: pointer;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 10px;
-                  box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
-                  transition: all 0.2s;
-               " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
+                   width: 100%;
+                   background: #ec4899;
+                   color: white;
+                   border: none;
+                   padding: 16px 20px;
+                   border-radius: 14px;
+                   font-weight: 800;
+                   font-size: 1rem;
+                   cursor: pointer;
+                   display: flex;
+                   align-items: center;
+                   justify-content: center;
+                   gap: 10px;
+                   box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+                   transition: all 0.2s;
+                " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                   Recargar mi Cuenta
                </button>
@@ -219,17 +217,17 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                      const borderBottom = isLast ? 'none' : '1px solid #e2e8f0';
                      
                      return `
-                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
-                            <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
-                               <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
-                               <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
-                                 <span style="font-size: 0.82rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
-                               </span>
-                            </div>
-                            <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
-                               ${amountStr}
-                            </span>
-                         </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
+                           <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
+                              <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
+                              <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
+                                <span style="font-size: 0.82rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
+                              </span>
+                           </div>
+                           <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
+                              ${amountStr}
+                           </span>
+                        </div>
                      `;
                   }).join('')}
                </div>
@@ -287,9 +285,10 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
     openWalletWithdrawalSubscreen(subscreenContainer, stats?.saldoDisponible || 0, updateDrawerState, closeDrawer);
   });
 
-  // Meat coupon redemption trigger -> Redirect to Tienda
+  // Meat coupon redemption trigger -> Redirect to Tienda (#/gourmet)
   document.getElementById('btn-canjear-carne-drawer')?.addEventListener('click', () => {
     closeDrawer();
+    window.location.hash = '#/gourmet';
     navigateTo('gourmet');
   });
 
