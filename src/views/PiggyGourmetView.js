@@ -274,7 +274,8 @@ function renderOfferCard(offer, index) {
                 box-shadow: 0 2px 8px rgba(0,0,0,0.25);
                 text-shadow: 0 1px 3px rgba(0,0,0,0.5);
               ">-${discount}%</div>
-            ` : ''}\n          </div>
+            ` : ''}
+          </div>
 
           <!-- Title Overlay at the bottom of the image -->
           <div style="
