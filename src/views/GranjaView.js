@@ -463,7 +463,7 @@ export function renderBottomNav(activeTab) {
         <span>Mercado</span>
       </a>
       <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
-        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '20')}</span>
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
