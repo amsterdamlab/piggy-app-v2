@@ -1,364 +1,157 @@
 /* ============================================
-   PIGGY APP — Granja (Dashboard) View
-   Matches screen2.png design
+   PIGGY APP — Granja View (Dashboard)
+   Main screen showing all adopted pigs, feed
+   progress, growth, and actions.
    ============================================ */
 
-import { renderIcon } from '../icons.js';
-import { getProfile, signOut, getUserInitials } from '../services/authService.js';
 import { AppState } from '../state.js';
-import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
-import { formatCOP } from '../services/mockData.js';
+import { formatCOP, formatWeight, getGrowthPercentage } from '../services/mockData.js';
+import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
-import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
-import { getRandomTip } from '../services/tipsService.js';
-import { getActiveMissions } from '../services/missionsService.js';
-import {
-    getActiveUserFlashMissions,
-    getActiveCycleMissions,
-    detectAndCreateCycleMissions,
-} from '../services/flashMissionsService.js';
-
-import { startOnboardingTourIfEligible } from './granja/OnboardingTourModal.js';
-
-/* ── Module imports (Granja Section blocks) ───────── */
-import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
-import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
-import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
-import { showSupportModal, HEADSET_ICON_SVG } from './granja/SupportModal.js';
-import { removeBonusModal } from './granja/WelcomeBonusModal.js';
-import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
-
-/* ── News Billboard Imports ── */
-import { getActiveNewsSlides } from '../services/newsService.js';
+import { getProfile } from '../services/authService.js';
+import { getPiggies, getDashboardStats, feedPiggy } from '../services/piggiesService.js';
+import { renderNewsBillboardModal } from '../components/NewsBillboardModal.js';
+import { showWalletDrawer, openWalletDrawer } from './granja/WalletDrawerModal.js';
+import { showRetiroSaldoModal } from './granja/WalletWithdrawalModal.js';
+import { showReferralsModal } from './granja/ReferralsModal.js';
+import { showSilverPiggyModal } from './granja/SilverPiggyModal.js';
+import { showCycleMissionModal } from './granja/CycleMissionModal.js';
+import { showFlashMissionModal } from './granja/FlashMissionModal.js';
+import { initOnboardingTour } from './granja/OnboardingTourModal.js';
 import { renderPiggyLoader } from '../components/PiggyLoader.js';
-import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
 
-/* =========================================
-   DYNAMIC NOTIFICATIONS
-   Fetched from Supabase dynamic_tips table.
-   Managed manually by admin — no hardcoding.
-   ========================================= */
+let intervalId = null;
 
 /**
- * Render the notification strip.
- * @param {Object} notif - Tip data from tipsService (already resolved)
+ * Render the Granja (My Farm) view.
+ * @param {HTMLElement} container - Target container.
  */
-function renderRandomNotification(notif) {
-  // Guard: if no tip data provided, render nothing
-  if (!notif) return '';
+export async function renderGranjaView(container) {
+  // Clear any existing timer
+  if (intervalId) clearInterval(intervalId);
 
-  const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
-  const cursor  = notif.ctaUrl ? 'pointer' : 'default';
-
-  // Unified background & border style matching exact image reference for ALL tips
-  const tipBgColor     = '#fff1f2';
-  const tipBorderColor = '#ffe4e6';
-  const tipTitleColor  = '#be123c';
-
-  return `
-    <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
-      <div id="dynamic-notification" style="
-        background: ${tipBgColor};
-        border: 1px solid ${tipBorderColor};
-        border-radius: 14px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        cursor: ${cursor};
-        transition: transform 0.2s, box-shadow 0.2s;
-      " ${ctaAttr}
-         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
-         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-        <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
-        <div style="flex:1; min-width:0;">
-          <div style="font-weight:700; color:${tipTitleColor}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
-          <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">&#10024; ${notif.reward}</div>
-        </div>
-        <div style="font-size:14px; color:${tipTitleColor}; opacity:0.6; flex-shrink:0;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
+  // Initial loading state
+  container.innerHTML = `
+    <div class="page granja-page">
+      <div class="container">
+        ${renderPiggyLoader('Cargando tu granja...')}
       </div>
-    </div>
-  `;
-}
-
-let currentGranjaSessionId = 0;
-
-/**
- * Render the Granja (Dashboard) view.
- */
-export function renderGranjaView() {
-  const app = document.getElementById('app');
-  const profile = AppState.get('profile');
-  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
-
-  currentGranjaSessionId++;
-  const sessionId = currentGranjaSessionId;
-
-  app.innerHTML = buildGranjaShell(firstName);
-  attachGreetingActions();
-
-  loadGranjaData(firstName, sessionId);
-
-  return () => {
-    // cleanup
-    removeBonusModal();
-  };
-}
-
-/**
- * Build the shell (before data is loaded).
- */
-function buildGranjaShell(firstName) {
-  return `
-    <div class="page page--with-nav granja-page">
-      <div class="page__content">
-        ${renderGreeting(firstName)}
-        <h2 class="granja-title">Mi Granja</h2>
-
-        ${renderWalletSkeleton(firstName)}
-
-        <!-- Piggies section skeleton -->
-        <div class="section" id="piggies-section">
-          ${renderPiggyLoader('Cargando tu granja...')}
-        </div>
-      </div>
-
       ${renderBottomNav('granja')}
     </div>
   `;
-}
 
-/**
- * Load data and update the dashboard.
- */
-async function loadGranjaData(firstName, sessionId) {
   try {
-    const isSessionActive = () => {
-      const currentView = AppState.get('currentView');
-      const hash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'auth').toLowerCase();
-      const isGranjaOrReferidos = (currentView === 'granja' || currentView === 'referidos') &&
-        (hash === 'granja' || hash === 'referidos' || hash === '');
-      return sessionId === currentGranjaSessionId && isGranjaOrReferidos;
-    };
+    // 1. Fetch user profile from Supabase (or fallback to local session)
+    let profile = AppState.get('profile');
+    if (!profile) {
+      profile = await getProfile();
+      if (profile) AppState.set({ profile });
+    }
 
-    // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
-    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
-    // con getUserPiggies(), AppState todavía está vacío → race condition.
-    const piggies = await getUserPiggies();
-    if (!isSessionActive()) return;
+    // 2. Fetch user's piggies from Supabase (fallback to mock)
+    const piggies = await getPiggies();
     AppState.set({ piggies });
 
-    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
-    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
-    await detectAndCreateCycleMissions(piggies);
-    if (!isSessionActive()) return;
+    // 3. Compute stats dynamically
+    const stats = await getDashboardStats(piggies);
 
-    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
-    const [
-        tipData, walletBalance, referralBonus,
-        activeMissions, flashMissions, cycleMissions, stats,
-        transactions, newsSlides,
-    ] = await Promise.all([
-      getRandomTip(),
-      getWalletBalance(),
-      getReferralBonusBalance(),
-      getActiveMissions(piggies),
-      getActiveUserFlashMissions(),
-      getActiveCycleMissions(),
-      getDashboardStats(piggies),
-      getWalletTransactions(),
-      getActiveNewsSlides(),
-    ]);
+    // 4. Render main view
+    const firstName = profile?.full_name?.split(' ')[0] || 'Granjero';
+    const piggyCount = piggies.length;
+    const hasPiggies = piggyCount > 0;
 
-    if (!isSessionActive()) return;
+    container.innerHTML = `
+      <div class="page granja-page animate-fade-in">
+        <div class="container">
 
-    // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
-    window._activeFlashMissions = flashMissions;
-    window._activeCycleMissions = cycleMissions;
+          <!-- 1. GREETING & ACTION BAR -->
+          ${renderGreetingBar(firstName, stats)}
 
-    // wallet_balance = real cash (ciclos completados + recargas)
-    // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
-    stats.walletBalance          = walletBalance;
-    stats.referralBonus          = referralBonus;
-    stats.referralBonusFormatted = formatCOP(referralBonus);
-    stats.saldoDisponible        = walletBalance;
-    stats.saldoDisponibleFormatted = formatCOP(walletBalance);
-    stats.transactions           = transactions;
+          <!-- 2. TOTAL BENEFIT CARD -->
+          ${hasPiggies ? renderTotalBenefitCard(stats) : ''}
 
-    const app = document.getElementById('app');
-    if (!app || !isSessionActive()) return;
+          <!-- 3. ACTION SHORTCUTS (3 Horizontal Cards) -->
+          ${renderActionShortcuts(stats)}
 
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
+          <!-- 4. PIGGIES SECTION (Cards or Empty State) -->
+          ${hasPiggies ? renderPiggiesSection(piggies) : renderEmptyState()}
 
-    if (!isSessionActive()) return;
-
-    // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
-    showNewsBillboardModal(newsSlides);
-
-    attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
-
-    // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
-    startOnboardingTourIfEligible();
-  } catch (error) {
-    if (sessionId !== currentGranjaSessionId || (AppState.get('currentView') !== 'granja' && AppState.get('currentView') !== 'referidos')) return;
-    console.error('Error loading granja data:', error);
-    const section = document.getElementById('piggies-section');
-    if (section) {
-      section.innerHTML = `
-        <div class="auth-form__error auth-form__error--visible">
-          Error al cargar datos: ${error.message}<br/>
-          <pre style="font-size:10px; text-align:left; color:#ff0000; overflow-x:auto;">${error.stack}</pre>
         </div>
-      `;
-    }
+
+        <!-- Sticky Bottom Navigation -->
+        ${renderBottomNav('granja')}
+      </div>
+    `;
+
+    // 5. Attach event listeners
+    attachGranjaListeners(hasPiggies, stats, piggyCount, piggies);
+
+    // 6. Setup auto-refresh for growth progress (every 60s)
+    intervalId = setInterval(async () => {
+      const updatedPiggies = await getPiggies();
+      AppState.set({ piggies: updatedPiggies });
+      updatePiggyProgress(updatedPiggies);
+    }, 60000);
+
+    // 7. Check if there are unviewed billboard news to display
+    renderNewsBillboardModal();
+
+    // 8. Launch Interactive Tour for first-time users (if eligible)
+    initOnboardingTour({ hasPiggies, piggyCount });
+
+  } catch (error) {
+    console.error('Error rendering GranjaView:', error);
+    container.innerHTML = `
+      <div class="page granja-page">
+        <div class="container">
+          <div class="empty-state">
+            <div class="empty-state__icon">⚠️</div>
+            <h3 class="empty-state__title">Error al cargar la granja</h3>
+            <p class="empty-state__text">${error.message || 'Intenta recargar la página'}</p>
+            <button class="btn btn--primary" onclick="location.reload()">Recargar</button>
+          </div>
+        </div>
+        ${renderBottomNav('granja')}
+      </div>
+    `;
   }
 }
 
 /**
- * Build the full dashboard with data.
+ * 1. Greeting & User Profile Action Bar
  */
-function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions) {
-  const activePiggies    = piggies.filter(p => !p.isComplete);
-  const completedPiggies = piggies.filter(p => p.isComplete);
-  const piggyCount       = piggies.length;
-  const missionBanner = renderPriorityMissionBanner(
-      flashMissions  || [],
-      cycleMissions  || [],
-      activeMissions || [],
-      piggyCount
-  );
-  const notification = renderRandomNotification(tipData);
+function renderGreetingBar(firstName, stats) {
+  const profile = AppState.get('profile');
+  const avatarUrl = profile?.avatar_url || '';
+  const initial = (firstName || 'G')[0].toUpperCase();
 
   return `
-    <div class="page page--with-nav granja-page">
-      <div class="page__content">
-        ${renderGreeting(firstName)}
-        <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
-
-        <!-- Dynamic Notification (rotates on refresh) -->
-        ${notification}
-
-        ${renderWalletBanner(firstName, stats)}
-
-
-
-        <!-- ROI Info -->
-        ${stats.activeCount > 0 ? `
-          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
-            <button id="btn-quick-buy" style="
-                background: #ec4899; 
-                color: white; 
-                border: none; 
-                width: 100%; 
-                padding: 14px 20px; 
-                border-radius: 12px; 
-                font-weight: 700; 
-                font-size: 1rem; 
-                cursor: pointer; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                gap: 10px;
-                box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
-                transition: transform 0.2s;
-            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                <div style="
-                    background: white; 
-                    color: #ec4899;
-                    width: 22px; 
-                    height: 22px; 
-                    border-radius: 50%; 
-                    display: flex; 
-                    align-items: center; 
-                    justify-content: center;
-                    font-size: 18px;
-                    font-weight: 800;
-                    padding-bottom: 2px;
-                ">+</div>
-                Compra un Nuevo Piggy
-            </button>
-          </div>
-        ` : ''}
-
-        <!-- Mis Cerdos -->
-        <div class="section animate-fade-in-up" id="mis-piggies-section" style="animation-delay: 0.2s;">
-          <div class="section__header" id="mis-piggies-header">
-            <h3 class="section__title">Mis Piggys</h3>
-            <button id="btn-ver-completados" class="section__link" style="background:none; border:none; cursor:pointer; font-size:0.85rem; font-weight:700; color:#ec4899; display:flex; align-items:center; gap:4px; padding:0; font-family:inherit;">
-              Completados ${completedPiggies.length > 0 ? `(${completedPiggies.length})` : ''} ${renderIcon('arrowRight', '', '14')}
-            </button>
-          </div>
-
-          ${activePiggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(activePiggies, stats.baseROI)}
-        </div>
-
-        <!-- Dynamic Mission Banner -->
-        <div id="mission-banner-container">
-          ${missionBanner}
-        </div>
-
-      </div>
-
-      ${renderBottomNav('granja')}
-    </div>
-  `;
-}
-
-// ... renderGreeting remains the same ...
-
-function renderGreeting(firstName) {
-  const profile = AppState.get('profile') || {};
-  const initials = getUserInitials(profile.full_name || firstName);
-  const initialsFontSize = initials.length > 1 ? '1rem' : '1.15rem';
-
-  // Gift icon (stroke style, consistent with bottom nav)
-  const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-    <rect x="3" y="8" width="18" height="4" rx="1"/>
-    <path d="M12 8v13"/>
-    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
-    <path d="M7.5 8C6.12 8 5 6.88 5 5.5C5 4.12 6.12 3 7.5 3C10 3 12 8 12 8C12 8 14 3 16.5 3C17.88 3 19 4.12 19 5.5C19 6.88 17.88 8 16.5 8"/>
-  </svg>`;
-
-  // Headset icon (stroke style)
-  const headsetIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-    <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
-    <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
-  </svg>`;
-
-  // Logout icon (stroke style)
-  const logoutIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-    <polyline points="16 17 21 12 16 7"/>
-    <line x1="21" y1="12" x2="9" y2="12"/>
-  </svg>`;
-
-  return `
-    <div class="granja-greeting animate-fade-in" id="granja-header" style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil" onclick="location.hash='#/perfil'">
-        <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-          <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
-          <span class="granja-greeting__online"></span>
-        </div>
-        <div class="granja-greeting__text">
-          <span class="granja-greeting__welcome">¡Bienvenido!</span>
-          <span class="granja-greeting__name">${firstName}</span>
+    <div class="granja-greeting-bar" id="tour-step-greeting">
+      <div class="granja-greeting-user">
+        <a href="#/perfil" class="granja-avatar-link" title="Mi Perfil" id="granja-avatar-btn">
+          ${avatarUrl
+            ? `<img src="${avatarUrl}" alt="${firstName}" class="granja-avatar-img" />`
+            : `<div class="granja-avatar-fallback">${initial}</div>`
+          }
+        </a>
+        <div class="granja-greeting-text">
+          <span class="granja-greeting-sub">Bienvenido de nuevo,</span>
+          <h2 class="granja-greeting-name">${firstName}</h2>
         </div>
       </div>
-
-      <!-- Action Buttons: Referidos | Soporte | Salir -->
-      <div class="greeting-actions">
-        <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
-          ${giftIconSVG}
+      <div class="granja-greeting-actions">
+        <button class="granja-action-btn" id="btn-descargar-app" title="Descargar App">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
         </button>
-        <button class="greeting-action-btn" id="btn-greeting-support" aria-label="Atención al Cliente" title="Soporte">
-          ${headsetIconSVG}
+        <button class="granja-action-btn" id="btn-referidos" title="Invitar y Ganar">
+          ${renderIcon('gift', '', '18')}
         </button>
-        <button class="greeting-action-btn" id="btn-greeting-logout" aria-label="Cerrar sesión" title="Salir">
-          ${logoutIconSVG}
+        <button class="granja-action-btn" id="btn-perfil" title="Mi Perfil">
+          ${renderIcon('user', '', '18')}
         </button>
       </div>
     </div>
@@ -366,77 +159,210 @@ function renderGreeting(firstName) {
 }
 
 /**
- * Render empty piggies state matching screen2.png.
+ * 2. Total Projected Benefit Card (Green)
  */
-function renderEmptyPiggies() {
+function renderTotalBenefitCard(stats) {
   return `
-    <div class="empty-state">
-      <div class="empty-state__icon">
-        <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
+    <div class="benefit-card" id="tour-step-benefit">
+      <div class="benefit-card__bg-decoration">
+        ${renderIcon('pigSide', '', '120')}
       </div>
-      <div class="empty-state__title">No tienes Piggys aún</div>
-      <div class="empty-state__description">
-        Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
+      <div class="benefit-card__header">
+        <span class="benefit-card__badge">
+          ${renderIcon('trendUp', '', '14')} Rentabilidad Total
+        </span>
+        <span class="benefit-card__roi">${stats.baseROIFormatted} ROI Base</span>
       </div>
-      <button class="btn btn--primary" id="btn-adopt-empty" onclick="location.hash='#/mercado'">
-        Compra un nuevo Piggy
-      </button>
+      <div class="benefit-card__amount" data-total-benefit>${stats.totalProjectedFormatted}</div>
+      <div class="benefit-card__sub">${stats.activePiggies} ${stats.activePiggies === 1 ? 'Piggy activo' : 'Piggies activos'} en producción</div>
+      <div class="benefit-card__footer">
+        <div class="benefit-card__stat">
+          <span class="benefit-card__stat-label">Margen Comercial Granja</span>
+          <span class="benefit-card__stat-value" data-total-roi>${stats.totalROIFormatted}</span>
+        </div>
+        <div class="benefit-card__stat-divider"></div>
+        <div class="benefit-card__stat">
+          <span class="benefit-card__stat-label">Valor de Compra</span>
+          <span class="benefit-card__stat-value" data-total-invested>${stats.totalInvestedFormatted}</span>
+        </div>
+      </div>
     </div>
   `;
 }
 
-// ... renderPiggiesList and renderPiggyCard remain the same ...
-
-export function renderPiggiesList(piggies, baseROI) {
+/**
+ * 3. Action Shortcuts (3 Cards)
+ */
+function renderActionShortcuts(stats) {
   return `
-    <div class="piggies-list">
-      ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
+    <div class="action-shortcuts">
+      <!-- Retirar Saldo Card -->
+      <div class="shortcut-card" id="btn-retiro-saldo">
+        <div class="shortcut-card__icon shortcut-card__icon--green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
+            <rect x="6" y="8" width="12" height="12" rx="2" />
+            <path d="M 12 11 v 6" />
+            <path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" />
+          </svg>
+        </div>
+        <div class="shortcut-card__body">
+          <span class="shortcut-card__label">Retirar mi Saldo</span>
+          <strong class="shortcut-card__value" data-wallet-balance>${stats.saldoDisponibleFormatted}</strong>
+          <span class="shortcut-card__sub shortcut-card__sub--green">Disponible Inmediato</span>
+        </div>
+      </div>
+
+      <!-- Bonos de Consumo Card -->
+      <div class="shortcut-card" id="btn-bonos-consumo">
+        <div class="shortcut-card__icon shortcut-card__icon--primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+            <path d="M13 5v2"/>
+            <path d="M13 17v2"/>
+            <path d="M13 11v2"/>
+          </svg>
+        </div>
+        <div class="shortcut-card__body">
+          <span class="shortcut-card__label">Bonos Consumo</span>
+          <strong class="shortcut-card__value" data-referral-bonus>${stats.referralBonusFormatted}</strong>
+          <span class="shortcut-card__sub shortcut-card__sub--primary">Compras en Tienda</span>
+        </div>
+      </div>
+
+      <!-- Cuenta Agro Card -->
+      <div class="shortcut-card" id="btn-wallet-drawer">
+        <div class="shortcut-card__icon shortcut-card__icon--blue">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+          </svg>
+        </div>
+        <div class="shortcut-card__body">
+          <span class="shortcut-card__label">Tu Cuenta Agro</span>
+          <strong class="shortcut-card__value">Explorar</strong>
+          <span class="shortcut-card__sub shortcut-card__sub--blue">Trazabilidad Total</span>
+        </div>
+      </div>
     </div>
   `;
 }
 
-export function renderPiggyCard(piggy, baseROI) {
-  const inv = parseFloat(piggy.investment_amount) || 1000000;
-  const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
-  const totalROI = baseROI + extraRoi;
-  const projectedReturn = inv * (1 + totalROI);
+/**
+ * 4. Piggies Section (Active Cards)
+ */
+function renderPiggiesSection(piggies) {
+  return `
+    <div class="piggies-section" id="tour-step-piggies">
+      <div class="section-header">
+        <h3 class="section-title">Tus Piggys en Granja</h3>
+        <span class="badge badge--success">${piggies.length} ${piggies.length === 1 ? 'Activo' : 'Activos'}</span>
+      </div>
+      <div class="piggies-grid" id="piggies-grid">
+        ${piggies.map((piggy) => renderPiggyCard(piggy)).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Empty State (No Piggies Adopted)
+ */
+function renderEmptyState() {
+  return `
+    <div class="empty-farm-state animate-fade-in">
+      <div class="empty-farm-card">
+        <div class="empty-farm-card__icon-wrapper">
+          ${renderIcon('farm', '', '48')}
+        </div>
+        <h3 class="empty-farm-card__title">¡Tu granja está lista para comenzar!</h3>
+        <p class="empty-farm-card__text">
+          Aún no tienes cerditos en engorde. Adopta tu primer Piggy en el mercado y comienza a generar rentabilidad mientras nosotros cuidamos de él.
+        </p>
+        <a href="#/mercado" class="btn btn--primary btn--lg btn--block empty-farm-card__cta">
+          ${renderIcon('shoppingBag', '', '20')} Ir al Mercado de Piggys
+        </a>
+      </div>
+
+      <!-- Trust Badges Grid -->
+      <div class="trust-badges-grid">
+        <div class="trust-badge">
+          <div class="trust-badge__icon">🛡️</div>
+          <strong class="trust-badge__title">100% Asegurado</strong>
+          <span class="trust-badge__sub">Póliza y monitoreo 24/7</span>
+        </div>
+        <div class="trust-badge">
+          <div class="trust-badge__icon">📈</div>
+          <strong class="trust-badge__title">12% Retorno Base</strong>
+          <span class="trust-badge__sub">En cada ciclo de engorde</span>
+        </div>
+        <div class="trust-badge">
+          <div class="trust-badge__icon">🌾</div>
+          <strong class="trust-badge__title">Cuidado Experto</strong>
+          <span class="trust-badge__sub">Granja Valle Morales</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render individual Piggy Card (matches original dashboard layout).
+ */
+function renderPiggyCard(piggy) {
+  const currentWeight = piggy.initial_weight_kg + ((piggy.target_weight_kg - piggy.initial_weight_kg) * (piggy.growth_percentage || 0) / 100);
+  const weightGain = currentWeight - piggy.initial_weight_kg;
+  const initialPrice = piggy.initial_price || 0;
+  const extraRoi = piggy.extra_roi || 0;
+  const totalRoiPercentage = 0.12 + extraRoi;
+  const projectedReturn = initialPrice * (1 + totalRoiPercentage);
 
   return `
-    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
+    <div class="piggy-card" data-piggy-id="${piggy.id}">
       <div class="piggy-card__header">
         <div class="piggy-card__avatar">
-          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.onerror=null;this.src='pig2.jpg'" />
+          <img src="${piggy.image_url || '/pig2.jpg'}" alt="${piggy.name}" class="piggy-card__img" onerror="this.onerror=null;this.src='/pig2.jpg';" />
+          <span class="piggy-card__stage-badge">${piggy.stage || 'Etapa 1'}</span>
         </div>
         <div class="piggy-card__info">
-          <div class="piggy-card__name">${piggy.name}</div>
-          <div class="piggy-card__status">
-            ${piggy.isComplete
-              ? '<span class="badge badge--success">✓ Completado</span>'
-              : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
-            }
+          <div class="piggy-card__name-row">
+            <h4 class="piggy-card__name">${piggy.name}</h4>
+            <span class="badge badge--success badge--sm">Activo</span>
+          </div>
+          <span class="piggy-card__id">#PGY-${(piggy.id || '').substring(0, 6).toUpperCase()}</span>
+          <div class="piggy-card__meta">
+            <span>Día ${piggy.day_current || 1} de ${piggy.day_total || 90}</span>
+            <span>&bull;</span>
+            <span>Raza: ${piggy.breed || 'Pietrain'}</span>
           </div>
         </div>
-        ${extraRoi > 0 ? `
-          <span class="badge badge--warning">+${(extraRoi * 100).toFixed(0)}%</span>
-        ` : ''}
       </div>
 
-      <div class="piggy-card__progress">
-        <div class="piggy-card__progress-header">
-          <span class="text-sm text-muted">Progreso del ciclo</span>
-          <span class="text-sm font-semibold">${piggy.progress}%</span>
+      <!-- Growth Progress Bar -->
+      <div class="piggy-card__progress-block">
+        <div class="piggy-card__progress-labels">
+          <span class="text-xs text-muted">Progreso de Engorde</span>
+          <span class="text-xs font-bold text-primary">${Math.min(100, Math.round(piggy.growth_percentage || 0))}%</span>
         </div>
-        <div class="progress">
-          <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
+        <div class="progress-bar progress-bar--lg">
+          <div class="progress-bar__fill progress-bar__fill--gradient" style="width: ${Math.min(100, Math.round(piggy.growth_percentage || 0))}%"></div>
         </div>
       </div>
 
-      <div class="piggy-card__stats grid-2">
-        <div>
-          <div class="text-xs text-muted">Peso actual</div>
-          <div class="font-semibold">${piggy.currentWeight} kg</div>
+      <!-- Weight & Financial Grid -->
+      <div class="piggy-card__stats-grid">
+        <div class="piggy-card__stat">
+          <span class="piggy-card__stat-label">Peso Actual</span>
+          <div class="piggy-card__stat-val">
+            <span class="font-bold">${formatWeight(currentWeight)}</span>
+            <span class="text-xs text-success font-medium">+${formatWeight(weightGain)}</span>
+          </div>
+          <div class="text-xs text-muted">Meta: ${formatWeight(piggy.target_weight_kg)}</div>
         </div>
-        <div>
+        <div class="piggy-card__stat-divider"></div>
+        <div class="piggy-card__stat">
+          <span class="piggy-card__stat-label">Retorno Proyectado</span>
           <div class="font-semibold text-primary" style="font-size:0.9rem;">
             <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
           </div>
@@ -455,15 +381,11 @@ export function renderBottomNav(activeTab) {
         <span>Granja</span>
       </a>
       <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
-        <span class="bottom-nav__icon">
-          <span class="icon" style="width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-          </span>
-        </span>
+        <span class="bottom-nav__icon">${renderIcon('pigSide', '', '24')}</span>
         <span>Mercado</span>
       </a>
       <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
-        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '20')}</span>
+        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
@@ -486,68 +408,95 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
     });
   });
 
-  // Completed piggies modal trigger
-  const btnCompletados = document.getElementById('btn-ver-completados');
-  if (btnCompletados) {
-    btnCompletados.addEventListener('click', () => {
-      const completedPiggies = (piggies || []).filter(p => p.isComplete);
-      showCompletedPiggiesModal(completedPiggies, stats.baseROI);
-    });
-  }
+  // Action buttons
+  document.getElementById('btn-referidos')?.addEventListener('click', () => {
+    showReferralsModal();
+  });
 
-  // Mission listeners (delegated to module)
-  attachMissionListeners();
-
-  // Dynamic Notification click
-  const notifEl = document.getElementById('dynamic-notification');
-  if (notifEl && notifEl.dataset.cta) {
-    notifEl.addEventListener('click', () => {
-      const cta = notifEl.dataset.cta;
-      if (cta.startsWith('#/')) {
-        navigateTo(cta.replace('#/', ''));
-      } else {
-        window.open(cta, '_blank');
-      }
-    });
-  }
-
-  // Quick Buy Action -> Redirect to Mercado
-  const quickBuyBtn = document.getElementById('btn-quick-buy');
-  if (quickBuyBtn) {
-    quickBuyBtn.addEventListener('click', () => {
-      navigateTo('mercado');
-    });
-  }
-
-  // Wallet listeners (delegated to module)
-  attachWalletListeners(stats);
-
-  // Greeting actions (profile, referrals, support, logout)
-  attachGreetingActions();
-}
-
-/**
- * Attach listeners for greeting action bar (works in both skeleton and full state).
- */
-export function attachGreetingActions() {
-  // Greeting avatar / profile trigger
-  document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
+  document.getElementById('btn-perfil')?.addEventListener('click', () => {
     navigateTo('perfil');
   });
 
-  // Greeting action buttons
-  document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
-    showReferralModal();
+  document.getElementById('btn-descargar-app')?.addEventListener('click', () => {
+    navigateTo('descargar');
   });
 
-  document.getElementById('btn-greeting-support')?.addEventListener('click', () => {
-    showSupportModal();
+  // Shortcut 1: Retirar Saldo -> Opens Withdrawal Drawer
+  document.getElementById('btn-retiro-saldo')?.addEventListener('click', () => {
+    showRetiroSaldoModal(stats.saldoDisponible || 0);
   });
 
-  document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
-    if (confirm('¿Cerrar sesión?')) {
-      await signOut();
-      navigateTo('auth');
+  // Shortcut 2: Bonos de Consumo -> Opens Full Drawer directly
+  document.getElementById('btn-bonos-consumo')?.addEventListener('click', () => {
+    openWalletDrawer();
+  });
+
+  // Shortcut 3: Tu Cuenta Agro -> Opens Full Drawer
+  document.getElementById('btn-wallet-drawer')?.addEventListener('click', () => {
+    openWalletDrawer();
+  });
+
+  // Check mission triggers if piggies exist
+  if (hasPiggies && piggies.length > 0) {
+    checkMissionTriggers(piggies);
+  }
+}
+
+/**
+ * Checks and triggers applicable mission modals (Cycle, Flash, Silver).
+ */
+function checkMissionTriggers(piggies) {
+  // 1. Check for Completed Cycle Piggies (Priority 1)
+  const completedPig = piggies.find(p => p.day_current >= (p.day_total || 90) || (p.growth_percentage || 0) >= 100);
+  if (completedPig) {
+    const key = `cycle_mission_seen_${completedPig.id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, 'true');
+      setTimeout(() => {
+        showCycleMissionModal(completedPig);
+      }, 800);
+      return; // Show one modal per session
+    }
+  }
+
+  // 2. Check for Flash Mission (Day 30-40) (Priority 2)
+  const flashPig = piggies.find(p => p.day_current >= 30 && p.day_current <= 40);
+  if (flashPig) {
+    const key = `flash_mission_seen_${flashPig.id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, 'true');
+      setTimeout(() => {
+        showFlashMissionModal(flashPig);
+      }, 1000);
+      return;
+    }
+  }
+
+  // 3. Check for Silver Piggy Offer (Day 60-70) (Priority 3)
+  const silverPig = piggies.find(p => p.day_current >= 60 && p.day_current <= 70);
+  if (silverPig) {
+    const key = `silver_mission_seen_${silverPig.id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, 'true');
+      setTimeout(() => {
+        showSilverPiggyModal(silverPig);
+      }, 1200);
+      return;
+    }
+  }
+}
+
+/**
+ * Real-time DOM update for piggy progress bars.
+ */
+function updatePiggyProgress(piggies) {
+  piggies.forEach((piggy) => {
+    const card = document.querySelector(`.piggy-card[data-piggy-id="${piggy.id}"]`);
+    if (card) {
+      const progressFill = card.querySelector('.progress-bar__fill');
+      const progressLabel = card.querySelector('.piggy-card__progress-labels .text-primary');
+      if (progressFill) progressFill.style.width = `${Math.min(100, Math.round(piggy.growth_percentage || 0))}%`;
+      if (progressLabel) progressLabel.textContent = `${Math.min(100, Math.round(piggy.growth_percentage || 0))}%`;
     }
   });
 }
