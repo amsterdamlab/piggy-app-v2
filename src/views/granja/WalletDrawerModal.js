@@ -248,7 +248,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
   const closeDrawer = () => {
     modal.remove();
-    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
       document.body.style.overflow = '';
     }
   };
