@@ -6,7 +6,7 @@
 import { formatCOP } from '../../services/mockData.js';
 import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
-import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, requestMeatRedemption } from '../../services/walletService.js';
 import { getDashboardStats } from '../../services/piggiesService.js';
 import { openWalletRechargeSubscreen, openWalletRechargeInfo } from './WalletRechargeModal.js';
 import { openWalletWithdrawalSubscreen, showRetiroSaldoModal } from './WalletWithdrawalModal.js';
@@ -140,7 +140,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
             ` : ''}
 
             <!-- Main Action Buttons -->
-            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;\">
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
                <button id="btn-recargar-wallet-drawer" style="
                   width: 100%;
                   background: #ec4899;
@@ -289,10 +289,18 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
     const ADMIN_WHATSAPP = '573154870448';
     const profile = AppState.get('profile');
     const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-    const referralBonusStr = formatCOP(stats.referralBonus);
-    const msg = `🥩 *PIGGY APP — Canje de Bonos de Consumo (Referidos)*\n\n👤 *Usuario:* ${userName}\n\n🎁 Hola, deseo canjear mi saldo de bonos de consumo (${referralBonusStr}) por productos de carne.\n\n⚡ Por favor, indícame los pasos a seguir.`;
+    const referralBonus = stats.referralBonus || 0;
+    const referralBonusStr = formatCOP(referralBonus);
+    const refId = 'PGY-CRN-' + Math.floor(100000 + Math.random() * 900000);
+
+    // Guardar la solicitud de consumo en la tabla wallet_requests
+    requestMeatRedemption({ amount: referralBonus, reference: refId }).catch(err => {
+      console.warn('Error al guardar solicitud de canje en wallet_requests:', err);
+    });
+
+    const msg = `🥩 *PIGGY APP — Canje de Bonos de Consumo (Referidos)*\n\n👤 *Usuario:* ${userName}\n\n🎫 *Referencia:* #${refId}\n\n🎁 Hola, deseo canjear mi saldo de bonos de consumo (${referralBonusStr}) por productos de carne.\n\n⚡ Por favor, indícame los pasos a seguir.`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-    openMeatRedemptionModal({ referralBonus: stats.referralBonus, userName });
+    openMeatRedemptionModal({ referralBonus, userName, refId });
   });
 
   if (autoOpenRecharge) {
@@ -305,13 +313,13 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 /**
  * Show the Meat Redemption pending popup (identical to Bre-B / QR confirmation design).
  */
-export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario' } = {}) {
+export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario', refId = null } = {}) {
   const existing = document.getElementById('meat-redemption-modal');
   if (existing) existing.remove();
 
   document.body.style.overflow = 'hidden';
 
-  const refId = 'PGY-CRN-' + Math.floor(100000 + Math.random() * 900000);
+  const finalRefId = refId || ('PGY-CRN-' + Math.floor(100000 + Math.random() * 900000));
   const referralBonusStr = formatCOP(referralBonus);
 
   const modal = document.createElement('div');
@@ -370,7 +378,7 @@ export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
           <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
             <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
-            <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${refId}</span>
+            <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${finalRefId}</span>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Saldo en Bonos</span>
@@ -394,7 +402,8 @@ export function openMeatRedemptionModal({ referralBonus = 0, userName = 'Usuario
         <button id="meat-redemption-close" style="
           width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
           padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;\n          display:flex; align-items:center; justify-content:center; gap:8px;
+          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
         ">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           <span>Ir a Mi Granja</span>
