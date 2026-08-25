@@ -400,47 +400,58 @@ export function renderPiggyCard(piggy, baseROI) {
   const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
   const totalROI = baseROI + extraRoi;
   const projectedReturn = inv * (1 + totalROI);
+  const progressPercent = typeof piggy.progress === 'number' ? piggy.progress : 0;
 
   return `
-    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}">
-      <div class="piggy-card__header">
-        <div class="piggy-card__avatar">
-          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.onerror=null;this.src='pig2.jpg'" />
+    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}" style="
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      margin-bottom: 14px;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.08)'"
+       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.04)'">
+      <div class="piggy-card__header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+        <div class="piggy-card__avatar" style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #fce7f3; flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
         </div>
-        <div class="piggy-card__info">
-          <div class="piggy-card__name">${piggy.name}</div>
+        <div class="piggy-card__info" style="flex: 1; min-width: 0;">
+          <div class="piggy-card__name" style="font-weight: 800; font-size: 1.05rem; color: #0f172a; line-height: 1.2; margin-bottom: 3px;">${piggy.name}</div>
           <div class="piggy-card__status">
             ${piggy.isComplete
-              ? '<span class="badge badge--success">✓ Completado</span>'
-              : `<span class="badge badge--primary">${piggy.daysLeft} días restantes</span>`
+              ? '<span class="badge badge--success" style="background: #ecfdf5; color: #059669; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">✓ Completado</span>'
+              : `<span class="badge badge--primary" style="background: #fce7f3; color: #be1260; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">${piggy.daysLeft} días restantes</span>`
             }
           </div>
         </div>
         ${extraRoi > 0 ? `
-          <span class="badge badge--warning">+${(extraRoi * 100).toFixed(0)}%</span>
+          <span class="badge badge--warning" style="background: #fffbeb; color: #b45309; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 9999px;">+${(extraRoi * 100).toFixed(0)}%</span>
         ` : ''}
       </div>
 
-      <div class="piggy-card__progress">
-        <div class="piggy-card__progress-header">
-          <span class="text-sm text-muted">Progreso del ciclo</span>
-          <span class="text-sm font-semibold">${piggy.progress}%</span>
+      <div class="piggy-card__progress" style="margin-bottom: 14px;">
+        <div class="piggy-card__progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span class="text-sm text-muted" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Progreso del ciclo</span>
+          <span class="text-sm font-semibold" style="font-size: 0.85rem; font-weight: 800; color: #be1260;">${progressPercent}%</span>
         </div>
-        <div class="progress">
-          <div class="progress__bar" style="width: ${piggy.progress}%; ${piggy.isComplete ? 'background: linear-gradient(135deg, #10B981, #059669);' : ''}"></div>
+        <div class="progress" style="height: 10px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
+          <div class="progress__bar" style="width: ${progressPercent}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #ec4899, #be1260)'}; border-radius: 9999px; transition: width 0.8s ease-out;"></div>
         </div>
       </div>
 
-      <div class="piggy-card__stats grid-2">
+      <div class="piggy-card__stats grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
         <div>
-          <div class="text-xs text-muted">Peso actual</div>
-          <div class="font-semibold">${piggy.currentWeight} kg</div>
+          <div class="text-xs text-muted" style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-bottom: 2px;">Peso actual</div>
+          <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
         </div>
-        <div>
-          <div class="font-semibold text-primary" style="font-size:0.9rem;">
-            <span style="color:var(--color-text-muted, #64748b); font-weight:600; font-size:0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
+        <div style="text-align: right;">
+          <div class="font-semibold text-primary" style="font-size: 0.95rem; font-weight: 800; color: #be1260;">
+            <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
           </div>
-          ${extraRoi > 0 ? `<div class="text-xs" style="font-size:10px; color:var(--color-warning); margin-top:2px;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
+          ${extraRoi > 0 ? `<div class="text-xs" style="font-size: 10px; color: #b45309; margin-top: 2px; font-weight: 700;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
         </div>
       </div>
     </div>

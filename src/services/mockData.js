@@ -20,17 +20,20 @@ export const MOCK_PROFILE = {
     created_at: '2026-01-15T10:00:00Z',
 };
 
+const NOW_MS = Date.now();
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export const MOCK_PIGGIES = [
     {
         id: 'pig-001',
         user_id: 'user-001',
         status: 'engorde',
-        purchase_date: '2026-01-20T10:00:00Z',
-        end_date: '2026-06-10T10:00:00Z',
+        purchase_date: new Date(NOW_MS - 60 * DAY_MS).toISOString(),
+        end_date: new Date(NOW_MS + 84 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0,
-        current_weight: 45.2,
-        created_at: '2026-01-20T10:00:00Z',
+        current_weight: 52.4,
+        created_at: new Date(NOW_MS - 60 * DAY_MS).toISOString(),
         name: 'Pochito',
         image_url: 'assets/piggies/stage2/et2-1.jpg',
         contract_code: '#PIG001',
@@ -39,16 +42,30 @@ export const MOCK_PIGGIES = [
         id: 'pig-002',
         user_id: 'user-001',
         status: 'engorde',
-        purchase_date: '2026-02-01T10:00:00Z',
-        end_date: '2026-06-22T10:00:00Z',
+        purchase_date: new Date(NOW_MS - 95 * DAY_MS).toISOString(),
+        end_date: new Date(NOW_MS + 49 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0.01,
-        current_weight: 32.7,
-        created_at: '2026-02-01T10:00:00Z',
+        current_weight: 84.6,
+        created_at: new Date(NOW_MS - 95 * DAY_MS).toISOString(),
         name: 'Luna',
-        image_url: 'assets/piggies/stage1/et1-2.jpg',
+        image_url: 'assets/piggies/stage2/et2-3.jpg',
         contract_code: 'PGY-TX-B843WD',
         contract_url: 'https://elhsvitbqzivgajccify.supabase.co/storage/v1/object/public/contracts/contratos/3349c043-bd00-4937-a831-6b5e6bb91738/contrato_1787196691238_PGY-TX-RK52-B843WD.pdf',
+    },
+    {
+        id: 'pig-003',
+        user_id: 'user-001',
+        status: 'completado',
+        purchase_date: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
+        end_date: new Date(NOW_MS - 6 * DAY_MS).toISOString(),
+        investment_amount: 1000000,
+        extra_roi_bonus: 0.02,
+        current_weight: 120.0,
+        created_at: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
+        name: 'Rocky',
+        image_url: 'assets/piggies/stage3/et3-1.jpg',
+        contract_code: 'PGY-TX-RCK991',
     },
 ];
 
