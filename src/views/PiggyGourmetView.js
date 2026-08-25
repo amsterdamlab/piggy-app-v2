@@ -33,7 +33,7 @@ export function renderPiggyGourmetView() {
         <div class="animate-fade-in" style="margin-bottom:24px;">
           <h2 style="font-size: var(--text-3xl); font-weight: var(--font-extrabold); color: var(--color-text-primary); margin: 0 0 var(--space-xs) 0;">Tienda</h2>
           <p style="font-size: var(--text-sm); color: var(--color-text-secondary); line-height: var(--leading-relaxed); margin: 0;">
-            Cortes premium y combos gourmet directos de Granja Valle Morales. Paga con tu Cuenta Agro, redime tus Bonos de Consumo o paga contra entrega.
+            Encuentra diferentes cortes en cerdo, pollo y res de la mejor calidad. Paga con tu Cuenta Agro, redime tus Bonos de Consumo o paga contra entrega.
           </p>
         </div>
 
@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -356,10 +356,10 @@ function renderCustomOrderSection() {
         </div>
         <div style="flex: 1; min-width: 0;">
           <h3 style="margin: 0 0 4px; font-size: 1.05rem; font-weight: 850; color: #0f172a; letter-spacing: -0.01em;">
-            Personaliza tu pedido
+            ¿Quieres armar los combos a tu medida?
           </h3>
           <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.45;">
-            ¿Quieres armar los combos a tu medida? Escríbenos y con gusto te enviamos todos los productos que manejamos en cerdo, pollo, y res.
+            Escríbenos y con gusto te enviamos todos los productos que manejamos en cerdo, pollo, y res.
           </p>
         </div>
       </div>
@@ -478,12 +478,13 @@ function openGourmetCheckoutModal(offer, userStats) {
             </div>
           </div>
 
+          ${isBonusEligible ? `
           <!-- Bono de Consumo Option -->
           <label style="
-            background: ${isBonusEligible && userBonus > 0 ? '#fff1f2' : '#f8fafc'};
-            border: 1.5px solid ${isBonusEligible && userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
+            background: ${userBonus > 0 ? '#fff1f2' : '#f8fafc'};
+            border: 1.5px solid ${userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
             border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-            cursor: ${isBonusEligible && userBonus > 0 ? 'pointer' : 'default'}; opacity: ${isBonusEligible && userBonus > 0 ? '1' : '0.75'};
+            cursor: ${userBonus > 0 ? 'pointer' : 'default'}; opacity: ${userBonus > 0 ? '1' : '0.75'};
             transition: all 0.2s;
           ">
             <div style="display:flex; align-items:center; gap:12px; min-width:0;">
@@ -499,15 +500,14 @@ function openGourmetCheckoutModal(offer, userStats) {
             </div>
 
             <div style="display:flex; align-items:center; gap:8px;">
-              ${!isBonusEligible ? `
-                <span style="font-size:0.68rem; font-weight:800; color:#b45309; background:#fef3c7; padding:3px 8px; border-radius:6px;">Aplica en compras ≥ $150.000</span>
-              ` : userBonus > 0 ? `
+              ${userBonus > 0 ? `
                 <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
               ` : `
                 <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
               `}
             </div>
           </label>
+          ` : ''}
 
           <!-- Desglose de Liquidación -->
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px;">
