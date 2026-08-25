@@ -5,6 +5,7 @@
    ========================================================================== */
 
 import { formatCOP } from '../../services/mockData.js';
+import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
 import { showWalletDrawer } from './WalletDrawerModal.js';
 
@@ -51,8 +52,9 @@ export function renderWalletBanner(firstName, stats) {
                        Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
                     </span>
                     ${stats.referralBonus > 0 ? `
-                    <span style="background: rgba(255, 255, 255, 0.22); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                       🎁 Bono Consumo: ${stats.referralBonusFormatted}
+                    <span style="background: rgba(255, 255, 255, 0.22); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                       ${renderIcon('giftBox', '', '14')}
+                       <span>Bono Consumo: ${stats.referralBonusFormatted}</span>
                     </span>
                     ` : ''}
                  </div>
