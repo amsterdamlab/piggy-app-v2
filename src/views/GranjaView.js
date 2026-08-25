@@ -273,9 +273,9 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center; 
-                    font-size: 18px; 
-                    font-weight: 800; 
+                    justify-content: center;
+                    font-size: 18px;
+                    font-weight: 800;
                     padding-bottom: 2px;
                 ">+</div>
                 Compra un Nuevo Piggy
@@ -463,7 +463,7 @@ export function renderBottomNav(activeTab) {
         <span>Mercado</span>
       </a>
       <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
-        <span class="bottom-nav__icon">${renderIcon('shop', '', '24')}</span>
+        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
         <span>Tienda</span>
       </a>
       <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
