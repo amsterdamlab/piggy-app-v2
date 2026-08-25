@@ -1,119 +1,112 @@
 /* ============================================
-   PIGGY APP — Profile View
-   User account, personal data, bank accounts,
-   terms and conditions, referrals & settings.
+   PIGGY APP — Profile View (Mi Perfil)
+   User profile management & Supabase sync
    ============================================ */
 
+import { renderIcon } from '../icons.js';
+import { getProfile, updateUserProfile, getUserInitials, signOut } from '../services/authService.js';
 import { AppState } from '../state.js';
-import { signOut, updateUserProfile } from '../services/authService.js';
-import { renderIcon } from '../components/Icons.js';
 import { navigateTo } from '../router.js';
-import { showReferralModal } from '../components/ReferralModal.js';
-import { showSupportModal } from '../components/SupportModal.js';
+import { showSupportModal } from './granja/SupportModal.js';
+import { showReferralModal } from './granja/ReferralsModal.js';
 import { generateMockReferralCode } from '../services/referralService.js';
 import { completeMissionOnVisit } from '../services/missionsService.js';
 
-// Predefined list of popular Colombian banks
+// Colombian Banks list
 const COLOMBIAN_BANKS = [
     'Bancolombia',
     'Nequi',
     'Daviplata',
-    'Davivienda',
+    'Nu Bank',
+    'Ualá',
     'Banco de Bogotá',
     'BBVA Colombia',
-    'Banco Agrario',
-    'Banco Popular',
-    'Scotiabank Colpatria',
-    'Banco Caja Social',
     'Banco Falabella',
-    'Banco de Occidente',
-    'Banco Itaú',
-    'Nu Colombia (NuBank)',
     'Lulo Bank',
     'RappiPay',
-    'Ualá',
-    'Dale!',
     'Movii',
+    'Davivienda',
+    'Banco Itaú',
+    'Scotiabank Colpatria',
+    'Banco Popular',
+    'Banco de Occidente',
+    'Banco AV Villas',
+    'Caja Social',
     'Otro'
 ];
 
 const ACCOUNT_TYPES = [
     'Cuenta de Ahorros',
-    'Cuenta Corriente',
-    'Billetera Digital (Nequi/Daviplata)'
+    'Cuenta Corriente'
 ];
 
 let currentActiveSubscreen = null; // 'datos' | 'legal' | null
 
 /**
- * Render the main Profile View with fast subscreen navigation.
+ * Render the Profile View.
  */
 export function renderProfileView() {
-    const container = document.getElementById('app');
-    if (!container) return;
+    const app = document.getElementById('app');
+    const state = AppState.getState();
+    let profile = state.profile || {};
 
-    const profile = AppState.get('profile') || {};
-    const referralStats = AppState.get('referralStats') || { totalEarned: 0 };
-    const fullName = profile.full_name || 'Usuario';
-    const email = profile.email || 'usuario@piggyapp.co';
+    const fullName = profile.full_name || 'Usuario Piggy';
+    const initials = getUserInitials(fullName);
+    const initialsClass = initials.length > 1 ? 'profile-avatar-circle--double' : 'profile-avatar-circle--single';
     const referralCode = profile.referral_code || generateMockReferralCode(fullName);
 
-    // Initial avatar placeholder letter
-    const initialLetter = fullName.charAt(0).toUpperCase() || 'U';
+    // If profile is empty in state, fetch fresh from Supabase
+    if (!profile.full_name) {
+        getProfile().then((freshProfile) => {
+            if (freshProfile && freshProfile.full_name && AppState.get('currentView') === 'perfil') {
+                AppState.set({ profile: freshProfile });
+                renderProfileView();
+            }
+        }).catch(err => console.warn('Background profile fetch error:', err));
+    }
 
-    container.innerHTML = `
-        <div class="profile-page">
-            <!-- Header con botón Volver a Granja -->
+    app.innerHTML = `
+        <div class="page profile-page animate-fade-in">
+            <!-- Header with Back Arrow -->
             <div class="profile-header">
-                <button class="profile-header__back" id="btn-profile-back" aria-label="Volver a la Granja" title="Volver">
+                <button class="profile-header__back" id="btn-profile-back" aria-label="Volver a Mi Granja" title="Volver a Mi Granja">
                     ${renderIcon('arrowLeft', '', '22')}
                 </button>
                 <h1 class="profile-header__title">Mi Perfil</h1>
             </div>
 
-            <!-- Profile Hero Card (Fondo #b80049) -->
-            <div class="profile-hero">
-                <div class="profile-hero__avatar">
-                    ${initialLetter}
-                </div>
-                <div class="profile-hero__info">
-                    <h2 class="profile-hero__name">${fullName}</h2>
-                    <p class="profile-hero__email">${email}</p>
-                </div>
-            </div>
-
-            <!-- Código de Referido Compacto -->
-            <div class="profile-referral-box">
-                <div class="profile-referral-box__label">Tu código de referido</div>
-                <div class="profile-referral-box__code-row">
-                    <span class="profile-referral-box__code">${referralCode}</span>
-                    <button class="btn btn--copy-profile" id="btn-copy-ref-profile" title="Copiar código">
-                        ${renderIcon('copy', '', '16')}
-                        <span>Copiar</span>
-                    </button>
-                </div>
-                <div id="copy-ref-toast" style="display:none; color:#10B981; font-size:0.75rem; font-weight:700; margin-top:4px; text-align:center;">
-                    ¡Código copiado al portapapeles!
-                </div>
-            </div>
-
-            <!-- Banner Promocional: Invita y Gana -->
-            <div class="profile-invite-banner" id="btn-profile-invite-banner" style="cursor:pointer;" title="Ver detalles del programa de referidos">
-                <div class="profile-invite-banner__left">
-                    <div class="profile-invite-banner__badge">PROGRAMA DE REFERIDOS</div>
-                    <div class="profile-invite-banner__title">¡Gana $20.000 por amigo!</div>
-                    <div class="profile-invite-banner__subtitle">Comparte tu código y recibe recompensas cuando tus amigos compren su primer Piggy.</div>
-                </div>
-                <div class="profile-invite-banner__right">
-                    <div class="profile-invite-banner__btn">
-                        <span>Invitar</span>
-                        ${renderIcon('chevronRight', '', '16')}
+            <!-- User Card -->
+            <div class="profile-user-card">
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar-circle ${initialsClass}">
+                        ${initials}
                     </div>
+                    <span class="profile-avatar-online" title="Usuario Activo"></span>
+                </div>
+                <h2 class="profile-user-name">${fullName}</h2>
+                
+                <!-- Copyable Referral Code Tag with line copy icon on right -->
+                <button class="profile-referral-tag" id="btn-copy-ref-profile" title="Copiar código de invitación">
+                    <span>${referralCode}</span>
+                    <span style="display:inline-flex; align-items:center; color:#b80049;">${renderIcon('copy', '', '16')}</span>
+                </button>
+                <div id="copy-ref-toast" style="font-size: 0.75rem; color: #16a34a; margin-top: 4px; display: none; font-weight: 700;">
+                    ¡Código copiado al portapapeles! 📋
                 </div>
             </div>
 
-            <!-- Menu List -->
-            <div class="profile-menu">
+            <!-- Banner Promocional Referidos -->
+            <div class="profile-banner-referral">
+                <p class="profile-banner-referral__text">
+                    Gana Bonos de Consumo por <strong>$20.000</strong> invitando a tus amigos a registrarse y usar PIGGY APP.
+                </p>
+                <button class="profile-banner-referral__btn" id="btn-profile-invite-banner">
+                    Invitar amigos →
+                </button>
+            </div>
+
+            <!-- Card Menu Container (Icons in #b80049) -->
+            <div class="profile-menu-card">
                 <!-- 1. Datos Personales -->
                 <button class="profile-menu-item" id="btn-menu-datos">
                     <div class="profile-menu-item__left">
@@ -123,25 +116,25 @@ export function renderProfileView() {
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 2. Invitar Amigos (Abre Modal de Referidos) -->
+                <!-- 2. Invitar Amigos (Caja de regalo en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-invitar">
                     <div class="profile-menu-item__left">
-                        <span class="profile-menu-item__icon">${renderIcon('users', '', '22')}</span>
+                        <span class="profile-menu-item__icon">${renderIcon('giftBox', '', '22')}</span>
                         <span class="profile-menu-item__text">Invitar amigos</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 3. Centro de Ayuda -->
+                <!-- 3. Centro de Ayuda (Diadema de soporte en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-ayuda">
                     <div class="profile-menu-item__left">
-                        <span class="profile-menu-item__icon">${renderIcon('helpCircle', '', '22')}</span>
+                        <span class="profile-menu-item__icon">${renderIcon('headset', '', '22')}</span>
                         <span class="profile-menu-item__text">Centro de ayuda</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 4. Términos y Condiciones -->
+                <!-- 4. Términos y Condiciones (Hoja / Documento en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-terminos">
                     <div class="profile-menu-item__left">
                         <span class="profile-menu-item__icon">${renderIcon('documentText', '', '22')}</span>
