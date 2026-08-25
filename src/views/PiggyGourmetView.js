@@ -237,27 +237,25 @@ function renderOfferCard(offer, index) {
             z-index: 2;
           ">
             <span style="
-              background: #b80049;
-              color: #fde047;
-              font-size: 0.68rem;
-              font-weight: 850;
-              padding: 4px 10px;
+              background: #fffbeb;
+              color: #b45309;
+              font-size: 0.72rem;
+              font-weight: 800;
+              padding: 4px 11px;
               border-radius: 9999px;
-              letter-spacing: 0.3px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+              letter-spacing: 0.2px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
             ">${offer.tag ? offer.tag.replace(/^[^\w\s]+/, '').trim() : 'Granja Valle Morales'}</span>
             
             ${discount > 0 ? `
               <div style="
-                background: rgba(255, 255, 255, 0.28);
-                color: white;
-                font-size: 0.68rem;
-                font-weight: 900;
-                padding: 3px 8px;
-                border-radius: 20px;
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
-                border: 1px solid rgba(255, 255, 255, 0.4);
+                background: #fffbeb;
+                color: #b45309;
+                font-size: 0.72rem;
+                font-weight: 850;
+                padding: 4px 10px;
+                border-radius: 9999px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
               ">-${discount}%</div>
             ` : ''}
           </div>
