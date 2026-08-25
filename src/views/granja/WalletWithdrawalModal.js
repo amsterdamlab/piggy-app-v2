@@ -116,7 +116,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           </div>
         </button>
 
-        <!-- 2. BOTÓN: Bonos de Consumo -->
+        <!-- 2. BOTÓN: Comprar Carne -->
         <button id="retiro-tipo-consumo" style="
           background: #fdf2f5; border: 1px solid #ffe4e6;
           color: #0f172a; padding: 22px 20px; border-radius: 18px;
@@ -126,19 +126,18 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
         " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
           <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-              <path d="M13 5v2"/>
-              <path d="M13 17v2"/>
-              <path d="M13 11v2"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3c-5 0-9 4.5-9 10 0 5.5 4.5 8 9.5 8 5 0 8.5-3.5 8.5-7.5 0-4-3-5-4.5-6C15 6.5 15.5 3 12 3z"/>
+              <path d="M11.8 5.2C8 5.2 4.8 8.8 4.8 13.2c0 4 3.7 6 7.4 6 3.8 0 7-3 7-6 0-3-2.4-4-4-5-1.4-1-1-3-3.4-3z"/>
+              <circle cx="10" cy="14" r="1.8"/>
             </svg>
           </div>
           <div style="flex:1; min-width:0;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Bonos de Consumo</span>
-              <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">CANJE INMEDIATO</span>
+              <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Comprar Carne</span>
+              <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">DIRECTO DE GRANJA</span>
             </div>
-            <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Canjear por cortes gourmet y productos cárnicos en Tienda.</div>
+            <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Cortes premium y combos gourmet directamente de nuestra Granja.</div>
           </div>
         </button>
       </div>
@@ -179,6 +178,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
         </div>
       </div>
+
 
       <!-- Scrollable Body Content -->
       <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
@@ -289,7 +289,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   };
 
   /* ─────────────────────────────────────────
-     STEP 2B — Canje a Bonos de Consumo
+     STEP 2B — Comprar Carne en Tienda
   ───────────────────────────────────────── */
   const renderStep2Consumo = () => {
     return `
@@ -303,73 +303,74 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         </div>
         
         <div>
-          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Canje por Carne</h2>
+          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Comprar Carne</h2>
           <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
         </div>
       </div>
 
       <!-- Scrollable Body Content -->
-      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
+      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; justify-content:space-between;">
         
-        <!-- Info Canje -->
-        <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:16px; padding:16px; margin-bottom:18px; display:flex; gap:12px; align-items:flex-start;">
-          <div style="color:#be1260; flex-shrink:0; margin-top:2px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-              <path d="M13 5v2"/>
-              <path d="M13 17v2"/>
-              <path d="M13 11v2"/>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <!-- Info Comprar Carne -->
+          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px; display:flex; gap:14px; align-items:flex-start;">
+            <div style="color:#be1260; flex-shrink:0; margin-top:2px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3c-5 0-9 4.5-9 10 0 5.5 4.5 8 9.5 8 5 0 8.5-3.5 8.5-7.5 0-4-3-5-4.5-6C15 6.5 15.5 3 12 3z"/>
+                <path d="M11.8 5.2C8 5.2 4.8 8.8 4.8 13.2c0 4 3.7 6 7.4 6 3.8 0 7-3 7-6 0-3-2.4-4-4-5-1.4-1-1-3-3.4-3z"/>
+                <circle cx="10" cy="14" r="1.8"/>
+              </svg>
+            </div>
+            <div style="font-size:0.86rem; color:#9f1239; line-height:1.5;">
+              <div style="font-weight:800; color:#881337; margin-bottom:6px; font-size:0.92rem;">Cortes premium y combos gourmet directos de Granja Valle Morales.</div>
+              <div style="color:#4c0519; font-weight:500;">Paga con el saldo de tu <strong>Cuenta Agro</strong> o redime tus <strong>Bonos de Consumo</strong> en compras mayores a <strong>$150.000</strong>. También puedes pagar en efectivo o transferencia contra entrega.</div>
+            </div>
+          </div>
+
+          <!-- Beneficios list -->
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Combos gourmet listos para entrega en tu domicilio</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Usa tu saldo o paga en efectivo / transferencia al recibir</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Bono de Consumo aplicable en compras desde $150.000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTÓN PRINCIPAL (Color #be1260 mantenido) -->
+        <div style="margin-top:24px;">
+          <button id="retiro-goto-tienda" style="
+            width: 100%;
+            background: #be1260;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-weight: 850;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
+            transition: all 0.2s;
+          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
-          </div>
-          <div style="font-size:0.85rem; color:#9f1239; line-height:1.45;">
-            El monto que solicites será destinado para tu pedido de cortes gourmet y productos cárnicos en <strong>Granja Valle Morales</strong>.
-          </div>
+            Comprar en Tienda
+          </button>
         </div>
-
-        <!-- Monto a Canjear con Botón TODO interior -->
-        <div style="margin-bottom:20px;">
-          <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">Monto a canjear en carne</label>
-          <div style="position:relative; display:flex; align-items:center;">
-            <span style="position:absolute; left:16px; font-weight:800; color:#9ca3af; font-size:1rem; pointer-events:none;">$</span>
-            <input type="text" inputmode="numeric" id="consumo-amount" placeholder="Ej: 100.000"
-              style="width:100%; padding:14px 75px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
-              onfocus="this.style.borderColor='#be1260';" onblur="this.style.borderColor='#e2e8f0';" />
-            <button type="button" id="btn-todo-consumo" style="
-              position:absolute; right:10px; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1;
-              border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:800; cursor:pointer;
-              transition:all 0.15s;
-            " onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">TODO</button>
-          </div>
-          <div id="consumo-amount-error" style="color:#dc2626; font-size:0.75rem; font-weight:600; margin-top:6px; display:none;"></div>
-          <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Monto mínimo de canje: <strong>${formatCOP(minAmount)}</strong>.</div>
-        </div>
-
-        <!-- BOTÓN CANJEAR -->
-        <button id="retiro-confirm-consumo" style="
-          width: 100%;
-          background: #be1260;
-          color: white;
-          border: none;
-          padding: 16px 20px;
-          border-radius: 14px;
-          font-weight: 850;
-          font-size: 1rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
-          transition: all 0.2s;
-        " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-            <path d="M13 5v2"/>
-            <path d="M13 17v2"/>
-            <path d="M13 11v2"/>
-          </svg>
-          Solicitar Canje por Carne
-        </button>
       </div>
 
       <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
@@ -489,68 +490,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
     subscreen.innerHTML = renderStep2Consumo();
     attachClose(goToStep1);
 
-    const input = document.getElementById('consumo-amount');
-    input?.addEventListener('input', (e) => {
-      const raw = e.target.value.replace(/\D/g, '');
-      if (!raw) {
-        e.target.value = '';
-        return;
-      }
-      const num = parseInt(raw, 10);
-      e.target.value = formatThousands(num);
-    });
-
-    // Setup the "TODO" button inside the input
-    document.getElementById('btn-todo-consumo')?.addEventListener('click', () => {
-      if (input) {
-        input.value = formatThousands(availableAmount);
-        input.dispatchEvent(new Event('input'));
-      }
-    });
-
-    document.getElementById('retiro-confirm-consumo')?.addEventListener('click', async () => {
-      const errDiv = document.getElementById('consumo-amount-error');
-      const amount = parseFormattedNumber(document.getElementById('consumo-amount')?.value);
-      if (!amount || amount < minAmount) {
-        errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
-        errDiv.style.display = 'block';
-        return;
-      }
-      if (amount > availableAmount) {
-        errDiv.textContent = 'El monto supera tu saldo disponible';
-        errDiv.style.display = 'block';
-        return;
-      }
-      
-      const btn = document.getElementById('retiro-confirm-consumo');
-      btn.innerText = 'Procesando...';
-      btn.disabled = true;
-
-      errDiv.style.display = 'none';
-
-      const ADMIN_WHATSAPP = '573154870448';
-      const curProfile = AppState.get('profile') || profile || {};
-      const userFullName = curProfile.full_name || userName || 'Usuario';
-      const userPhoneNum = curProfile.phone || userPhone || 'No registrado';
-      const refId = 'PGY-CRN-' + Math.floor(100000 + Math.random() * 900000);
-
-      // 1. Guardar solicitud en tabla wallet_requests con request_type 'consumption'
-      requestMeatRedemption({ amount, reference: refId }).catch(err => {
-        console.warn('Error al registrar canje de carne en wallet_requests:', err);
-      });
-
-      // 2. Abrir WhatsApp con mensaje estructurado
-      const msg = `🥩 *PIGGY APP — Solicitud de Canje por Carne*\n\n` +
-        `👤 *Usuario:* ${userFullName}\n` +
-        `📱 *WhatsApp:* ${userPhoneNum}\n` +
-        `💵 *Monto a Canjear:* ${formatCOP(amount)}\n` +
-        `🎫 *Referencia:* #${refId}\n` +
-        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-        `Hola, deseo canjear este monto de mi saldo disponible por productos de carne. Por favor, indíquenme los cortes disponibles y pasos a seguir.`;
-
-      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-
-      // 3. Cerrar drawer y abrir popup de atencion en proceso
+    document.getElementById('retiro-goto-tienda')?.addEventListener('click', () => {
       closeSubscreen();
       if (onCloseAll) {
         onCloseAll();
@@ -558,8 +498,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         const drawer = document.getElementById('wallet-drawer-modal');
         if (drawer) drawer.remove();
       }
-
-      openMeatRedemptionModal({ amount, userName: userFullName, refId });
+      navigateTo('gourmet');
     });
   };
 

@@ -188,20 +188,56 @@ export async function deleteGourmetOffer(offerId) {
 /* ─── Helpers ─── */
 
 /**
- * Format COP currency for gourmet prices.
+ * Format COP currency strictly as $150.000 without COP suffix.
  */
 export function formatGourmetPrice(value) {
-    return '$' + value.toLocaleString('es-CO');
+    const num = Math.round(Number(value) || 0);
+    return '$' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 /**
- * Build WhatsApp purchase link for a gourmet offer.
+ * Build structured WhatsApp purchase link with payment methods breakdown.
  */
-export function buildGourmetWhatsAppLink(offer) {
+export function buildGourmetCheckoutWhatsAppLink({ offer, appliedSaldo = 0, appliedBonus = 0, cashDue = 0, deliveryAddress = '' } = {}) {
     const profile = AppState.get('profile');
     const userName = profile?.full_name || 'Usuario';
-    const message = encodeURIComponent(
-        `¡Hola! 👋 Mi nombre es *${userName}*, vengo de *Piggy App* y quiero comprar el combo *${offer.name}* por valor de *${formatGourmetPrice(offer.price)}*.\n\n¿Me podrías confirmar la entrega por favor? ¡Muchas gracias!`
-    );
-    return `https://wa.me/${WHATSAPP_PHONE}?text=${message}`;
+    const userPhone = profile?.whatsapp || profile?.phone_number || '';
+    const refId = 'PGY-CMB-' + Math.floor(100000 + Math.random() * 900000);
+
+    let msg = `🥩 *PIGGY APP — Pedido de Carne en Granja Valle Morales*\n\n` +
+        `👤 *Cliente:* ${userName}\n` +
+        (userPhone ? `📱 *Teléfono:* ${userPhone}\n` : '') +
+        `🎫 *Referencia:* #${refId}\n` +
+        `📦 *Combo:* ${offer.name}\n` +
+        `💵 *Subtotal:* ${formatGourmetPrice(offer.price)}\n\n` +
+        `💳 *DESGLOSE DE PAGO:*\n`;
+
+    if (appliedBonus > 0) {
+        msg += `• *Bono de Consumo aplicado:* ${formatGourmetPrice(appliedBonus)}\n`;
+    }
+    if (appliedSaldo > 0) {
+        msg += `• *Saldo Cuenta Agro utilizado:* ${formatGourmetPrice(appliedSaldo)}\n`;
+    }
+    if (cashDue > 0) {
+        msg += `• *Total a pagar contra entrega:* ${formatGourmetPrice(cashDue)} (Efectivo / Transferencia)\n`;
+    } else {
+        msg += `• *Total a pagar contra entrega:* $0 (Cubierto al 100%)\n`;
+    }
+
+    msg += `\n¡Hola! He generado este pedido desde la Tienda de Piggy App. Por favor confírmenme la disponibilidad y tiempo de entrega. ¡Muchas gracias!`;
+
+    return {
+        url: `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`,
+        refId
+    };
+}
+
+/**
+ * Build WhatsApp link for customized meat orders.
+ */
+export function buildCustomOrderWhatsAppLink() {
+    const profile = AppState.get('profile');
+    const userName = profile?.full_name || 'Usuario';
+    const msg = `¡Hola! 👋 Mi nombre es *${userName}*, vengo de *Piggy App* y deseo cotizar un *pedido personalizado* de cortes premium y productos cárnicos directamente de *Granja Valle Morales*. ¿Me podrían asesorar por favor?`;
+    return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(msg)}`;
 }

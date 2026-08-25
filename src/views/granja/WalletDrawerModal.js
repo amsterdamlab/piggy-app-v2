@@ -148,7 +148,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                   border: none;
                   padding: 16px 20px;
                   border-radius: 14px;
-                  font-weight: 850;
+                  font-weight: 800;
                   font-size: 1rem;
                   cursor: pointer;
                   display: flex;
@@ -248,7 +248,7 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
   const closeDrawer = () => {
     modal.remove();
-    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
       document.body.style.overflow = '';
     }
   };
@@ -283,24 +283,10 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
     openWalletWithdrawalSubscreen(subscreenContainer, stats?.saldoDisponible || 0, updateDrawerState, closeDrawer);
   });
 
-  // Meat coupon redemption trigger
+  // Meat coupon redemption trigger -> Redirect to Tienda
   document.getElementById('btn-canjear-carne-drawer')?.addEventListener('click', () => {
     closeDrawer();
-    const ADMIN_WHATSAPP = '573154870448';
-    const profile = AppState.get('profile');
-    const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-    const referralBonus = stats.referralBonus || 0;
-    const referralBonusStr = formatCOP(referralBonus);
-    const refId = 'PGY-CRN-' + Math.floor(100000 + Math.random() * 900000);
-
-    // Guardar la solicitud de consumo en la tabla wallet_requests
-    requestMeatRedemption({ amount: referralBonus, reference: refId }).catch(err => {
-      console.warn('Error al guardar solicitud de canje en wallet_requests:', err);
-    });
-
-    const msg = `🥩 *PIGGY APP — Canje de Bonos de Consumo (Referidos)*\n\n👤 *Usuario:* ${userName}\n\n🎫 *Referencia:* #${refId}\n\n🎁 Hola, deseo canjear mi saldo de bonos de consumo (${referralBonusStr}) por productos de carne.\n\n⚡ Por favor, indícame los pasos a seguir.`;
-    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-    openMeatRedemptionModal({ amount: referralBonus, userName, refId });
+    navigateTo('gourmet');
   });
 
   if (autoOpenRecharge) {
