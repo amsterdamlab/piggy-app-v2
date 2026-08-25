@@ -2,7 +2,7 @@
    PIGGY APP — Piggy Gourmet View
    Meat combo offers & bonus redemption
    Now powered by DB-backed gourmetService with premium real images.
-   ========================================================================= */
+   ========================================================================== */
 
 import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
@@ -59,7 +59,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -69,7 +69,7 @@ export function renderPiggyGourmetView() {
               <div style="font-weight: 700; color: #166534; font-size: 0.88rem; margin-bottom: 6px;">Información de entregas</div>
               <div style="font-size: 0.78rem; color: #15803d; line-height: 1.5;">
                 <strong>Cali:</strong> Domicilio gratis en zona urbana.<br/>
-                <strong>Otros municipios:</strong> Costo de envío según ubicación y peso.
+                <strong>Otros municipios cerca a Cali:</strong> Si tienen costo de envío según ubicación y peso.
               </div>
             </div>
           </div>
@@ -274,8 +274,7 @@ function renderOfferCard(offer, index) {
                 box-shadow: 0 2px 8px rgba(0,0,0,0.25);
                 text-shadow: 0 1px 3px rgba(0,0,0,0.5);
               ">-${discount}%</div>
-            ` : ''}
-          </div>
+            ` : ''}\n          </div>
 
           <!-- Title Overlay at the bottom of the image -->
           <div style="

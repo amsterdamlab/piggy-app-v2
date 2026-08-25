@@ -38,7 +38,7 @@ export async function signInWithGoogle() {
             email: 'google.user@example.com',
             terms_accepted: true,
             habeas_data_accepted: true,
-            referral_balance: 30000,
+            referral_balance: 20000,
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email: 'google.user@example.com' },
@@ -82,7 +82,7 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
             whatsapp: fallbackMeta.whatsapp || user.user_metadata?.whatsapp || null,
             terms_accepted: true,
             habeas_data_accepted: true,
-            referral_balance: 30000,
+            referral_balance: 20000,
         };
 
         const { data: createdProfile, error: upsertError } = await client
@@ -118,7 +118,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             terms_accepted: true,
             habeas_data_accepted: true,
             referral_code: generateMockReferralCode(fullName),
-            referral_balance: 30000,
+            referral_balance: 20000,
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email },
@@ -153,7 +153,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             whatsapp,
             terms_accepted: true,
             habeas_data_accepted: true,
-            referral_balance: 30000,
+            referral_balance: 20000,
         };
 
         const { error: profileError } = await client.from('profiles').upsert(profile);
@@ -260,8 +260,7 @@ export async function acceptTerms() {
     const { data: { user } } = await client.auth.getUser();
 
     const { error } = await client.from('profiles')
-        .update({ terms_accepted: true, habeas_data_accepted: true })
-        .eq('id', user.id);
+        .update({ terms_accepted: true, habeas_data_accepted: true })\n        .eq('id', user.id);
 
     if (!error) {
         const profile = await getProfile();
