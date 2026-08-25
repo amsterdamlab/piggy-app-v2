@@ -248,7 +248,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
         <!-- ROI Info -->
         ${stats.activeCount > 0 ? `
           <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
-            <button id="btn-quick-buy" style="
+            <button id="btn-quick-buy" class="btn-shine-7s" style="
                 background: #ec4899; 
                 color: white; 
                 border: none; 
@@ -277,8 +277,10 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     font-size: 18px;
                     font-weight: 800;
                     padding-bottom: 2px;
+                    position: relative;
+                    z-index: 1;
                 ">+</div>
-                Compra un Nuevo Piggy
+                <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>
             </button>
           </div>
         ` : ''}
