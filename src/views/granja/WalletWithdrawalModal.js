@@ -127,9 +127,9 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
           <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3c-5 0-9 4.5-9 10 0 5.5 4.5 8 9.5 8 5 0 8.5-3.5 8.5-7.5 0-4-3-5-4.5-6C15 6.5 15.5 3 12 3z"/>
-              <path d="M11.8 5.2C8 5.2 4.8 8.8 4.8 13.2c0 4 3.7 6 7.4 6 3.8 0 7-3 7-6 0-3-2.4-4-4-5-1.4-1-1-3-3.4-3z"/>
-              <circle cx="10" cy="14" r="1.8"/>
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
             </svg>
           </div>
           <div style="flex:1; min-width:0;">
@@ -178,7 +178,6 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
         </div>
       </div>
-
 
       <!-- Scrollable Body Content -->
       <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
@@ -313,33 +312,10 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         
         <div style="display:flex; flex-direction:column; gap:16px;">
           <!-- Info Comprar Carne -->
-          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px; display:flex; gap:14px; align-items:flex-start;">
-            <div style="color:#be1260; flex-shrink:0; margin-top:2px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3c-5 0-9 4.5-9 10 0 5.5 4.5 8 9.5 8 5 0 8.5-3.5 8.5-7.5 0-4-3-5-4.5-6C15 6.5 15.5 3 12 3z"/>
-                <path d="M11.8 5.2C8 5.2 4.8 8.8 4.8 13.2c0 4 3.7 6 7.4 6 3.8 0 7-3 7-6 0-3-2.4-4-4-5-1.4-1-1-3-3.4-3z"/>
-                <circle cx="10" cy="14" r="1.8"/>
-              </svg>
-            </div>
+          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px;">
             <div style="font-size:0.86rem; color:#9f1239; line-height:1.5;">
               <div style="font-weight:800; color:#881337; margin-bottom:6px; font-size:0.92rem;">Cortes premium y combos gourmet directos de Granja Valle Morales.</div>
-              <div style="color:#4c0519; font-weight:500;">Paga con el saldo de tu <strong>Cuenta Agro</strong> o redime tus <strong>Bonos de Consumo</strong> en compras mayores a <strong>$150.000</strong>. También puedes pagar en efectivo o transferencia contra entrega.</div>
-            </div>
-          </div>
-
-          <!-- Beneficios list -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
-            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Combos gourmet listos para entrega en tu domicilio</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Usa tu saldo o paga en efectivo / transferencia al recibir</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px; font-size:0.84rem; color:#334155;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>Bono de Consumo aplicable en compras desde $150.000</span>
+              <div style="color:#4c0519; font-weight:500;">Paga con el saldo de tu <strong>Cuenta Agro</strong> o redime tus <strong>Bonos de Consumo</strong> en compras mayores a <strong>$150.000</strong>.</div>
             </div>
           </div>
         </div>
