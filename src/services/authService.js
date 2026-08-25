@@ -260,7 +260,8 @@ export async function acceptTerms() {
     const { data: { user } } = await client.auth.getUser();
 
     const { error } = await client.from('profiles')
-        .update({ terms_accepted: true, habeas_data_accepted: true })\n        .eq('id', user.id);
+        .update({ terms_accepted: true, habeas_data_accepted: true })
+        .eq('id', user.id);
 
     if (!error) {
         const profile = await getProfile();
