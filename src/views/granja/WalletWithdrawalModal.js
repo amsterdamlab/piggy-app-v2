@@ -157,10 +157,10 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   const renderStep2Dinero = () => {
     const curProfile = AppState.get('profile') || profile || {};
     const userBank = curProfile.bank_name || '';
-    const userAccount = curProfile.bank_account_number || curProfile.bank_breve_key || '';
+    const userBreveKey = curProfile.bank_breve_key || '';
     const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
     const userCedula = curProfile.cedula || curProfile.document_id || '';
-    const hasBankData = Boolean(userBank || userAccount);
+    const hasBankData = Boolean(userBank && userBreveKey);
 
     return `
       <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
@@ -199,8 +199,8 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
                 <span style="font-size:0.98rem; font-weight:850; color:#0f172a;">${userBank || 'Banco Registrado'}</span>
               </div>
               <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#334155;">
-                <span style="color:#64748b; font-weight:600;">No. Cuenta / Llave:</span>
-                <code style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-weight:700; color:#0f172a;">${userAccount || 'No registrada'}</code>
+                <span style="color:#64748b; font-weight:600;">Llave Bre-B:</span>
+                <code style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-weight:700; color:#0f172a;">${userBreveKey || 'No registrada'}</code>
               </div>
               ${userCedula ? `
               <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; color:#64748b;">
@@ -210,13 +210,13 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
               ` : ''}
               <div style="margin-top:6px; padding-top:8px; border-top:1px dashed #cbd5e1; text-align:right;">
                 <button id="btn-goto-profile-edit" style="background:none; border:none; color:#be1260; font-size:0.75rem; font-weight:700; cursor:pointer; padding:0; text-decoration:underline;">
-                  Cambiar o editar cuenta en Mi Perfil
+                  Cambiar o editar en Mi Perfil
                 </button>
               </div>
             </div>
           ` : `
             <div style="text-align:center; padding:10px 0;">
-              <p style="font-size:0.85rem; color:#64748b; margin:0 0 10px 0;">Aún no tienes una cuenta bancaria registrada en tu perfil.</p>
+              <p style="font-size:0.85rem; color:#64748b; margin:0 0 10px 0;">Aún no tienes un banco y Llave Bre-B registrados en tu perfil.</p>
               <button id="btn-goto-profile-setup" style="
                 background: #fdf2f5; color: #be1260; border: 1.5px solid #fbcfe8;
                 padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 0.82rem;
@@ -428,7 +428,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
     document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
       const curProfile = AppState.get('profile') || profile || {};
       const userBank = curProfile.bank_name || '';
-      const userAccount = curProfile.bank_account_number || curProfile.bank_breve_key || '';
+      const userBreveKey = curProfile.bank_breve_key || '';
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
@@ -442,8 +442,8 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         errDiv.style.display = 'block';
         return;
       }
-      if (!userBank && !userAccount) {
-        errDiv.textContent = 'Por favor registra tu cuenta bancaria en Mi Perfil para continuar.';
+      if (!userBank || !userBreveKey) {
+        errDiv.textContent = 'Por favor registra tu banco y Llave Bre-B en Mi Perfil para continuar.';
         errDiv.style.display = 'block';
         return;
       }
@@ -469,7 +469,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         return;
       }
 
-      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.requestId);
+      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.requestId, userBreveKey);
       closeSubscreen();
       showWalletRequestSuccess('withdrawal', amount, userBank || 'Banco Registrado', res.requestId, onUpdated);
     });
