@@ -152,12 +152,12 @@ async function loadPiggyDetail(piggyId) {
                 <span class="font-semibold">${formatCOP(piggy.investment_amount)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Beneficio</span>
-                <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
-              </div>
-              <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">Fecha Cierre de Ciclo</span>
                 <span class="font-semibold">${new Date(piggy.end_date).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '-')}</span>
+              </div>
+              <div class="piggy-detail__finance-row">
+                <span class="text-sm text-muted">Beneficio</span>
+                <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
