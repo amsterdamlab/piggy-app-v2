@@ -10,13 +10,15 @@ import { AppState } from '../state.js';
 /* ─── Helpers ─────────────────────────────── */
 
 /**
- * Check whether a flash/cycle mission has expired.
- * @param {string} activatedAt - ISO timestamp of activation
- * @param {number} durationHours - Duration in hours
+ * Check whether a flash mission has expired based on scheduled_at (expiration deadline).
+ * @param {string} scheduledAt - ISO timestamp when the mission expires
  * @returns {{ expired: boolean, expiresAt: string, remainingMs: number }}
  */
-function computeExpiry(activatedAt, durationHours) {
-    const expiresAtMs = new Date(activatedAt).getTime() + (durationHours * 3600000);
+function computeExpiry(scheduledAt) {
+    if (!scheduledAt) {
+        return { expired: false, expiresAt: null, remainingMs: 0 };
+    }
+    const expiresAtMs = new Date(scheduledAt).getTime();
     const remainingMs = expiresAtMs - Date.now();
     return {
         expired:   remainingMs <= 0,
@@ -49,9 +51,9 @@ export async function deactivateFlashMission(missionId) {
 
 /**
  * Get active flash missions for the current user.
- * Filters: is_active=TRUE, is_purchased=FALSE, within duration window, and scheduled_at <= NOW().
- * Automatically sets is_active=FALSE in the DB for any records that have expired.
- * Orders by activated_at DESC (most recent first).
+ * Filters: is_active=TRUE, is_purchased=FALSE, and NOW() < scheduled_at.
+ * Automatically sets is_active=FALSE in the DB for any records whose scheduled_at deadline has passed.
+ * Orders by created_at DESC (most recent first).
  * @returns {Promise<Array>}
  */
 export async function getActiveUserFlashMissions() {
@@ -72,32 +74,24 @@ export async function getActiveUserFlashMissions() {
         .eq('user_id', user.id)
         .eq('is_active', true)
         .eq('is_purchased', false)
-        .order('activated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.warn('getActiveUserFlashMissions error:', error.message);
         return [];
     }
 
-    const nowMs = Date.now();
     const expiredIds = [];
     const activeList = [];
 
-    // Filter out scheduled future missions, expired missions, and inject computed expiry info
+    // Check expiration using scheduled_at as the expiration deadline
     for (const m of (data || [])) {
-        // If scheduled_at is in the future, hide for now (not yet started)
-        if (m.scheduled_at) {
-            const scheduledMs = new Date(m.scheduled_at).getTime();
-            if (scheduledMs > nowMs) continue;
-        }
-
-        const activationTime = m.activated_at || m.scheduled_at || m.created_at;
-        if (!activationTime) {
-            expiredIds.push(m.id);
+        if (!m.scheduled_at) {
+            activeList.push({ ...m, expiresAt: null, remainingMs: 0 });
             continue;
         }
 
-        const expiry = computeExpiry(activationTime, m.duration_hours || 72);
+        const expiry = computeExpiry(m.scheduled_at);
         if (expiry.expired) {
             expiredIds.push(m.id);
             continue;
@@ -147,14 +141,11 @@ export async function buyFlashMission(missionId, piggyName) {
     if (mError || !mission) return { success: false, error: 'Misión no encontrada' };
     if (mission.is_purchased) return { success: false, error: 'Ya fue comprada' };
 
-    // Verify not expired and scheduled_at has passed
-    if (mission.scheduled_at && new Date(mission.scheduled_at).getTime() > Date.now()) {
-        return { success: false, error: 'Esta misión aún no está disponible' };
+    // Verify not expired using scheduled_at deadline
+    if (mission.scheduled_at) {
+        const expiry = computeExpiry(mission.scheduled_at);
+        if (expiry.expired) return { success: false, error: 'La oferta ha expirado' };
     }
-
-    const activationTime = mission.activated_at || mission.scheduled_at || mission.created_at;
-    const expiry = computeExpiry(activationTime, mission.duration_hours || 72);
-    if (expiry.expired) return { success: false, error: 'La oferta ha expirado' };
 
     const profile = AppState.get('profile');
 

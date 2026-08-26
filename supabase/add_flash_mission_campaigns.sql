@@ -200,24 +200,16 @@ CREATE TRIGGER trg_assign_flash_missions_new_user
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.assign_active_flash_missions_to_new_user();
 
--- 5. Trigger to enforce is_active = FALSE when is_purchased = TRUE or when expired
+-- 5. Trigger to enforce is_active = FALSE when is_purchased = TRUE or when scheduled_at passed
 CREATE OR REPLACE FUNCTION public.sync_flash_mission_status()
 RETURNS TRIGGER AS $$
-DECLARE
-  v_base_time TIMESTAMP WITH TIME ZONE;
-  v_duration_hours INTEGER;
-  v_expiry_time TIMESTAMP WITH TIME ZONE;
 BEGIN
   IF NEW.is_purchased = TRUE THEN
     NEW.is_active := FALSE;
   END IF;
 
-  IF NEW.is_active = TRUE THEN
-    v_base_time := COALESCE(NEW.scheduled_at, NEW.activated_at, NEW.created_at, NOW());
-    v_duration_hours := COALESCE(NEW.duration_hours, 72);
-    v_expiry_time := v_base_time + (v_duration_hours * INTERVAL '1 hour');
-
-    IF NOW() >= v_expiry_time THEN
+  IF NEW.is_active = TRUE AND NEW.scheduled_at IS NOT NULL THEN
+    IF NOW() >= NEW.scheduled_at THEN
       NEW.is_active := FALSE;
     END IF;
   END IF;
@@ -242,9 +234,8 @@ BEGIN
     SELECT id FROM public.user_flash_missions
     WHERE user_id IS NULL
       AND is_active = TRUE
-      AND (
-        (COALESCE(scheduled_at, activated_at, created_at) + (COALESCE(duration_hours, 72) * INTERVAL '1 hour')) <= NOW()
-      )
+      AND scheduled_at IS NOT NULL
+      AND NOW() >= scheduled_at
   LOOP
     UPDATE public.user_flash_missions
     SET is_active = FALSE
@@ -262,7 +253,7 @@ BEGIN
       AND (
         is_purchased = TRUE
         OR (
-          (COALESCE(scheduled_at, activated_at, created_at) + (COALESCE(duration_hours, 72) * INTERVAL '1 hour')) <= NOW()
+          scheduled_at IS NOT NULL AND NOW() >= scheduled_at
         )
       )
     RETURNING id
