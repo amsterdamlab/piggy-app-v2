@@ -199,3 +199,91 @@ DROP TRIGGER IF EXISTS trg_assign_flash_missions_new_user ON public.profiles;
 CREATE TRIGGER trg_assign_flash_missions_new_user
   AFTER INSERT ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.assign_active_flash_missions_to_new_user();
+
+-- 5. Trigger to enforce is_active = FALSE when is_purchased = TRUE or when expired
+CREATE OR REPLACE FUNCTION public.sync_flash_mission_status()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_base_time TIMESTAMP WITH TIME ZONE;
+  v_duration_hours INTEGER;
+  v_expiry_time TIMESTAMP WITH TIME ZONE;
+BEGIN
+  IF NEW.is_purchased = TRUE THEN
+    NEW.is_active := FALSE;
+  END IF;
+
+  IF NEW.is_active = TRUE THEN
+    v_base_time := COALESCE(NEW.scheduled_at, NEW.activated_at, NEW.created_at, NOW());
+    v_duration_hours := COALESCE(NEW.duration_hours, 72);
+    v_expiry_time := v_base_time + (v_duration_hours * INTERVAL '1 hour');
+
+    IF NOW() >= v_expiry_time THEN
+      NEW.is_active := FALSE;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_flash_mission_status ON public.user_flash_missions;
+CREATE TRIGGER trg_sync_flash_mission_status
+  BEFORE INSERT OR UPDATE ON public.user_flash_missions
+  FOR EACH ROW EXECUTE FUNCTION public.sync_flash_mission_status();
+
+-- 6. Stored Procedure (RPC) to deactivate all outdated / purchased flash missions in bulk
+CREATE OR REPLACE FUNCTION public.expire_outdated_flash_missions()
+RETURNS INTEGER AS $$
+DECLARE
+  v_updated_count INTEGER := 0;
+  v_template_record RECORD;
+BEGIN
+  FOR v_template_record IN
+    SELECT id FROM public.user_flash_missions
+    WHERE user_id IS NULL
+      AND is_active = TRUE
+      AND (
+        (COALESCE(scheduled_at, activated_at, created_at) + (COALESCE(duration_hours, 72) * INTERVAL '1 hour')) <= NOW()
+      )
+  LOOP
+    UPDATE public.user_flash_missions
+    SET is_active = FALSE
+    WHERE id = v_template_record.id;
+
+    UPDATE public.user_flash_missions
+    SET is_active = FALSE
+    WHERE campaign_id = v_template_record.id AND is_active = TRUE;
+  END LOOP;
+
+  WITH expired_rows AS (
+    UPDATE public.user_flash_missions
+    SET is_active = FALSE
+    WHERE is_active = TRUE
+      AND (
+        is_purchased = TRUE
+        OR (
+          (COALESCE(scheduled_at, activated_at, created_at) + (COALESCE(duration_hours, 72) * INTERVAL '1 hour')) <= NOW()
+        )
+      )
+    RETURNING id
+  )
+  SELECT count(*) INTO v_updated_count FROM expired_rows;
+
+  RETURN v_updated_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.expire_outdated_flash_missions() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.expire_outdated_flash_missions() TO anon;
+GRANT EXECUTE ON FUNCTION public.expire_outdated_flash_missions() TO service_role;
+
+-- ==============================================================================
+-- EXAMPLE USAGE IN SUPABASE SQL EDITOR OR STUDIO:
+-- ==============================================================================
+-- 1. Create an instant Global Flash Mission for Advanced30 (starts immediately):
+-- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active)
+-- VALUES (NULL, '¡Acelera tu Crecimiento!', 'Inicia tu cerdito en el 2do mes ahorrando 30 días de espera.', 'advanced30', 1000000, TRUE);
+
+-- 2. Create a Scheduled Global Flash Mission for Advanced60 (scheduled for tomorrow at 14:00):
+-- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active, scheduled_at)
+-- VALUES (NULL, '¡Salto Cuántico 60 Días!', 'Inicia tu cerdito directo en el 3er mes ahorrando 60 días.', 'advanced60', 1500000, TRUE, NOW() + INTERVAL '1 day');

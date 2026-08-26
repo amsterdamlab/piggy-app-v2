@@ -9,7 +9,7 @@ import { navigateTo } from '../../router.js';
 import { getWalletBalance } from '../../services/walletService.js';
 import { formatCOP } from '../../services/mockData.js';
 import { deductWalletBalance } from '../../services/walletService.js';
-import { buyFlashMission } from '../../services/flashMissionsService.js';
+import { buyFlashMission, deactivateFlashMission } from '../../services/flashMissionsService.js';
 import { openWalletDrawer } from './WalletBlock.js';
 
 /** Active countdown interval — cleaned up on modal close */
@@ -113,6 +113,16 @@ function getTypeTheme(piggyType) {
             badge:    '⚡ OFERTA FLASH · AVANZADO 45D',
             bonusIcon:'📈',
         },
+        advanced45: {
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 45D',
+            bonusIcon:'📈',
+        },
         avanzado60: {
             gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
             shadow:   'rgba(147,51,234,0.45)',
@@ -143,7 +153,27 @@ function getTypeTheme(piggyType) {
             badge:    '🚀 OFERTA FLASH · AVANZADO 75D',
             bonusIcon:'🚀',
         },
+        advanced75: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 75D',
+            bonusIcon:'🚀',
+        },
         avanzado90: {
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '⚡',
+            badge:    '⚡ OFERTA FLASH · AVANZADO 90D',
+            bonusIcon:'⚡',
+        },
+        advanced90: {
             gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
             shadow:   'rgba(147,51,234,0.45)',
             color:    '#4C1D95',
@@ -168,6 +198,10 @@ export function showFlashMissionModal(mission) {
     if (_flashCountdownInterval) { clearInterval(_flashCountdownInterval); _flashCountdownInterval = null; }
 
     if (!mission) return;
+
+    const theme = getTypeTheme(mission.piggy_type);
+    let remaining = mission.remainingMs || 0;
+    let currentBalance = 0;
 
     const defaultPrice = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
     const price        = mission.price || defaultPrice;
@@ -466,6 +500,10 @@ export function showFlashMissionModal(mission) {
         if (remaining <= 0) {
             el.textContent = '¡Oferta vencida!';
             clearInterval(_flashCountdownInterval);
+            deactivateFlashMission(mission.id);
+            if (typeof window._refreshMissionBanner === 'function') {
+                window._refreshMissionBanner();
+            }
         } else {
             el.textContent = formatCountdown(remaining);
         }

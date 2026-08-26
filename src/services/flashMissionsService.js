@@ -28,8 +28,29 @@ function computeExpiry(activatedAt, durationHours) {
 /* ─── M8 / M9: User Flash Missions ────────── */
 
 /**
+ * Deactivate a flash mission by setting is_active = false in the database.
+ * @param {string} missionId
+ * @returns {Promise<boolean>}
+ */
+export async function deactivateFlashMission(missionId) {
+    if (isUsingMockData() || !missionId) return false;
+    try {
+        const client = getClient();
+        const { error } = await client
+            .from('user_flash_missions')
+            .update({ is_active: false })
+            .eq('id', missionId);
+        return !error;
+    } catch (err) {
+        console.warn('deactivateFlashMission error:', err);
+        return false;
+    }
+}
+
+/**
  * Get active flash missions for the current user.
  * Filters: is_active=TRUE, is_purchased=FALSE, within duration window, and scheduled_at <= NOW().
+ * Automatically sets is_active=FALSE in the DB for any records that have expired.
  * Orders by activated_at DESC (most recent first).
  * @returns {Promise<Array>}
  */
@@ -39,6 +60,11 @@ export async function getActiveUserFlashMissions() {
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
+
+    // Trigger RPC to clean up expired/purchased records in DB if available
+    try {
+        client.rpc('expire_outdated_flash_missions').then(() => {}).catch(() => {});
+    } catch (_) {}
 
     const { data, error } = await client
         .from('user_flash_missions')
@@ -54,25 +80,45 @@ export async function getActiveUserFlashMissions() {
     }
 
     const nowMs = Date.now();
+    const expiredIds = [];
+    const activeList = [];
 
     // Filter out scheduled future missions, expired missions, and inject computed expiry info
-    return (data || [])
-        .map(m => {
-            // Check scheduled_at: if it exists and is in the future, hide it for now
-            if (m.scheduled_at) {
-                const scheduledMs = new Date(m.scheduled_at).getTime();
-                if (scheduledMs > nowMs) return null;
-            }
+    for (const m of (data || [])) {
+        // If scheduled_at is in the future, hide for now (not yet started)
+        if (m.scheduled_at) {
+            const scheduledMs = new Date(m.scheduled_at).getTime();
+            if (scheduledMs > nowMs) continue;
+        }
 
-            const activationTime = m.activated_at || m.scheduled_at || m.created_at;
-            if (!activationTime) return null;
+        const activationTime = m.activated_at || m.scheduled_at || m.created_at;
+        if (!activationTime) {
+            expiredIds.push(m.id);
+            continue;
+        }
 
-            const expiry = computeExpiry(activationTime, m.duration_hours || 72);
-            if (expiry.expired) return null;
+        const expiry = computeExpiry(activationTime, m.duration_hours || 72);
+        if (expiry.expired) {
+            expiredIds.push(m.id);
+            continue;
+        }
 
-            return { ...m, expiresAt: expiry.expiresAt, remainingMs: expiry.remainingMs };
-        })
-        .filter(Boolean);
+        activeList.push({ ...m, expiresAt: expiry.expiresAt, remainingMs: expiry.remainingMs });
+    }
+
+    // Auto-update expired records to is_active = FALSE in Supabase DB
+    if (expiredIds.length > 0) {
+        client
+            .from('user_flash_missions')
+            .update({ is_active: false })
+            .in('id', expiredIds)
+            .then(({ error: updErr }) => {
+                if (updErr) console.warn('Error deactivating expired flash missions in DB:', updErr.message);
+            })
+            .catch(() => {});
+    }
+
+    return activeList;
 }
 
 /**
@@ -202,11 +248,12 @@ export async function buyFlashMission(missionId, piggyName) {
         return { success: false, error: piggyError.message };
     }
 
-    // Mark the mission as purchased
+    // Mark the mission as purchased and deactivate it
     const { error: updateError } = await client
         .from('user_flash_missions')
         .update({
             is_purchased:       true,
+            is_active:          false,
             purchased_at:       new Date().toISOString(),
             purchased_piggy_id: newPiggy.id,
         })
