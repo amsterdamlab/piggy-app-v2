@@ -5,10 +5,11 @@
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { createWalletRequest, notifyAdminViaWhatsApp, requestMeatRedemption } from '../../services/walletService.js';
+import { requestBankWithdrawal, createWalletRequest, notifyAdminViaWhatsApp, requestMeatRedemption } from '../../services/walletService.js';
 import { getProfile } from '../../services/authService.js';
 import { openWalletDrawer, openMeatRedemptionModal } from './WalletDrawerModal.js';
 import { navigateTo } from '../../router.js';
+import { showToast } from '../../components/Toast.js';
 
 /**
  * Open Wallet Withdrawal flow as a sliding subscreen inside the parent container.
@@ -302,7 +303,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         </div>
         
         <div>
-          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Comprar Carne</h2>
+          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Retiro de Dinero</h2>
           <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
         </div>
       </div>
@@ -416,6 +417,8 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
       const curProfile = AppState.get('profile') || profile || {};
       const userBank = curProfile.bank_name || '';
       const userBreveKey = curProfile.bank_breve_key || '';
+      const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
+      const userCedula = curProfile.cedula || curProfile.document_id || '';
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
@@ -441,14 +444,20 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
 
       errDiv.style.display = 'none';
       
-      const res = await createWalletRequest('withdrawal', amount, userBank || 'Banco Registrado');
+      const res = await requestBankWithdrawal({
+        amount,
+        bankName: userBank || 'Banco Registrado',
+        accountType: userAccountType || 'Cuenta de Ahorros',
+        breveKey: userBreveKey || '',
+        notes: `Retiro bancario solicitado por ${userName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
+      });
+
       if (!res.success) {
         errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
         errDiv.style.display = 'block';
         btn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-            <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+          <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
           </svg>
           Solicitar Retiro
         `;
@@ -456,9 +465,20 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         return;
       }
 
-      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.requestId, userBreveKey);
+      // 1. Mostrar Toast de éxito inmediato
+      showToast('Solicitud enviada y saldo retenido para transferencia', { type: 'success' });
+
+      // 2. Actualizar estado visual de saldo en tiempo real
+      if (onUpdated && res.newBalance !== undefined) {
+        onUpdated(res.newBalance);
+      }
+
+      // 3. Notificar a WhatsApp de administración
+      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.reference || res.requestId, userBreveKey);
+      
+      // 4. Cerrar subscreen y abrir recibo de confirmación
       closeSubscreen();
-      showWalletRequestSuccess('withdrawal', amount, userBank || 'Banco Registrado', res.requestId, onUpdated);
+      showWalletRequestSuccess('withdrawal', amount, userBank || 'Banco Registrado', res.reference || res.requestId, onUpdated);
     });
   };
 
@@ -533,7 +553,7 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
         </div>
 
         <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 20px 0; text-align:center;">
-          Hemos abierto WhatsApp para que confirmes la solicitud con administración. Tu saldo se actualizará tras la aprobación.
+          Hemos abierto WhatsApp para que confirmes la solicitud con administración. Tu saldo ha sido retenido para la transferencia bancaria.
         </p>
 
         <button id="btn-close-success-modal" style="

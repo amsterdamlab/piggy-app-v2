@@ -144,22 +144,22 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
             <!-- Main Action Buttons -->
             <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
                <button id="btn-recargar-wallet-drawer" style="
-                   width: 100%;
-                   background: #ec4899;
-                   color: white;
-                   border: none;
-                   padding: 16px 20px;
-                   border-radius: 14px;
-                   font-weight: 800;
-                   font-size: 1rem;
-                   cursor: pointer;
-                   display: flex;
-                   align-items: center;
-                   justify-content: center;
-                   gap: 10px;
-                   box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
-                   transition: all 0.2s;
-                " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
+                  width: 100%;
+                  background: #ec4899;
+                  color: white;
+                  border: none;
+                  padding: 16px 20px;
+                  border-radius: 14px;
+                  font-weight: 800;
+                  font-size: 1rem;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 10px;
+                  box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+                  transition: all 0.2s;
+               " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                   Recargar mi Cuenta
                </button>
@@ -266,6 +266,8 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
       stats.saldoDisponibleFormatted = formatCOP(newBalance);
       const balEl = document.getElementById('drawer-main-balance');
       if (balEl) balEl.textContent = stats.saldoDisponibleFormatted;
+      const bannerBalEl = document.getElementById('granja-banner-balance');
+      if (bannerBalEl) bannerBalEl.textContent = stats.saldoDisponibleFormatted;
     }
     if (newBonus !== undefined) {
       stats.referralBonus = newBonus;

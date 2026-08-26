@@ -504,243 +504,209 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
 }
 
 /**
+ * Helper to register a wallet request in Supabase with optional RPC fallback.
+ */
+async function recordWalletRequestInDB({ userId, userName, requestType, paymentMethod, reference, amount, walletType, bankName, notes, rpcName = null, rpcArgs = null }) {
+    const client = getClient();
+    if (rpcName && rpcArgs) {
+        try {
+            const { data, error } = await client.rpc(rpcName, rpcArgs);
+            if (!error && data?.success) {
+                return { success: true, requestId: data.request_id, reference: data.reference || reference, status: 'pending' };
+            }
+        } catch (e) {
+            console.warn(`RPC ${rpcName} exception:`, e);
+        }
+    }
+
+    const { data, error } = await client
+        .from('wallet_requests')
+        .insert({
+            user_id: userId,
+            user_name: userName,
+            request_type: requestType,
+            payment_method: paymentMethod,
+            reference,
+            amount: amount || 0,
+            status: 'pending',
+            wallet_type: walletType || 'dinero',
+            bank_name: bankName,
+            notes,
+        })
+        .select('id, reference, status')
+        .single();
+
+    if (error) {
+        console.error('Error registrando solicitud en wallet_requests:', error);
+        return { success: false, reason: error.message };
+    }
+
+    return {
+        success: true,
+        requestId: data?.id,
+        reference: data?.reference || reference,
+        status: data?.status || 'pending',
+    };
+}
+
+/**
  * Registrar una solicitud de recarga por Bre-B (Semi-automática).
- * Inserta un registro en wallet_requests con estado 'pending' y la referencia única
- * para que el administrador verifique la transferencia y la apruebe en Supabase.
- *
- * @param {Object} params
- * @param {number} params.amount - Monto a recargar en COP
- * @param {string} params.reference - Código de referencia único (ej: PGY-748291)
- * @param {string} [params.breBKey='@piggygranjamoral'] - Llave Bre-B utilizada
- * @param {Object} [params.mockState=null] - Estado mutable para mock mode
- * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
  */
 export async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {
     if (isUsingMockData()) {
         initMockState();
-        return {
-            success: true,
-            requestId: `req-breb-${Date.now()}`,
-            reference,
-            status: 'pending'
-        };
+        return { success: true, requestId: `req-breb-${Date.now()}`, reference, status: 'pending' };
     }
 
-    // Real Supabase mode
     const client = getClient();
-    if (!client) {
-        return { success: false, reason: 'no_supabase_client' };
-    }
+    if (!client) return { success: false, reason: 'no_supabase_client' };
 
-    let userId = null;
-    try {
-        const { data: authData } = await client.auth.getUser();
-        userId = authData?.user?.id;
-    } catch (e) {
-        console.warn('No se pudo obtener usuario de auth.getUser:', e);
-    }
-
-    if (!userId) {
-        const profile = AppState.get('profile') || AppState.get('currentUser');
-        userId = profile?.id;
-    }
-
-    if (!userId) {
-        console.error('No se encontró ID de usuario para registrar la solicitud');
-        return { success: false, reason: 'not_authenticated' };
-    }
-
-    // 1. Intentar registrar a través de RPC seguro
-    try {
-        const { data, error } = await client.rpc('create_recharge_request', {
-            p_user_id: userId,
-            p_amount: amount,
-            p_payment_method: 'BRE_B',
-            p_reference: reference,
-            p_notes: `Llave Bre-B: ${breBKey}`
-        });
-
-        if (!error && data?.success) {
-            console.log('✅ Solicitud Bre-B registrada vía RPC en wallet_requests:', data);
-            return {
-                success: true,
-                requestId: data.request_id,
-                reference: data.reference || reference,
-                status: 'pending'
-            };
-        }
-        if (error) {
-            console.warn('RPC create_recharge_request retornó error, intentando inserción directa:', error);
-        }
-    } catch (rpcErr) {
-        console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
-    }
-
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
     const profile = AppState.get('profile') || AppState.get('currentUser');
-    const userName = profile?.full_name || 'Usuario';
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
 
-    // 2. Inserción directa en tabla wallet_requests
-    const { data, error } = await client
-        .from('wallet_requests')
-        .insert({
-            user_id: userId,
-            user_name: userName,
-            request_type: 'recharge',
-            payment_method: 'BRE_B',
-            reference: reference,
-            amount: amount,
-            status: 'pending',
-            wallet_type: 'dinero',
-            bank_name: 'Bancolombia',
-            notes: `Llave Bre-B: ${breBKey}`
-        })
-        .select('id, reference, status')
-        .single();
-
-    if (error) {
-        console.error('Error registrando solicitud Bre-B en wallet_requests:', error);
-        return { success: false, reason: error.message };
-    }
-
-    console.log('✅ Solicitud Bre-B registrada exitosamente en wallet_requests:', data);
-    return {
-        success: true,
-        requestId: data?.id,
-        reference: data?.reference || reference,
-        status: data?.status || 'pending'
-    };
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'recharge',
+        paymentMethod: 'BRE_B',
+        reference,
+        amount,
+        walletType: 'dinero',
+        bankName: 'Bancolombia',
+        notes: `Llave Bre-B: ${breBKey}`,
+        rpcName: 'create_recharge_request',
+        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'BRE_B', p_reference: reference, p_notes: `Llave Bre-B: ${breBKey}` }
+    });
 }
 
 /**
  * Registrar una solicitud de recarga por Código QR.
- * Inserta un registro en wallet_requests con estado 'pending' y la referencia única
- * para que el administrador verifique la transferencia y la apruebe en Supabase.
- *
- * @param {Object} params
- * @param {number} params.amount - Monto a recargar en COP
- * @param {string} params.reference - Código de referencia único (ej: PGY-748291)
- * @param {Object} [params.mockState=null] - Estado mutable para mock mode
- * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
  */
 export async function requestQRRecharge({ amount, reference, mockState = null }) {
     if (isUsingMockData()) {
         initMockState();
-        return {
-            success: true,
-            requestId: `req-qr-${Date.now()}`,
-            reference,
-            status: 'pending'
-        };
+        return { success: true, requestId: `req-qr-${Date.now()}`, reference, status: 'pending' };
     }
 
-    // Real Supabase mode
     const client = getClient();
-    if (!client) {
-        return { success: false, reason: 'no_supabase_client' };
-    }
+    if (!client) return { success: false, reason: 'no_supabase_client' };
 
-    let userId = null;
-    try {
-        const { data: authData } = await client.auth.getUser();
-        userId = authData?.user?.id;
-    } catch (e) {
-        console.warn('No se pudo obtener usuario de auth.getUser:', e);
-    }
-
-    if (!userId) {
-        const profile = AppState.get('profile') || AppState.get('currentUser');
-        userId = profile?.id;
-    }
-
-    if (!userId) {
-        console.error('No se encontró ID de usuario para registrar la solicitud');
-        return { success: false, reason: 'not_authenticated' };
-    }
-
-    // 1. Intentar registrar a través de RPC seguro
-    try {
-        const { data, error } = await client.rpc('create_recharge_request', {
-            p_user_id: userId,
-            p_amount: amount,
-            p_payment_method: 'QR_CODE',
-            p_reference: reference,
-            p_notes: 'Código QR Bancolombia'
-        });
-
-        if (!error && data?.success) {
-            console.log('✅ Solicitud QR registrada vía RPC en wallet_requests:', data);
-            return {
-                success: true,
-                requestId: data.request_id,
-                reference: data.reference || reference,
-                status: 'pending'
-            };
-        }
-        if (error) {
-            console.warn('RPC create_recharge_request retornó error, intentando inserción directa:', error);
-        }
-    } catch (rpcErr) {
-        console.warn('Excepción en RPC create_recharge_request, procediendo con inserción directa en wallet_requests:', rpcErr);
-    }
-
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
     const profile = AppState.get('profile') || AppState.get('currentUser');
-    const userName = profile?.full_name || 'Usuario';
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
 
-    // 2. Inserción directa en tabla wallet_requests
-    const { data, error } = await client
-        .from('wallet_requests')
-        .insert({
-            user_id: userId,
-            user_name: userName,
-            request_type: 'recharge',
-            payment_method: 'QR_CODE',
-            reference: reference,
-            amount: amount,
-            status: 'pending',
-            wallet_type: 'dinero',
-            bank_name: 'Bancolombia',
-            notes: 'Código QR Bancolombia'
-        })
-        .select('id, reference, status')
-        .single();
-
-    if (error) {
-        console.error('Error registrando solicitud QR en wallet_requests:', error);
-        return { success: false, reason: error.message };
-    }
-
-    console.log('✅ Solicitud QR registrada exitosamente en wallet_requests:', data);
-    return {
-        success: true,
-        requestId: data?.id,
-        reference: data?.reference || reference,
-        status: data?.status || 'pending'
-    };
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'recharge',
+        paymentMethod: 'QR_CODE',
+        reference,
+        amount,
+        walletType: 'dinero',
+        bankName: 'Bancolombia',
+        notes: 'Código QR Bancolombia',
+        rpcName: 'create_recharge_request',
+        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'QR_CODE', p_reference: reference, p_notes: 'Código QR Bancolombia' }
+    });
 }
 
 /**
  * Registrar una solicitud de canje por carne (Bonos de Consumo).
- * Inserta un registro en wallet_requests con request_type 'consumption', estado 'pending' y referencia.
- *
- * @param {Object} params
- * @param {number} params.amount - Monto a canjear en COP (saldo de bonos)
- * @param {string} params.reference - Código de referencia único (ej: PGY-CRN-748291)
- * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, reason?: string }>}
  */
 export async function requestMeatRedemption({ amount, reference }) {
     if (isUsingMockData()) {
+        return { success: true, requestId: `req-crn-${Date.now()}`, reference, status: 'pending' };
+    }
+
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_supabase_client' };
+
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
+
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'consumption',
+        paymentMethod: 'BONO',
+        reference,
+        amount,
+        walletType: 'bono_consumo',
+        notes: 'Canje de bonos por productos de carne',
+    });
+}
+
+/* ─── Bank Withdrawal with Immediate Retention (Fintech Standard) ─── */
+
+/**
+ * Request a bank withdrawal with immediate balance retention.
+ * 1. Validates available balance (amount <= profiles.wallet_balance).
+ * 2. Debits immediately from profiles.wallet_balance.
+ * 3. Records accounting debit in wallet_transactions (-amount).
+ * 4. Inserts pending request in wallet_requests.
+ * 5. Syncs AppState and local state in real time.
+ *
+ * @param {Object} params
+ * @param {number} params.amount - Monto a retirar en COP
+ * @param {string} [params.bankName] - Nombre del banco de destino
+ * @param {string} [params.accountType] - Tipo de cuenta
+ * @param {string} [params.breveKey] - Llave Bre-B
+ * @param {string} [params.notes] - Notas bancarias
+ * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, newBalance?: number, reason?: string }>}
+ */
+export async function requestBankWithdrawal({ amount, bankName = '', accountType = '', breveKey = '', notes = '' }) {
+    const numAmount = Number(amount) || 0;
+    if (numAmount <= 0) {
+        return { success: false, reason: 'El monto a retirar debe ser mayor a cero' };
+    }
+
+    const refCode = `RET-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    if (isUsingMockData()) {
+        initMockState();
+        if (mockBalance < numAmount) {
+            return { success: false, reason: 'Saldo insuficiente en tu Cuenta Agro' };
+        }
+
+        mockBalance -= numAmount;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+
+        const bankLabel = bankName || 'Bancario';
+        const debitTx = {
+            id: `tx-ret-${Date.now()}`,
+            user_id: 'mock-user-id',
+            amount: -numAmount,
+            type: 'debit',
+            description: `Retención por solicitud de retiro bancario (${bankLabel}) [Ref: ${refCode}]`,
+            wallet_type: 'dinero',
+            payment_method: 'TRANSFERENCIA',
+            simulation_status: 'PENDING',
+            created_at: new Date().toISOString(),
+        };
+
+        if (!mockTransactions) mockTransactions = [];
+        mockTransactions.unshift(debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+
+        const curProfile = AppState.get('profile') || { ...MOCK_PROFILE };
+        curProfile.wallet_balance = mockBalance;
+        AppState.set({ profile: { ...curProfile } });
+
         return {
             success: true,
-            requestId: `req-crn-${Date.now()}`,
-            reference,
-            status: 'pending'
+            requestId: `req-ret-${Date.now()}`,
+            reference: refCode,
+            newBalance: mockBalance,
         };
     }
 
     const client = getClient();
-    if (!client) {
-        return { success: false, reason: 'no_supabase_client' };
-    }
+    if (!client) return { success: false, reason: 'no_supabase_client' };
 
     let userId = null;
     try {
@@ -755,54 +721,125 @@ export async function requestMeatRedemption({ amount, reference }) {
         userId = profile?.id;
     }
 
-    const profile = AppState.get('profile') || AppState.get('currentUser');
-    const userName = profile?.full_name || 'Usuario';
+    if (!userId) return { success: false, reason: 'not_authenticated' };
 
+    // 1. Validación de Saldo Disponible en DB
+    const { data: profile, error: profileErr } = await client
+        .from('profiles')
+        .select('id, wallet_balance, full_name, bank_name, bank_account_type, bank_breve_key')
+        .eq('id', userId)
+        .single();
+
+    if (profileErr || !profile) {
+        return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
+    }
+
+    const currentBalance = Number(profile.wallet_balance) || 0;
+    if (currentBalance < numAmount) {
+        return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };
+    }
+
+    const effectiveBank = bankName || profile.bank_name || 'Bancario';
+    const effectiveAccountType = accountType || profile.bank_account_type || 'Ahorros';
+    const effectiveBreveKey = breveKey || profile.bank_breve_key || '';
+    const bankDetailsStr = [effectiveBank, effectiveAccountType, effectiveBreveKey ? `Llave Bre-B: ${effectiveBreveKey}` : ''].filter(Boolean).join(' - ');
+    const userName = profile.full_name || 'Usuario';
+    const finalNotes = notes || `Retiro bancario a cuenta ${bankDetailsStr}`;
+    const txDescription = `Retención por solicitud de retiro bancario (${effectiveBank}) [Ref: ${refCode}]`;
+    const newBalance = Math.max(0, currentBalance - numAmount);
+
+    // 2. Registro Contable de Retención en wallet_transactions (-numAmount)
+    const { data: txData, error: txError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: userId,
+            amount: -numAmount,
+            type: 'debit',
+            description: txDescription,
+            wallet_type: 'dinero',
+            payment_method: 'TRANSFERENCIA',
+            simulation_status: 'PENDING',
+            created_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+    if (txError) {
+        console.error('Error insertando débito de retención en wallet_transactions:', txError);
+        return { success: false, reason: 'Error contable al registrar la retención: ' + txError.message };
+    }
+
+    // 3. Retención / Débito Inmediato en profiles.wallet_balance
+    const { error: balError } = await client
+        .from('profiles')
+        .update({ wallet_balance: newBalance })
+        .eq('id', userId);
+
+    if (balError) {
+        console.warn('Advertencia actualizando profiles.wallet_balance directamente:', balError);
+    }
+
+    // 4. Creación de la Solicitud en wallet_requests
+    let requestId = txData?.id || null;
     try {
-        const { data, error } = await client
+        const { data: reqData, error: reqError } = await client
             .from('wallet_requests')
             .insert({
                 user_id: userId,
                 user_name: userName,
-                request_type: 'consumption',
-                reference: reference,
-                amount: amount || 0,
+                request_type: 'withdrawal',
+                amount: numAmount,
+                bank_name: bankDetailsStr,
+                reference: refCode,
+                wallet_type: 'dinero',
                 status: 'pending',
-                wallet_type: 'bono_consumo',
-                notes: 'Canje de bonos por productos de carne'
+                notes: finalNotes,
+                created_at: new Date().toISOString(),
             })
             .select('id, reference, status')
             .single();
 
-        if (error) {
-            console.error('Error registrando canje de carne en wallet_requests:', error);
-            return { success: false, reason: error.message };
+        if (reqError) {
+            console.warn('Error insertando en wallet_requests (retención ya aplicada):', reqError);
+        } else if (reqData?.id) {
+            requestId = reqData.id;
         }
-
-        console.log('✅ Solicitud de canje de carne registrada exitosamente en wallet_requests:', data);
-        return {
-            success: true,
-            requestId: data?.id,
-            reference: data?.reference || reference,
-            status: data?.status || 'pending'
-        };
     } catch (e) {
-        console.error('Excepción al registrar canje de carne en wallet_requests:', e);
-        return { success: false, reason: e.message };
+        console.warn('Excepción al crear registro en wallet_requests:', e);
     }
+
+    // 5. Actualizar AppState en tiempo real
+    const currentAppStateProfile = AppState.get('profile') || {};
+    AppState.set({
+        profile: {
+            ...currentAppStateProfile,
+            ...profile,
+            wallet_balance: newBalance,
+        }
+    });
+
+    return {
+        success: true,
+        requestId,
+        reference: refCode,
+        newBalance,
+    };
 }
 
-/* ─── Create Wallet Request ─── */
+/* ─── Create Wallet Request (Backwards-Compatible Wrapper) ─── */
 
 /**
  * Submit a withdrawal or consumption request.
- * Stores in DB and opens WhatsApp to notify admin.
  * @param {'withdrawal' | 'consumption'} requestType
  * @param {number} amount - Amount in COP
  * @param {string|null} bankName - Bank name (only for withdrawals)
- * @returns {{ success: boolean, requestId?: string, reason?: string }}
+ * @returns {{ success: boolean, requestId?: string, reference?: string, newBalance?: number, reason?: string }}
  */
 export async function createWalletRequest(requestType, amount, bankName = null) {
+    if (requestType === 'withdrawal') {
+        return requestBankWithdrawal({ amount, bankName });
+    }
+
     if (isUsingMockData()) {
         return { success: true, requestId: 'mock-req-id' };
     }
@@ -814,29 +851,6 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
     const profile = AppState.get('profile') || AppState.get('currentUser');
     const userName = profile?.full_name || 'Usuario';
 
-    // 1. Intentar registrar a través de RPC
-    try {
-        const { data, error } = await client.rpc('create_wallet_request', {
-            p_user_id: user.id,
-            p_type: requestType,
-            p_amount: amount,
-            p_bank: bankName,
-        });
-
-        if (!error && data?.success === true) {
-            return {
-                success: true,
-                requestId: data?.request_id || null,
-            };
-        }
-        if (error) {
-            console.warn('RPC create_wallet_request falló, intentando inserción directa:', error);
-        }
-    } catch (rpcErr) {
-        console.warn('Excepción en RPC create_wallet_request:', rpcErr);
-    }
-
-    // 2. Inserción directa en tabla wallet_requests como respaldo seguro
     try {
         const { data: insData, error: insError } = await client
             .from('wallet_requests')
@@ -847,20 +861,16 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
                 amount: amount,
                 bank_name: bankName,
                 status: 'pending',
-                wallet_type: requestType === 'withdrawal' ? 'dinero' : 'bono_consumo'
+                wallet_type: 'bono_consumo'
             })
             .select('id')
             .single();
 
         if (insError) {
-            console.error('Error en inserción directa de wallet_requests:', insError);
             return { success: false, reason: insError.message };
         }
 
-        return {
-            success: true,
-            requestId: insData?.id || null
-        };
+        return { success: true, requestId: insData?.id || null };
     } catch (e) {
         return { success: false, reason: e.message };
     }

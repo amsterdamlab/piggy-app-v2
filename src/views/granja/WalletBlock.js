@@ -44,7 +44,7 @@ export function renderWalletBanner(firstName, stats) {
                  
                  <div style="margin-bottom: 16px;">
                     <div style="font-size:0.75rem; opacity:0.85; margin-bottom:4px;">Saldo Disponible</div>
-                    <div style="font-size:1.8rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;">${stats.saldoDisponibleFormatted}</div>
+                    <div style="font-size:1.8rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;" id="granja-banner-balance">${stats.saldoDisponibleFormatted}</div>
                  </div>
 
                  <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
