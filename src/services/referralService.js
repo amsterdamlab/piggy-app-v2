@@ -161,10 +161,10 @@ export async function getMyReferralStats() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return null;
 
-    // Fetch balance from profile (supports both consumption_balance and legacy referral_balance)
+    // Fetch balance from profile
     const { data: profile } = await client
         .from('profiles')
-        .select('*')
+        .select('consumption_balance')
         .eq('id', user.id)
         .single();
 
@@ -194,9 +194,7 @@ export async function getMyReferralStats() {
     const completedCount = allReferrals.filter(r => r.status === 'completed').length;
     const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
 
-    const cb = Number(profile?.consumption_balance) || 0;
-    const rb = Number(profile?.referral_balance) || 0;
-    const consumptionBalance = cb > 0 ? cb : rb;
+    const consumptionBalance = Number(profile?.consumption_balance) || 0;
 
     return {
         balance: consumptionBalance,

@@ -126,16 +126,15 @@ export async function getWalletBalance() {
 
 /**
  * Fetch the current user's consumption bonus balance.
- * Supports both new 'consumption_balance' and legacy 'referral_balance'.
+ * Reads exclusively from 'consumption_balance' column.
  * These are NOT withdrawable cash — they are exchanged for meat-consumption coupons.
  * @returns {number} Consumption bonus balance in COP
  */
 export async function getReferralBonusBalance() {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || MOCK_PROFILE;
-        const cb = Number(profile?.consumption_balance) || 0;
-        const rb = Number(profile?.referral_balance) || 0;
-        return cb > 0 ? cb : (rb > 0 ? rb : 20000);
+        const cb = Number(profile?.consumption_balance);
+        return !isNaN(cb) && cb >= 0 ? cb : 20000;
     }
 
     const client = getClient();
@@ -144,14 +143,13 @@ export async function getReferralBonusBalance() {
 
     const { data } = await client
         .from('profiles')
-        .select('*')
+        .select('consumption_balance')
         .eq('id', user.id)
         .single();
 
     if (!data) return 0;
-    const cb = Number(data.consumption_balance) || 0;
-    const rb = Number(data.referral_balance) || 0;
-    return cb > 0 ? cb : rb;
+    const cb = Number(data.consumption_balance);
+    return !isNaN(cb) && cb >= 0 ? cb : 0;
 }
 
 /** Alias for semantic clarity */
@@ -163,15 +161,11 @@ export const getConsumptionBonusBalance = getReferralBonusBalance;
 export async function ensureWelcomeBonusAssigned(userId) {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
-        const cb = Number(profile?.consumption_balance) || 0;
-        const rb = Number(profile?.referral_balance) || 0;
-        const curBal = cb > 0 ? cb : rb;
-        if (!curBal) {
-            profile.consumption_balance = 20000;
-            profile.referral_balance = 20000;
-            AppState.set({ profile: { ...profile } });
-        }
-        return curBal || 20000;
+        const cb = Number(profile?.consumption_balance);
+        const curBal = !isNaN(cb) && cb >= 0 ? cb : 20000;
+        profile.consumption_balance = curBal;
+        AppState.set({ profile: { ...profile } });
+        return curBal;
     }
 
     const client = getClient();
@@ -180,13 +174,12 @@ export async function ensureWelcomeBonusAssigned(userId) {
 
     const { data } = await client
         .from('profiles')
-        .select('*')
+        .select('consumption_balance')
         .eq('id', targetUserId)
         .single();
 
-    const cb = Number(data?.consumption_balance) || 0;
-    const rb = Number(data?.referral_balance) || 0;
-    const existingBalance = cb > 0 ? cb : rb;
+    const cb = Number(data?.consumption_balance);
+    const existingBalance = !isNaN(cb) && cb >= 0 ? cb : 0;
 
     if (!data || existingBalance === 0) {
         const { error } = await client
@@ -206,8 +199,7 @@ export async function ensureWelcomeBonusAssigned(userId) {
                 AppState.set({
                     profile: {
                         ...currentProfile,
-                        consumption_balance: 20000,
-                        referral_balance: 20000
+                        consumption_balance: 20000
                     }
                 });
             }
@@ -398,8 +390,8 @@ export async function convertBalanceToConsumptionBonus(amount) {
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
 
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
-        const currentRef = profile.referral_balance || 0;
-        profile.referral_balance = currentRef + amount;
+        const currentRef = profile.consumption_balance || 0;
+        profile.consumption_balance = currentRef + amount;
         profile.wallet_balance = mockBalance;
         AppState.set({ profile: { ...profile } });
 
