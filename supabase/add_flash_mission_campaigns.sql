@@ -25,10 +25,8 @@ CREATE TABLE IF NOT EXISTS public.user_flash_missions (
   icon               TEXT DEFAULT '⚡',                                          -- Mission icon
   piggy_type         public.piggy_type_enum NOT NULL,                            -- Dropdown Enum selection
   price              NUMERIC DEFAULT 1000000,
-  duration_hours     INTEGER DEFAULT 72,
   is_active          BOOLEAN DEFAULT FALSE,
-  scheduled_at       TIMESTAMP WITH TIME ZONE NULL,                              -- Future timestamp for scheduled launch
-  activated_at       TIMESTAMP WITH TIME ZONE NULL,                              -- Timestamp when mission actually became active
+  scheduled_at       TIMESTAMP WITH TIME ZONE NULL,                              -- Exact expiration deadline timestamp
   is_purchased       BOOLEAN DEFAULT FALSE,
   purchased_at       TIMESTAMP WITH TIME ZONE NULL,
   purchased_piggy_id UUID REFERENCES public.piggies(id) ON DELETE SET NULL NULL,
@@ -55,10 +53,12 @@ BEGIN
   EXCEPTION WHEN others THEN END;
 
   BEGIN
-    -- Remove deprecated columns if present from earlier experiments
+    -- Remove deprecated / obsolete columns
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS mission_key;
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS piggy_label;
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS extra_roi_bonus;
+    ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS duration_hours;
+    ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS activated_at;
   EXCEPTION WHEN others THEN END;
   
   -- Convert piggy_type column to enum safely if it was text
@@ -105,10 +105,8 @@ BEGIN
             icon,
             piggy_type,
             price,
-            duration_hours,
             is_active,
-            scheduled_at,
-            activated_at
+            scheduled_at
           ) VALUES (
             v_profile.id,
             v_template_id,
@@ -118,10 +116,8 @@ BEGIN
             COALESCE(NEW.icon, '⚡'),
             NEW.piggy_type,
             NEW.price,
-            NEW.duration_hours,
             TRUE,
-            NEW.scheduled_at,
-            COALESCE(NEW.scheduled_at, NOW())
+            NEW.scheduled_at
           );
         END IF;
       END LOOP;
@@ -133,12 +129,6 @@ BEGIN
       SET is_active = FALSE
       WHERE campaign_id = v_template_id AND is_purchased = FALSE;
       RAISE NOTICE 'Global Flash Mission % deactivated for all users.', v_template_id;
-    END IF;
-  
-  -- If user_id is NOT null, check if activated_at needs setting
-  ELSIF NEW.user_id IS NOT NULL THEN
-    IF NEW.is_active = TRUE AND NEW.activated_at IS NULL THEN
-      NEW.activated_at := COALESCE(NEW.scheduled_at, NOW());
     END IF;
   END IF;
 
@@ -158,10 +148,9 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_template RECORD;
 BEGIN
-  -- Find all active global templates where scheduled_at is either null or past/present
   FOR v_template IN 
     SELECT * FROM public.user_flash_missions 
-    WHERE user_id IS NULL AND is_active = TRUE
+    WHERE user_id IS NULL AND is_active = TRUE AND (scheduled_at IS NULL OR NOW() < scheduled_at)
   LOOP
     INSERT INTO public.user_flash_missions (
       user_id,
@@ -172,10 +161,8 @@ BEGIN
       icon,
       piggy_type,
       price,
-      duration_hours,
       is_active,
-      scheduled_at,
-      activated_at
+      scheduled_at
     ) VALUES (
       NEW.id,
       v_template.id,
@@ -185,10 +172,8 @@ BEGIN
       COALESCE(v_template.icon, '⚡'),
       v_template.piggy_type,
       v_template.price,
-      v_template.duration_hours,
       TRUE,
-      v_template.scheduled_at,
-      COALESCE(v_template.scheduled_at, NOW())
+      v_template.scheduled_at
     );
   END LOOP;
   RETURN NEW;
@@ -271,10 +256,6 @@ GRANT EXECUTE ON FUNCTION public.expire_outdated_flash_missions() TO service_rol
 -- ==============================================================================
 -- EXAMPLE USAGE IN SUPABASE SQL EDITOR OR STUDIO:
 -- ==============================================================================
--- 1. Create an instant Global Flash Mission for Advanced30 (starts immediately):
--- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active)
--- VALUES (NULL, '¡Acelera tu Crecimiento!', 'Inicia tu cerdito en el 2do mes ahorrando 30 días de espera.', 'advanced30', 1000000, TRUE);
-
--- 2. Create a Scheduled Global Flash Mission for Advanced60 (scheduled for tomorrow at 14:00):
+-- 1. Create an instant Global Flash Mission (valid until a specific deadline):
 -- INSERT INTO public.user_flash_missions (user_id, title, description, piggy_type, price, is_active, scheduled_at)
--- VALUES (NULL, '¡Salto Cuántico 60 Días!', 'Inicia tu cerdito directo en el 3er mes ahorrando 60 días.', 'advanced60', 1500000, TRUE, NOW() + INTERVAL '1 day');
+-- VALUES (NULL, '¡Acelera tu Crecimiento!', 'Inicia tu cerdito en el 2do mes.', 'advanced30', 1000000, TRUE, '2026-08-30 20:00:00+00');
