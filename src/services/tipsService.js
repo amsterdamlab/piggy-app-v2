@@ -6,6 +6,7 @@
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
+import { getWelcomeBonusExpiryInfo } from './walletService.js';
 
 /**
  * Fallback tips used in mock mode or on DB error.
@@ -70,29 +71,55 @@ function normalizeTip(row) {
 /**
  * Fetch all active tips from the DB, ordered by priority (desc).
  * Falls back to FALLBACK_TIPS in mock mode or on any error.
+ * Automatically injects the dynamic Welcome Bonus tip if active and within 30 days.
  * @returns {Promise<Array<Object>>}
  */
 export async function getActiveTips() {
-  if (isUsingMockData()) return FALLBACK_TIPS;
+  let tips = [];
+  if (isUsingMockData()) {
+    tips = [...FALLBACK_TIPS];
+  } else {
+    try {
+      const client = getClient();
+      const { data, error } = await client
+        .from('dynamic_tips')
+        .select('icon, title, reward, color, bg_color, border_color, cta_url')
+        .eq('is_active', true)
+        .order('priority', { ascending: false });
 
-  try {
-    const client = getClient();
-    const { data, error } = await client
-      .from('dynamic_tips')
-      .select('icon, title, reward, color, bg_color, border_color, cta_url')
-      .eq('is_active', true)
-      .order('priority', { ascending: false });
-
-    if (error || !data?.length) {
-      console.warn('TipsService: falling back to local data', error?.message);
-      return FALLBACK_TIPS;
+      if (error || !data?.length) {
+        console.warn('TipsService: falling back to local data', error?.message);
+        tips = [...FALLBACK_TIPS];
+      } else {
+        tips = data.map(normalizeTip);
+      }
+    } catch (err) {
+      console.warn('TipsService: unexpected error, using fallback', err);
+      tips = [...FALLBACK_TIPS];
     }
-
-    return data.map(normalizeTip);
-  } catch (err) {
-    console.warn('TipsService: unexpected error, using fallback', err);
-    return FALLBACK_TIPS;
   }
+
+  // Dynamic Welcome Bonus Countdown Tip (active while within 30 days and has balance)
+  try {
+    const expiryInfo = await getWelcomeBonusExpiryInfo();
+    if (!expiryInfo.isExpired && expiryInfo.daysRemaining > 0 && expiryInfo.hasWelcomeBonus) {
+      const daysText = expiryInfo.daysRemaining === 1 ? '1 día' : `${expiryInfo.daysRemaining} días`;
+      const welcomeBonusTip = {
+        icon: '🎁',
+        title: 'Bono de Bienvenida por $20.000',
+        reward: `Aprovecha para redimir en productos de la Tienda. Quedan (${daysText} para expirar.)`,
+        color: '#be123c',
+        bgColor: '#fff1f2',
+        borderColor: '#ffe4e6',
+        ctaUrl: '#/gourmet',
+      };
+      tips.unshift(welcomeBonusTip);
+    }
+  } catch (err) {
+    console.warn('TipsService: error checking welcome bonus tip expiry', err);
+  }
+
+  return tips;
 }
 
 /**

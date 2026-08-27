@@ -13,7 +13,7 @@ import {
   buildGourmetCheckoutWhatsAppLink,
   buildCustomOrderWhatsAppLink,
 } from '../services/gourmetService.js';
-import { getReferralBonusBalance, getWalletBalance, createWalletRequest } from '../services/walletService.js';
+import { getReferralBonusBalance, getWalletBalance, getWelcomeBonusExpiryInfo, createWalletRequest } from '../services/walletService.js';
 import { completeMissionOnVisit } from '../services/missionsService.js';
 import { renderPiggyLoader } from '../components/PiggyLoader.js';
 
@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -91,10 +91,11 @@ export function renderPiggyGourmetView() {
 
 async function loadGourmetOffers() {
   try {
-    const [offers, referralBonus, walletBalance] = await Promise.all([
+    const [offers, referralBonus, walletBalance, expiryInfo] = await Promise.all([
       getGourmetOffers(),
       getReferralBonusBalance(),
       getWalletBalance(),
+      getWelcomeBonusExpiryInfo(),
       new Promise(resolve => setTimeout(resolve, 500))
     ]);
 
@@ -105,41 +106,53 @@ async function loadGourmetOffers() {
 
     // Render dynamic bonus banner if user has referral bonus balance
     const bonusContainer = document.getElementById('gourmet-bonus-container');
-    if (bonusContainer && userStats.referralBonus > 0) {
-      bonusContainer.innerHTML = `
-        <div class="animate-fade-in-up" style="
-          background: linear-gradient(135deg, #fffdf2 0%, #fef8db 50%, #fef3c7 100%);
-          border: 1.5px solid #fbbf24;
-          border-radius: 18px;
-          padding: 16px 18px;
-          margin-bottom: 20px;
-          box-shadow: 0 4px 20px rgba(245, 158, 11, 0.22), 0 0 12px rgba(251, 191, 36, 0.18);
-          position: relative;
-        ">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <div style="
-              width: 38px; height: 38px; border-radius: 11px;
-              background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-              display: flex; align-items: center; justify-content: center;
-              color: white; flex-shrink: 0; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
-            ">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 12v10H4V12"/>
-                <path d="M2 7h20v5H2z"/>
-                <path d="M12 22V7"/>
-                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-              </svg>
+    if (bonusContainer) {
+      if (userStats.referralBonus > 0) {
+        const isExpiringSoon = expiryInfo && !expiryInfo.isExpired && expiryInfo.daysRemaining > 0;
+        const daysText = expiryInfo?.daysRemaining === 1 ? '1 día' : `${expiryInfo?.daysRemaining} días`;
+
+        bonusContainer.innerHTML = `
+          <div class="animate-fade-in-up" style="
+            background: linear-gradient(135deg, #fffdf2 0%, #fef8db 50%, #fef3c7 100%);
+            border: 1.5px solid #fbbf24;
+            border-radius: 18px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.22), 0 0 12px rgba(251, 191, 36, 0.18);
+            position: relative;
+          ">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+              <div style="
+                width: 38px; height: 38px; border-radius: 11px;
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                display: flex; align-items: center; justify-content: center;
+                color: white; flex-shrink: 0; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+              ">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12v10H4V12"/>
+                  <path d="M2 7h20v5H2z"/>
+                  <path d="M12 22V7"/>
+                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                </svg>
+              </div>
+              <div style="font-weight: 850; color: #78350f; font-size: 0.95rem; line-height: 1.3; flex: 1;">
+                Tienes Bonos de Consumo por ${formatGourmetPrice(userStats.referralBonus)}
+              </div>
             </div>
-            <div style="font-weight: 850; color: #78350f; font-size: 0.95rem; line-height: 1.3; flex: 1;">
-              Tienes Bonos de Consumo por ${formatGourmetPrice(userStats.referralBonus)}
+            ${isExpiringSoon ? `
+              <div style="font-size: 0.80rem; color: #b45309; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <span>⏳</span> Aprovecha tu Bono por tiempo limitado. Faltan (${daysText}) para expirar.
+              </div>
+            ` : ''}
+            <div style="font-size: 0.78rem; color: #92400e; line-height: 1.45; width: 100%; border-top: 1px dashed #fde68a; padding-top: 8px;">
+              <strong>TC:</strong> Redímelos en compras iguales o superiores a $150.000.
             </div>
           </div>
-          <div style="font-size: 0.78rem; color: #92400e; line-height: 1.45; width: 100%; border-top: 1px dashed #fde68a; padding-top: 8px;">
-            <strong>TC:</strong> Redímelos en compras iguales o superiores a $150.000.
-          </div>
-        </div>
-      `;
+        `;
+      } else {
+        bonusContainer.innerHTML = '';
+      }
     }
 
     renderOfferCards(offers, userStats);
@@ -537,13 +550,13 @@ function openGourmetCheckoutModal(offer, userStats) {
           " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-          </svg>
-          Confirmar Pedido
-        </button>
+            </svg>
+            Confirmar Pedido
+          </button>
+        </div>
       </div>
-    </div>
-  `;
-};
+    `;
+  };
 
   const updateModalDOM = () => {
     modal.innerHTML = renderContent();

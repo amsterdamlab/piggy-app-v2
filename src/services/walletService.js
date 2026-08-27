@@ -125,15 +125,17 @@ export async function getWalletBalance() {
 }
 
 /**
- * Fetch the current user's consumption bonus balance (previously just referral commission).
+ * Fetch the current user's consumption bonus balance.
+ * Supports both new 'consumption_balance' and legacy 'referral_balance'.
  * These are NOT withdrawable cash — they are exchanged for meat-consumption coupons.
- * Updated automatically by triggers (e.g. Welcome Bonus) or manually by admin.
  * @returns {number} Consumption bonus balance in COP
  */
 export async function getReferralBonusBalance() {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || MOCK_PROFILE;
-        return profile?.referral_balance !== undefined ? profile.referral_balance : 20000;
+        if (profile?.consumption_balance !== undefined) return profile.consumption_balance;
+        if (profile?.referral_balance !== undefined) return profile.referral_balance;
+        return 20000;
     }
 
     const client = getClient();
@@ -142,20 +144,25 @@ export async function getReferralBonusBalance() {
 
     const { data } = await client
         .from('profiles')
-        .select('referral_balance')
+        .select('*')
         .eq('id', user.id)
         .single();
 
-    return data?.referral_balance || 0;
+    return data?.consumption_balance ?? data?.referral_balance ?? 0;
 }
 
+/** Alias for semantic clarity */
+export const getConsumptionBonusBalance = getReferralBonusBalance;
+
 /**
- * Ensures the welcome bonus ($20.000) is assigned to the user's referral_balance in DB if not set yet.
+ * Ensures the welcome bonus ($20.000) is assigned to the user's consumption balance in DB if not set yet.
  */
 export async function ensureWelcomeBonusAssigned(userId) {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
-        if (profile && !profile.referral_balance) {
+        const curBal = profile.consumption_balance ?? profile.referral_balance;
+        if (!curBal) {
+            profile.consumption_balance = 20000;
             profile.referral_balance = 20000;
             AppState.set({ profile: { ...profile } });
         }
@@ -168,11 +175,13 @@ export async function ensureWelcomeBonusAssigned(userId) {
 
     const { data } = await client
         .from('profiles')
-        .select('referral_balance')
+        .select('*')
         .eq('id', targetUserId)
         .single();
 
-    if (!data || !data.referral_balance || data.referral_balance === 0) {
+    const existingBalance = data?.consumption_balance ?? data?.referral_balance ?? 0;
+
+    if (!data || existingBalance === 0) {
         const { error } = await client
             .from('wallet_transactions')
             .insert({
@@ -187,12 +196,58 @@ export async function ensureWelcomeBonusAssigned(userId) {
             console.log('🎁 Welcome consumption bonus ($20.000) assigned via transaction in DB!');
             const currentProfile = AppState.get('profile');
             if (currentProfile && currentProfile.id === targetUserId) {
-                AppState.set({ profile: { ...currentProfile, referral_balance: 20000 } });
+                AppState.set({
+                    profile: {
+                        ...currentProfile,
+                        consumption_balance: 20000,
+                        referral_balance: 20000
+                    }
+                });
             }
             return 20000;
         }
     }
-    return data?.referral_balance || 0;
+    return existingBalance;
+}
+
+/**
+ * Calculates the Welcome Bonus expiration status based on user's registration date (created_at).
+ * Validity is exactly 30 calendar days from the creation of the account.
+ * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean }>}
+ */
+export async function getWelcomeBonusExpiryInfo() {
+    const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);
+    let createdAt = profile?.created_at;
+
+    if (!createdAt && !isUsingMockData()) {
+        try {
+            const client = getClient();
+            const { data: { user } } = await client.auth.getUser();
+            if (user) {
+                const { data } = await client.from('profiles').select('created_at').eq('id', user.id).single();
+                createdAt = data?.created_at || user.created_at;
+            }
+        } catch (e) {
+            console.warn('Could not read user registration date for bonus expiry:', e);
+        }
+    }
+
+    const regDate = createdAt ? new Date(createdAt) : new Date();
+    const EXPIRY_DAYS = 30;
+    const expiryTime = regDate.getTime() + (EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const now = Date.now();
+    const msRemaining = expiryTime - now;
+    const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+    const isExpired = msRemaining <= 0;
+
+    const currentBonus = await getReferralBonusBalance();
+
+    return {
+        isExpired,
+        daysRemaining,
+        expiryDate: new Date(expiryTime),
+        hasWelcomeBonus: currentBonus > 0,
+    };
 }
 
 /* ─── Deduct Wallet Balance (Post-Purchase) ─── */
@@ -645,18 +700,7 @@ export async function requestMeatRedemption({ amount, reference }) {
 
 /**
  * Request a bank withdrawal with immediate balance retention.
- * 1. Validates available balance (amount <= profiles.wallet_balance).
- * 2. Debits immediately from profiles.wallet_balance.
- * 3. Records accounting debit in wallet_transactions (-amount).
- * 4. Inserts pending request in wallet_requests.
- * 5. Syncs AppState and local state in real time.
- *
  * @param {Object} params
- * @param {number} params.amount - Monto a retirar en COP
- * @param {string} [params.bankName] - Nombre del banco de destino
- * @param {string} [params.accountType] - Tipo de cuenta
- * @param {string} [params.breveKey] - Llave Bre-B
- * @param {string} [params.notes] - Notas bancarias
  * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, newBalance?: number, reason?: string }>}
  */
 export async function requestBankWithdrawal({ amount, bankName = '', accountType = '', breveKey = '', notes = '' }) {
@@ -880,13 +924,6 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
 
 /**
  * Build and open a WhatsApp message to notify admin about a wallet request.
- * @param {'withdrawal' | 'consumption'} requestType
- * @param {number} amount
- * @param {string} userName
- * @param {string} userWhatsApp
- * @param {string|null} bankName
- * @param {string} requestId
- * @param {string|null} userBreveKey
  */
 export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId, userBreveKey = null) {
     const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';
