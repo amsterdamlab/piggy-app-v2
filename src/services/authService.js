@@ -104,62 +104,20 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
 }
 
 /**
- * Sign in with email and password.
+ * Sign up with email and password.
+ * Terms are already accepted before calling this function.
  */
-export async function signIn(email, password) {
+export async function signUp({ email, password, fullName, whatsapp }, onProgress = () => {}) {
     if (isUsingMockData()) {
-        mockLoggedIn = true;
-        mockProfile = {
-            ...MOCK_PROFILE,
-            email,
-            terms_accepted: true,
-            habeas_data_accepted: true,
-        };
-        AppState.set({
-            currentUser: { ...MOCK_USER, email },
-            profile: { ...mockProfile },
-            isAuthenticated: true,
-        });
-        return { user: MOCK_USER, error: null };
-    }
-
-    const client = getClient();
-    const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password,
-    });
-
-    if (error) {
-        return { user: null, error: error.message };
-    }
-
-    let profile = null;
-    if (data.user) {
-        profile = await ensureProfileExists(client, data.user);
-    }
-
-    AppState.set({
-        currentUser: data.user,
-        profile,
-        isAuthenticated: !!data.user,
-    });
-
-    return { user: data.user, error: null };
-}
-
-/**
- * Sign up with email, password, full name, and WhatsApp.
- */
-export async function signUp({ email, password, fullName, whatsapp, referralCode }) {
-    if (isUsingMockData()) {
+        onProgress('⚙️ Modo demo detectado. Configurando usuario simulado...');
         mockLoggedIn = true;
         mockProfile = {
             ...MOCK_PROFILE,
             full_name: fullName,
-            email,
             whatsapp,
-            terms_accepted: false,
-            habeas_data_accepted: false,
+            email,
+            terms_accepted: true,
+            habeas_data_accepted: true,
             referral_code: generateMockReferralCode(fullName),
             referral_balance: 20000,
         };
@@ -171,6 +129,7 @@ export async function signUp({ email, password, fullName, whatsapp, referralCode
         return { user: MOCK_USER, error: null };
     }
 
+    onProgress('🔑 Enviando datos al servidor de seguridad Supabase...');
     const client = getClient();
     const { data, error } = await client.auth.signUp({
         email,
@@ -178,264 +137,279 @@ export async function signUp({ email, password, fullName, whatsapp, referralCode
         options: {
             data: {
                 full_name: fullName,
-                whatsapp,
-                referral_code_input: referralCode || null,
-            },
-        },
-    });
-
-    if (error) {
-        return { user: null, error: error.message };
-    }
-
-    let profile = null;
-    if (data.user) {
-        profile = await ensureProfileExists(client, data.user, {
-            full_name: fullName,
-            whatsapp,
-        });
-
-        // Intentar vincular referido si ingresó un código al registrarse
-        if (referralCode && referralCode.trim().length >= 4) {
-            try {
-                const { linkReferral } = await import('./referralService.js');
-                await linkReferral(data.user.id, referralCode.trim());
-            } catch (refErr) {
-                console.warn('Error vinculando código de referido durante registro:', refErr);
+                whatsapp: whatsapp
             }
         }
-    }
-
-    AppState.set({
-        currentUser: data.user,
-        profile,
-        isAuthenticated: !!data.user,
     });
+
+    if (error) return { user: null, error: error.message };
+
+    // Create profile with terms already accepted
+    if (data.user) {
+        onProgress('📝 Creando tu perfil en la base de datos de usuarios...');
+        const profile = {
+            id: data.user.id,
+            full_name: fullName,
+            email,
+            whatsapp,
+            terms_accepted: true,
+            habeas_data_accepted: true,
+            referral_balance: 20000,
+        };
+
+        const { error: profileError } = await client.from('profiles').upsert(profile);
+
+        if (profileError) {
+            console.warn('🐷 Profile upsert error:', profileError.message);
+        }
+
+        onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
+        // Update AppState immediately
+        AppState.set({
+            currentUser: data.user,
+            profile: { ...profile },
+            isAuthenticated: true,
+        });
+    }
 
     return { user: data.user, error: null };
 }
 
 /**
- * Sign out current user.
+ * Sign in with email and password.
+ */
+export async function signIn({ email, password }, onProgress = () => {}) {
+    if (isUsingMockData()) {
+        onProgress('⚙️ Modo demo detectado. Iniciando sesión simulada...');
+        mockLoggedIn = true;
+        mockProfile = { ...MOCK_PROFILE, terms_accepted: true, habeas_data_accepted: true };
+        AppState.set({
+            currentUser: { ...MOCK_USER, email },
+            profile: { ...mockProfile },
+            isAuthenticated: true,
+        });
+        return { user: MOCK_USER, error: null };
+    }
+
+    onProgress('🔑 Verificando tu correo y contraseña con el sistema de seguridad...');
+    const client = getClient();
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+    if (error) return { user: null, error: error.message };
+
+    // Fetch profile and update state
+    if (data.user) {
+        onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
+        const profile = await getProfile();
+        onProgress('✅ Perfil verificado. Preparando tu granja agro...');
+        AppState.set({
+            currentUser: data.user,
+            profile,
+            isAuthenticated: true,
+            showLegalModal: profile && !profile.terms_accepted,
+        });
+    }
+
+    return { user: data.user, error: null };
+}
+
+/**
+ * Sign out.
  */
 export async function signOut() {
     if (isUsingMockData()) {
         mockLoggedIn = false;
-        mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted: false };
-        AppState.set({
-            currentUser: null,
-            profile: null,
-            isAuthenticated: false,
-        });
-        return { error: null };
+        AppState.reset();
+        return;
     }
 
     const client = getClient();
-    const { error } = await client.auth.signOut();
-
-    AppState.set({
-        currentUser: null,
-        profile: null,
-        isAuthenticated: false,
-    });
-
-    return { error: error ? error.message : null };
+    await client.auth.signOut();
+    AppState.reset();
 }
 
 /**
- * Fetch the current user profile from DB.
+ * Fetch user profile.
  */
 export async function getProfile() {
     if (isUsingMockData()) {
-        return mockProfile;
+        return mockLoggedIn ? { ...mockProfile } : null;
     }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-
     if (!user) return null;
 
-    const profile = await ensureProfileExists(client, user);
-
-    if (profile) {
-        AppState.set({ profile });
-    }
-
-    return profile;
+    return await ensureProfileExists(client, user);
 }
 
 /**
- * Update user profile (e.g., terms acceptance, name, etc.)
+ * Accept terms and habeas data (for existing users who haven't accepted).
  */
-export async function updateProfile(updates) {
+export async function acceptTerms() {
     if (isUsingMockData()) {
-        mockProfile = { ...mockProfile, ...updates };
-        AppState.set({ profile: { ...mockProfile } });
-        return { profile: mockProfile, error: null };
-    }
-
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-
-    if (!user) {
-        return { profile: null, error: 'No authenticated user' };
-    }
-
-    const { data, error } = await client
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-    if (error) {
-        return { profile: null, error: error.message };
-    }
-
-    AppState.set({ profile: data });
-    return { profile: data, error: null };
-}
-
-/**
- * Accept legal terms and habeas data.
- */
-export async function acceptLegalTerms() {
-    return updateProfile({
-        terms_accepted: true,
-        habeas_data_accepted: true,
-    });
-}
-
-/**
- * Check if the user has accepted terms.
- */
-export async function hasAcceptedTerms() {
-    if (isUsingMockData()) {
-        return mockProfile.terms_accepted && mockProfile.habeas_data_accepted;
-    }
-
-    const profile = await getProfile();
-    return profile?.terms_accepted && profile?.habeas_data_accepted;
-}
-
-/**
- * Initialize auth listener.
- */
-export function initAuthListener(onStateChange) {
-    if (isUsingMockData()) {
+        mockProfile.terms_accepted = true;
+        mockProfile.habeas_data_accepted = true;
         AppState.set({
-            currentUser: mockLoggedIn ? MOCK_USER : null,
-            profile: mockLoggedIn ? mockProfile : null,
-            isAuthenticated: mockLoggedIn,
+            profile: { ...mockProfile },
+            showLegalModal: false,
         });
-        if (onStateChange) onStateChange(mockLoggedIn ? MOCK_USER : null);
-        return () => { };
-    }
-
-    const client = getClient();
-
-    const { data: { subscription } } = client.auth.onAuthStateChange(
-        async (event, session) => {
-            const user = session?.user || null;
-
-            if (user) {
-                const profile = await ensureProfileExists(client, user);
-                AppState.set({
-                    currentUser: user,
-                    profile,
-                    isAuthenticated: true,
-                });
-            } else {
-                AppState.set({
-                    currentUser: null,
-                    profile: null,
-                    isAuthenticated: false,
-                });
-            }
-
-            if (onStateChange) onStateChange(user);
-        }
-    );
-
-    return () => subscription.unsubscribe();
-}
-
-/**
- * Change password for authenticated user.
- */
-export async function changePassword(newPassword) {
-    if (isUsingMockData()) {
         return { error: null };
     }
 
     const client = getClient();
-    const { error } = await client.auth.updateUser({
-        password: newPassword
-    });
+    const { data: { user } } = await client.auth.getUser();
 
-    if (error) {
-        return { error: error.message };
+    const { error } = await client.from('profiles')
+        .update({ terms_accepted: true, habeas_data_accepted: true })
+        .eq('id', user.id);
+
+    if (!error) {
+        const profile = await getProfile();
+        AppState.set({ profile, showLegalModal: false });
     }
 
-    return { error: null };
+    return { error: error?.message || null };
+}
+
+export const acceptLegalTerms = acceptTerms;
+
+export function hasAcceptedTerms() {
+    const profile = AppState.get('profile') || mockProfile;
+    return !!(profile?.terms_accepted && profile?.habeas_data_accepted);
 }
 
 /**
- * Send password recovery email.
+ * Check current session on app load.
  */
-export async function sendPasswordResetEmail(email) {
+export async function checkSession() {
     if (isUsingMockData()) {
+        const storedBal = parseFloat(localStorage.getItem('mock_wallet_balance') || '2000000');
+        AppState.set({
+            currentUser: { ...MOCK_USER },
+            profile: { ...MOCK_PROFILE, wallet_balance: storedBal },
+            isAuthenticated: true,
+            authLoading: false,
+        });
+        return;
+    }
+
+    const client = getClient();
+    const { data: { session } } = await client.auth.getSession();
+
+    if (session?.user) {
+        const profile = await getProfile();
+        const isGoogleUser = session.user.app_metadata?.provider === 'google';
+        const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
+
+        AppState.set({
+            currentUser: session.user,
+            profile,
+            isAuthenticated: true,
+            authLoading: false,
+            showLegalModal: profile && !profile.terms_accepted,
+            showWhatsAppModal: needsWhatsApp,
+        });
+    } else {
+        AppState.set({ authLoading: false });
+    }
+
+    // Escuchar cambios de estado (recuperación de contraseña y login via OAuth redirect)
+    client.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+            console.log('🐷 PASSWORD_RECOVERY event caught!');
+            AppState.set({ isResettingPassword: true });
+        }
+
+        // Detectar cuando el usuario regresa del redirect de Google OAuth
+        if (event === 'SIGNED_IN' && session?.user) {
+            const isGoogleUser = session.user.app_metadata?.provider === 'google';
+            if (isGoogleUser) {
+                const profile = await getProfile();
+                const needsWhatsApp = !profile?.whatsapp;
+                AppState.set({
+                    currentUser: session.user,
+                    profile,
+                    isAuthenticated: true,
+                    showWhatsAppModal: needsWhatsApp,
+                });
+            }
+        }
+    });
+}
+
+/**
+ * Send password reset email.
+ */
+export async function sendPasswordReset(email) {
+    if (isUsingMockData()) {
+        console.log(`🐷 Mock: Sending password reset to ${email}`);
         return { error: null };
     }
 
     const client = getClient();
     const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#/recuperar-password`
+        redirectTo: `${window.location.origin}/#auth`
     });
 
-    if (error) {
-        return { error: error.message };
-    }
-
-    return { error: null };
+    return { error: error?.message || null };
 }
 
 /**
- * Delete / deactivate account for authenticated user.
+ * Update password for current authenticated user (recovery flow).
  */
-export async function deleteAccount() {
+export async function updateUserPassword(newPassword) {
     if (isUsingMockData()) {
-        mockLoggedIn = false;
-        mockProfile = { ...MOCK_PROFILE, terms_accepted: false, habeas_data_accepted: false };
-        AppState.set({
-            currentUser: null,
-            profile: null,
-            isAuthenticated: false,
-        });
+        AppState.set({ isResettingPassword: false });
         return { error: null };
     }
 
     const client = getClient();
+    const { error } = await client.auth.updateUser({ password: newPassword });
+    if (!error) {
+        AppState.set({ isResettingPassword: false });
+    }
+    return { error: error?.message || null };
+}
+
+export { updateUserPassword as updatePassword };
+
+/**
+ * Update user profile in Supabase and AppState.
+ * Updates personal and banking information.
+ */
+export async function updateUserProfile(updates) {
+    if (isUsingMockData()) {
+        const currentProfile = AppState.get('profile') || {};
+        mockProfile = { ...currentProfile, ...updates };
+        AppState.set({ profile: { ...mockProfile } });
+        return { data: mockProfile, error: null };
+    }
+
+    const client = getClient();
     const { data: { user } } = await client.auth.getUser();
+    if (!user) return { data: null, error: 'No hay usuario autenticado.' };
 
-    if (!user) {
-        return { error: 'No authenticated user' };
+    const currentProfile = AppState.get('profile') || {};
+
+    const payload = {
+        id: user.id,
+        email: user.email,
+        ...updates
+    };
+
+    const { data, error } = await client
+        .from('profiles')
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .maybeSingle();
+
+    if (!error) {
+        const newProfile = { ...currentProfile, ...(data || payload) };
+        AppState.set({ profile: newProfile });
+        return { data: newProfile, error: null };
     }
 
-    const { error: reqError } = await client
-        .from('wallet_requests')
-        .insert({
-            user_id: user.id,
-            user_name: AppState.get('profile')?.full_name || user.email,
-            request_type: 'account_deletion',
-            notes: 'Solicitud de eliminación de cuenta por parte del usuario',
-            status: 'pending'
-        });
-
-    if (reqError) {
-        console.warn('Could not register account deletion request:', reqError);
-    }
-
-    await signOut();
-    return { error: null };
+    console.error('Error updating profile in Supabase:', error.message);
+    return { data: null, error: error.message };
 }
