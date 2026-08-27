@@ -102,7 +102,7 @@ export async function getActiveTips() {
   // Dynamic Welcome Bonus Countdown Tip (active while within 30 days and has balance)
   try {
     const expiryInfo = await getWelcomeBonusExpiryInfo();
-    if (!expiryInfo.isExpired && expiryInfo.daysRemaining > 0 && expiryInfo.hasWelcomeBonus) {
+    if (expiryInfo.status === 'active' && !expiryInfo.isExpired && expiryInfo.daysRemaining > 0 && expiryInfo.hasWelcomeBonus) {
       const daysText = expiryInfo.daysRemaining === 1 ? '1 día' : `${expiryInfo.daysRemaining} días`;
       const welcomeBonusTip = {
         icon: '🎁',
