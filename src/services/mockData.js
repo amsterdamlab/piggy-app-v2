@@ -17,6 +17,7 @@ export const MOCK_PROFILE = {
     habeas_data_accepted: true,
     referral_code: 'ALE582',
     consumption_balance: 20000,
+    welcome_bonus_status: 'active',
     created_at: '2026-01-15T10:00:00Z',
 };
 

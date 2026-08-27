@@ -126,7 +126,7 @@ export async function getWalletBalance() {
 
 /**
  * Fetch the current user's consumption bonus balance.
- * Reads exclusively from 'consumption_balance' column.
+ * Supports both new 'consumption_balance' and legacy 'referral_balance'.
  * These are NOT withdrawable cash — they are exchanged for meat-consumption coupons.
  * @returns {number} Consumption bonus balance in COP
  */
@@ -164,6 +164,7 @@ export async function ensureWelcomeBonusAssigned(userId) {
         const cb = Number(profile?.consumption_balance);
         const curBal = !isNaN(cb) && cb >= 0 ? cb : 20000;
         profile.consumption_balance = curBal;
+        profile.welcome_bonus_status = profile.welcome_bonus_status || 'active';
         AppState.set({ profile: { ...profile } });
         return curBal;
     }
@@ -174,14 +175,14 @@ export async function ensureWelcomeBonusAssigned(userId) {
 
     const { data } = await client
         .from('profiles')
-        .select('consumption_balance')
+        .select('consumption_balance, welcome_bonus_status')
         .eq('id', targetUserId)
         .single();
 
     const cb = Number(data?.consumption_balance);
     const existingBalance = !isNaN(cb) && cb >= 0 ? cb : 0;
 
-    if (!data || existingBalance === 0) {
+    if (!data || (existingBalance === 0 && !data.welcome_bonus_status)) {
         const { error } = await client
             .from('wallet_transactions')
             .insert({
@@ -194,12 +195,18 @@ export async function ensureWelcomeBonusAssigned(userId) {
 
         if (!error) {
             console.log('🎁 Welcome consumption bonus ($20.000) assigned via transaction in DB!');
+            await client.from('profiles').update({
+                welcome_bonus_status: 'active',
+                consumption_balance: 20000
+            }).eq('id', targetUserId);
+
             const currentProfile = AppState.get('profile');
             if (currentProfile && currentProfile.id === targetUserId) {
                 AppState.set({
                     profile: {
                         ...currentProfile,
-                        consumption_balance: 20000
+                        consumption_balance: 20000,
+                        welcome_bonus_status: 'active'
                     }
                 });
             }
@@ -210,21 +217,87 @@ export async function ensureWelcomeBonusAssigned(userId) {
 }
 
 /**
+ * Automatically debits welcome bonus ($20.000) when 30-day limit expires and status is 'active'.
+ */
+export async function expireWelcomeBonusIfDue(userId = null) {
+    if (isUsingMockData()) {
+        const profile = AppState.get('profile') || { ...MOCK_PROFILE };
+        if (profile.welcome_bonus_status === 'active') {
+            const deduct = Math.min(Number(profile.consumption_balance) || 0, 20000);
+            profile.consumption_balance = Math.max(0, (Number(profile.consumption_balance) || 0) - deduct);
+            profile.welcome_bonus_status = 'expired';
+            AppState.set({ profile: { ...profile } });
+        }
+        return;
+    }
+
+    const client = getClient();
+    const targetUserId = userId || (await client.auth.getUser()).data.user?.id;
+    if (!targetUserId) return;
+
+    try {
+        const { data: profile } = await client
+            .from('profiles')
+            .select('id, created_at, consumption_balance, welcome_bonus_status')
+            .eq('id', targetUserId)
+            .single();
+
+        if (!profile) return;
+        const status = profile.welcome_bonus_status || 'active';
+        if (status !== 'active') return;
+
+        const regDate = profile.created_at ? new Date(profile.created_at) : new Date();
+        const expiryTime = regDate.getTime() + (30 * 24 * 60 * 60 * 1000);
+
+        if (Date.now() >= expiryTime) {
+            const currentBal = Number(profile.consumption_balance) || 0;
+            const deductAmount = Math.min(currentBal, 20000);
+            const newBal = Math.max(0, currentBal - deductAmount);
+
+            if (deductAmount > 0) {
+                await client.from('wallet_transactions').insert({
+                    user_id: targetUserId,
+                    amount: -deductAmount,
+                    type: 'debit',
+                    description: 'Vencimiento de Bono de Bienvenida (30 días)',
+                    wallet_type: 'consumo'
+                });
+            }
+
+            await client.from('profiles').update({
+                welcome_bonus_status: 'expired',
+                consumption_balance: newBal
+            }).eq('id', targetUserId);
+
+            const cur = AppState.get('profile') || {};
+            AppState.set({ profile: { ...cur, ...profile, welcome_bonus_status: 'expired', consumption_balance: newBal } });
+            console.log('⏳ Welcome bonus expired automatically after 30 days.');
+        }
+    } catch (e) {
+        console.warn('Error checking welcome bonus expiry:', e);
+    }
+}
+
+/**
  * Calculates the Welcome Bonus expiration status based on user's registration date (created_at).
  * Validity is exactly 30 calendar days from the creation of the account.
- * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean }>}
+ * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string }>}
  */
 export async function getWelcomeBonusExpiryInfo() {
     const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);
     let createdAt = profile?.created_at;
+    let status = profile?.welcome_bonus_status || 'active';
 
-    if (!createdAt && !isUsingMockData()) {
+    if ((!createdAt || !profile?.welcome_bonus_status) && !isUsingMockData()) {
         try {
             const client = getClient();
             const { data: { user } } = await client.auth.getUser();
             if (user) {
-                const { data } = await client.from('profiles').select('created_at').eq('id', user.id).single();
-                createdAt = data?.created_at || user.created_at;
+                const { data } = await client.from('profiles').select('created_at, welcome_bonus_status, consumption_balance').eq('id', user.id).single();
+                if (data) {
+                    createdAt = data.created_at || user.created_at;
+                    status = data.welcome_bonus_status || 'active';
+                }
             }
         } catch (e) {
             console.warn('Could not read user registration date for bonus expiry:', e);
@@ -237,11 +310,18 @@ export async function getWelcomeBonusExpiryInfo() {
     const now = Date.now();
     const msRemaining = expiryTime - now;
     const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-    const isExpired = msRemaining <= 0;
+    const isExpired = status !== 'active' || msRemaining <= 0;
+
+    // Automatic trigger if 30 days passed and still marked active
+    if (status === 'active' && msRemaining <= 0) {
+        await expireWelcomeBonusIfDue();
+        status = 'expired';
+    }
 
     const currentBonus = await getReferralBonusBalance();
 
     return {
+        status,
         isExpired,
         daysRemaining,
         expiryDate: new Date(expiryTime),
@@ -603,18 +683,14 @@ async function recordWalletRequestInDB({ userId, userName, requestType, paymentM
     };
 }
 
-/**
- * Registrar una solicitud de recarga por Bre-B (Semi-automática).
- */
+/** Registrar una solicitud de recarga por Bre-B (Semi-automática). */
 export async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {
     if (isUsingMockData()) {
         initMockState();
         return { success: true, requestId: `req-breb-${Date.now()}`, reference, status: 'pending' };
     }
-
     const client = getClient();
     if (!client) return { success: false, reason: 'no_supabase_client' };
-
     const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
     const profile = AppState.get('profile') || AppState.get('currentUser');
     const userId = authData?.user?.id || profile?.id;
@@ -635,18 +711,14 @@ export async function requestBreBRecharge({ amount, reference, breBKey = '@piggy
     });
 }
 
-/**
- * Registrar una solicitud de recarga por Código QR.
- */
+/** Registrar una solicitud de recarga por Código QR. */
 export async function requestQRRecharge({ amount, reference, mockState = null }) {
     if (isUsingMockData()) {
         initMockState();
         return { success: true, requestId: `req-qr-${Date.now()}`, reference, status: 'pending' };
     }
-
     const client = getClient();
     if (!client) return { success: false, reason: 'no_supabase_client' };
-
     const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
     const profile = AppState.get('profile') || AppState.get('currentUser');
     const userId = authData?.user?.id || profile?.id;
@@ -667,17 +739,11 @@ export async function requestQRRecharge({ amount, reference, mockState = null })
     });
 }
 
-/**
- * Registrar una solicitud de canje por carne (Bonos de Consumo).
- */
+/** Registrar una solicitud de canje por carne (Bonos de Consumo). */
 export async function requestMeatRedemption({ amount, reference }) {
-    if (isUsingMockData()) {
-        return { success: true, requestId: `req-crn-${Date.now()}`, reference, status: 'pending' };
-    }
-
+    if (isUsingMockData()) return { success: true, requestId: `req-crn-${Date.now()}`, reference, status: 'pending' };
     const client = getClient();
     if (!client) return { success: false, reason: 'no_supabase_client' };
-
     const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
     const profile = AppState.get('profile') || AppState.get('currentUser');
     const userId = authData?.user?.id || profile?.id;
@@ -697,35 +763,25 @@ export async function requestMeatRedemption({ amount, reference }) {
 
 /* ─── Bank Withdrawal with Immediate Retention (Fintech Standard) ─── */
 
-/**
- * Request a bank withdrawal with immediate balance retention.
- * @param {Object} params
- * @returns {Promise<{ success: boolean, requestId?: string, reference?: string, newBalance?: number, reason?: string }>}
- */
+/** Request a bank withdrawal with immediate balance retention. */
 export async function requestBankWithdrawal({ amount, bankName = '', accountType = '', breveKey = '', notes = '' }) {
     const numAmount = Number(amount) || 0;
-    if (numAmount <= 0) {
-        return { success: false, reason: 'El monto a retirar debe ser mayor a cero' };
-    }
-
+    if (numAmount <= 0) return { success: false, reason: 'El monto a retirar debe ser mayor a cero' };
     const refCode = `RET-${Math.floor(100000 + Math.random() * 900000)}`;
 
     if (isUsingMockData()) {
         initMockState();
-        if (mockBalance < numAmount) {
-            return { success: false, reason: 'Saldo insuficiente en tu Cuenta Agro' };
-        }
+        if (mockBalance < numAmount) return { success: false, reason: 'Saldo insuficiente en tu Cuenta Agro' };
 
         mockBalance -= numAmount;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
 
-        const bankLabel = bankName || 'Bancario';
         const debitTx = {
             id: `tx-ret-${Date.now()}`,
             user_id: 'mock-user-id',
             amount: -numAmount,
             type: 'debit',
-            description: `Retención por solicitud de retiro bancario (${bankLabel}) [Ref: ${refCode}]`,
+            description: `Retención por solicitud de retiro bancario (${bankName || 'Bancario'}) [Ref: ${refCode}]`,
             wallet_type: 'dinero',
             payment_method: 'TRANSFERENCIA',
             simulation_status: 'PENDING',
@@ -739,13 +795,7 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
         const curProfile = AppState.get('profile') || { ...MOCK_PROFILE };
         curProfile.wallet_balance = mockBalance;
         AppState.set({ profile: { ...curProfile } });
-
-        return {
-            success: true,
-            requestId: `req-ret-${Date.now()}`,
-            reference: refCode,
-            newBalance: mockBalance,
-        };
+        return { success: true, requestId: `req-ret-${Date.now()}`, reference: refCode, newBalance: mockBalance };
     }
 
     const client = getClient();
@@ -758,12 +808,10 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
     } catch (e) {
         console.warn('No se pudo obtener usuario de auth.getUser:', e);
     }
-
     if (!userId) {
         const profile = AppState.get('profile') || AppState.get('currentUser');
         userId = profile?.id;
     }
-
     if (!userId) return { success: false, reason: 'not_authenticated' };
 
     // 1. Validación de Saldo Disponible en DB
@@ -773,14 +821,9 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
         .eq('id', userId)
         .single();
 
-    if (profileErr || !profile) {
-        return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
-    }
-
+    if (profileErr || !profile) return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
     const currentBalance = Number(profile.wallet_balance) || 0;
-    if (currentBalance < numAmount) {
-        return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };
-    }
+    if (currentBalance < numAmount) return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };
 
     const effectiveBank = bankName || profile.bank_name || 'Bancario';
     const effectiveAccountType = accountType || profile.bank_account_type || 'Ahorros';
@@ -813,19 +856,12 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
     }
 
     // 3. Retención / Débito Inmediato en profiles.wallet_balance
-    const { error: balError } = await client
-        .from('profiles')
-        .update({ wallet_balance: newBalance })
-        .eq('id', userId);
-
-    if (balError) {
-        console.warn('Advertencia actualizando profiles.wallet_balance directamente:', balError);
-    }
+    await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', userId);
 
     // 4. Creación de la Solicitud en wallet_requests
     let requestId = txData?.id || null;
     try {
-        const { data: reqData, error: reqError } = await client
+        const { data: reqData } = await client
             .from('wallet_requests')
             .insert({
                 user_id: userId,
@@ -842,11 +878,7 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
             .select('id, reference, status')
             .single();
 
-        if (reqError) {
-            console.warn('Error insertando en wallet_requests (retención ya aplicada):', reqError);
-        } else if (reqData?.id) {
-            requestId = reqData.id;
-        }
+        if (reqData?.id) requestId = reqData.id;
     } catch (e) {
         console.warn('Excepción al crear registro en wallet_requests:', e);
     }
@@ -861,31 +893,15 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
         }
     });
 
-    return {
-        success: true,
-        requestId,
-        reference: refCode,
-        newBalance,
-    };
+    return { success: true, requestId, reference: refCode, newBalance };
 }
 
 /* ─── Create Wallet Request (Backwards-Compatible Wrapper) ─── */
 
-/**
- * Submit a withdrawal or consumption request.
- * @param {'withdrawal' | 'consumption'} requestType
- * @param {number} amount - Amount in COP
- * @param {string|null} bankName - Bank name (only for withdrawals)
- * @returns {{ success: boolean, requestId?: string, reference?: string, newBalance?: number, reason?: string }}
- */
+/** Submit a withdrawal or consumption request. */
 export async function createWalletRequest(requestType, amount, bankName = null) {
-    if (requestType === 'withdrawal') {
-        return requestBankWithdrawal({ amount, bankName });
-    }
-
-    if (isUsingMockData()) {
-        return { success: true, requestId: 'mock-req-id' };
-    }
+    if (requestType === 'withdrawal') return requestBankWithdrawal({ amount, bankName });
+    if (isUsingMockData()) return { success: true, requestId: 'mock-req-id' };
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
@@ -909,10 +925,7 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
             .select('id')
             .single();
 
-        if (insError) {
-            return { success: false, reason: insError.message };
-        }
-
+        if (insError) return { success: false, reason: insError.message };
         return { success: true, requestId: insData?.id || null };
     } catch (e) {
         return { success: false, reason: e.message };
@@ -921,51 +934,32 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
 
 /* ─── WhatsApp Notification ─── */
 
-/**
- * Build and open a WhatsApp message to notify admin about a wallet request.
- */
+/** Build and open a WhatsApp message to notify admin about a wallet request. */
 export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId, userBreveKey = null) {
     const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';
     const shortId = requestId ? requestId.slice(-8).toUpperCase() : 'N/A';
-
-    let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n`;
-    message += `👤 *Usuario:* ${userName}\n`;
-    message += `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n`;
-    message += `💵 *Monto:* ${formatCOP(amount)}\n`;
+    let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
+        `👤 *Usuario:* ${userName}\n` +
+        `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n` +
+        `💵 *Monto:* ${formatCOP(amount)}\n`;
 
     if (requestType === 'withdrawal' && bankName) {
         message += `🏦 *Banco:* ${bankName}\n`;
-        if (userBreveKey) {
-            message += `⚡ *Llave Bre-B:* ${userBreveKey}\n`;
-        }
+        if (userBreveKey) message += `⚡ *Llave Bre-B:* ${userBreveKey}\n`;
     }
+    message += `🎫 *ID Solicitud:* #${shortId}\n` +
+        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+        (requestType === 'withdrawal' ? '⚡ Acción requerida: Transferir fondos vía Bre-B al usuario y debitar saldo en la BD.' : '⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.');
 
-    message += `🎫 *ID Solicitud:* #${shortId}\n`;
-    message += `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n`;
-
-    if (requestType === 'withdrawal') {
-        message += `⚡ Acción requerida: Transferir fondos vía Bre-B al usuario y debitar saldo en la BD.`;
-    } else {
-        message += `⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.`;
-    }
-
-    const whatsappUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-/* ─── Get Transaction History ─── */
-
-/**
- * Fetch all wallet transactions for the current user.
- * Ordered by created_at DESC (newest first).
- * @returns {Promise<Array>} Transaction history
- */
+/** Fetch all wallet transactions for the current user. */
 export async function getWalletTransactions() {
     if (isUsingMockData()) {
         initMockState();
         return mockTransactions;
     }
-
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
@@ -980,10 +974,7 @@ export async function getWalletTransactions() {
         console.error('Error fetching wallet transactions:', error);
         return [];
     }
-
     return data || [];
 }
-
-/* ─── Format Helper ─── */
 
 export { formatCOP };

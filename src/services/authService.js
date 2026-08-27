@@ -39,6 +39,7 @@ export async function signInWithGoogle() {
             terms_accepted: true,
             habeas_data_accepted: true,
             consumption_balance: 20000,
+            welcome_bonus_status: 'active',
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email: 'google.user@example.com' },
@@ -83,6 +84,7 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
             terms_accepted: true,
             habeas_data_accepted: true,
             consumption_balance: 20000,
+            welcome_bonus_status: 'active',
         };
 
         const { data: createdProfile, error: upsertError } = await client
@@ -119,6 +121,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             habeas_data_accepted: true,
             referral_code: generateMockReferralCode(fullName),
             consumption_balance: 20000,
+            welcome_bonus_status: 'active',
         };
         AppState.set({
             currentUser: { ...MOCK_USER, email },
@@ -154,6 +157,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             terms_accepted: true,
             habeas_data_accepted: true,
             consumption_balance: 20000,
+            welcome_bonus_status: 'active',
         };
 
         const { error: profileError } = await client.from('profiles').upsert(profile);
