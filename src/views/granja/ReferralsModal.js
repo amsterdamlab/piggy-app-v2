@@ -165,7 +165,7 @@ export async function showReferralModal() {
           <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥇 Oro</span>
             <span style="text-align:center; color:#6b7280;">16+</span>
-            <span style="text-align:right; font-weight:700; color:#059669;">$80.000</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$70.000</span>
           </div>
         </div>
         <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;">

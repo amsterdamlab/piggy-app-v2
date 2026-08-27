@@ -13,7 +13,7 @@ import { AppState } from '../state.js';
 const COMMISSION_TIERS = [
     { min: 0, max: 5, amount: 20000, label: '$20.000' },
     { min: 6, max: 15, amount: 50000, label: '$50.000' },
-    { min: 16, max: Infinity, amount: 80000, label: '$80.000' },
+    { min: 16, max: Infinity, amount: 70000, label: '$70.000' },
 ];
 
 /**
@@ -161,10 +161,10 @@ export async function getMyReferralStats() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return null;
 
-    // Fetch balance from profile
+    // Fetch balance from profile (supports both consumption_balance and legacy referral_balance)
     const { data: profile } = await client
         .from('profiles')
-        .select('referral_balance')
+        .select('*')
         .eq('id', user.id)
         .single();
 
@@ -194,8 +194,10 @@ export async function getMyReferralStats() {
     const completedCount = allReferrals.filter(r => r.status === 'completed').length;
     const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
 
+    const consumptionBalance = profile?.consumption_balance ?? profile?.referral_balance ?? 0;
+
     return {
-        balance: profile?.referral_balance || 0,
+        balance: consumptionBalance,
         totalReferrals: allReferrals.length,
         completedReferrals: completedCount,
         pendingReferrals: pendingCount,

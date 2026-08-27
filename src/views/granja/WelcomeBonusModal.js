@@ -34,7 +34,7 @@ export function showBonusModal(hasPiggies) {
             
             <div class="bonus-text-scroll">
                 <p><strong>1. Definición del Beneficio:</strong><br/>
-                PIGGY otorga un Bono de Consumo por valor de VEINTE MIL PESOS M/CTE ($20.000 COP) a todo usuario nuevo que complete satisfactoriamente el registro en la plataforma y realice su primera adopción de un "Piggy" (pago único de $1.000.000 COP).</p>
+                PIGGY otorga un Bono de Consumo por valor de VEINTE MIL PESOS M/CTE ($20.000 COP) a todo usuario nuevo que complete satisfactoriamente el registro en la plataforma, sin necesidad de adquirir previamente un activo productivo.</p>
 
                 <p><strong>2. Condiciones de Redención:</strong><br/>
                 Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Granja Villa Morales del Valle SAS, bajo las siguientes condiciones:</p>
@@ -46,24 +46,23 @@ export function showBonusModal(hasPiggies) {
 
                 <p><strong>3. Política de Envíos y Logística:</strong></p>
                 <ul>
-                    <li><strong>Cali:</strong> El servicio de domicilio será completamente gratuito unicamente para entregas dentro del perímetro urbano de la ciudad de Cali.</li>
+                    <li><strong>Cali:</strong> El servicio de domicilio será completamente gratuito únicamente para entregas dentro del perímetro urbano de la ciudad de Cali.</li>
                     <li><strong>Otras Ubicaciones:</strong> Para entregas en municipios aledaños (Jamundí, Palmira, Yumbo, etc.) o en el resto del territorio nacional, el USUARIO deberá asumir el 100% del costo del envío, el cual se cotizará según la ubicación y el peso del pedido.</li>
                 </ul>
 
                 <p><strong>4. Vigencia y Restricciones:</strong></p>
                 <ul>
                     <li>El bono es personal, intransferible y no es canjeable por dinero en efectivo.</li>
-                    <li>Solo se permite la redención de un (1) bono por usuario único y por la primera compra de activo productivo.</li>
-                    <li>El bono tendrá una vigencia de 30 días calendario a partir del momento de la confirmación de la primera compra del piggy inicial.</li>
+                    <li>Solo se permite la redención de un (1) bono de bienvenida por usuario único registrado.</li>
+                    <li>El bono tendrá una vigencia de 30 días calendario contados a partir de la fecha de registro en la plataforma. Cumplido este periodo, el sistema lo marcará como expirado.</li>
                 </ul>
             </div>
         </div>
 
         <div class="bonus-footer mt-lg">
             <button class="btn btn--primary btn--block" id="btn-redeem-bonus">
-                ${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $20.000!'}
+                ¡Redime tu bono $20.000 en Tienda!
             </button>
-            ${!hasPiggies ? '<p class="text-xs text-center mt-sm text-muted">Debes tener un Piggy activo para redimir.</p>' : ''}
         </div>
     </div>
   `;
