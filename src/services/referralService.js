@@ -194,7 +194,9 @@ export async function getMyReferralStats() {
     const completedCount = allReferrals.filter(r => r.status === 'completed').length;
     const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
 
-    const consumptionBalance = profile?.consumption_balance ?? profile?.referral_balance ?? 0;
+    const cb = Number(profile?.consumption_balance) || 0;
+    const rb = Number(profile?.referral_balance) || 0;
+    const consumptionBalance = cb > 0 ? cb : rb;
 
     return {
         balance: consumptionBalance,

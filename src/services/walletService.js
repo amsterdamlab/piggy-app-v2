@@ -133,9 +133,9 @@ export async function getWalletBalance() {
 export async function getReferralBonusBalance() {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || MOCK_PROFILE;
-        if (profile?.consumption_balance !== undefined) return profile.consumption_balance;
-        if (profile?.referral_balance !== undefined) return profile.referral_balance;
-        return 20000;
+        const cb = Number(profile?.consumption_balance) || 0;
+        const rb = Number(profile?.referral_balance) || 0;
+        return cb > 0 ? cb : (rb > 0 ? rb : 20000);
     }
 
     const client = getClient();
@@ -148,7 +148,10 @@ export async function getReferralBonusBalance() {
         .eq('id', user.id)
         .single();
 
-    return data?.consumption_balance ?? data?.referral_balance ?? 0;
+    if (!data) return 0;
+    const cb = Number(data.consumption_balance) || 0;
+    const rb = Number(data.referral_balance) || 0;
+    return cb > 0 ? cb : rb;
 }
 
 /** Alias for semantic clarity */
@@ -160,13 +163,15 @@ export const getConsumptionBonusBalance = getReferralBonusBalance;
 export async function ensureWelcomeBonusAssigned(userId) {
     if (isUsingMockData()) {
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
-        const curBal = profile.consumption_balance ?? profile.referral_balance;
+        const cb = Number(profile?.consumption_balance) || 0;
+        const rb = Number(profile?.referral_balance) || 0;
+        const curBal = cb > 0 ? cb : rb;
         if (!curBal) {
             profile.consumption_balance = 20000;
             profile.referral_balance = 20000;
             AppState.set({ profile: { ...profile } });
         }
-        return 20000;
+        return curBal || 20000;
     }
 
     const client = getClient();
@@ -179,7 +184,9 @@ export async function ensureWelcomeBonusAssigned(userId) {
         .eq('id', targetUserId)
         .single();
 
-    const existingBalance = data?.consumption_balance ?? data?.referral_balance ?? 0;
+    const cb = Number(data?.consumption_balance) || 0;
+    const rb = Number(data?.referral_balance) || 0;
+    const existingBalance = cb > 0 ? cb : rb;
 
     if (!data || existingBalance === 0) {
         const { error } = await client
