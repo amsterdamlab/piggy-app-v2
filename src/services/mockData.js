@@ -1,3 +1,8 @@
+/* ============================================
+   PIGGY APP — Mock Data for Development
+   Used when Supabase is not configured
+   ============================================ */
+
 export const MOCK_USER = {
     id: 'user-001',
     email: 'ale@correo.com',
@@ -96,249 +101,334 @@ export const MOCK_MARKETPLACE = [
         image_url: null,
         category: 'dorado',
     },
-];
-
-export const MOCK_MISSIONS = [
     {
-        id: 'm1',
-        title: 'Obtén tu Bono de Bienvenida',
-        description: 'Visita la tienda oficial y canjea tu bono $20.000 en cortes premium.',
-        reward_points: 50,
-        action_url: '#/gourmet',
-        action_label: 'Ir a la Tienda',
-        badge: '🎁 $20.000',
-        badge_type: 'bonus',
-    },
-    {
-        id: 'm2',
-        title: 'Descubre los Aceleradores',
-        description: 'Explora el mercado y conoce cómo aumentar tu rentabilidad hasta +2%.',
-        reward_points: 30,
-        action_url: '#/mercado',
-        action_label: 'Ver Mercado',
-        badge: '⚡ +2% ROI',
-        badge_type: 'speed',
-    },
-    {
-        id: 'm3',
-        title: 'Invita a un amigo a Piggy',
-        description: 'Comparte tu código de referido y gana comisiones por cada compra.',
-        reward_points: 100,
-        action_url: '#/referidos',
-        action_label: 'Compartir Código',
-        badge: '👥 Referidos',
-        badge_type: 'referral',
-    },
-    {
-        id: 'm4',
-        title: 'Descarga Piggy en tu Celular',
-        description: 'Instala la app en tu pantalla de inicio para acceso rápido y notificaciones.',
-        reward_points: 50,
-        action_url: '#/descargar',
-        action_label: 'Instalar App',
-        badge: '📲 PWA',
-        badge_type: 'download',
-    },
-    {
-        id: 'm5',
-        title: 'Lee tus Términos y Contrato',
-        description: 'Conoce los detalles legales y condiciones de tu participación en la granja.',
-        reward_points: 20,
-        action_url: '#/contrato',
-        action_label: 'Ver Contrato',
-        badge: '📄 Legal',
-        badge_type: 'legal',
-    },
-    {
-        id: 'm6',
-        title: 'Explora tu Cuenta Agro',
-        description: 'Revisa tu saldo disponible, recargas y retiros en tu panel transaccional.',
-        reward_points: 20,
-        action_url: '#/granja',
-        action_label: 'Ver Cuenta',
-        badge: '💰 Wallet',
-        badge_type: 'wallet',
-    },
-    {
-        id: 'm7',
-        title: 'Compra en locales aliados',
-        description: 'Visita los restaurantes y carnicerías aliadas para descuentos exclusivos.',
-        reward_points: 40,
-        action_url: '#/aliados',
-        action_label: 'Ver Aliados',
-        badge: '🤝 Aliados',
-        badge_type: 'ally',
+        id: 'item-004',
+        item_name: 'Piggy Premium',
+        description: 'Cerdo con comercialización exclusiva. Bono de +3% adicional.',
+        price: 1000000,
+        extra_roi: 0.03,
+        stock: 10,
+        image_url: null,
+        category: 'premium',
     },
 ];
 
 export const MOCK_ALLIES = [
     {
         id: 'ally-001',
-        name: 'La Fogata Criolla',
-        category: 'Restaurante',
-        location: 'Cali — Av. San Joaquín # 14-22',
-        address: 'Av. San Joaquín # 14-22',
-        phone: '315 487 0448',
-        specialty: 'Carnes a la brasa y gastronomía vallecaucana.',
-        discount_info: '10% de descuento en platos a la carta presentando tu perfil de Piggy App.',
-        benefit: '10% OFF en platos',
-        image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80',
-        logo_url: null,
+        name: 'Carnes Don Julio',
+        category: 'Carnicería',
+        specialty: 'Cortes Premium',
+        location: 'Cali, Valle del Cauca',
+        image_url: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+        description: 'Cortes selectos madurados y frescos para tus asados de fin de semana.',
+        benefit: '15% de descuento en Punta de Anca',
+        phone: '310 123 4567',
+        address: 'Av. Pasoancho # 50-20',
+        discount_info: '15% de descuento en cortes premium',
     },
     {
         id: 'ally-002',
-        name: 'Carnes del Valle Gourmet',
-        category: 'Carnicería',
-        location: 'Cali — Calle 9 # 38-12',
-        address: 'Calle 9 # 38-12',
-        phone: '315 487 0448',
-        specialty: 'Cortes premium madurados de res y cerdo de origen certificado.',
-        discount_info: 'Punto de entrega oficial para redimir tu cerdo al finalizar el ciclo. 5% de descuento en cortes adicionales.',
-        benefit: 'Punto de Entrega + 5% OFF',
-        image_url: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=600&q=80',
-        logo_url: null,
+        name: 'La Parrilla de Pepe',
+        category: 'Restaurante',
+        specialty: 'Parrilla & Barril',
+        location: 'Cali, Valle del Cauca',
+        image_url: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=800&q=80',
+        description: 'Expertos en cocción lenta al barril. Chicharrón ahumado inigualable.',
+        benefit: '2x1 los jueves en platos de cerdo',
+        phone: '315 987 6543',
+        address: 'Granada Calle 9 # 12-45',
+        discount_info: '2x1 los jueves en platos de cerdo',
     },
     {
         id: 'ally-003',
-        name: 'Distribuidora San Jerónimo',
-        category: 'Distribuidor',
-        location: 'Palmira — Cra 28 # 45-60',
-        address: 'Cra 28 # 45-60',
-        phone: '315 487 0448',
-        specialty: 'Venta mayorista de cárnicos y embutidos artesanales.',
-        discount_info: 'Precios mayoristas desde 10 kg en compras de carne de cerdo para usuarios activos.',
-        benefit: 'Precio mayorista desde 10kg',
-        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-        logo_url: null,
+        name: 'El Fogón de la Abuela',
+        category: 'Restaurante',
+        specialty: 'Comida Típica',
+        location: 'Cali, Valle del Cauca',
+        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+        description: 'Sabor tradicional con ingredientes del campo directo a tu mesa.',
+        benefit: 'Postre gratis por consumo > $50k',
+        phone: '312 456 7890',
+        address: 'San Antonio Cra 4 # 2-10',
+        discount_info: '10% en platos con cerdo',
     },
     {
         id: 'ally-004',
-        name: 'Asador El Porcino',
-        category: 'Restaurante',
-        location: 'Jamundí — Km 2 Vía Panamericana',
-        address: 'Km 2 Vía Panamericana',
-        phone: '315 487 0448',
-        specialty: 'Especialistas en lechona, costillas BBQ y chicharrón crocante.',
-        discount_info: '15% de descuento en consumo los fines de semana mostrando tu app.',
-        benefit: '15% OFF Fines de semana',
-        image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80',
-        logo_url: null,
+        name: 'SuperCarnes Express',
+        category: 'Distribuidor',
+        specialty: 'Venta al Por Mayor',
+        location: 'Medellín, Antioquia',
+        image_url: 'https://images.unsplash.com/photo-1615937651188-4b92cd38052e?auto=format&fit=crop&w=800&q=80',
+        description: 'Abastecemos tu negocio con la mejor carne de cerdo de la región.',
+        benefit: 'Envío gratis en pedidos mayoristas',
+        phone: '300 555 1234',
+        address: 'Centro, Calle 50 # 40-20',
+        discount_info: 'Entrega gratuita en Medellín',
     },
+    {
+        id: 'ally-005',
+        name: 'Huellitas Felices',
+        category: 'Petshop',
+        specialty: 'Alimentos y Spa',
+        location: 'Bogotá, Cundinamarca',
+        image_url: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
+        description: 'Todo para consentir a tu peludo. Baño, peluquería y juguetes.',
+        benefit: '10% en Baño y Peluquería',
+        phone: '312 456 7890',
+        address: 'Av. Principal # 45-12',
+        discount_info: '10% en Baño y Peluquería',
+    },
+    {
+        id: 'ally-006',
+        name: 'El Barbero',
+        category: 'Barbería',
+        specialty: 'Cortes Clásicos',
+        location: 'Cali, Valle del Cauca',
+        image_url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+        description: 'Estilo y tradición. Afeitado con toalla caliente y los mejores cortes.',
+        benefit: '2x1 en corte de cabello y barba',
+        phone: '315 789 1234',
+        address: 'Calle 10 # 20-30',
+        discount_info: '2x1 en corte de cabello y barba',
+    }
 ];
 
-export const MOCK_NEWS = [
+export const MOCK_MISSIONS = [
     {
-        id: 'news-001',
-        title: '¡Nueva camada de Piggies lista para adopción!',
-        summary: 'Inicia un nuevo ciclo de engorde con cerdos seleccionados genéticamente de raza Landrace-York.',
-        date: '2026-02-15',
-        category: 'Granja',
-        image_url: 'dist/assets/piggies/stage1/et1-1.jpg',
+        id: 'm1',
+        title: 'Crea una cuenta nueva',
+        reward: 'Bono de consumo por valor de $20.000',
+        is_completed: true,
+        icon: '🎉',
+        cta: null
     },
     {
-        id: 'news-002',
-        title: 'Nuevo aliado en Cali: Carnes del Valle Gourmet',
-        summary: 'Ahora puedes redimir tus productos directamente en la sede sur de Cali.',
-        date: '2026-02-10',
-        category: 'Aliados',
-        image_url: 'dist/assets/piggies/stage2/et2-1.jpg',
+        id: 'm2',
+        title: 'Compra tu primer Piggy',
+        reward: 'Desbloquea Piggy de 3 meses',
+        is_completed: true, // Simulado completado para ver progreso
+        icon: '🐷',
+        cta: '#/mercado'
     },
     {
-        id: 'news-003',
-        title: 'Mantenimiento preventivo en instalaciones',
-        summary: 'Se completó la instalación de nuevos comederos automáticos y bebederos de nivel constante.',
-        date: '2026-01-28',
-        category: 'Infraestructura',
-        image_url: 'dist/assets/piggies/stage3/et3-1.jpg',
+        id: 'm3',
+        title: 'Invita a un amigo a Piggy',
+        reward: 'Desbloquea tu código referido',
+        is_completed: false,
+        icon: '📲',
+        cta: 'https://wa.me/?text=Hola!%20Te%20invito%20a%20ser%20parte%20de%20Piggy%20y%20ganar%20con%20cerdos%20digitales.%20Unete%20aqui:%20piggy.app'
     },
+    {
+        id: 'm4',
+        title: 'Compra tu 2do Piggy',
+        reward: '+1% en Margen Comercial',
+        is_completed: false,
+        icon: '📈',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm5',
+        title: 'Compra en locales aliados',
+        reward: 'Desbloquea Piggy Silver (24h)',
+        is_completed: false,
+        icon: '&#127980;',
+        cta: '#/aliados'
+    },
+    {
+        id: 'm6',
+        title: 'Cierra tu primer ciclo',
+        reward: 'Desbloquea Piggy Silver (24h)',
+        is_completed: false,
+        icon: '&#128260;',
+        cta: null
+    },
+    {
+        id: 'm7',
+        title: 'Activa tu 3er Piggy',
+        reward: 'Mant&eacute;n 10% Margen Comercial',
+        is_completed: false,
+        icon: '&#128048;',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm8',
+        title: 'Compra la oferta de la semana',
+        reward: 'Desbloquea Piggy Gold (24h)',
+        is_completed: false,
+        icon: '&#128293;',
+        cta: '#/mercado'
+    },
+    {
+        id: 'm9',
+        title: 'Refiere y logra una compra',
+        reward: 'Obt&eacute;n $20.000 en tu Wallet',
+        is_completed: false,
+        icon: '&#129309;',
+        cta: null
+    }
 ];
 
-export const MOCK_NOTIFICATIONS = [
-    {
-        id: 'notif-001',
-        title: '¡Bienvenido a Piggy App!',
-        body: 'Comienza adoptando tu primer Piggy y sigue su crecimiento en tiempo real.',
-        date: '2026-01-15T10:05:00Z',
-        read: true,
-        type: 'system',
-    },
-    {
-        id: 'notif-002',
-        title: 'Actualización de peso: Pochito',
-        body: 'Pochito ha alcanzado 52.4 kg. ¡Va en excelente ritmo de crecimiento!',
-        date: '2026-02-01T14:30:00Z',
-        read: false,
-        type: 'growth',
-    },
-    {
-        id: 'notif-003',
-        title: '¡Pochito cumplió 60 días!',
-        body: 'Tu cerdo ha superado el 40% de su ciclo productivo. Revisa su estado en la Granja.',
-        date: '2026-02-15T09:00:00Z',
-        read: false,
-        type: 'growth',
-    },
-    {
-        id: 'notif-004',
-        title: 'Oferta especial de fin de mes',
-        body: 'Los Piggies con bono de aceleración tienen 5 cupos disponibles en el Mercado.',
-        date: '2026-02-20T16:45:00Z',
-        read: false,
-        type: 'promo',
-    },
-];
-
-export const MOCK_WALLET_TRANSACTIONS = [
-    {
-        id: 'tx-001',
-        amount: -1000000,
-        type: 'debit',
-        description: 'Débito: compra de Piggy (Pochito)',
-        wallet_type: 'dinero',
-        created_at: '2026-01-15T10:00:00Z',
-    },
-    {
-        id: 'tx-002',
-        amount: 2230000,
-        type: 'recharge',
-        description: 'Recarga de Wallet aprobada vía PSE',
-        wallet_type: 'dinero',
-        created_at: '2026-01-20T15:30:00Z',
-    },
-    {
-        id: 'tx-003',
-        amount: 20000,
-        type: 'credit',
-        description: 'Bono de Bienvenida ($20.000 en Tienda)',
-        wallet_type: 'consumo',
-        created_at: '2026-01-15T10:05:00Z',
-    },
-];
-
-/* ─── Format Currency ─── */
+/** Format COP currency safely */
 export function formatCOP(amount) {
+    const num = Number(amount);
+    if (amount === undefined || amount === null || isNaN(num)) return '$ 0';
     return new Intl.NumberFormat('es-CO', {
         style: 'currency',
         currency: 'COP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(amount || 0);
+    }).format(num);
 }
 
-/* ─── Format Date ─── */
-export function formatDate(dateString) {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('es-CO', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    }).format(date);
-}
-
-/* ─── Days Between ─── */
-export function daysBetween(start, end) {
-    const s = new Date(start);
-    const e = new Date(end);
-    const diff = e.getTime() - s.getTime();
+/** Calculate days remaining from now until end_date */
+export function getDaysRemaining(endDate) {
+    if (!endDate) return 143;
+    const end = new Date(endDate);
+    if (isNaN(end.getTime())) return 143;
+    const now = new Date();
+    const diff = end - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
+/** Calculate progress percentage (0-100) for a piggy's cycle */
+export function getProgressPercentage(purchaseDate, endDate) {
+    const start = new Date(purchaseDate).getTime();
+    const end = new Date(endDate).getTime();
+    const now = Date.now();
+    const total = end - start;
+    const elapsed = now - start;
+    return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+}
+
+/** Get the base ROI percentage based on piggy count */
+export function calculateBaseROI(piggyCount) {
+    if (piggyCount >= 3) return 0.10;
+    if (piggyCount === 2) return 0.09;
+    return 0.08;
+}
+
+/** Calculate total return for a piggy */
+export function calculateTotalReturn(investment, baseROI, extraROI = 0) {
+    return investment + (investment * (baseROI + extraROI));
+}
+
+/** Format percentage for display */
+export function formatPercentage(value) {
+    return `${(value * 100).toFixed(0)}%`;
+}
+
+/** Simulate weight based on progress (6kg to 120kg over 144 days) */
+export function simulateWeight(progressPercent) {
+    const minWeight = 6;
+    const maxWeight = 120;
+    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
+    return minWeight + ((maxWeight - minWeight) * p / 100);
+}
+
+/**
+ * 10 Growth Stages breakdown for 144-day farm cycle.
+ * Descriptions are concise (max 3 lines) and free of explicit weight numbers.
+ */
+export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
+    const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
+
+    if (p < 5.0) {
+        return {
+            stageNumber: 1,
+            stageName: 'Destete',
+            icon: '🍼',
+            badgeBg: '#fef3c7',
+            badgeColor: '#b45309',
+            description: `${piggyName} ha ingresado a las cunas de destete tras dejar su zona de lactancia calidamente.`
+        };
+    }
+    if (p < 9.0) {
+        return {
+            stageNumber: 2,
+            stageName: 'Climatización Controlada',
+            icon: '🌡️',
+            badgeBg: '#e0f2fe',
+            badgeColor: '#0369a1',
+            description: `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${piggyName} se mantenga en óptimas condiciones.`
+        };
+    }
+    if (p < 14.0) {
+        return {
+            stageNumber: 3,
+            stageName: 'Adaptación de Corral',
+            icon: '🏡',
+            badgeBg: '#fdf4ff',
+            badgeColor: '#c026d3',
+            description: `${piggyName} se socializa en su nuevo espacio y reconoce los puntos de hidratación y alimentación.`
+        };
+    }
+    if (p < 21.0) {
+        return {
+            stageNumber: 4,
+            stageName: 'Nutrición Adaptativa',
+            icon: '🌾',
+            badgeBg: '#f0fdf4',
+            badgeColor: '#15803d',
+            description: `${piggyName} recibe su alimento pre-iniciador especializado para adaptar gradualmente su sistema digestivo.`
+        };
+    }
+    if (p < 27.0) {
+        return {
+            stageNumber: 5,
+            stageName: 'Nutrición Fortificada',
+            icon: '🍲',
+            badgeBg: '#fdf4ff',
+            badgeColor: '#a21caf',
+            description: `${piggyName} avanza en su plan nutricional con alimento de transición para fortalecer su flora intestinal.`
+        };
+    }
+    if (p < 35.0) {
+        return {
+            stageNumber: 6,
+            stageName: 'Alimento Proteico',
+            icon: '🌿',
+            badgeBg: '#ecfdf5',
+            badgeColor: '#047857',
+            description: `${piggyName} consume alimento de inicio y completa la maduración total de su sistema digestivo.`
+        };
+    }
+    if (p < 62.0) {
+        return {
+            stageNumber: 7,
+            stageName: 'Desarrollo Acelerado',
+            icon: '🚀',
+            badgeBg: '#eff6ff',
+            badgeColor: '#1d4ed8',
+            description: `${piggyName} pasa a los galpones de engorde en lote y gana peso a ritmo acelerado con 16% de proteína.`
+        };
+    }
+    if (p < 98.0) {
+        return {
+            stageNumber: 8,
+            stageName: 'Engorde Final',
+            icon: '🥩',
+            badgeBg: '#fff1f2',
+            badgeColor: '#be123c',
+            description: `${piggyName} se alimenta libremente al 14% de proteína en nuestra granja cubierta.`
+        };
+    }
+    if (p < 100.0) {
+        return {
+            stageNumber: 9,
+            stageName: 'Preparación de Salida',
+            icon: '💧',
+            badgeBg: '#fefce8',
+            badgeColor: '#a16207',
+            description: `Se retira el alimento sólido de ${piggyName} para reducir la contaminación de la canal, manteniendo agua a libre voluntad.`
+        };
+    }
+    return {
+        stageNumber: 10,
+        stageName: 'Salida al Mercado',
+        icon: '🚚',
+        badgeBg: '#f0fdf4',
+        badgeColor: '#16a34a',
+        description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
+    };
 }
