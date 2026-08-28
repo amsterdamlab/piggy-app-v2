@@ -18,76 +18,40 @@ let mockTransactions = null;
 function initMockState() {
     if (mockBalance === null) {
         const storedBal = localStorage.getItem('mock_wallet_balance');
-        if (storedBal !== null) {
-            mockBalance = parseFloat(storedBal);
-        } else {
-            mockBalance = 0;
-            localStorage.setItem('mock_wallet_balance', '0');
-        }
+        mockBalance = storedBal !== null ? parseFloat(storedBal) : 0;
+        if (storedBal === null) localStorage.setItem('mock_wallet_balance', '0');
     }
-
     if (mockTransactions === null) {
         const storedTxs = localStorage.getItem('mock_wallet_transactions');
-        if (storedTxs !== null) {
-            mockTransactions = JSON.parse(storedTxs);
-        } else {
-            mockTransactions = [
-                { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
-                { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
-                { id: '3', amount: 20000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
-            ];
-            localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-        }
+        mockTransactions = storedTxs !== null ? JSON.parse(storedTxs) : [
+            { id: '1', amount: -1000000, type: 'debit', description: 'Débito: compra de Piggy', wallet_type: 'dinero', created_at: new Date().toISOString() },
+            { id: '2', amount: 2230000, type: 'recharge', description: 'Recarga de Wallet aprobada', wallet_type: 'dinero', created_at: new Date(Date.now() - 86400000).toISOString() },
+            { id: '3', amount: 20000, type: 'credit', description: 'Bono de Bienvenida (aplica condiciones)', wallet_type: 'consumo', created_at: new Date(Date.now() - 172800000).toISOString() }
+        ];
+        if (storedTxs === null) localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
     }
-
     // Guaranteed Option A refund ($2.000.000 COP) check
-    const isRefundApplied = localStorage.getItem('mock_refund_applied_v3') === 'true';
-    if (!isRefundApplied) {
+    if (localStorage.getItem('mock_refund_applied_v3') !== 'true') {
         mockBalance = (mockBalance || 0) + 2000000;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
-
-        const refundTx = {
-            id: `refund-${Date.now()}`,
-            amount: 2000000,
-            type: 'recharge',
-            description: 'Reembolso por compra de Piggys no completada (Opción A)',
-            wallet_type: 'dinero',
-            created_at: new Date().toISOString()
-        };
+        const refundTx = { id: `refund-${Date.now()}`, amount: 2000000, type: 'recharge', description: 'Reembolso por compra de Piggys no completada (Opción A)', wallet_type: 'dinero', created_at: new Date().toISOString() };
         if (!mockTransactions) mockTransactions = [];
         mockTransactions.unshift(refundTx);
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
         localStorage.setItem('mock_refund_applied_v3', 'true');
-
-        // Force AppState profile update
         const curProfile = AppState.get('profile') || {};
         AppState.set({ profile: { ...curProfile, wallet_balance: mockBalance } });
     }
 }
 
-/**
- * Execute Option A refund in Supabase DB if pending.
- */
+/** Execute Option A refund in Supabase DB if pending. */
 export async function executeOptionARefundIfPending(userId) {
-    if (isUsingMockData() || !userId) return;
-    if (sessionStorage.getItem(`opt_a_refund_${userId}`)) return;
-
+    if (isUsingMockData() || !userId || sessionStorage.getItem(`opt_a_refund_${userId}`)) return;
     const client = getClient();
     try {
-        const { data: existing } = await client
-            .from('wallet_transactions')
-            .select('id')
-            .eq('user_id', userId)
-            .ilike('description', '%Reembolso por compra de Piggys%')
-            .limit(1);
-
+        const { data: existing } = await client.from('wallet_transactions').select('id').eq('user_id', userId).ilike('description', '%Reembolso por compra de Piggys%').limit(1);
         if (!existing || existing.length === 0) {
-            await client.from('wallet_transactions').insert({
-                user_id: userId,
-                amount: 2000000,
-                type: 'credit',
-                description: 'Reembolso por compra de Piggys no completada (Opción A)',
-            });
+            await client.from('wallet_transactions').insert({ user_id: userId, amount: 2000000, type: 'credit', description: 'Reembolso por compra de Piggys no completada (Opción A)' });
             console.log('✅ Reembolso de $2.000.000 COP acreditado exitosamente en DB.');
         }
         sessionStorage.setItem(`opt_a_refund_${userId}`, 'done');
@@ -242,9 +206,7 @@ export async function expireWelcomeBonusIfDue(userId = null) {
             .eq('id', targetUserId)
             .single();
 
-        if (!profile) return;
-        const status = profile.welcome_bonus_status || 'active';
-        if (status !== 'active') return;
+        if (!profile || profile.welcome_bonus_status !== 'active') return;
 
         const regDate = profile.created_at ? new Date(profile.created_at) : new Date();
         const expiryTime = regDate.getTime() + (30 * 24 * 60 * 60 * 1000);
@@ -278,21 +240,109 @@ export async function expireWelcomeBonusIfDue(userId = null) {
     }
 }
 
+/** Synchronizes active marketing campaigns and auto-expires due campaign bonuses in DB. */
+export async function syncAndExpireMarketingBonuses(userId = null) {
+    if (isUsingMockData()) return;
+    const client = getClient();
+    const targetUserId = userId || (await client.auth.getUser()).data.user?.id;
+    if (!targetUserId) return;
+
+    try {
+        const nowIso = new Date().toISOString();
+
+        // 1. Expire due marketing bonuses
+        const { data: dueBonuses } = await client
+            .from('user_marketing_bonuses')
+            .select('id, amount, campaign_id, marketing_bonuses(campaign_name)')
+            .eq('user_id', targetUserId)
+            .eq('status', 'active')
+            .lte('expires_at', nowIso);
+
+        if (dueBonuses && dueBonuses.length > 0) {
+            for (const b of dueBonuses) {
+                const cName = b.marketing_bonuses?.campaign_name || 'Campaña';
+                const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
+                const curBal = Number(prof?.consumption_balance) || 0;
+                const deduct = Math.min(curBal, Number(b.amount) || 0);
+
+                if (deduct > 0) {
+                    await client.from('wallet_transactions').insert({
+                        user_id: targetUserId,
+                        amount: -deduct,
+                        type: 'debit',
+                        description: `Vencimiento de Campaña: ${cName}`,
+                        wallet_type: 'consumo'
+                    });
+                    await client.from('profiles').update({ consumption_balance: Math.max(0, curBal - deduct) }).eq('id', targetUserId);
+                }
+                await client.from('user_marketing_bonuses').update({ status: 'expired' }).eq('id', b.id);
+            }
+        }
+
+        // 2. Assign eligible active campaigns
+        const { data: activeCampaigns } = await client
+            .from('marketing_bonuses')
+            .select('*')
+            .eq('is_active', true)
+            .lte('starts_at', nowIso)
+            .gt('expires_at', nowIso);
+
+        if (activeCampaigns && activeCampaigns.length > 0) {
+            const { data: existingUserBonuses } = await client
+                .from('user_marketing_bonuses')
+                .select('campaign_id')
+                .eq('user_id', targetUserId);
+
+            const receivedIds = new Set((existingUserBonuses || []).map(x => x.campaign_id));
+            const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
+            const curBal = Number(prof?.consumption_balance) || 0;
+
+            for (const camp of activeCampaigns) {
+                if (receivedIds.has(camp.id)) continue;
+                if (camp.target_audience === 'zero_balance' && curBal > 0) continue;
+
+                const bonusAmount = Number(camp.amount) || 0;
+                const { error: insErr } = await client.from('user_marketing_bonuses').insert({
+                    user_id: targetUserId,
+                    campaign_id: camp.id,
+                    amount: bonusAmount,
+                    expires_at: camp.expires_at,
+                    status: 'active'
+                });
+
+                if (!insErr && bonusAmount > 0) {
+                    await client.from('wallet_transactions').insert({
+                        user_id: targetUserId,
+                        amount: bonusAmount,
+                        type: 'credit',
+                        description: `Bono de Campaña: ${camp.campaign_name}`,
+                        wallet_type: 'consumo'
+                    });
+                    await client.from('profiles').update({ consumption_balance: curBal + bonusAmount }).eq('id', targetUserId);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Error in syncAndExpireMarketingBonuses:', e);
+    }
+}
+
 /**
- * Calculates the Welcome Bonus expiration status based on user's registration date (created_at).
- * Validity is exactly 30 calendar days from the creation of the account.
- * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string }>}
+ * Calculates active bonus status (Welcome Bonus or Active Marketing Bonus) with unified countdown info.
+ * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string, campaignName: string }>}
  */
 export async function getWelcomeBonusExpiryInfo() {
     const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);
     let createdAt = profile?.created_at;
     let status = profile?.welcome_bonus_status || 'active';
+    let targetUserId = profile?.id;
 
-    if ((!createdAt || !profile?.welcome_bonus_status) && !isUsingMockData()) {
+    if (!isUsingMockData()) {
         try {
             const client = getClient();
             const { data: { user } } = await client.auth.getUser();
             if (user) {
+                targetUserId = user.id;
                 const { data } = await client.from('profiles').select('created_at, welcome_bonus_status, consumption_balance').eq('id', user.id).single();
                 if (data) {
                     createdAt = data.created_at || user.created_at;
@@ -300,7 +350,7 @@ export async function getWelcomeBonusExpiryInfo() {
                 }
             }
         } catch (e) {
-            console.warn('Could not read user registration date for bonus expiry:', e);
+            console.warn('Could not read user profile for bonus expiry:', e);
         }
     }
 
@@ -310,22 +360,56 @@ export async function getWelcomeBonusExpiryInfo() {
     const now = Date.now();
     const msRemaining = expiryTime - now;
     const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
-    const isExpired = status !== 'active' || msRemaining <= 0;
+    let isExpired = status !== 'active' || msRemaining <= 0;
 
     // Automatic trigger if 30 days passed and still marked active
     if (status === 'active' && msRemaining <= 0) {
-        await expireWelcomeBonusIfDue();
+        await expireWelcomeBonusIfDue(targetUserId);
         status = 'expired';
+        isExpired = true;
+    }
+
+    // Check active marketing campaign bonus
+    let campaignName = 'Bono Bienvenida $20.000';
+    let marketingDaysRemaining = 0;
+    let hasActiveMarketingBonus = false;
+
+    if (!isUsingMockData() && targetUserId) {
+        try {
+            await syncAndExpireMarketingBonuses(targetUserId);
+            const client = getClient();
+            const { data: activeMkt } = await client
+                .from('user_marketing_bonuses')
+                .select('expires_at, amount, marketing_bonuses(campaign_name)')
+                .eq('user_id', targetUserId)
+                .eq('status', 'active')
+                .gt('expires_at', new Date().toISOString())
+                .order('expires_at', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (activeMkt) {
+                hasActiveMarketingBonus = true;
+                const mktExpiry = new Date(activeMkt.expires_at).getTime();
+                marketingDaysRemaining = Math.max(0, Math.ceil((mktExpiry - now) / (1000 * 60 * 60 * 24)));
+                campaignName = activeMkt.marketing_bonuses?.campaign_name || 'Bono Express';
+            }
+        } catch (e) {
+            console.warn('Error checking marketing bonus info:', e);
+        }
     }
 
     const currentBonus = await getReferralBonusBalance();
+    const isOverallActive = (!isExpired && daysRemaining > 0) || hasActiveMarketingBonus;
+    const effectiveDaysRemaining = hasActiveMarketingBonus ? marketingDaysRemaining : daysRemaining;
 
     return {
-        status,
-        isExpired,
-        daysRemaining,
+        status: isOverallActive ? 'active' : status,
+        isExpired: !isOverallActive,
+        daysRemaining: effectiveDaysRemaining,
         expiryDate: new Date(expiryTime),
         hasWelcomeBonus: currentBonus > 0,
+        campaignName: isOverallActive ? campaignName : 'Bono Bienvenida $20.000',
     };
 }
 
@@ -442,139 +526,61 @@ export async function addWalletBalance(amount, description = 'Reembolso a Wallet
 export async function convertBalanceToConsumptionBonus(amount) {
     if (isUsingMockData()) {
         initMockState();
-        if (mockBalance < amount) {
-            return { success: false, reason: 'insufficient_balance' };
-        }
-        
+        if (mockBalance < amount) return { success: false, reason: 'insufficient_balance' };
         mockBalance -= amount;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
-
-        const debitTx = {
-            id: `sim-deb-${Date.now()}`,
-            amount: -amount,
-            type: 'debit',
-            description: 'Canje a Bonos de Consumo (Débito saldo)',
-            wallet_type: 'dinero',
-            created_at: new Date().toISOString()
-        };
-        const creditTx = {
-            id: `sim-cred-${Date.now() + 1}`,
-            amount: amount,
-            type: 'credit',
-            description: 'Bono de Consumo acreditado por canje de saldo',
-            wallet_type: 'consumo',
-            created_at: new Date().toISOString()
-        };
-
+        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description: 'Canje a Bonos de Consumo (Débito saldo)', wallet_type: 'dinero', created_at: new Date().toISOString() };
+        const creditTx = { id: `sim-cred-${Date.now() + 1}`, amount: amount, type: 'credit', description: 'Bono de Consumo acreditado por canje de saldo', wallet_type: 'consumo', created_at: new Date().toISOString() };
         mockTransactions.unshift(creditTx, debitTx);
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-
         const profile = AppState.get('profile') || { ...MOCK_PROFILE };
-        const currentRef = profile.consumption_balance || 0;
-        profile.consumption_balance = currentRef + amount;
+        profile.consumption_balance = (profile.consumption_balance || 0) + amount;
         profile.wallet_balance = mockBalance;
         AppState.set({ profile: { ...profile } });
-
         return { success: true };
     }
-
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
-
-    // Ejecutamos el procedimiento RPC en base de datos de forma atómica y con autorización interna
-    const { data, error } = await client.rpc('convert_balance_to_consumption_bonus', {
-        p_amount: amount
-    });
-
-    if (error) {
-        console.error('Error calling convert_balance_to_consumption_bonus RPC:', error);
-        return { success: false, reason: error.message };
-    }
-
-    if (!data || !data.success) {
-        return { success: false, reason: data?.reason || 'No se pudo realizar el canje en base de datos.' };
-    }
-
-    // Actualizar AppState con los saldos sincronizados por los triggers
-    const { data: updatedProfile } = await client
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-        
+    const { data, error } = await client.rpc('convert_balance_to_consumption_bonus', { p_amount: amount });
+    if (error || !data?.success) return { success: false, reason: error?.message || data?.reason || 'No se pudo realizar el canje en base de datos.' };
+    const { data: updatedProfile } = await client.from('profiles').select('*').eq('id', user.id).single();
     if (updatedProfile) {
-        const currentAppStateProfile = AppState.get('profile') || {};
-        AppState.set({ profile: { ...currentAppStateProfile, ...updatedProfile } });
+        const cur = AppState.get('profile') || {};
+        AppState.set({ profile: { ...cur, ...updatedProfile } });
     }
-
     return { success: true };
 }
 
 /* ─── Recharge Wallet (Wompi Simulation) ─── */
-
-/**
- * Recharge the user's wallet balance with a simulation_recharge transaction.
- * Records full traceability: payment method, simulation status, and description.
- * Supports both mock mode and real Supabase mode.
- *
- * @param {number} amount - Amount in COP to credit
- * @param {'tarjeta' | 'pse'} paymentMethod - Payment method used in the simulation
- * @param {'simulated_approved' | 'simulated_rejected'} simulationStatus - Result of the simulation
- * @param {Object} mockState - (Mock mode only) Mutable object with { balance, transactions }
- * @param {string|null} [reference=null] - Wompi transaction reference for idempotency
- * @returns {{ success: boolean, newBalance?: number, transactionId?: string, reason?: string }}
- */
 export async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null, reference = null) {
     const isApproved = simulationStatus === 'simulated_approved';
     const refStr = reference ? ` [Ref: ${reference}]` : '';
-
     if (isUsingMockData()) {
         initMockState();
-
         const newTransaction = {
             id: `sim-${Date.now()}`,
             amount: isApproved ? amount : 0,
             type: 'simulation_recharge',
-            description: isApproved
-                ? `Recarga Wompi${refStr || ` (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`}`
-                : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`,
+            description: isApproved ? `Recarga Wompi${refStr || ` (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`}` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`,
             wallet_type: 'dinero',
             payment_method: paymentMethod,
             simulation_status: simulationStatus,
             created_at: new Date().toISOString(),
         };
-
         mockTransactions.unshift(newTransaction);
         localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
-
         if (isApproved) {
             mockBalance += amount;
             localStorage.setItem('mock_wallet_balance', mockBalance.toString());
         }
-
-        // Mutate the provided mockState reference if passed to sync with UI
-        if (mockState) {
-            mockState.balance = mockBalance;
-            mockState.transactions = mockTransactions;
-        }
-
-        return {
-            success: isApproved,
-            newBalance: mockBalance,
-            transactionId: newTransaction.id,
-            reason: isApproved ? null : 'simulated_rejected',
-        };
+        if (mockState) { mockState.balance = mockBalance; mockState.transactions = mockTransactions; }
+        return { success: isApproved, newBalance: mockBalance, transactionId: newTransaction.id, reason: isApproved ? null : 'simulated_rejected' };
     }
-
-    // Real Supabase mode
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
-
-    const description = isApproved
-        ? (reference ? `Recarga Wompi [Ref: ${reference}]` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`)
-        : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;
+    const description = isApproved ? (reference ? `Recarga Wompi [Ref: ${reference}]` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`) : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;
 
     // Idempotencia: Verificar si el Webhook ya insertó esta transacción por referencia
     if (reference && isApproved) {

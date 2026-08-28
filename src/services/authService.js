@@ -7,7 +7,7 @@ import { getClient, isUsingMockData } from './supabase.js';
 import { MOCK_USER, MOCK_PROFILE } from './mockData.js';
 import { AppState } from '../state.js';
 import { generateMockReferralCode } from './referralService.js';
-import { expireWelcomeBonusIfDue } from './walletService.js';
+import { expireWelcomeBonusIfDue, syncAndExpireMarketingBonuses } from './walletService.js';
 
 // Mock session control
 let mockLoggedIn = false;
@@ -205,6 +205,7 @@ export async function signIn({ email, password }, onProgress = () => {}) {
     if (data.user) {
         onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
         await expireWelcomeBonusIfDue(data.user.id);
+        await syncAndExpireMarketingBonuses(data.user.id);
         const profile = await getProfile();
         onProgress('✅ Perfil verificado. Preparando tu granja agro...');
         AppState.set({
@@ -304,6 +305,7 @@ export async function checkSession() {
 
     if (session?.user) {
         await expireWelcomeBonusIfDue(session.user.id);
+        await syncAndExpireMarketingBonuses(session.user.id);
         const profile = await getProfile();
         const isGoogleUser = session.user.app_metadata?.provider === 'google';
         const needsWhatsApp = isGoogleUser && !profile?.whatsapp;

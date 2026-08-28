@@ -106,7 +106,7 @@ export async function getActiveTips() {
       const daysText = expiryInfo.daysRemaining === 1 ? '1 día' : `${expiryInfo.daysRemaining} días`;
       const welcomeBonusTip = {
         icon: '🎁',
-        title: 'Bono Bienvenida $20.000',
+        title: expiryInfo.campaignName || 'Bono Bienvenida $20.000',
         reward: `Redime en productos de la Tienda. <strong>Te quedan solo ${daysText}</strong>`,
         color: '#be123c',
         bgColor: '#fff1f2',

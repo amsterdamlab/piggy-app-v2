@@ -269,6 +269,20 @@ export const MOCK_MISSIONS = [
     }
 ];
 
+export const MOCK_MARKETING_BONUSES = [
+    {
+        id: 'promo-001',
+        campaign_name: 'Oferta Express Fin de Semana',
+        description: 'Bono especial para redimir en cortes de carne en la Tienda.',
+        amount: 30000,
+        min_order_amount: 150000,
+        starts_at: new Date(NOW_MS - 2 * DAY_MS).toISOString(),
+        expires_at: new Date(NOW_MS + 5 * DAY_MS).toISOString(),
+        target_audience: 'all',
+        is_active: true,
+    }
+];
+
 /** Format COP currency safely */
 export function formatCOP(amount) {
     const num = Number(amount);
