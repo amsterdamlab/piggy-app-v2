@@ -4,29 +4,11 @@
 -- Permite personalizar desde BD: títulos, subtítulos, beneficios y etiquetas
 -- ==============================================================================
 
--- 1. Agregar columnas para textos personalizados a user_flash_missions si no existen
-DO $$ 
-BEGIN
-  -- Nombre/etiqueta del cerdito en el modal/banner (ej: 'Piggy Flash', 'Piggy Avanzado 45D')
-  BEGIN
-    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS piggy_label TEXT NULL;
-  EXCEPTION WHEN others THEN END;
-
-  -- Título de la tarjeta de beneficio (ej: 'Reducción de 45 días de espera' o '+2% en Comisión Comercial')
-  BEGIN
-    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TEXT NULL;
-  EXCEPTION WHEN others THEN END;
-
-  -- Descripción/subtítulo de la tarjeta de beneficio (ej: 'Inicia tu cerdito en el día 45 ahorrando tiempo.' o '+2% adicional sobre tu ROI base')
-  BEGIN
-    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_description TEXT NULL;
-  EXCEPTION WHEN others THEN END;
-
-  -- Texto del badge superior (ej: '⚡ OFERTA FLASH · AVANZADO 45D')
-  BEGIN
-    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS badge TEXT NULL;
-  EXCEPTION WHEN others THEN END;
-END $$;
+-- 1. Agregar columnas para textos personalizados a user_flash_missions
+ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS piggy_label TEXT NULL;
+ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TEXT NULL;
+ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_description TEXT NULL;
+ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS badge TEXT NULL;
 
 -- 2. Actualizar la función trigger para copiar todos los campos de texto al duplicar plantillas globales
 CREATE OR REPLACE FUNCTION public.process_consolidated_flash_mission()
