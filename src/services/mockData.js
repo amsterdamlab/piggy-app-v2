@@ -446,3 +446,26 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
         description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
     };
 }
+
+/**
+ * Format weight in kilograms.
+ */
+export function formatWeight(weight) {
+    const num = Number(weight);
+    if (isNaN(num) || num <= 0) return '15.0 kg';
+    return `${num.toFixed(1)} kg`;
+}
+
+/**
+ * Get Growth Phase Name by month number.
+ */
+export function getGrowthPhaseName(monthNumber) {
+    const phases = {
+        1: 'Iniciación / Destete',
+        2: 'Crecimiento y Adaptación',
+        3: 'Desarrollo Muscular',
+        4: 'Engorde Acelerado',
+        5: 'Finalización de Engorde',
+    };
+    return phases[monthNumber] || 'Crecimiento Inicial';
+}
