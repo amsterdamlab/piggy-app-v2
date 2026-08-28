@@ -240,7 +240,7 @@ export async function expireWelcomeBonusIfDue(userId = null) {
     }
 }
 
-/** Synchronizes active marketing campaigns and auto-expires due campaign bonuses in DB. */
+/** Synchronizes active marketing campaigns and auto-expires due bonuses in DB (Single Table: user_marketing_bonuses). */
 export async function syncAndExpireMarketingBonuses(userId = null) {
     if (isUsingMockData()) return;
     const client = getClient();
@@ -250,17 +250,16 @@ export async function syncAndExpireMarketingBonuses(userId = null) {
     try {
         const nowIso = new Date().toISOString();
 
-        // 1. Expire due marketing bonuses
+        // 1. Auto-expire due user-specific bonuses
         const { data: dueBonuses } = await client
             .from('user_marketing_bonuses')
-            .select('id, amount, campaign_id, marketing_bonuses(campaign_name)')
+            .select('id, amount, campaign_name')
             .eq('user_id', targetUserId)
             .eq('status', 'active')
             .lte('expires_at', nowIso);
 
         if (dueBonuses && dueBonuses.length > 0) {
             for (const b of dueBonuses) {
-                const cName = b.marketing_bonuses?.campaign_name || 'Campaña';
                 const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
                 const curBal = Number(prof?.consumption_balance) || 0;
                 const deduct = Math.min(curBal, Number(b.amount) || 0);
@@ -270,44 +269,48 @@ export async function syncAndExpireMarketingBonuses(userId = null) {
                         user_id: targetUserId,
                         amount: -deduct,
                         type: 'debit',
-                        description: `Vencimiento de Campaña: ${cName}`,
+                        description: `Vencimiento de Campaña: ${b.campaign_name}`,
                         wallet_type: 'consumo'
                     });
                     await client.from('profiles').update({ consumption_balance: Math.max(0, curBal - deduct) }).eq('id', targetUserId);
                 }
-                await client.from('user_marketing_bonuses').update({ status: 'expired' }).eq('id', b.id);
+                await client.from('user_marketing_bonuses').update({ status: 'expired', is_active: false }).eq('id', b.id);
             }
         }
 
-        // 2. Assign eligible active campaigns
-        const { data: activeCampaigns } = await client
-            .from('marketing_bonuses')
+        // 2. Check for active Global campaigns (where user_id IS NULL) and credit them if not received yet
+        const { data: globalBonuses } = await client
+            .from('user_marketing_bonuses')
             .select('*')
+            .is('user_id', null)
             .eq('is_active', true)
+            .eq('status', 'active')
             .lte('starts_at', nowIso)
             .gt('expires_at', nowIso);
 
-        if (activeCampaigns && activeCampaigns.length > 0) {
-            const { data: existingUserBonuses } = await client
+        if (globalBonuses && globalBonuses.length > 0) {
+            const { data: userExisting } = await client
                 .from('user_marketing_bonuses')
-                .select('campaign_id')
+                .select('campaign_name')
                 .eq('user_id', targetUserId);
 
-            const receivedIds = new Set((existingUserBonuses || []).map(x => x.campaign_id));
+            const receivedNames = new Set((userExisting || []).map(x => x.campaign_name));
             const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
             const curBal = Number(prof?.consumption_balance) || 0;
 
-            for (const camp of activeCampaigns) {
-                if (receivedIds.has(camp.id)) continue;
-                if (camp.target_audience === 'zero_balance' && curBal > 0) continue;
+            for (const gb of globalBonuses) {
+                if (receivedNames.has(gb.campaign_name)) continue;
 
-                const bonusAmount = Number(camp.amount) || 0;
+                const bonusAmount = Number(gb.amount) || 0;
                 const { error: insErr } = await client.from('user_marketing_bonuses').insert({
                     user_id: targetUserId,
-                    campaign_id: camp.id,
+                    campaign_name: gb.campaign_name,
                     amount: bonusAmount,
-                    expires_at: camp.expires_at,
-                    status: 'active'
+                    min_order_amount: gb.min_order_amount || 150000,
+                    starts_at: gb.starts_at,
+                    expires_at: gb.expires_at,
+                    status: 'active',
+                    is_active: true,
                 });
 
                 if (!insErr && bonusAmount > 0) {
@@ -315,7 +318,7 @@ export async function syncAndExpireMarketingBonuses(userId = null) {
                         user_id: targetUserId,
                         amount: bonusAmount,
                         type: 'credit',
-                        description: `Bono de Campaña: ${camp.campaign_name}`,
+                        description: `Bono de Campaña: ${gb.campaign_name}`,
                         wallet_type: 'consumo'
                     });
                     await client.from('profiles').update({ consumption_balance: curBal + bonusAmount }).eq('id', targetUserId);
@@ -369,7 +372,7 @@ export async function getWelcomeBonusExpiryInfo() {
         isExpired = true;
     }
 
-    // Check active marketing campaign bonus
+    // Check active marketing campaign bonus from user_marketing_bonuses
     let campaignName = 'Bono Bienvenida $20.000';
     let marketingDaysRemaining = 0;
     let hasActiveMarketingBonus = false;
@@ -380,9 +383,10 @@ export async function getWelcomeBonusExpiryInfo() {
             const client = getClient();
             const { data: activeMkt } = await client
                 .from('user_marketing_bonuses')
-                .select('expires_at, amount, marketing_bonuses(campaign_name)')
+                .select('expires_at, amount, campaign_name')
                 .eq('user_id', targetUserId)
                 .eq('status', 'active')
+                .eq('is_active', true)
                 .gt('expires_at', new Date().toISOString())
                 .order('expires_at', { ascending: true })
                 .limit(1)
@@ -392,7 +396,7 @@ export async function getWelcomeBonusExpiryInfo() {
                 hasActiveMarketingBonus = true;
                 const mktExpiry = new Date(activeMkt.expires_at).getTime();
                 marketingDaysRemaining = Math.max(0, Math.ceil((mktExpiry - now) / (1000 * 60 * 60 * 24)));
-                campaignName = activeMkt.marketing_bonuses?.campaign_name || 'Bono Express';
+                campaignName = activeMkt.campaign_name || 'Bono Express';
             }
         } catch (e) {
             console.warn('Error checking marketing bonus info:', e);
