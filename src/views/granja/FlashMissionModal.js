@@ -238,9 +238,7 @@ export function showFlashMissionModal(mission) {
         avanzado90: 'Piggy Avanzado (90d)',
     };
     const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
-    const piggyLabel = (mission.piggy_label && mission.piggy_label.trim() !== '')
-        ? mission.piggy_label.trim()
-        : (mission.title && !mission.title.toLowerCase().includes('misión') && !mission.title.toLowerCase().includes('acelera') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
+    const piggyLabel = mission.piggy_label || (mission.title && !mission.title.toLowerCase().includes('misión') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
 
     // DB Texts or smart fallbacks
     let defaultBenefitTitle = '';
@@ -267,23 +265,18 @@ export function showFlashMissionModal(mission) {
         defaultBenefitTitle = 'Reducción de 90 días de espera';
         defaultBenefitSub   = 'Inicia tu cerdito ahorrando 90 días de tiempo.';
         defaultDescription  = 'Piggy cuántico con 90 días de crecimiento incluidos.';
-    } else if (rawType === 'dorado' || rawType === 'gold') {
-        defaultBenefitTitle = '+2% en Margen Comercial';
-        defaultBenefitSub   = '+2% adicional sobre tu ROI base de granja.';
-        defaultDescription  = 'Piggy exclusivo Dorado con +2% adicional en tu Margen Comercial.';
-    } else if (rawType === 'premium') {
-        defaultBenefitTitle = '+3% en Margen Comercial';
-        defaultBenefitSub   = '+3% adicional sobre tu ROI base de granja.';
-        defaultDescription  = 'Piggy exclusivo Premium con +3% adicional en tu Margen Comercial.';
     } else {
-        defaultBenefitTitle = '+1% en Margen Comercial';
-        defaultBenefitSub   = '+1% adicional sobre tu ROI base de granja.';
-        defaultDescription  = 'Piggy exclusivo Plus con +1% adicional en tu Margen Comercial.';
+        let extraPct = '+1%';
+        if (rawType === 'gold' || rawType === 'dorado') extraPct = '+2%';
+        if (rawType === 'premium') extraPct = '+3%';
+        defaultBenefitTitle = `${extraPct} en Margen Comercial`;
+        defaultBenefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
+        defaultDescription  = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
     }
 
-    const benefitTitle    = (mission.benefit_title && mission.benefit_title.trim() !== '') ? mission.benefit_title : defaultBenefitTitle;
-    const benefitSub      = (mission.benefit_description && mission.benefit_description.trim() !== '') ? mission.benefit_description : (mission.benefit_sub || defaultBenefitSub);
-    const descriptionText = (mission.description && mission.description.trim() !== '') ? mission.description : defaultDescription;
+    const benefitTitle    = mission.benefit_title || defaultBenefitTitle;
+    const benefitSub      = mission.benefit_description || mission.benefit_sub || defaultBenefitSub;
+    const descriptionText = mission.description || defaultDescription;
 
     const suggestedNames = {
         advanced30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
@@ -313,31 +306,28 @@ export function showFlashMissionModal(mission) {
     modal.innerHTML = `
         <div class="animate-fade-in-up" style="
             background: white; border-radius: 28px 28px 0 0;
-            width: 100%; max-width: 480px; max-height: 88dvh;
+            width: 100%; max-width: 480px; max-height: 90dvh;
             overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px)) 0; position: relative;
         ">
             <!-- Handle -->
-            <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin:12px auto 0;"></div>
+            <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin:14px auto 6px;"></div>
 
             <!-- Close -->
             <button id="flash-modal-close" style="
                 position:absolute; top:12px; right:16px;
-                background:#f3f4f6; border:none; width:32px; height:32px;
-                border-radius:50%; cursor:pointer; font-size:18px; color:#6b7280;
+                background:transparent; border:none; width:32px; height:32px;
+                cursor:pointer; font-size:24px; color:#9ca3af;
                 display:flex; align-items:center; justify-content:center;
-            ">&times;</button>
+                line-height:1; z-index:10; transition:color 0.15s;
+            " onmouseover="this.style.color='#4b5563'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
             <!-- Premium Header -->
             <div style="
                 background: ${theme.gradient};
-                margin: 20px 20px 0; border-radius: 20px; padding: 28px 24px;
+                margin: 14px 20px 0; border-radius: 20px; padding: 28px 24px;
                 color: white; text-align: center; position: relative; overflow: hidden;
                 box-shadow: 0 12px 30px -5px ${theme.shadow};
             ">
-                <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.07;
-                    background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🐷%3C/text%3E%3C/svg%3E');
-                    pointer-events:none;"></div>
-
                 <!-- Badge -->
                 <div style="background:rgba(255,255,255,0.22); display:inline-block; padding:4px 14px;
                     border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1.5px;
@@ -367,7 +357,8 @@ export function showFlashMissionModal(mission) {
                     </div>
                 </div>
 
-                <div style="position:absolute; bottom:-20px; right:-10px; font-size:80px; opacity:0.12; transform:rotate(-15deg);">🐷</div>
+                <!-- Single bottom-left piggy icon -->
+                <div style="position:absolute; bottom:-18px; left:-8px; font-size:75px; opacity:0.12; transform:rotate(15deg); pointer-events:none; user-select:none;">🐷</div>
             </div>
 
             <!-- Body -->
@@ -390,7 +381,7 @@ export function showFlashMissionModal(mission) {
                 <!-- Name Input -->
                 <div style="margin-bottom: 16px;">
                     <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
-                        Ponle un nombre a tu ${piggyLabel}
+                        Ponle un nombre a tu Piggy
                     </label>
                     <input type="text" id="flash-piggy-name"
                         placeholder="Nombre del piggy..."
@@ -490,8 +481,9 @@ export function showFlashMissionModal(mission) {
                 </div>
 
                 <!-- Footer -->
-                <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem;">
-                    🔒 Transacción segura · Oferta exclusiva por tiempo limitado
+                <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Transacción segura · Oferta exclusiva por tiempo limitado</span>
                 </div>
             </div>
         </div>
