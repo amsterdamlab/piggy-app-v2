@@ -472,8 +472,10 @@ function renderFlashMissionBanner(mission) {
     };
     const t = typeThemes[rawType] || typeThemes.avanzado30;
     if (mission.icon) t.icon = mission.icon;
-    const missionTitle = mission.mission_title || 'MISIÓN FLASH';
-    const badgeText = mission.badge || `${t.icon} ${missionTitle} · OFERTA LIMITADA`;
+    const missionTitle = mission.title || mission.mission_title || 'MISIÓN FLASH';
+    const badgeText = (mission.badge && mission.badge.trim() !== '')
+        ? mission.badge
+        : `${t.icon} ${mission.mission_title || 'MISIÓN FLASH'} · OFERTA LIMITADA`;
     
     let defaultBenefitText = '';
     if (rawType.includes('30')) {
@@ -486,15 +488,15 @@ function renderFlashMissionBanner(mission) {
         defaultBenefitText = 'Piggy cuántico con <strong>75 días ahorrados</strong> (69 días restantes)';
     } else if (rawType.includes('90')) {
         defaultBenefitText = 'Piggy cuántico con <strong>90 días ahorrados</strong> (54 días restantes)';
+    } else if (rawType === 'dorado' || rawType === 'gold') {
+        defaultBenefitText = `Piggy exclusivo <strong>Dorado</strong> con <strong>+2% en Margen Comercial</strong>`;
+    } else if (rawType === 'premium') {
+        defaultBenefitText = `Piggy exclusivo <strong>Premium</strong> con <strong>+3% en Margen Comercial</strong>`;
     } else {
-        let roiBonus = 0.01;
-        if (rawType === 'dorado' || rawType === 'gold') roiBonus = 0.02;
-        if (rawType === 'premium') roiBonus = 0.03;
-        let extraPct = `+${(roiBonus * 100).toFixed(0)}%`;
-        defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Margen Comercial</strong>`;
+        defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>+1% en Margen Comercial</strong>`;
     }
 
-    const benefitText = mission.description || defaultBenefitText;
+    const benefitText = (mission.description && mission.description.trim() !== '') ? mission.description : defaultBenefitText;
 
     const remaining = mission.remainingMs || 0;
     const hours     = String(Math.floor(remaining / 3600000)).padStart(2, '0');

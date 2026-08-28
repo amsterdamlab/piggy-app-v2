@@ -10,7 +10,7 @@ ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TE
 ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_description TEXT NULL;
 ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS badge TEXT NULL;
 
--- 2. Actualizar la función trigger para copiar todos los campos de texto al duplicar plantillas globales
+-- 2. Actualizar la función trigger para copiar y SINCRONIZAR todos los campos de texto al crear o editar plantillas globales
 CREATE OR REPLACE FUNCTION public.process_consolidated_flash_mission()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -21,14 +21,31 @@ BEGIN
   IF NEW.user_id IS NULL THEN
     v_template_id := NEW.id;
 
-    -- CASO A: La plantilla se activa (is_active pasa a TRUE)
-    IF NEW.is_active = TRUE AND (TG_OP = 'INSERT' OR OLD.is_active = FALSE) THEN
+    -- CASO A: La plantilla está activa (is_active = TRUE)
+    IF NEW.is_active = TRUE THEN
       FOR v_profile IN SELECT id FROM public.profiles LOOP
-        -- Solo insertar si el usuario no tiene ya una copia activa/no comprada de esta campaña
-        IF NOT EXISTS (
+        -- Si el usuario ya tiene una fila activa/no comprada de esta campaña, ACTUALIZAR TODOS los campos
+        IF EXISTS (
           SELECT 1 FROM public.user_flash_missions
           WHERE user_id = v_profile.id AND campaign_id = v_template_id AND is_purchased = FALSE
         ) THEN
+          UPDATE public.user_flash_missions
+          SET
+            mission_title       = COALESCE(NEW.mission_title, 'MISIÓN FLASH'),
+            title               = NEW.title,
+            description         = NEW.description,
+            icon                = COALESCE(NEW.icon, '⚡'),
+            piggy_type          = NEW.piggy_type,
+            piggy_label         = NEW.piggy_label,
+            benefit_title       = NEW.benefit_title,
+            benefit_description = NEW.benefit_description,
+            badge               = NEW.badge,
+            price               = NEW.price,
+            is_active           = TRUE,
+            scheduled_at        = NEW.scheduled_at
+          WHERE user_id = v_profile.id AND campaign_id = v_template_id AND is_purchased = FALSE;
+        ELSE
+          -- Si no la tiene, INSERTAR copia con todos los campos
           INSERT INTO public.user_flash_missions (
             user_id,
             campaign_id,
@@ -62,10 +79,10 @@ BEGIN
           );
         END IF;
       END LOOP;
-      RAISE NOTICE 'Plantilla global de Misión Flash % replicada a todos los usuarios con textos personalizados.', v_template_id;
+      RAISE NOTICE 'Plantilla global de Misión Flash % sincronizada a todos los usuarios.', v_template_id;
 
     -- CASO B: La plantilla se desactiva (is_active pasa a FALSE)
-    ELSIF NEW.is_active = FALSE AND (TG_OP = 'UPDATE' AND OLD.is_active = TRUE) THEN
+    ELSIF NEW.is_active = FALSE THEN
       UPDATE public.user_flash_missions
       SET is_active = FALSE
       WHERE campaign_id = v_template_id AND is_purchased = FALSE;

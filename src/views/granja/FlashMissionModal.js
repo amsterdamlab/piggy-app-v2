@@ -238,7 +238,9 @@ export function showFlashMissionModal(mission) {
         avanzado90: 'Piggy Avanzado (90d)',
     };
     const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
-    const piggyLabel = mission.piggy_label || (mission.title && !mission.title.toLowerCase().includes('misión') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
+    const piggyLabel = (mission.piggy_label && mission.piggy_label.trim() !== '')
+        ? mission.piggy_label.trim()
+        : (mission.title && !mission.title.toLowerCase().includes('misión') && !mission.title.toLowerCase().includes('acelera') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
 
     // DB Texts or smart fallbacks
     let defaultBenefitTitle = '';
@@ -265,18 +267,23 @@ export function showFlashMissionModal(mission) {
         defaultBenefitTitle = 'Reducción de 90 días de espera';
         defaultBenefitSub   = 'Inicia tu cerdito ahorrando 90 días de tiempo.';
         defaultDescription  = 'Piggy cuántico con 90 días de crecimiento incluidos.';
+    } else if (rawType === 'dorado' || rawType === 'gold') {
+        defaultBenefitTitle = '+2% en Margen Comercial';
+        defaultBenefitSub   = '+2% adicional sobre tu ROI base de granja.';
+        defaultDescription  = 'Piggy exclusivo Dorado con +2% adicional en tu Margen Comercial.';
+    } else if (rawType === 'premium') {
+        defaultBenefitTitle = '+3% en Margen Comercial';
+        defaultBenefitSub   = '+3% adicional sobre tu ROI base de granja.';
+        defaultDescription  = 'Piggy exclusivo Premium con +3% adicional en tu Margen Comercial.';
     } else {
-        let extraPct = '+1%';
-        if (rawType === 'gold' || rawType === 'dorado') extraPct = '+2%';
-        if (rawType === 'premium') extraPct = '+3%';
-        defaultBenefitTitle = `${extraPct} en Margen Comercial`;
-        defaultBenefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
-        defaultDescription  = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
+        defaultBenefitTitle = '+1% en Margen Comercial';
+        defaultBenefitSub   = '+1% adicional sobre tu ROI base de granja.';
+        defaultDescription  = 'Piggy exclusivo Plus con +1% adicional en tu Margen Comercial.';
     }
 
-    const benefitTitle    = mission.benefit_title || defaultBenefitTitle;
-    const benefitSub      = mission.benefit_description || mission.benefit_sub || defaultBenefitSub;
-    const descriptionText = mission.description || defaultDescription;
+    const benefitTitle    = (mission.benefit_title && mission.benefit_title.trim() !== '') ? mission.benefit_title : defaultBenefitTitle;
+    const benefitSub      = (mission.benefit_description && mission.benefit_description.trim() !== '') ? mission.benefit_description : (mission.benefit_sub || defaultBenefitSub);
+    const descriptionText = (mission.description && mission.description.trim() !== '') ? mission.description : defaultDescription;
 
     const suggestedNames = {
         advanced30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
@@ -619,7 +626,7 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${mission.piggy_label}`;
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });
