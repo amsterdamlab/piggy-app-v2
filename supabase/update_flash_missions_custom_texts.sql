@@ -4,6 +4,10 @@
 -- Permite personalizar desde BD: títulos, subtítulos, beneficios y etiquetas
 -- ==============================================================================
 
+-- 0. Eliminar triggers y funciones obsoletas que usaban la columna 'activated_at'
+DROP TRIGGER IF EXISTS trg_user_flash_mission_activated ON public.user_flash_missions;
+DROP FUNCTION IF EXISTS public.set_flash_mission_activated_at() CASCADE;
+
 -- 1. Agregar columnas para textos personalizados a user_flash_missions
 ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS piggy_label TEXT NULL;
 ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TEXT NULL;
