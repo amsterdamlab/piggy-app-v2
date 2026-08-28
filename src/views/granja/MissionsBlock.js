@@ -471,31 +471,35 @@ function renderFlashMissionBanner(mission) {
         advanced90:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '⚡', label: 'Avanzado (90d)' },
     };
     const t = typeThemes[rawType] || typeThemes.avanzado30;
+    if (mission.icon) t.icon = mission.icon;
     const missionTitle = mission.mission_title || 'MISIÓN FLASH';
+    const badgeText = mission.badge || `${t.icon} ${missionTitle} · OFERTA LIMITADA`;
     
-    let benefitText = '';
+    let defaultBenefitText = '';
     if (rawType.includes('30')) {
-        benefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (Inicia en 2do Mes)';
+        defaultBenefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (Inicia en 2do Mes)';
     } else if (rawType.includes('45')) {
-        benefitText = 'Piggy acelerado con <strong>45 días ahorrados</strong> (Inicia en 45 días)';
+        defaultBenefitText = 'Piggy acelerado con <strong>45 días ahorrados</strong> (Inicia en 45 días)';
     } else if (rawType.includes('60')) {
-        benefitText = 'Piggy cuántico con <strong>60 días ahorrados</strong> (Inicia en 3er Mes)';
+        defaultBenefitText = 'Piggy cuántico con <strong>60 días ahorrados</strong> (Inicia en 3er Mes)';
     } else if (rawType.includes('75')) {
-        benefitText = 'Piggy cuántico con <strong>75 días ahorrados</strong> (69 días restantes)';
+        defaultBenefitText = 'Piggy cuántico con <strong>75 días ahorrados</strong> (69 días restantes)';
     } else if (rawType.includes('90')) {
-        benefitText = 'Piggy cuántico con <strong>90 días ahorrados</strong> (54 días restantes)';
+        defaultBenefitText = 'Piggy cuántico con <strong>90 días ahorrados</strong> (54 días restantes)';
     } else {
-        let roiBonus = 0;
-        if (rawType === 'plus' || rawType === 'silver') roiBonus = 0.01;
+        let roiBonus = 0.01;
         if (rawType === 'dorado' || rawType === 'gold') roiBonus = 0.02;
         if (rawType === 'premium') roiBonus = 0.03;
         let extraPct = `+${(roiBonus * 100).toFixed(0)}%`;
-        benefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Margen Comercial</strong>`;
+        defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>${extraPct} en Margen Comercial</strong>`;
     }
+
+    const benefitText = mission.description || defaultBenefitText;
 
     const remaining = mission.remainingMs || 0;
     const hours     = String(Math.floor(remaining / 3600000)).padStart(2, '0');
     const mins      = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0');
+    const secs      = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
 
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
@@ -514,7 +518,7 @@ function renderFlashMissionBanner(mission) {
                 <div style="background:rgba(255,255,255,0.18); display:inline-flex; align-items:center; gap:6px;
                     padding:3px 12px; border-radius:20px; font-size:0.65rem; font-weight:700;
                     letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">
-                    ${t.icon} ${missionTitle} · OFERTA LIMITADA
+                    ${badgeText}
                 </div>
 
                 <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || '¡Oferta Especial de Granja!'}</div>
@@ -530,7 +534,7 @@ function renderFlashMissionBanner(mission) {
                         <div id="flash-banner-countdown-${mission.id}"
                             data-expires-ms="${remaining}"
                             style="font-size:1rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
-                            ${hours}h ${mins}m
+                            ${hours}h ${mins}m ${secs}s
                         </div>
                     </div>
                 </div>
@@ -637,6 +641,24 @@ export function attachMissionListeners() {
 
     const missionBanner = document.getElementById('mission-banner');
     if (!missionBanner) return;
+
+    // Start live countdown for Flash Mission if present
+    const flashCountdownEl = document.querySelector('[id^="flash-banner-countdown-"]');
+    if (flashCountdownEl) {
+        let remMs = parseInt(flashCountdownEl.dataset.expiresMs, 10) || 0;
+        _bannerCountdownInterval = setInterval(() => {
+            remMs = Math.max(0, remMs - 1000);
+            if (remMs <= 0) {
+                flashCountdownEl.textContent = '¡Oferta vencida!';
+                clearInterval(_bannerCountdownInterval);
+                return;
+            }
+            const h = String(Math.floor(remMs / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((remMs % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((remMs % 60000) / 1000)).padStart(2, '0');
+            flashCountdownEl.textContent = `${h}h ${m}m ${s}s`;
+        }, 1000);
+    }
 
     // Start live countdown for Cycle Mission if present
     const cycleCountdownEl = document.querySelector('[id^="cycle-banner-countdown-"]');

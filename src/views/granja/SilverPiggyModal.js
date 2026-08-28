@@ -200,12 +200,14 @@ export function showSilverPiggyModal(silverExpiry) {
                         color: white; display: flex; align-items: center; justify-content: space-between;
                     ">
                         <div>
-                            <div style="font-size:0.72rem; opacity:0.8; margin-bottom:2px;">Saldo en tu Wallet</div>
+                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Cuenta Agro</div>
                             <div id="silver-balance-display" style="font-size:1.5rem; font-weight:800;">
                                 <span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
                             </div>
                         </div>
-                        <div style="font-size:40px; opacity:0.3;">💰</div>
+                        <div style="opacity:0.25; color:white; display:flex; align-items:center; justify-content:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        </div>
                     </div>
 
                     <!-- Insufficient funds notice -->

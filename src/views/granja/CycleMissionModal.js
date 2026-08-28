@@ -48,7 +48,7 @@ function getTypeTheme(piggyType) {
             gradient:  'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
             shadow:    'rgba(14,165,233,0.5)',
             color:     '#0284c7',
-            btnGrad:   'linear-gradient(135deg, #0ea5e9, #0284c7)',
+            btnGrad:  'linear-gradient(135deg, #0ea5e9, #0284c7)',
             btnShadow: 'rgba(14,165,233,0.4)',
             icon:      '🌟',
             bonusBg:   'linear-gradient(135deg, #e0f2fe, #bae6fd)',
@@ -291,7 +291,7 @@ export function showCycleMissionModal(mission) {
                         border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
                         color: white; position: relative; overflow: hidden;
                     ">
-                        <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+                        <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Cuenta Agro</div>
                         <div id="cycle-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
                             <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
                         </div>

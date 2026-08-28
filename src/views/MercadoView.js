@@ -1,436 +1,551 @@
 /* ============================================
-   PIGGY APP — Mercado (Marketplace) View
-   Streamlined Direct Purchase Flow (Wallet-based)
+   PIGGY APP — Mercado View (Piggy Marketplace)
+   Fixed-slot adoption store with single-piggy limits,
+   real-time inventory indicators, and adoption modal.
    ============================================ */
 
+import { getMarketplaceItems, getMarketplaceStats, updateItemStock } from '../services/marketplaceService.js';
+import { formatCOP, formatWeight, getGrowthPhaseName } from '../services/mockData.js';
 import { renderIcon } from '../icons.js';
-import { renderBottomNav } from './GranjaView.js';
 import { navigateTo } from '../router.js';
-import { getMarketplaceItems } from '../services/marketplaceService.js';
-import { buyMarketplaceItem } from '../services/piggiesService.js';
-import { getWalletBalance, formatCOP, deductWalletBalance, addWalletBalance } from '../services/walletService.js';
 import { AppState } from '../state.js';
-import { openWalletRechargeInfo, openWalletDrawer } from './granja/WalletBlock.js';
-import { renderPiggyLoader } from '../components/PiggyLoader.js';
+import { getWalletBalance, deductWalletBalance } from '../services/walletService.js';
+import { buyMarketplaceItem } from '../services/piggiesService.js';
+import { openWalletDrawer } from './granja/WalletBlock.js';
 
-/** In-memory cache */
-let cachedItems = [];
-
-/**
- * Generate a stable photo number (1-5) for marketplace items.
- */
-function getMarketplacePhotoNumber(itemId) {
-  let hash = 0;
-  const str = String(itemId || 'default');
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return (Math.abs(hash) % 5) + 1;
-}
+let _activeFilter = 'todos';
+let _allItems = [];
 
 /**
- * Render the Mercado (Marketplace) view.
+ * Renders the Mercado / Adopción view.
+ * @returns {Promise<string>} HTML string
  */
-export function renderMercadoView() {
-  const app = document.getElementById('app');
+export async function renderMercadoView() {
+    let items = [];
+    let stats = { totalAvailable: 0, categoriesCount: 0 };
 
-  app.innerHTML = `
-    <div class="page page--with-nav mercado-page">
-      <div class="page__content">
+    try {
+        [items, stats] = await Promise.all([
+            getMarketplaceItems(),
+            getMarketplaceStats(),
+        ]);
+        _allItems = items;
+    } catch (err) {
+        console.error('Error loading marketplace data:', err);
+    }
 
-        <!-- Header -->
-        <div class="mercado-header animate-fade-in-up">
-          <h2 class="mercado-title">Mercado</h2>
-          <p class="mercado-subtitle">Compra piggys exclusivos en el mercado para que tu granja siga creciendo.</p>
+    return `
+    <div class="mercado-view">
+      <!-- Top App Bar -->
+      <header class="top-nav">
+        <div class="top-nav__content" style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="top-nav__btn" id="btn-back-mercado" title="Volver a la Granja" style="background:none; border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:4px;">
+              ${renderIcon('arrowLeft', '', '22')}
+            </button>
+            <h1 class="top-nav__title" style="margin:0; font-size:1.15rem; font-weight:800;">Mercado Piggy</h1>
+          </div>
+          <span class="badge" style="background:rgba(255,255,255,0.2); color:white; font-size:0.75rem; padding:4px 10px; border-radius:12px;">
+            ${stats.totalAvailable} cupos disponibles
+          </span>
+        </div>
+      </header>
+
+      <main class="main-content" style="padding-top: 20px; padding-bottom: 90px;">
+
+        <!-- Hero Header -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.05s;">
+          <div style="
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 20px;
+            padding: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px -5px rgba(16,185,129,0.3);
+          ">
+            <div style="position:relative; z-index:2;">
+              <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; margin-bottom:10px;">
+                <span>🐷</span>
+                <span>Cerditos de Engorde</span>
+              </div>
+              <h2 style="margin:0 0 6px 0; font-size:1.4rem; font-weight:900; line-height:1.2;">
+                Adopta tu Piggy
+              </h2>
+              <p style="margin:0; font-size:0.85rem; opacity:0.9; line-height:1.4;">
+                Cada piggy tiene un cupo único. Todos los cerditos generan el mismo margen comercial base con opción de bonificación especial.
+              </p>
+            </div>
+            <!-- Background pig silhouette -->
+            <div style="position:absolute; right:-15px; bottom:-20px; opacity:0.12; font-size:120px; line-height:1; pointer-events:none; select:none;">
+              🐷
+            </div>
+          </div>
         </div>
 
-        <!-- Products List -->
-        <div id="mercado-content">
-          ${renderPiggyLoader('Cargando el mercado...')}
+        <!-- Category Filters -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.1s; margin-top: 16px;">
+          <div class="filter-chips" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
+            <button class="filter-chip filter-chip--active" data-filter="todos">
+              Todos (${items.length})
+            </button>
+            <button class="filter-chip" data-filter="standard">
+              Mes 1 (Inicio)
+            </button>
+            <button class="filter-chip" data-filter="avanzado30">
+              ⚡ Avanzados (Mes 2+)
+            </button>
+            <button class="filter-chip" data-filter="plus">
+              🌟 Plus (+1%)
+            </button>
+            <button class="filter-chip" data-filter="dorado">
+              🥇 Dorados (+2%)
+            </button>
+          </div>
         </div>
 
-      </div>
-      ${renderBottomNav('mercado')}
+        <!-- Product Cards Grid -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.15s; margin-top: 16px;">
+          <div id="marketplace-grid" style="display:grid; grid-template-columns: 1fr; gap:16px;">
+            ${renderItemCards(items)}
+          </div>
+        </div>
+
+        <!-- Security / Guarantee Notice -->
+        <div class="section animate-fade-in-up" style="animation-delay: 0.2s; margin-top: 24px;">
+          <div style="
+            background: var(--color-surface, white);
+            border: 1px solid var(--color-border, #e5e7eb);
+            border-radius: 16px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+          ">
+            <div style="
+              width: 42px;
+              height: 42px;
+              border-radius: 12px;
+              background: #ecfdf5;
+              color: #059669;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+            ">
+              ${renderIcon('shield', '', '22')}
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:0.9rem; color:var(--color-text,#1f2937); margin-bottom:2px;">
+                Garantía Granja Piggy
+              </div>
+              <div style="font-size:0.78rem; color:var(--color-text-secondary,#6b7280); line-height:1.4;">
+                Cuidado integral incluido durante todo el ciclo de engorde (144 días). Seguimiento de peso semanal y liquidación al completar el ciclo.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
     </div>
   `;
-
-  loadMarketplaceData();
-
-  return () => { };
 }
 
 /**
- * Load marketplace data from service.
+ * Generates the HTML for the product cards list.
+ * @param {Array} items
+ * @returns {string}
  */
-async function loadMarketplaceData() {
-  try {
-    const items = await getMarketplaceItems();
-    cachedItems = items;
-    renderItems(items);
-  } catch (error) {
-    console.error('Error loading marketplace:', error);
-    const container = document.getElementById('mercado-content');
-    if (container) {
-      container.innerHTML = `
-        <div class="mercado-empty">
-          <p>Error al cargar el mercado. Intenta de nuevo.</p>
-        </div>
-      `;
-    }
-  }
-}
-
-/**
- * Render items list.
- */
-function renderItems(items) {
-  const container = document.getElementById('mercado-content');
-  if (!container) return;
-
-  // Filter out zero stock (service does it, but double check)
-  const availableItems = items.filter(item => item.stock > 0);
-
-  if (availableItems.length === 0) {
-    container.innerHTML = `
-      <div class="mercado-empty animate-fade-in-up">
-        <span style="font-size:48px;">🔍</span>
-        <p>No hay Piggies disponibles en este momento.</p>
+function renderItemCards(items) {
+    if (!items || items.length === 0) {
+        return `
+      <div style="text-align:center; padding: 40px 20px; color: var(--color-text-secondary, #6b7280);">
+        <div style="font-size: 48px; margin-bottom: 12px;">🐷</div>
+        <div style="font-weight:700; font-size:1rem; margin-bottom:4px;">No hay cerditos en esta categoría</div>
+        <div style="font-size:0.82rem;">Pronto habilitaremos más cupos de adopción.</div>
       </div>
     `;
-    return;
-  }
+    }
 
-  container.innerHTML = `
-    <div class="mercado-list">
-      ${availableItems.map(renderProductCard).join('')}
-    </div>
-  `;
+    return items.map((item) => {
+        const isSoldOut = item.stock <= 0;
+        const phaseName = getGrowthPhaseName(item.currentMonth || item.current_month || 1);
+        const weightFormatted = formatWeight(item.current_weight || 15.0);
+        const isAdvanced = item.days_advanced > 0;
+        const isDorado = item.category === 'dorado' || item.category === 'gold';
+        const isPlus = item.category === 'plus' || item.category === 'silver';
 
-  // Attach buy button listeners
-  availableItems.forEach(item => {
-    document.getElementById(`buy-${item.id}`)?.addEventListener('click', () => {
-      showCheckoutModal(item);
-    });
-  });
+        let badgeBg = '#f3f4f6';
+        let badgeColor = '#374151';
+        let badgeText = `Mes ${item.currentMonth || item.current_month || 1}`;
 
-  // Attach ribbon click listeners programmatically
-  container.querySelectorAll('.js-ribbon').forEach(ribbon => {
-    ribbon.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const category = ribbon.getAttribute('data-category');
-      if (category && window.showCategoryInfo) {
-        window.showCategoryInfo(category);
-      }
-    });
-  });
+        if (isDorado) {
+            badgeBg = '#fef3c7';
+            badgeColor = '#92400e';
+            badgeText = '🥇 DORADO · +2% ROI';
+        } else if (isPlus) {
+            badgeBg = '#e0f2fe';
+            badgeColor = '#0369a1';
+            badgeText = '🌟 PLUS · +1% ROI';
+        } else if (isAdvanced) {
+            badgeBg = '#f3e8ff';
+            badgeColor = '#6b21a8';
+            badgeText = `⚡ AHORRA ${item.days_advanced} DÍAS`;
+        }
 
-  // Attach image click listeners for category info
-  container.querySelectorAll('.js-img-category').forEach(imgWrap => {
-    imgWrap.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const category = imgWrap.getAttribute('data-category');
-      if (category && window.showCategoryInfo) {
-        window.showCategoryInfo(category);
-      }
-    });
-  });
+        const cardBorder = isDorado
+            ? '2px solid #f59e0b'
+            : isPlus
+                ? '2px solid #0ea5e9'
+                : '1px solid var(--color-border, #e5e7eb)';
+
+        return `
+      <div class="marketplace-card" data-item-id="${item.id}" style="
+        background: var(--color-surface, white);
+        border: ${cardBorder};
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px -3px rgba(0,0,0,0.07);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+      ">
+        <!-- Card Top: Image + Badges -->
+        <div style="position:relative; width:100%; height:160px; background:#f9fafb; overflow:hidden;">
+          <img
+            src="${item.image_url}"
+            alt="${item.item_name}"
+            style="width:100%; height:100%; object-fit:cover; display:block;"
+            onerror="this.src='assets/piggies/stage1/et1-1.jpg'"
+          />
+          
+          <!-- Category Badge -->
+          <div style="
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: ${badgeBg};
+            color: ${badgeColor};
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          ">
+            ${badgeText}
+          </div>
+
+          <!-- Stock Indicator -->
+          <div style="
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: ${isSoldOut ? '#ef4444' : 'rgba(0,0,0,0.65)'};
+            backdrop-filter: blur(4px);
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 4px 9px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          ">
+            <span style="width:6px; height:6px; border-radius:50%; background:${isSoldOut ? '#fff' : '#22c55e'}; display:inline-block;"></span>
+            ${isSoldOut ? 'Agotado' : `${item.stock} disponible`}
+          </div>
+
+          <!-- Growth Phase Pill at bottom of image -->
+          <div style="
+            position: absolute;
+            bottom: 8px;
+            left: 12px;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(4px);
+            color: #1f2937;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 8px;
+          ">
+            Etapa: ${phaseName} · ${weightFormatted}
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div style="padding: 18px 20px; flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+              <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:var(--color-text,#1f2937);">
+                ${item.item_name}
+              </h3>
+            </div>
+            
+            <p style="margin:0 0 14px 0; font-size:0.8rem; color:var(--color-text-secondary,#6b7280); line-height:1.4;">
+              ${item.description}
+            </p>
+
+            <!-- Metrics Row -->
+            <div style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              background: var(--color-bg-secondary, #f8fafc);
+              border-radius: 12px;
+              padding: 10px 14px;
+              margin-bottom: 16px;
+            ">
+              <div>
+                <div style="font-size:0.68rem; color:var(--color-text-secondary,#9ca3af); font-weight:600; text-transform:uppercase;">Días restantes</div>
+                <div style="font-size:0.95rem; font-weight:800; color:var(--color-text,#1f2937);">${item.days_remaining} días</div>
+              </div>
+              <div>
+                <div style="font-size:0.68rem; color:var(--color-text-secondary,#9ca3af); font-weight:600; text-transform:uppercase;">Margen Comercial</div>
+                <div style="font-size:0.95rem; font-weight:800; color:#059669;">
+                  ${item.extra_roi > 0 ? `Base + ${(item.extra_roi * 100).toFixed(0)}%` : 'Margen Base'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price + Adopt Button -->
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:12px; border-top:1px solid var(--color-border,#f3f4f6);">
+            <div>
+              <div style="font-size:0.68rem; color:var(--color-text-secondary,#9ca3af); font-weight:600; text-transform:uppercase;">Inversión</div>
+              <div style="font-size:1.25rem; font-weight:900; color:var(--color-primary,#059669); line-height:1;">
+                ${item.priceFormatted}
+              </div>
+            </div>
+
+            <button
+              class="btn-adoptar"
+              data-item-id="${item.id}"
+              ${isSoldOut ? 'disabled' : ''}
+              style="
+                background: ${isSoldOut ? '#e5e7eb' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)'};
+                color: ${isSoldOut ? '#9ca3af' : 'white'};
+                border: none;
+                padding: 11px 22px;
+                border-radius: 12px;
+                font-weight: 800;
+                font-size: 0.88rem;
+                cursor: ${isSoldOut ? 'not-allowed' : 'pointer'};
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: ${isSoldOut ? 'none' : '0 4px 12px rgba(16,185,129,0.3)'};
+                transition: transform 0.15s, box-shadow 0.15s;
+              "
+            >
+              <span>${isSoldOut ? 'Sin cupos' : 'Adoptar'}</span>
+              ${!isSoldOut ? '<span>→</span>' : ''}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    }).join('');
 }
 
 /**
- * Render a single horizontal product card.
- * Layout: Image left, Buy button below image. Details right.
- * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
+ * Attaches event listeners for the Mercado view.
  */
-function renderProductCard(item) {
-  const currentMonth = item.currentMonth || 1;
-  const daysRemaining = item.daysRemaining || (144 - (item.daysAdvanced || 0));
-  const daysSaved = item.daysAdvanced || Math.max(0, 144 - daysRemaining);
-  const isAdvanced = daysSaved > 0;
-  const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
-  if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
-    imgSrc = '/' + imgSrc;
-  }
+export function attachMercadoListeners() {
+    // Back button -> navigate to granja
+    const btnBack = document.getElementById('btn-back-mercado');
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            navigateTo('granja');
+        });
+    }
 
-  const categoryLabels = {
-    estandar: 'Estandar',
-    standard: 'Estandar',
-    estandard: 'Estandar',
-    avanzado: 'Avanzado',
-    advanced: 'Avanzado',
-    avanzado30: 'Avanzado',
-    advanced30: 'Avanzado',
-    avanzado45: 'Avanzado',
-    advanced45: 'Avanzado',
-    avanzado60: 'Avanzado',
-    advanced60: 'Avanzado',
-    avanzado75: 'Avanzado',
-    advanced75: 'Avanzado',
-    avanzado90: 'Avanzado',
-    advanced90: 'Avanzado',
-    plus: 'Plus',
-    silver: 'Plus',
-    dorado: 'Dorado',
-    gold: 'Dorado',
-    premium: 'Premium',
-  };
-  const categoryKey = item.category?.toLowerCase() || 'estandar';
-  const displayCategory = categoryLabels[categoryKey] || item.category;
-  const isEstandar = categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard';
+    // Filter chips
+    const chips = document.querySelectorAll('.filter-chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            chips.forEach(c => {
+                c.classList.remove('filter-chip--active');
+                c.style.background = '';
+                c.style.color = '';
+            });
+            const target = e.currentTarget;
+            target.classList.add('filter-chip--active');
+            _activeFilter = target.dataset.filter;
+            applyFilter(_activeFilter);
+        });
+    });
 
-  const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
-
-  return `
-    <div class="mcard animate-fade-in-up">
-      ${!isEstandar ? `
-        <div class="mcard__ribbon mcard__ribbon--${categoryKey} js-ribbon" data-category="${categoryKey}" style="pointer-events: auto; cursor: pointer;">
-          <span style="pointer-events: auto;">${displayCategory} ⓘ</span>
-        </div>
-      ` : ''}
-      ${isAdvanced ? `<span class="mcard__time-badge">⚡ Ahorra ${daysSaved} días</span>` : ''}
-
-      <!-- Left Column: Image + Buy Button -->
-      <div class="mcard__left">
-        <div class="mcard__img-wrap ${!isEstandar ? 'js-img-category' : ''}"
-             ${!isEstandar ? `data-category="${categoryKey}" style="cursor: pointer;"` : ''}>
-          <img src="${imgSrc}" alt="${itemName}" class="mcard__img" onerror="this.onerror=null;this.src='pig2.jpg'" />
-        </div>
-        
-        <button class="mcard__buy-btn" id="buy-${item.id}">
-          ${renderIcon('shop', '', '16')}
-          Comprar
-        </button>
-      </div>
-
-      <!-- Right Column: Details -->
-      <div class="mcard__right">
-        <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
-        <p class="mcard__desc">${item.description}</p>
-
-        <!-- Info Row: Days Remaining + Weight -->
-        <div class="mcard__info-row">
-          <div class="mcard__info-item">
-            <span class="mcard__info-label">FALTAN</span>
-            <span class="mcard__info-value mcard__info-value--days">${daysRemaining} días</span>
-          </div>
-
-          <div class="mcard__info-divider"></div>
-          <div class="mcard__info-item">
-            <span class="mcard__info-label">PESO</span>
-            <span class="mcard__info-value">${item.current_weight || 15} kg</span>
-          </div>
-        </div>
-
-        <!-- Price Info -->
-        <div class="mcard__price-row">
-            <span class="mcard__price">${item.priceFormatted}</span>
-            <span class="mcard__stock">${item.stock} disponibles</span>
-        </div>
-      </div>
-    </div>
-  `;
+    // Adopt buttons -> open checkout modal
+    attachAdoptButtons();
 }
 
 /**
- * Show Full Screen Checkout for Direct Purchase.
+ * Attaches click handlers to all "Adoptar" buttons.
+ */
+function attachAdoptButtons() {
+    const buttons = document.querySelectorAll('.btn-adoptar:not([disabled])');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const itemId = e.currentTarget.dataset.itemId;
+            const item = _allItems.find(i => i.id === itemId);
+            if (item) {
+                showCheckoutModal(item);
+            }
+        });
+    });
+}
+
+/**
+ * Filters the product grid dynamically.
+ * @param {string} filter
+ */
+function applyFilter(filter) {
+    const grid = document.getElementById('marketplace-grid');
+    if (!grid) return;
+
+    let filtered = _allItems;
+    if (filter === 'standard') {
+        filtered = _allItems.filter(i => (i.currentMonth === 1 || i.current_month === 1) && i.category === 'standard');
+    } else if (filter === 'avanzado30') {
+        filtered = _allItems.filter(i => i.days_advanced > 0);
+    } else if (filter === 'plus') {
+        filtered = _allItems.filter(i => i.category === 'plus' || i.category === 'silver');
+    } else if (filter === 'dorado') {
+        filtered = _allItems.filter(i => i.category === 'dorado' || i.category === 'gold');
+    }
+
+    grid.innerHTML = renderItemCards(filtered);
+    attachAdoptButtons();
+}
+
+/**
+ * Shows the checkout / adoption confirmation modal.
+ * @param {Object} item - Marketplace product item
  */
 export function showCheckoutModal(item) {
-  // Remove existing if any
-  const existing = document.getElementById('checkout-modal');
-  if (existing) existing.remove();
+    const existing = document.getElementById('checkout-modal');
+    if (existing) existing.remove();
 
-  // 1. Lock Body Scroll
-  document.body.style.overflow = 'hidden';
+    const suggestedNames = ['Porky', 'Bacon', 'Piggy', 'Toby', 'Max', 'Gordo', 'Copito', 'Rocky'];
+    const randomNames = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 3);
+    const isSpecialItem = item.category === 'dorado' || item.category === 'gold' || item.category === 'avanzado60' || item.category === 'advanced60';
 
-  const modal = document.createElement('div');
-  modal.id = 'checkout-modal';
-  modal.className = 'checkout-fullscreen animate-fade-in-up';
+    const modal = document.createElement('div');
+    modal.id = 'checkout-modal';
+    modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100dvh;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  `;
 
-  // Style for full screen override
-  modal.style.position = 'fixed';
-  modal.style.top = '0';
-  modal.style.left = '0';
-  modal.style.width = '100%';
-  modal.style.height = '100dvh';
-  modal.style.backgroundColor = 'var(--color-bg, #FDF2F5)'; // Light pink background matching app theme
-  modal.style.zIndex = '99999';
-  modal.style.display = 'flex';
-  modal.style.flexDirection = 'column';
-  modal.style.overflowY = 'auto'; // Internal scroll if needed
+    modal.innerHTML = `
+    <div class="animate-fade-in-up" style="
+      background: var(--color-surface, white);
+      border-radius: 28px 28px 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px)) 0;
+      position: relative;
+    ">
+      <!-- Handle -->
+      <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin: 12px auto 0;"></div>
 
-  const stage = (item.currentMonth || 1) >= 4 ? 3 : (item.currentMonth || 1) >= 2 ? 2 : 1;
-  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
-  if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
-    imgSrc = '/' + imgSrc;
-  }
-
-  // Random names for suggestions (pick 3)
-  const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
-  const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 3);
-
-  modal.innerHTML = `
-    <style>
-      @keyframes pulseGlow7s {
-        0%, 78%, 100% {
-          transform: scale(1);
-          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
-        }
-        83% {
-          transform: scale(1.03);
-          box-shadow: 0 12px 28px rgba(236, 72, 153, 0.7), 0 0 20px rgba(255, 255, 255, 0.8);
-        }
-        88% {
-          transform: scale(0.99);
-          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
-        }
-        93% {
-          transform: scale(1.02);
-          box-shadow: 0 10px 24px rgba(236, 72, 153, 0.6);
-        }
-      }
-      @keyframes shineSweep7s {
-        0%, 75% {
-          left: -120%;
-        }
-        88%, 100% {
-          left: 220%;
-        }
-      }
-      .btn-pulse-glow-7s {
-        position: relative !important;
-        overflow: hidden !important;
-        animation: pulseGlow7s 7s infinite ease-in-out !important;
-      }
-      .btn-pulse-glow-7s::after {
-        content: '';
+      <!-- Close Button -->
+      <button id="btn-close-checkout" style="
         position: absolute;
-        top: -50%;
-        left: -120%;
-        width: 60%;
-        height: 200%;
-        background: linear-gradient(
-          90deg, 
-          rgba(255, 255, 255, 0) 0%, 
-          rgba(255, 255, 255, 0.55) 50%, 
-          rgba(255, 255, 255, 0) 100%
-        );
-        transform: rotate(25deg);
-        animation: shineSweep7s 7s infinite ease-in-out;
-        pointer-events: none;
-      }
-    </style>
+        top: 16px;
+        right: 16px;
+        background: #f3f4f6;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">&times;</button>
 
-    <!-- Checkout Header matching Ciclos Completados structure -->
-    <div style="padding: 20px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-          <h2 style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Pasarela de Pago</h2>
-          <button id="checkout-close-btn" style="
-              background: none; 
-              border: none; 
-              cursor: pointer; 
-              color: #64748b; 
-              font-size: 1.3rem; 
-              font-weight: 600; 
-              padding: 4px; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-              transition: color 0.2s;"
-              onmouseover="this.style.color='#0f172a';"
-              onmouseout="this.style.color='#64748b'">
-              ✕
-          </button>
-        </div>
-        <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
-    </div>
-    
-    <!-- Checklist Body -->
-    <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
-      
-      <!-- Summary Section (Integrated with light pink background) -->
-      <div class="checkout-summary" style="
-          width: 100%; 
-          max-width: 400px; 
-          text-align: center; 
-          background: transparent;
-          padding: 0;
-          margin-bottom: 20px;">
-          
-          <div style="
-              width: 76px; 
-              height: 76px; 
-              margin: 0 auto 12px; 
-              border-radius: 50%; 
-              overflow: hidden;
-              border: 3px solid white;
-              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
+      <!-- Content -->
+      <div style="padding: 20px 24px 0 24px;">
+
+        <!-- Product Preview Header -->
+        <div style="display:flex; gap:16px; align-items:center; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #f3f4f6;">
+          <img
+            src="${item.image_url}"
+            alt="${item.item_name}"
+            style="width:70px; height:70px; border-radius:14px; object-fit:cover; flex-shrink:0;"
+            onerror="this.src='assets/piggies/stage1/et1-1.jpg'"
+          />
+          <div>
+            <span style="font-size:0.7rem; font-weight:700; color:#059669; text-transform:uppercase; letter-spacing:0.5px;">Adopción Inmediata</span>
+            <h2 style="margin:2px 0 4px 0; font-size:1.15rem; font-weight:900; color:#1f2937;">${item.item_name}</h2>
+            <div style="font-size:1.2rem; font-weight:900; color:#059669;">${item.priceFormatted}</div>
           </div>
-          
-          <h2 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em;">¡Compra tu Piggy!</h2>
-          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
-            Un nuevo integrante para que tu granja siga creciendo desde
-          </p>
-          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price)}</div>
-      </div>
+        </div>
 
-      <!-- Custom Name Input Section -->
-      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 24px; text-align: center;">
-           
-           <div style="margin-bottom: 12px;">
-                <input type="text" id="piggy-custom-name" 
-                       placeholder="Ponle un nombre a tu Piggy"
-                       autocomplete="off"
-                       style="
-                           width: 100%;
-                           padding: 14px 16px;
-                           border: 2px solid #fce7f3;
-                           border-radius: 14px;
-                           font-size: 1rem;
-                           font-weight: 600;
-                           color: var(--color-text-primary);
-                           outline: none;
-                           text-align: center;
-                           transition: all 0.2s;
-                           box-sizing: border-box;
-                           background: #fff;
-                       "
-                       onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
-                       onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
-                />
-           </div>
+        <!-- Name Input -->
+        <div style="margin-bottom: 20px;">
+          <label style="font-size:0.82rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
+            Ponle un nombre a tu nuevo Piggy
+          </label>
+          <input
+            type="text"
+            id="checkout-piggy-name"
+            placeholder="Ej: Porky, Copito..."
+            autocomplete="off"
+            style="
+              width: 100%;
+              padding: 14px 16px;
+              box-sizing: border-box;
+              border: 2px solid #e5e7eb;
+              border-radius: 14px;
+              font-size: 1rem;
+              font-weight: 600;
+              color: #1f2937;
+              outline: none;
+              text-align: center;
+              transition: border-color 0.2s;
+            "
+            onfocus="this.style.borderColor='#10b981'"
+            onblur="this.style.borderColor='#e5e7eb'"
+          />
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; justify-content:center;">
+            ${randomNames.map(n => `
+              <button class="name-suggestion" style="
+                background: #f0fdf4;
+                color: #059669;
+                border: 1px solid #bbf7d0;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.78rem;
+                font-weight: 600;
+                cursor: pointer;
+              ">${n}</button>
+            `).join('')}
+          </div>
+          <div id="name-error" style="color:#ef4444; font-size:0.75rem; margin-top:4px; display:none; text-align:center;">
+            * Escribe un nombre de al menos 3 caracteres
+          </div>
+        </div>
 
-           <!-- Name Suggestions (3 White Pills with 1px Intense Pink Border) -->
-           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
-               ${shuffled.map(name => `
-                  <button class="name-pill" style="
-                      background: white; 
-                      color: #db2777; 
-                      border: 1px solid #ec4899; 
-                      padding: 7px 16px; 
-                      border-radius: 20px; 
-                      font-size: 0.85rem; 
-                      font-weight: 700; 
-                      cursor: pointer;
-                      box-shadow: 0 2px 6px rgba(236, 72, 153, 0.08);
-                      transition: all 0.2s;
-                  " 
-                  onmouseover="this.style.background='#fdf2f8'; this.style.transform='translateY(-1px)';"
-                  onmouseout="this.style.background='white'; this.style.transform='translateY(0)';"
-                  onclick="selectPiggyName('${name}')">${name}</button>
-               `).join('')}
-           </div>
-           
-           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:8px;">
-                * Debes darle un nombre para continuar
-           </div>
-      </div>
-
-      <!-- Wallet Section -->
-      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; transition: opacity 0.3s;">
-        
-        <!-- Balance Display -->
-        <div style="
+        <!-- Wallet Balance Card (Dynamic Green Container) -->
+        <div id="wallet-balance-container" style="
           background: linear-gradient(135deg, #10B981 0%, #059669 100%);
           border-radius: 16px;
           padding: 18px 20px;
@@ -439,7 +554,7 @@ export function showCheckoutModal(item) {
           position: relative;
           overflow: hidden;
         ">
-          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Cuenta Agro</div>
           <div id="wallet-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
             <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
           </div>
@@ -459,7 +574,7 @@ export function showCheckoutModal(item) {
           font-weight: 700;
           font-size: 0.95rem;
           cursor: pointer;
-          display: flex;
+          display: none;
           align-items: center;
           justify-content: center;
           gap: 8px;
@@ -471,299 +586,166 @@ export function showCheckoutModal(item) {
           Recargar mi Cuenta
         </button>
 
-        <!-- Insufficient funds notice (shown when balance < price) -->
-        <div id="insufficient-funds-notice" style="
-          background:#fef2f2;
-          border:1px solid #fecaca;
-          border-radius:10px;
-          padding:12px 16px;
-          font-size:0.82rem;
-          color:#dc2626;
-          text-align:center;
-          margin-bottom:12px;
-          display:none;
+        <!-- Insufficient Balance Alert -->
+        <div id="insufficient-alert" style="
+          display: none;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 12px;
+          padding: 12px 16px;
+          margin-bottom: 16px;
+          font-size: 0.82rem;
+          color: #dc2626;
+          text-align: center;
         ">
-          Saldo insuficiente. Recarga tu Cuenta para continuar.
+          ⚠️ Saldo insuficiente en tu Cuenta Agro. Recarga saldo para continuar con la adopción.
         </div>
 
-        <!-- Confirm Purchase Button (with 7s pulse & glow animation) -->
-        <button id="btn-confirm-purchase" class="btn-pulse-glow-7s" style="
+        <!-- Investment Breakdown Summary Card -->
+        <div style="
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 14px 16px;
+          margin-bottom: 20px;
+          font-size: 0.82rem;
+        ">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#64748b;">
+            <span>Valor de Inversión</span>
+            <span style="font-weight:700; color:#1e293b;">${item.priceFormatted}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#64748b;">
+            <span>Cuidado y Alimentación</span>
+            <span style="font-weight:700; color:#059669;">Incluido (0 COP)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#64748b;">
+            <span>Duración del Ciclo</span>
+            <span style="font-weight:700; color:#1e293b;">${item.days_remaining} días restantes</span>
+          </div>
+          <div style="border-top:1px dashed #cbd5e1; padding-top:6px; margin-top:6px; display:flex; justify-content:space-between; font-weight:800; color:#059669; font-size:0.88rem;">
+            <span>Total a Descontar</span>
+            <span>${item.priceFormatted}</span>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="btn-confirm-adopt" style="
           width: 100%;
-          background: linear-gradient(135deg, #ec4899, #db2777);
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
           color: white;
           border: none;
-          padding: 14px 20px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.95rem;
+          padding: 15px;
+          border-radius: 14px;
+          font-weight: 800;
+          font-size: 1rem;
           cursor: pointer;
+          box-shadow: 0 4px 15px rgba(16,185,129,0.35);
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          box-shadow: 0 6px 20px -4px rgba(236,72,153,0.4);
-          transition: all 0.2s;
-          opacity: 0.5;
-          pointer-events: none;
+          transition: transform 0.15s, opacity 0.2s;
         ">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
-          <span>Confirmar Compra</span>
+          <span>Firmar Contrato y Adoptar</span>
+          <span>✍️</span>
         </button>
-      </div>
 
-      <div class="checkout-footer" style="margin-top: 16px; padding-top: 12px; padding-bottom: 16px; display: flex; justify-content: center;">
-         <div class="secure-badge" style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.78rem; font-weight: 600; align-items: center;">
-            <span style="display: flex; align-items: center; gap: 5px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Pagos seguros
-            </span>
-            <span style="display: flex; align-items: center; gap: 5px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Cifrado SSL
-            </span>
-         </div>
+        <!-- Terms Footnote -->
+        <p style="text-align:center; margin:12px 0 0 0; font-size:0.72rem; color:#9ca3af; line-height:1.3;">
+          🔒 Al continuar, serás dirigido a firmar tu contrato digital seguro de adopción.
+        </p>
+
       </div>
     </div>
   `;
 
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-  // --- Logic ---
+    // ── Logic inside Modal ──────────────────────────────────────
+    const inputName = document.getElementById('checkout-piggy-name');
+    const nameError = document.getElementById('name-error');
+    const balanceDisplay = document.getElementById('wallet-balance-display');
+    const alertInsufficient = document.getElementById('insufficient-alert');
+    const btnConfirm = document.getElementById('btn-confirm-adopt');
+    const btnClose = document.getElementById('btn-close-checkout');
+    let currentBalance = 0;
 
-  const input = document.getElementById('piggy-custom-name');
-  const walletSection = document.getElementById('wallet-checkout-section');
-  const balanceDisplay = document.getElementById('wallet-balance-display');
-  const insufficientNotice = document.getElementById('insufficient-funds-notice');
-  const confirmBtn = document.getElementById('btn-confirm-purchase');
-  const errorMsg = document.getElementById('name-error');
-  const recargarBtn = document.getElementById('btn-recargar-checkout');
-  const ADMIN_WHATSAPP = '573154870448';
+    // Suggestion chip clicks
+    document.querySelectorAll('.name-suggestion').forEach(chip => {
+        chip.addEventListener('click', () => {
+            inputName.value = chip.textContent.trim();
+            nameError.style.display = 'none';
+        });
+    });
 
-  let currentBalance = 0;
+    // Close logic
+    const closeModal = () => {
+        document.body.style.overflow = '';
+        modal.remove();
+    };
+    btnClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
 
-  // Load wallet balance
-  getWalletBalance().then(balance => {
-    currentBalance = balance;
-    balanceDisplay.textContent = formatCOP(balance);
-    updatePurchaseState(input.value.trim());
-  }).catch(() => {
-    balanceDisplay.textContent = '$0';
-    updatePurchaseState(input.value.trim());
-  });
+    // Load Wallet Balance
+    getWalletBalance().then(balance => {
+        currentBalance = balance;
+        balanceDisplay.textContent = formatCOP(balance);
 
-  // Helper: update button states based on name + balance
-  const updatePurchaseState = (nameVal) => {
-    const nameValid = nameVal.length >= 3;
-    const hasFunds = currentBalance >= item.price;
+        if (balance < item.price) {
+            alertInsufficient.style.display = 'block';
+            const btnRecargar = document.getElementById('btn-recargar-checkout');
+            if (btnRecargar) btnRecargar.style.display = 'flex';
+        }
+    }).catch(err => {
+        console.warn('Error fetching wallet balance:', err);
+        balanceDisplay.textContent = '$0';
+    });
 
-    // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
-    walletSection.style.opacity = '1';
-    walletSection.style.pointerEvents = 'auto';
-
-    // Show/hide insufficient funds notice and recharge button
-    insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
-    recargarBtn.style.display = !hasFunds ? 'flex' : 'none';
-
-    // Enable confirm button directly if they have sufficient funds
-    if (hasFunds) {
-      confirmBtn.style.opacity = '1';
-      confirmBtn.style.pointerEvents = 'auto';
-    } else {
-      confirmBtn.style.opacity = '0.5';
-      confirmBtn.style.pointerEvents = 'none';
+    // Recargar button handler
+    const btnRecargar = document.getElementById('btn-recargar-checkout');
+    if (btnRecargar) {
+        btnRecargar.addEventListener('click', async () => {
+            const originalText = btnRecargar.innerHTML;
+            btnRecargar.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+            btnRecargar.style.pointerEvents = 'none';
+            try {
+                await openWalletDrawer(true);
+                closeModal();
+            } catch (e) {
+                console.error('Error opening wallet from checkout:', e);
+                btnRecargar.innerHTML = originalText;
+                btnRecargar.style.pointerEvents = 'auto';
+            }
+        });
     }
 
-    // Name validation feedback
-    if (nameValid) {
-      errorMsg.style.opacity = '0';
-      input.style.borderColor = '#10B981';
-    } else if (nameVal.length > 0) {
-      errorMsg.style.opacity = '1';
-      errorMsg.textContent = '* El nombre debe tener al menos 3 caracteres';
-      input.style.borderColor = '#dc2626';
-    } else {
-      errorMsg.style.opacity = '0';
-      input.style.borderColor = '#fce7f3';
-    }
-  };
+    // Confirm Adoption Handler -> Digital Contract Signing Flow
+    btnConfirm.addEventListener('click', () => {
+        const customName = inputName.value.trim();
 
-  // Input listener
-  input.addEventListener('input', () => updatePurchaseState(input.value.trim()));
+        if (customName.length < 3) {
+            nameError.style.display = 'block';
+            inputName.focus();
+            return;
+        }
 
-  // Suggestion Pills
-  window.selectPiggyName = (name) => {
-    input.value = name;
-    updatePurchaseState(name);
-    input.focus();
-  };
+        if (currentBalance < item.price) {
+            alertInsufficient.style.display = 'block';
+            return;
+        }
 
-  // Close Logic
-  const close = () => {
-    document.body.style.overflow = '';
-    delete window.selectPiggyName;
-    modal.remove();
-  };
+        // Attach chosen name to item payload
+        const pendingItem = { ...item, name: customName };
 
-  document.getElementById('checkout-close-btn').addEventListener('click', close);
+        // Save in sessionStorage as single source of truth for contract
+        sessionStorage.setItem('pending_piggy_name', customName);
+        sessionStorage.setItem('pending_marketplace_item', JSON.stringify(pendingItem));
 
-  // Recargar Wallet
-  recargarBtn.addEventListener('click', async () => {
-    const originalText = recargarBtn.innerHTML;
-    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
-    recargarBtn.style.pointerEvents = 'none';
-    try {
-      await openWalletDrawer(true);
-      close();
-    } catch (e) {
-      console.error('Error opening wallet from mercado view:', e);
-      recargarBtn.innerHTML = originalText;
-      recargarBtn.style.pointerEvents = 'auto';
-    }
-  });
+        closeModal();
 
-  // Confirm Purchase -> Navigate to Contract Signing
-  confirmBtn.addEventListener('click', () => {
-    const customName = input.value.trim();
-     
-    // Check name validation on click
-    if (customName.length < 3) {
-      errorMsg.style.opacity = '1';
-      errorMsg.textContent = '* Debes darle un nombre de al menos 3 letras a tu cerdito';
-      input.style.borderColor = '#dc2626';
-      input.focus();
-      return;
-    }
-
-    if (currentBalance < item.price) return;
-
-    // Save pending purchase details in session
-    sessionStorage.setItem('pending_piggy_name', customName);
-    sessionStorage.setItem('pending_marketplace_item', JSON.stringify(item));
-
-    close();
-    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${item.price}`);
-  });
+        // Navigate to contract view
+        navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${item.price}&itemId=${encodeURIComponent(item.id)}`);
+    });
 }
-
-/**
- * Show premium, dorado, plus, avanzado category explanations in a custom popup modal.
- */
-window.showCategoryInfo = (category) => {
-  const existing = document.getElementById('category-info-popup');
-  if (existing) existing.remove();
-
-  const normalized = (category || '').toLowerCase();
-  const infoTexts = {
-    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
-    dorado: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    plus: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    avanzado30: 'Cerdito con 30 días de engorde avanzado (114 días restantes). Ahorra 1 mes de espera.',
-    avanzado45: 'Cerdito con 45 días de engorde avanzado (99 días restantes). Ahorra 1.5 meses de espera.',
-    avanzado60: 'Cerdito con 60 días de engorde avanzado (84 días restantes). Ahorra 2 meses de espera.',
-    avanzado75: 'Cerdito con 75 días de engorde avanzado (69 días restantes). Ahorra 2.5 meses de espera.',
-    avanzado90: 'Cerdito con 90 días de engorde avanzado (54 días restantes). Máximo ahorro de tiempo.',
-    estandar: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
-    standard: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
-  };
-
-  const text = infoTexts[normalized] || 'Cerdito exclusivo disponible en el mercado Piggy.';
-
-  const colors = {
-    premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
-    dorado: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    plus: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
-    silver: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
-    avanzado: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado45: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado60: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado75: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado90: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    estandar: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' },
-    standard: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' }
-  };
-
-  const theme = colors[normalized] || { bg: 'var(--color-primary)', color: '#FFF' };
-
-  const popup = document.createElement('div');
-  popup.id = 'category-info-popup';
-  popup.style.cssText = `
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100dvh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 100000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    box-sizing: border-box;
-  `;
-
-  const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
-
-  popup.innerHTML = `
-    <div class="animate-scale-in" style="
-      background: white;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 340px;
-      overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    ">
-      <div style="
-        background: ${theme.bg};
-        color: ${theme.color};
-        width: 100%;
-        padding: 20px 24px;
-        text-align: center;
-        font-weight: 800;
-        font-size: 1.15rem;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-      ">
-        Categoría ${capitalizedCat}
-      </div>
-
-      <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
-        ${text}
-      </div>
-
-      <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
-        <button id="btn-close-cat-popup" style="
-          width: 100%;
-          background: #f3f4f6;
-          color: #1f2937;
-          border: none;
-          padding: 12px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
-          Entendido
-        </button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(popup);
-
-  const close = () => popup.remove();
-  document.getElementById('btn-close-cat-popup').addEventListener('click', close);
-  popup.addEventListener('click', (e) => {
-    if (e.target === popup) close();
-  });
-};

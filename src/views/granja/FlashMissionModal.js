@@ -21,10 +21,11 @@ let _flashCountdownInterval = null;
  * @returns {string}
  */
 function formatCountdown(remainingMs) {
-    if (remainingMs <= 0) return '00h 00m';
+    if (remainingMs <= 0) return '00h 00m 00s';
     const hours   = Math.floor(remainingMs / 3600000);
     const minutes = Math.floor((remainingMs % 3600000) / 60000);
-    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`;
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
 }
 
 /**
@@ -200,7 +201,19 @@ export function showFlashMissionModal(mission) {
     if (!mission) return;
 
     const theme = getTypeTheme(mission.piggy_type);
-    let remaining = mission.remainingMs || 0;
+    if (mission.icon) {
+        theme.icon = mission.icon;
+    }
+    if (mission.badge) {
+        theme.badge = mission.badge;
+    } else if (mission.mission_title) {
+        theme.badge = `${theme.icon} ${mission.mission_title}`;
+    }
+
+    const expiresAtMs = mission.scheduled_at
+        ? new Date(mission.scheduled_at).getTime()
+        : (Date.now() + (mission.remainingMs || 0));
+    let remaining = Math.max(0, expiresAtMs - Date.now());
     let currentBalance = 0;
 
     const defaultPrice = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
@@ -210,42 +223,74 @@ export function showFlashMissionModal(mission) {
     const piggyLabels = {
         silver:     'Piggy Silver',
         gold:       'Piggy Gold',
+        dorado:     'Piggy Dorado',
         premium:    'Piggy Premium',
+        plus:       'Piggy Plus',
         advanced30: 'Piggy Advanced (30d)',
+        avanzado30: 'Piggy Avanzado (30d)',
+        advanced45: 'Piggy Advanced (45d)',
+        avanzado45: 'Piggy Avanzado (45d)',
         advanced60: 'Piggy Advanced (60d)',
+        avanzado60: 'Piggy Avanzado (60d)',
+        advanced75: 'Piggy Advanced (75d)',
+        avanzado75: 'Piggy Avanzado (75d)',
+        advanced90: 'Piggy Advanced (90d)',
+        avanzado90: 'Piggy Avanzado (90d)',
     };
-    const piggyLabel = piggyLabels[mission.piggy_type] || 'Piggy Flash';
+    const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
+    const piggyLabel = mission.piggy_label || (mission.title && !mission.title.toLowerCase().includes('misión') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
 
-    let benefitTitle = '';
-    let benefitSub   = '';
-    let descriptionText = '';
+    // DB Texts or smart fallbacks
+    let defaultBenefitTitle = '';
+    let defaultBenefitSub   = '';
+    let defaultDescription  = '';
 
-    if (mission.piggy_type === 'advanced30') {
-        benefitTitle = 'Reducción de 30 días de espera';
-        benefitSub   = 'Inicia tu cerdito en el 2do mes ahorrando tiempo.';
-        descriptionText = 'Piggy acelerado con 30 días de crecimiento incluidos.';
-    } else if (mission.piggy_type === 'advanced60') {
-        benefitTitle = 'Reducción de 60 días de espera';
-        benefitSub   = 'Inicia tu cerdito en el 3er mes ahorrando tiempo.';
-        descriptionText = 'Piggy acelerado con 60 días de crecimiento incluidos.';
+    if (rawType.includes('30')) {
+        defaultBenefitTitle = 'Reducción de 30 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el 2do mes ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 30 días de crecimiento incluidos.';
+    } else if (rawType.includes('45')) {
+        defaultBenefitTitle = 'Reducción de 45 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el día 45 ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 45 días de crecimiento incluidos.';
+    } else if (rawType.includes('60')) {
+        defaultBenefitTitle = 'Reducción de 60 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el 3er mes ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 60 días de crecimiento incluidos.';
+    } else if (rawType.includes('75')) {
+        defaultBenefitTitle = 'Reducción de 75 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 75 días de tiempo.';
+        defaultDescription  = 'Piggy cuántico con 75 días de crecimiento incluidos.';
+    } else if (rawType.includes('90')) {
+        defaultBenefitTitle = 'Reducción de 90 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 90 días de tiempo.';
+        defaultDescription  = 'Piggy cuántico con 90 días de crecimiento incluidos.';
     } else {
-        let extraPct = '0%';
-        if (mission.piggy_type === 'silver') extraPct = '+1%';
-        if (mission.piggy_type === 'gold') extraPct = '+2%';
-        if (mission.piggy_type === 'premium') extraPct = '+3%';
-        benefitTitle = `${extraPct} en Comisión Comercial`;
-        benefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
-        descriptionText = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Comisión Comercial.`;
+        let extraPct = '+1%';
+        if (rawType === 'gold' || rawType === 'dorado') extraPct = '+2%';
+        if (rawType === 'premium') extraPct = '+3%';
+        defaultBenefitTitle = `${extraPct} en Margen Comercial`;
+        defaultBenefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
+        defaultDescription  = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
     }
+
+    const benefitTitle    = mission.benefit_title || defaultBenefitTitle;
+    const benefitSub      = mission.benefit_description || mission.benefit_sub || defaultBenefitSub;
+    const descriptionText = mission.description || defaultDescription;
 
     const suggestedNames = {
         advanced30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        advanced45: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         advanced60: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        advanced75: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        advanced90: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        plus:       ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
         silver:     ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
         gold:       ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
+        dorado:     ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
         premium:    ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
     };
-    const names = (suggestedNames[mission.piggy_type] || suggestedNames.advanced30)
+    const names = (suggestedNames[rawType] || suggestedNames.advanced30)
         .sort(() => 0.5 - Math.random()).slice(0, 4);
 
     document.body.style.overflow = 'hidden';
@@ -376,12 +421,14 @@ export function showFlashMissionModal(mission) {
                         color: white; display: flex; align-items: center; justify-content: space-between;
                     ">
                         <div>
-                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Wallet</div>
+                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Cuenta Agro</div>
                             <div id="flash-balance-display" style="font-size:1.5rem; font-weight:800;">
                                 <span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
                             </div>
                         </div>
-                        <div style="font-size:40px; opacity:0.3;">💰</div>
+                        <div style="opacity:0.25; color:white; display:flex; align-items:center; justify-content:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        </div>
                     </div>
 
                     <!-- Insufficient funds -->
@@ -492,9 +539,9 @@ export function showFlashMissionModal(mission) {
         nameInput.focus();
     };
 
-    // Live countdown in modal
+    // Live countdown in modal (updates every second)
     _flashCountdownInterval = setInterval(() => {
-        remaining = Math.max(0, remaining - 30000);
+        remaining = Math.max(0, expiresAtMs - Date.now());
         const el = document.getElementById('flash-countdown-time');
         if (!el) { clearInterval(_flashCountdownInterval); return; }
         if (remaining <= 0) {
@@ -507,7 +554,7 @@ export function showFlashMissionModal(mission) {
         } else {
             el.textContent = formatCountdown(remaining);
         }
-    }, 30000);
+    }, 1000);
 
     // Close handlers
     const close = () => {
