@@ -169,7 +169,7 @@ export async function buyFlashMission(missionId, piggyName) {
     };
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
-        : (defaultLabels[mission.piggy_type] || mission.title || 'Piggy Flash');
+        : (mission.piggy_label || defaultLabels[mission.piggy_type] || mission.title || 'Piggy Flash');
 
     // Calculate category, extra ROI bonus, weight and duration based on piggy_type
     const rawType = (mission.piggy_type || '').toLowerCase();

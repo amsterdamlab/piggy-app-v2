@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS public.user_flash_missions (
   description        TEXT,                                                       -- Mission description
   icon               TEXT DEFAULT '⚡',                                          -- Mission icon
   piggy_type         public.piggy_type_enum NOT NULL,                            -- Dropdown Enum selection
+  piggy_label        TEXT NULL,                                                  -- Custom Piggy Label (e.g. 'Piggy Flash')
+  benefit_title      TEXT NULL,                                                  -- Custom Benefit title
+  benefit_description TEXT NULL,                                                 -- Custom Benefit description
+  badge              TEXT NULL,                                                  -- Custom Header badge
   price              NUMERIC DEFAULT 1000000,
   is_active          BOOLEAN DEFAULT FALSE,
   scheduled_at       TIMESTAMP WITH TIME ZONE NULL,                              -- Exact expiration deadline timestamp
@@ -53,9 +57,24 @@ BEGIN
   EXCEPTION WHEN others THEN END;
 
   BEGIN
+    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS piggy_label TEXT NULL;
+  EXCEPTION WHEN others THEN END;
+
+  BEGIN
+    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TEXT NULL;
+  EXCEPTION WHEN others THEN END;
+
+  BEGIN
+    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_description TEXT NULL;
+  EXCEPTION WHEN others THEN END;
+
+  BEGIN
+    ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS badge TEXT NULL;
+  EXCEPTION WHEN others THEN END;
+
+  BEGIN
     -- Remove deprecated / obsolete columns
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS mission_key;
-    ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS piggy_label;
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS extra_roi_bonus;
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS duration_hours;
     ALTER TABLE public.user_flash_missions DROP COLUMN IF EXISTS activated_at;
@@ -104,6 +123,10 @@ BEGIN
             description,
             icon,
             piggy_type,
+            piggy_label,
+            benefit_title,
+            benefit_description,
+            badge,
             price,
             is_active,
             scheduled_at
@@ -115,6 +138,10 @@ BEGIN
             NEW.description,
             COALESCE(NEW.icon, '⚡'),
             NEW.piggy_type,
+            NEW.piggy_label,
+            NEW.benefit_title,
+            NEW.benefit_description,
+            NEW.badge,
             NEW.price,
             TRUE,
             NEW.scheduled_at
@@ -160,6 +187,10 @@ BEGIN
       description,
       icon,
       piggy_type,
+      piggy_label,
+      benefit_title,
+      benefit_description,
+      badge,
       price,
       is_active,
       scheduled_at
@@ -171,6 +202,10 @@ BEGIN
       v_template.description,
       COALESCE(v_template.icon, '⚡'),
       v_template.piggy_type,
+      v_template.piggy_label,
+      v_template.benefit_title,
+      v_template.benefit_description,
+      v_template.badge,
       v_template.price,
       TRUE,
       v_template.scheduled_at
