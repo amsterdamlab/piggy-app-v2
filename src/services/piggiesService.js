@@ -184,6 +184,13 @@ export async function createPiggy({ name, amount = 1000000, durationMonths = 3, 
 }
 
 /**
+ * Buy a piggy (alias for adoptPiggy).
+ */
+export async function buyPiggy(piggyName, contractUrl = null) {
+    return adoptPiggy(piggyName, contractUrl);
+}
+
+/**
  * Generate a stable hash number from a string (piggy ID) to pick a
  * consistent random photo (1-5) per piggy without changing on refresh.
  * @param {string} idStr

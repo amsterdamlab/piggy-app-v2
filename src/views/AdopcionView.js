@@ -1,312 +1,276 @@
 /* ============================================
-   PIGGY APP — Adopción View (Compra con Wallet)
-   Flujo directo: Compra 1 Piggy por $1.000.000 COP
-   usando el saldo de la Wallet del usuario.
+   PIGGY APP — Adopcion (Purchase) View
+   Custom view for adopting a new piggy
    ============================================ */
 
+import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
-import { getWalletBalance, deductWalletBalance, formatCOP } from '../services/walletService.js';
-import { buyPiggy } from '../services/piggiesService.js';
-import { completeMission } from '../services/missionsService.js';
+import { renderBottomNav } from './GranjaView.js';
+import { getWalletBalance } from '../services/walletService.js';
+import { formatCOP } from '../services/mockData.js';
+import { AppState } from '../state.js';
 import { openWalletDrawer } from './granja/WalletBlock.js';
 
-const ITEM_PRICE = 1000000; // $1.000.000 COP
-
 /**
- * Renderiza la vista de compra directa de Piggy.
- * @returns {Promise<string>}
+ * Render the Adopcion view.
  */
-export async function renderAdopcionView() {
-  const balance = await getWalletBalance();
-  const hasSufficient = balance >= ITEM_PRICE;
+export function renderAdopcionView() {
+  const app = document.getElementById('app');
 
-  return `
-    <div class="adopcion-view">
-      <!-- Top Bar -->
-      <header class="top-nav">
-        <div class="top-nav__content" style="display:flex; align-items:center; gap:12px;">
-          <button id="btn-back-adopcion" class="top-nav__btn" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer; padding:4px;">
-            ←
-          </button>
-          <h1 class="top-nav__title" style="margin:0; font-size:1.15rem; font-weight:800;">Adopción Piggy</h1>
-        </div>
-      </header>
+  app.innerHTML = `
+    <div class="page page--with-nav adopcion-page">
+      
+      <!-- Header / Back -->
+      <div class="adopcion-header">
+        <button class="btn btn--ghost btn--sm" id="btn-back-adopcion">
+          ${renderIcon('arrowRight', '', '16')} Cancelar compra
+        </button>
+      </div>
 
-      <main class="main-content" style="padding: 20px 16px 80px 16px; max-width: 480px; margin: 0 auto;">
-
-        <!-- Header Card -->
-        <div class="section animate-fade-in-up" style="
-          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-          border-radius: 20px;
-          padding: 24px;
-          color: white;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 10px 25px -5px rgba(16,185,129,0.35);
-          margin-bottom: 20px;
-        ">
-          <div style="font-size: 64px; margin-bottom: 8px; line-height: 1;">🐷</div>
-          <h2 style="margin: 0 0 6px 0; font-size: 1.4rem; font-weight: 900;">¡Tu Nuevo Cerdito te Espera!</h2>
-          <p style="margin: 0; font-size: 0.85rem; opacity: 0.9; line-height: 1.4;">
-            Asigna un nombre a tu cerdito y comienza el ciclo de engorde en tu granja digital.
-          </p>
+      <div class="page__content adopcion-content">
+        
+        <!-- Piggy Image Circle -->
+        <div class="adopcion-image-wrapper animate-scale-in">
+          <div class="adopcion-image adopcion-image--clean">
+            <img src="pig2.jpg" alt="Piggy Bank" class="adopcion-image__img" />
+          </div>
         </div>
 
-        <!-- Form Card -->
-        <div class="section animate-fade-in-up" style="
-          background: var(--color-surface, white);
-          border-radius: 20px;
-          padding: 24px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-          border: 1px solid var(--color-border, #e5e7eb);
-          margin-bottom: 16px;
-        ">
-          <!-- Piggy Name Input -->
-          <div style="margin-bottom: 20px;">
-            <label style="font-size: 0.82rem; font-weight: 700; color: #374151; display: block; margin-bottom: 8px;">
-              Nombre de tu Cerdito
-            </label>
-            <input
-              type="text"
-              id="piggy-name-input"
-              placeholder="Ej: Porky, Bacon, Copito..."
-              autocomplete="off"
-              style="
-                width: 100%;
-                padding: 14px 16px;
-                box-sizing: border-box;
-                border: 2px solid #e5e7eb;
-                border-radius: 14px;
-                font-size: 1rem;
-                font-weight: 600;
-                color: #1f2937;
-                outline: none;
-                text-align: center;
-                transition: border-color 0.2s;
-              "
-              onfocus="this.style.borderColor='#10B981'"
-              onblur="this.style.borderColor='#e5e7eb'"
-            />
-            <div id="piggy-name-error" style="color: #ef4444; font-size: 0.75rem; margin-top: 4px; display: none; text-align: center;">
-              * Por favor ingresa un nombre para tu cerdito (mínimo 3 letras).
+        <!-- Adoption Card -->
+        <div class="adopcion-card card animate-fade-in-up">
+          <h2 class="adopcion-title">¡Compra tu Piggy!</h2>
+          <p class="adopcion-subtitle">Inicia con $ 1.000.000</p>
+
+          <!-- Inputs -->
+          <div class="adopcion-form">
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                class="input-wrapper__field text-center" 
+                id="piggy-name-input" 
+                placeholder="Ponle un nombre a tu Piggy"
+                autocomplete="off"
+              />
             </div>
-            
-            <!-- Quick Name Suggestions -->
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center;">
-              ${['Porky', 'Bacon', 'Copito', 'Toby', 'Max', 'Gordo'].map(n => `
-                <button class="name-chip" style="
-                  background: #f0fdf4;
-                  color: #059669;
-                  border: 1px solid #bbf7d0;
-                  padding: 4px 12px;
-                  border-radius: 20px;
-                  font-size: 0.78rem;
-                  font-weight: 600;
-                  cursor: pointer;
-                ">${n}</button>
-              `).join('')}
+
+            <!-- Name Chips -->
+            <div class="adopcion-chips">
+              <button class="chip" data-name="Bacon">Bacon</button>
+              <button class="chip" data-name="Piggy">Piggy</button>
+              <button class="chip" data-name="Oink">Oink</button>
+              <button class="chip" data-name="Rosita">Rosita</button>
             </div>
+
+            <!-- Action Button -->
+            <button class="btn btn--primary btn--block btn--lg" id="btn-adopt-init">
+              ${renderIcon('shop', '', '20')}
+              Compra por $ 1.000.000
+            </button>
           </div>
-
-          <!-- Price Info -->
-          <div style="
-            background: #f8fafc;
-            border-radius: 14px;
-            padding: 14px 16px;
-            margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
-          ">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; color: #64748b;">
-              <span>Valor del Piggy</span>
-              <span style="font-weight: 700; color: #1e293b;">${formatCOP(ITEM_PRICE)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; color: #64748b;">
-              <span>Cuidado y Alimentación (144 días)</span>
-              <span style="font-weight: 700; color: #059669;">Incluido (0 COP)</span>
-            </div>
-            <div style="border-top: 1px dashed #cbd5e1; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between; font-weight: 800; font-size: 0.95rem; color: #059669;">
-              <span>Total a Descontar</span>
-              <span>${formatCOP(ITEM_PRICE)}</span>
-            </div>
-          </div>
-
-          <!-- Wallet Balance -->
-          <div style="
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 14px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-          ">
-            <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Cuenta Agro</div>
-            <div id="adopcion-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px;">
-              ${formatCOP(balance)}
-            </div>
-            <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.12; color:white;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-            </div>
-          </div>
-
-          <!-- Recharge Button -->
-          <button id="adopcion-btn-recargar" style="
-            width: 100%;
-            background: linear-gradient(135deg, #7c3aed, #5b21b6);
-            color: white;
-            border: none;
-            padding: 13px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            display: ${hasSufficient ? 'none' : 'flex'};
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-            transition: all 0.2s;
-          ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-            Recargar mi Cuenta
-          </button>
-
-          <!-- Insufficient funds warning -->
-          <div id="adopcion-insufficient-alert" style="
-            display: ${hasSufficient ? 'none' : 'block'};
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            font-size: 0.82rem;
-            color: #dc2626;
-            text-align: center;
-          ">
-            ⚠️ Saldo insuficiente en tu Cuenta Agro. Recarga saldo para continuar con la adopción.
-          </div>
-
-          <!-- Adopt Button -->
-          <button id="btn-comprar-piggy" style="
-            width: 100%;
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(16,185,129,0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: transform 0.15s, opacity 0.2s;
-          ">
-            <span>Comprar mi Cerdito</span>
-            <span>🐷</span>
-          </button>
         </div>
 
-        <p style="text-align: center; font-size: 0.75rem; color: #9ca3af; margin: 0;">
-          🔒 Transacción protegida. Al comprar, tu saldo se debita automáticamente y tu cerdito se agrega a tu granja.
-        </p>
+      </div>
 
-      </main>
+      ${renderBottomNav('granja')}
     </div>
   `;
+
+  attachAdopcionListeners();
+
+  return () => { };
 }
 
-/**
- * Adjunta los event listeners de la vista de adopción.
- */
-export function attachAdopcionListeners() {
-  const btnBack = document.getElementById('btn-back-adopcion');
-  if (btnBack) {
-    btnBack.addEventListener('click', () => navigateTo('granja'));
-  }
+function attachAdopcionListeners() {
+  // Back button
+  document.getElementById('btn-back-adopcion')?.addEventListener('click', () => {
+    navigateTo('granja');
+  });
 
-  const nameInput = document.getElementById('piggy-name-input');
-  const nameError = document.getElementById('piggy-name-error');
-
-  // Name suggestions
-  document.querySelectorAll('.name-chip').forEach(chip => {
+  // Name chips
+  const input = document.getElementById('piggy-name-input');
+  document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      if (nameInput) {
-        nameInput.value = chip.textContent.trim();
-        if (nameError) nameError.style.display = 'none';
+      if (input) {
+        input.value = chip.dataset.name;
       }
     });
   });
 
-  // Recharge button
-  const btnRecargar = document.getElementById('adopcion-btn-recargar');
-  if (btnRecargar) {
-    btnRecargar.addEventListener('click', async () => {
-      const originalText = btnRecargar.innerHTML;
-      btnRecargar.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
-      btnRecargar.style.pointerEvents = 'none';
-      try {
-        await openWalletDrawer(true);
-      } catch (e) {
-        console.error('Error opening wallet drawer:', e);
-      } finally {
-        btnRecargar.innerHTML = originalText;
-        btnRecargar.style.pointerEvents = 'auto';
-      }
-    });
-  }
+  // Init Purchase Flow (Open Checkout Modal)
+  document.getElementById('btn-adopt-init')?.addEventListener('click', () => {
+    const name = input?.value?.trim();
+    if (!name) {
+      alert('¡Por favor ponle un nombre a tu cerdito!');
+      return;
+    }
+    showCheckoutModal(name);
+  });
+}
 
-  // Buy Piggy button
-  const btnComprar = document.getElementById('btn-comprar-piggy');
-  if (btnComprar) {
-    btnComprar.addEventListener('click', async () => {
-      const customName = nameInput?.value.trim() || '';
+/**
+ * Show Checkout Modal — Wallet-based purchase flow
+ */
+function showCheckoutModal(piggyName) {
+  const existing = document.getElementById('checkout-modal');
+  if (existing) existing.remove();
 
-      if (customName.length < 3) {
-        if (nameError) nameError.style.display = 'block';
-        nameInput?.focus();
-        return;
-      }
+  const ITEM_PRICE = 1000000;
 
-      // Check balance
-      btnComprar.disabled = true;
-      btnComprar.style.opacity = '0.7';
-      btnComprar.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando Adopción...';
+  const modal = document.createElement('div');
+  modal.id = 'checkout-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
 
-      try {
-        // 1. Deduct from wallet
-        const deductResult = await deductWalletBalance(ITEM_PRICE);
-        if (!deductResult.success) {
-          throw new Error(deductResult.reason === 'insufficient_balance' 
-            ? 'Saldo insuficiente en tu Wallet.' 
-            : 'No se pudo procesar el pago. Intenta de nuevo.');
-        }
+  modal.innerHTML = `
+    <div class="modal checkout-modal animate-fade-in-up" style="position:relative;">
+      <div class="modal__header-row">
+        <h3 class="modal-title text-white">Confirmar Compra</h3>
+        <button class="checkout-close" id="checkout-close-btn" style="
+            background: #fef2f2;
+            color: #ef4444;
+            border: none;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;">
+            ${renderIcon('close', '', '20')}
+        </button>
+      </div>
+      
+      <div class="checkout-body" style="padding: 24px 20px;">
+        
+        <!-- Piggy Summary -->
+        <div style="text-align:center; margin-bottom:20px;">
+          <div style="font-size:0.95rem; color:#4b5563; margin-bottom:4px;">Comprando</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#1f2937;">Piggy &quot;${piggyName}&quot;</div>
+          <div style="font-size:1.5rem; font-weight:900; color:var(--color-primary); margin-top:4px;">${formatCOP(ITEM_PRICE)}</div>
+        </div>
 
-        // 2. Register new piggy in DB
-        const createdPiggy = await buyPiggy(customName, ITEM_PRICE);
-        if (!createdPiggy) {
-          throw new Error('No se pudo registrar tu cerdito en la base de datos.');
-        }
+        <!-- Wallet Balance -->
+        <div style="
+          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+          border-radius: 14px;
+          padding: 18px 20px;
+          margin-bottom: 14px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Cuenta Agro</div>
+          <div id="adopcion-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px;">
+            <span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
+          </div>
+          <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.12; color:white;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+        </div>
 
-        // 3. Mark M2 (Compra tu primer cerdito) as complete if applicable
-        try {
-          await completeMission('m2');
-        } catch (_) {}
+        <!-- Recharge Button -->
+        <button id="adopcion-btn-recargar" style="
+          width: 100%;
+          background: linear-gradient(135deg, #7c3aed, #5b21b6);
+          color: white;
+          border: none;
+          padding: 13px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          transition: all 0.2s;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Recargar mi Cuenta
+        </button>
 
-        // 4. Success -> redirect to Granja
-        alert(`¡Felicitaciones! Has adoptado a "${customName}" exitosamente.`);
-        navigateTo('granja');
+        <!-- Insufficient Notice -->
+        <div id="adopcion-insufficient" style="
+          background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+          padding:10px 14px; font-size:0.82rem; color:#dc2626; text-align:center;
+          margin-bottom:12px; display:none;
+        ">Saldo insuficiente. Recarga tu Cuenta para continuar.</div>
 
-      } catch (error) {
-        alert(error.message || 'Ocurrió un error al procesar tu adopción.');
-        btnComprar.disabled = false;
-        btnComprar.style.opacity = '1';
-        btnComprar.innerHTML = '<span>Comprar mi Cerdito</span> <span>🐷</span>';
-      }
-    });
-  }
+        <!-- Confirm Button -->
+        <button id="adopcion-btn-confirm" style="
+          width:100%; background:linear-gradient(135deg,#ec4899,#db2777); color:white;
+          border:none; padding:13px 20px; border-radius:12px; font-weight:700; font-size:0.9rem;
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+          box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
+          opacity:0.5; pointer-events:none;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+          Confirmar Compra
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const balanceDisplay = document.getElementById('adopcion-balance-display');
+  const insufficientNotice = document.getElementById('adopcion-insufficient');
+  const confirmBtn = document.getElementById('adopcion-btn-confirm');
+  let currentBalance = 0;
+
+  // Load balance
+  getWalletBalance().then(balance => {
+    currentBalance = balance;
+    balanceDisplay.textContent = formatCOP(balance);
+    const hasFunds = balance >= ITEM_PRICE;
+    insufficientNotice.style.display = hasFunds ? 'none' : 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = hasFunds ? 'none' : 'flex';
+    }
+    if (hasFunds) {
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.pointerEvents = 'auto';
+    }
+  }).catch(() => {
+    balanceDisplay.textContent = '$0';
+    insufficientNotice.style.display = 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = 'flex';
+    }
+  });
+
+  // Close
+  const close = () => modal.remove();
+  document.getElementById('checkout-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Recargar
+  const recargarBtn = document.getElementById('adopcion-btn-recargar');
+  recargarBtn.addEventListener('click', async () => {
+    const originalText = recargarBtn.innerHTML;
+    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+    recargarBtn.style.pointerEvents = 'none';
+    try {
+      await openWalletDrawer(true);
+      close();
+    } catch (e) {
+      console.error('Error opening wallet from adoption view:', e);
+      recargarBtn.innerHTML = originalText;
+      recargarBtn.style.pointerEvents = 'auto';
+    }
+  });
+
+  // Confirm -> Navigate to contract signing without deducting wallet balance
+  confirmBtn.addEventListener('click', () => {
+    if (currentBalance < ITEM_PRICE) return;
+    sessionStorage.setItem('pending_piggy_name', piggyName);
+    sessionStorage.removeItem('pending_marketplace_item');
+    close();
+    navigateTo(`contrato?name=${encodeURIComponent(piggyName)}&price=${ITEM_PRICE}`);
+  });
 }
