@@ -221,3 +221,34 @@ function enrichItem(item) {
         image_url: resolvedImageUrl,
     };
 }
+
+/**
+ * Get marketplace inventory statistics.
+ */
+export async function getMarketplaceStats() {
+    try {
+        const items = await getMarketplaceItems();
+        const totalAvailable = items.reduce((acc, item) => acc + (item.stock || 0), 0);
+        const categories = new Set(items.map(i => i.category));
+        return {
+            totalAvailable,
+            categoriesCount: categories.size,
+        };
+    } catch (e) {
+        return { totalAvailable: 0, categoriesCount: 0 };
+    }
+}
+
+/**
+ * Update stock for a marketplace item.
+ */
+export async function updateItemStock(itemId, quantity = 1) {
+    if (isUsingMockData()) return true;
+    try {
+        const client = getClient();
+        const { error } = await client.rpc('decrement_marketplace_stock', { item_id: itemId, qty: quantity });
+        return !error;
+    } catch {
+        return false;
+    }
+}
