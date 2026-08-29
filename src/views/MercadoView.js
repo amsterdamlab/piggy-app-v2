@@ -141,23 +141,40 @@ function renderItems(items) {
  * Layout: Image left, Buy button below image. Details right.
  * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
  */
+/**
+ * Render a single horizontal product card.
+ * Layout: Image left, Buy button below image. Details right.
+ * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
+ */
 function renderProductCard(item) {
   const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
 
-  // Safe month extraction
-  let currentMonth = item.currentMonth || item.current_month;
-  if (!currentMonth || currentMonth < 1) {
-    const monthMatch = itemName.match(/(\d+)\s*Mes(es)?/i);
-    if (monthMatch) {
-      currentMonth = Number(monthMatch[1]);
+  // Safe daysAdvanced extraction according to category or type
+  let daysAdvanced = item.daysAdvanced ?? item.days_advanced;
+  if (daysAdvanced === undefined || daysAdvanced === null) {
+    const daysMatch = itemName.match(/(\d+)\s*d[ií]as/i);
+    if (daysMatch) {
+      daysAdvanced = Number(daysMatch[1]);
     } else {
-      const weight = Number(item.current_weight || 15);
-      currentMonth = weight >= 90 ? 4 : weight >= 55 ? 3 : weight >= 30 ? 2 : 1;
+      const monthMatch = itemName.match(/(\d+)\s*Mes(es)?/i);
+      if (monthMatch) {
+        daysAdvanced = (Number(monthMatch[1]) - 1) * 30;
+      } else {
+        const cat = (item.category || '').toLowerCase();
+        if (cat.includes('90')) daysAdvanced = 90;
+        else if (cat.includes('75')) daysAdvanced = 75;
+        else if (cat.includes('60')) daysAdvanced = 60;
+        else if (cat.includes('45')) daysAdvanced = 45;
+        else if (cat.includes('30')) daysAdvanced = 30;
+        else if (cat === 'avanzado' || cat === 'advanced') daysAdvanced = 30;
+        else daysAdvanced = 0;
+      }
     }
   }
 
-  const daysRemaining = item.daysRemaining || Math.max(1, 144 - ((currentMonth - 1) * 30));
-  const daysSaved = item.daysAdvanced || ((currentMonth - 1) * 30);
+  let currentMonth = item.currentMonth || item.current_month || (daysAdvanced >= 90 ? 4 : daysAdvanced >= 60 ? 3 : daysAdvanced >= 30 ? 2 : 1);
+  const daysRemaining = item.daysRemaining || Math.max(1, 144 - daysAdvanced);
+  const daysSaved = daysAdvanced;
   const isAdvanced = daysSaved > 0;
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
   let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
@@ -190,7 +207,7 @@ function renderProductCard(item) {
 
   let categoryKey = (item.category || '').toLowerCase();
   if (!categoryKey || categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard') {
-    if (currentMonth > 1 || daysSaved > 0) {
+    if (daysSaved > 0 || currentMonth > 1) {
       categoryKey = 'avanzado';
     } else {
       categoryKey = 'estandar';
@@ -198,7 +215,7 @@ function renderProductCard(item) {
   }
 
   const displayCategory = categoryLabels[categoryKey] || item.category || 'Estandar';
-  const isEstandar = categoryKey === 'estandar' && currentMonth === 1;
+  const isEstandar = categoryKey === 'estandar' && daysSaved === 0;
 
   // Safe price resolution
   const rawPrice = item.price ?? item.investment_amount ?? item.amount ?? item.precio ?? 1000000;
@@ -232,17 +249,17 @@ function renderProductCard(item) {
         <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
         <p class="mcard__desc">${item.description || 'Cerdo con excelente rendimiento y cuidado óptimo.'}</p>
 
-        <!-- Info Row: Month + Weight (Matches original design reference) -->
+        <!-- Info Row: Días + Weight (Matches original design reference) -->
         <div class="mcard__info-row">
           <div class="mcard__info-item">
-            <span class="mcard__info-label">MES</span>
-            <span class="mcard__info-value mcard__info-value--month">${currentMonth}</span>
+            <span class="mcard__info-label">DÍAS</span>
+            <span class="mcard__info-value mcard__info-value--days">${daysAdvanced}</span>
           </div>
 
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
             <span class="mcard__info-label">PESO</span>
-            <span class="mcard__info-value">${item.current_weight || (currentMonth === 4 ? 98 : currentMonth === 3 ? 62 : currentMonth === 2 ? 35 : 15)} kg</span>
+            <span class="mcard__info-value">${item.current_weight || (daysAdvanced >= 90 ? 75 : daysAdvanced >= 60 ? 55 : daysAdvanced >= 30 ? 35 : 15)} kg</span>
           </div>
         </div>
 

@@ -49,12 +49,59 @@ export async function showReferralModal() {
   const modal = document.createElement('div');
   modal.id = 'referral-modal';
   modal.className = 'modal-overlay';
-  modal.style.cssText = 'z-index:9999; display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);';
+  modal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fadeIn 0.25s ease;
+    padding: 0;
+  `;
 
   modal.innerHTML = `
-    <div class="modal animate-scale-in" style="max-width:420px; max-height:90vh; overflow-y:auto; margin:16px;">
-      <div class="modal__handle"></div>
-      <button class="bonus-close" id="referral-modal-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+    <div class="animate-slide-up-modal" style="
+      background: white;
+      border-radius: 28px 28px 0 0;
+      padding: 20px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
+      max-width: 480px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+      position: relative;
+      box-sizing: border-box;
+    ">
+      <!-- Pill handle (Tirador de cajón) -->
+      <div style="
+        width: 44px;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        margin: 0 auto 16px;
+      "></div>
+      <button id="referral-modal-close" style="
+        background: none;
+        border: none;
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        font-size: 24px;
+        color: #9ca3af;
+        cursor: pointer;
+        z-index: 10;
+        line-height: 1;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s;
+      " onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
       <div class="loading-container" style="padding:40px 0;">
         <div class="spinner"></div>
         <span>Cargando referidos...</span>
@@ -106,10 +153,33 @@ export async function showReferralModal() {
       }).join('');
     }
 
-    const modalContent = modal.querySelector('.modal');
+    const modalContent = modal.querySelector('.animate-slide-up-modal') || modal.firstElementChild;
     modalContent.innerHTML = `
-      <div class="modal__handle"></div>
-      <button class="bonus-close" id="referral-modal-close-2" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+      <!-- Pill handle (Tirador de cajón) -->
+      <div style="
+        width: 44px;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        margin: 0 auto 16px;
+      "></div>
+      <button id="referral-modal-close-2" style="
+        background: none;
+        border: none;
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        font-size: 24px;
+        color: #9ca3af;
+        cursor: pointer;
+        z-index: 10;
+        line-height: 1;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s;
+      " onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
       <div style="text-align:center; margin-bottom:20px;">
         <div style="font-size:48px; margin-bottom:8px;">💰</div>

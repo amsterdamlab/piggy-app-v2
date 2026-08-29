@@ -38,25 +38,72 @@ export function showSupportModal() {
   const modal = document.createElement('div');
   modal.id = 'support-modal';
   modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
+  modal.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: fadeIn 0.25s ease;
+    padding: 0;
+  `;
 
   modal.innerHTML = `
-    <div class="modal animate-scale-in" style="position: relative; max-width:420px; max-height:90vh; overflow-y:auto; padding: 32px 24px 24px;">
-      <div class="modal__handle"></div>
-      <button class="bonus-close" id="support-modal-close" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer; z-index:3;">&times;</button>
+    <div class="animate-slide-up-modal" style="
+      background: white;
+      border-radius: 28px 28px 0 0;
+      padding: 20px 24px calc(32px + env(safe-area-inset-bottom, 0px));
+      width: 100%;
+      max-width: 480px;
+      max-height: 88dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.15);
+      position: relative;
+      box-sizing: border-box;
+    ">
+      <!-- Pill handle (Tirador de cajón) -->
+      <div style="
+        width: 44px;
+        height: 5px;
+        background: #e2e8f0;
+        border-radius: 99px;
+        margin: 0 auto 16px;
+      "></div>
+      <button id="support-modal-close" style="
+        background: none;
+        border: none;
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        font-size: 24px;
+        color: #9ca3af;
+        cursor: pointer;
+        z-index: 10;
+        line-height: 1;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.15s;
+      " onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
       <!-- Headset Icon (large, colored) -->
-      <div style="text-align:center; margin-bottom:24px;">
+      <div style="text-align:center; margin-bottom:20px;">
         <div style="
-          width: 80px;
-          height: 80px;
+          width: 72px;
+          height: 72px;
           margin: 0 auto;
           color: #b80049;
           display: flex;
           align-items: center;
           justify-content: center;
         ">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="80" height="80">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="72" height="72">
             <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
             <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
             <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
@@ -65,12 +112,12 @@ export function showSupportModal() {
       </div>
 
       <!-- Title -->
-      <h3 style="margin:0 0 10px 0; font-size:1.45rem; font-weight:800; color:#111827; text-align:center;">
+      <h3 style="margin:0 0 8px 0; font-size:1.35rem; font-weight:800; color:#111827; text-align:center;">
         ¿Necesitas ayuda?
       </h3>
 
       <!-- Subtitle -->
-      <p style="margin:0 0 28px 0; font-size:0.88rem; color:#6b7280; text-align:center; line-height:1.5;">
+      <p style="margin:0 0 24px 0; font-size:0.88rem; color:#6b7280; text-align:center; line-height:1.5;">
         Mariana, nuestra asesora virtual responde al instante — dudas, transferencias, estado de tu cuenta y más.
       </p>
 
@@ -79,14 +126,14 @@ export function showSupportModal() {
         border: 1px solid #e5e7eb;
         border-radius: 14px;
         overflow: hidden;
-        margin-bottom: 28px;
+        margin-bottom: 24px;
       ">
         <!-- Row 1: Habla con MarIAna -->
         <button id="btn-support-talk" style="
           width: 100%;
           background: white;
           border: none;
-          padding: 18px 20px;
+          padding: 16px 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -106,7 +153,7 @@ export function showSupportModal() {
           width: 100%;
           background: white;
           border: none;
-          padding: 18px 20px;
+          padding: 16px 20px;
           display: flex;
           align-items: center;
           justify-content: space-between;

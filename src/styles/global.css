@@ -277,6 +277,17 @@ ol {
     }
 }
 
+@keyframes slideUpModal {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .animate-fade-in {
     animation: fadeIn var(--transition-base) ease-out;
 }
@@ -287,4 +298,8 @@ ol {
 
 .animate-scale-in {
     animation: scaleIn var(--transition-spring);
+}
+
+.animate-slide-up-modal {
+    animation: slideUpModal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
