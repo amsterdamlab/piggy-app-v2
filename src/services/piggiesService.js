@@ -207,6 +207,57 @@ export function getGrowthPhaseDescription(weight) {
 }
 
 /**
+ * Create a new piggy for the user (Testing / Admin purpose).
+ * Note: Use buyMarketplaceItem for real purchases.
+ * @param {string} piggyName 
+ * @returns {Promise<Object>}
+ */
+export async function adoptPiggy(piggyName, contractUrl = null) {
+    const defaultImageUrl = 'assets/piggies/stage1/et1-1.jpg';
+    if (isUsingMockData()) {
+        const newPiggy = {
+            id: `mock-${Date.now()}`,
+            user_id: 'mock-user',
+            name: piggyName,
+            status: 'engorde',
+            purchase_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            investment_amount: 250000,
+            extra_roi_bonus: 0,
+            current_weight: 15.0,
+            contract_url: contractUrl || '/contracts/contrato_base.pdf',
+            image_url: defaultImageUrl,
+        };
+        MOCK_PIGGIES.unshift(newPiggy);
+        return enrichPiggyData(newPiggy);
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) throw new Error('Usuario no autenticado');
+
+    const { data, error } = await client
+        .from('piggies')
+        .insert({
+            user_id: user.id,
+            name: piggyName,
+            status: 'engorde',
+            purchase_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
+            investment_amount: 250000,
+            extra_roi_bonus: 0,
+            current_weight: 15.0,
+            contract_url: contractUrl || '/contracts/contrato_base.pdf',
+            image_url: defaultImageUrl,
+        })
+        .select()
+        .single();
+
+    if (error || !data) throw new Error('No se pudo registrar el Piggy en la base de datos');
+    return enrichPiggyData(data);
+}
+
+/**
  * Calculate dashboard summary statistics.
  * Multi-Piggy Margin:
  *   1-2 Piggies  → 11.5% Base ROI (standard)
