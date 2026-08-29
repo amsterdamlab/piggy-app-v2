@@ -30,11 +30,9 @@ export function navigateTo(path) {
  * @returns {string} The current route path
  */
 function getCurrentRoute() {
-    const hash = window.location.hash || '';
-    const clean = hash.replace(/^#\/?/, '').trim();
-    if (!clean) return 'auth';
-    const noQuery = clean.split('?')[0];
-    return noQuery.split('/')[0] || 'auth';
+    const raw = window.location.hash.slice(2) || 'auth';
+    const noQuery = raw.split('?')[0];
+    return noQuery.split('/')[0];
 }
 
 /**
@@ -42,10 +40,7 @@ function getCurrentRoute() {
  * @returns {string|null} The parameter value or null
  */
 export function getRouteParam() {
-    const hash = window.location.hash || '';
-    const clean = hash.replace(/^#\/?/, '').trim();
-    const noQuery = clean.split('?')[0];
-    const parts = noQuery.split('/');
+    const parts = window.location.hash.slice(2).split('/');
     return parts.length > 1 ? parts[1] : null;
 }
 
@@ -115,6 +110,10 @@ function handleRouteChange() {
         currentCleanup = null;
     }
 
+    // Reset body overflow and remove any lingering modals or backdrops
+    document.body.style.overflow = '';
+    document.querySelectorAll('.modal-overlay, #flash-mission-modal, #cycle-mission-modal, #silver-piggy-modal, #referral-modal, #support-modal, #welcome-bonus-modal, #news-billboard-modal').forEach(el => el.remove());
+
     // Reset scroll on view change
     scrollToTop(false);
 
@@ -125,12 +124,7 @@ function handleRouteChange() {
         currentCleanup = handler() || null;
     } else {
         // Default fallback
-        const state = AppState.getState();
-        if (state.isAuthenticated) {
-            navigateTo('granja');
-        } else {
-            navigateTo('auth');
-        }
+        navigateTo('auth');
     }
 }
 
@@ -139,6 +133,20 @@ function handleRouteChange() {
  */
 export function initRouter() {
     window.addEventListener('hashchange', handleRouteChange);
+
+    // Scroll to top when tapping the current active bottom-nav tab without reloading
+    document.addEventListener('click', (e) => {
+        const navLink = e.target.closest('[data-nav-tab]');
+        if (!navLink) return;
+
+        const targetTab = navLink.getAttribute('data-nav-tab');
+        const activeTab = AppState.get('activeTab');
+
+        if (targetTab && targetTab === activeTab) {
+            e.preventDefault();
+            scrollToTop(true);
+        }
+    });
 
     // Handle initial route
     handleRouteChange();

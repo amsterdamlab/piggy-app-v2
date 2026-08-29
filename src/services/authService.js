@@ -305,21 +305,9 @@ export async function checkSession() {
         const { data: { session } } = await client.auth.getSession();
 
         if (session?.user) {
-            // Run background expirations non-blocking so session resolves instantly
-            expireWelcomeBonusIfDue(session.user.id).catch(e => console.warn('Welcome bonus check:', e));
-            syncAndExpireMarketingBonuses(session.user.id).catch(e => console.warn('Marketing bonus check:', e));
-
-            const profile = await getProfile().catch(e => {
-                console.warn('Profile fetch warning in checkSession:', e);
-                return {
-                    id: session.user.id,
-                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuario',
-                    email: session.user.email,
-                    terms_accepted: true,
-                    habeas_data_accepted: true,
-                };
-            });
-
+            await expireWelcomeBonusIfDue(session.user.id);
+            await syncAndExpireMarketingBonuses(session.user.id);
+            const profile = await getProfile();
             const isGoogleUser = session.user.app_metadata?.provider === 'google';
             const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
 
