@@ -142,9 +142,22 @@ function renderItems(items) {
  * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
  */
 function renderProductCard(item) {
-  const currentMonth = item.currentMonth || 1;
-  const daysRemaining = item.daysRemaining || (144 - (item.daysAdvanced || 0));
-  const daysSaved = item.daysAdvanced || Math.max(0, 144 - daysRemaining);
+  const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
+
+  // Safe month extraction
+  let currentMonth = item.currentMonth || item.current_month;
+  if (!currentMonth || currentMonth < 1) {
+    const monthMatch = itemName.match(/(\d+)\s*Mes(es)?/i);
+    if (monthMatch) {
+      currentMonth = Number(monthMatch[1]);
+    } else {
+      const weight = Number(item.current_weight || 15);
+      currentMonth = weight >= 90 ? 4 : weight >= 55 ? 3 : weight >= 30 ? 2 : 1;
+    }
+  }
+
+  const daysRemaining = item.daysRemaining || Math.max(1, 144 - ((currentMonth - 1) * 30));
+  const daysSaved = item.daysAdvanced || ((currentMonth - 1) * 30);
   const isAdvanced = daysSaved > 0;
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
   let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
@@ -174,11 +187,23 @@ function renderProductCard(item) {
     gold: 'Dorado',
     premium: 'Premium',
   };
-  const categoryKey = item.category?.toLowerCase() || 'estandar';
-  const displayCategory = categoryLabels[categoryKey] || item.category;
-  const isEstandar = categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard';
 
-  const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
+  let categoryKey = (item.category || '').toLowerCase();
+  if (!categoryKey || categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard') {
+    if (currentMonth > 1 || daysSaved > 0) {
+      categoryKey = 'avanzado';
+    } else {
+      categoryKey = 'estandar';
+    }
+  }
+
+  const displayCategory = categoryLabels[categoryKey] || item.category || 'Estandar';
+  const isEstandar = categoryKey === 'estandar' && currentMonth === 1;
+
+  // Safe price resolution
+  const rawPrice = item.price ?? item.investment_amount ?? item.amount ?? item.precio ?? 1000000;
+  const numPrice = Number(rawPrice) || 1000000;
+  const priceDisplay = item.priceFormatted || formatCOP(numPrice);
 
   return `
     <div class="mcard animate-fade-in-up">
@@ -205,7 +230,7 @@ function renderProductCard(item) {
       <!-- Right Column: Details -->
       <div class="mcard__right">
         <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
-        <p class="mcard__desc">${item.description}</p>
+        <p class="mcard__desc">${item.description || 'Cerdo con excelente rendimiento y cuidado óptimo.'}</p>
 
         <!-- Info Row: Month + Weight (Matches original design reference) -->
         <div class="mcard__info-row">
@@ -217,14 +242,14 @@ function renderProductCard(item) {
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
             <span class="mcard__info-label">PESO</span>
-            <span class="mcard__info-value">${item.current_weight || 15} kg</span>
+            <span class="mcard__info-value">${item.current_weight || (currentMonth === 4 ? 98 : currentMonth === 3 ? 62 : currentMonth === 2 ? 35 : 15)} kg</span>
           </div>
         </div>
 
         <!-- Price Info -->
         <div class="mcard__price-row">
-            <span class="mcard__price">${item.priceFormatted}</span>
-            <span class="mcard__stock">${item.stock} disponibles</span>
+            <span class="mcard__price">${priceDisplay}</span>
+            <span class="mcard__stock">${item.stock ?? 1} disponibles</span>
         </div>
       </div>
     </div>
@@ -371,7 +396,7 @@ export function showCheckoutModal(item) {
           <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
             Un nuevo integrante para que tu granja siga creciendo desde
           </p>
-          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price)}</div>
+          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price || item.investment_amount || item.amount || item.precio || 1000000)}</div>
       </div>
 
       <!-- Custom Name Input Section -->
@@ -539,6 +564,7 @@ export function showCheckoutModal(item) {
   const recargarBtn = document.getElementById('btn-recargar-checkout');
   const ADMIN_WHATSAPP = '573154870448';
 
+  const itemPrice = Number(item.price || item.investment_amount || item.amount || item.precio || 1000000);
   let currentBalance = 0;
 
   // Load wallet balance
@@ -554,7 +580,7 @@ export function showCheckoutModal(item) {
   // Helper: update button states based on name + balance
   const updatePurchaseState = (nameVal) => {
     const nameValid = nameVal.length >= 3;
-    const hasFunds = currentBalance >= item.price;
+    const hasFunds = currentBalance >= itemPrice;
 
     // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
     walletSection.style.opacity = '1';
@@ -634,14 +660,14 @@ export function showCheckoutModal(item) {
       return;
     }
 
-    if (currentBalance < item.price) return;
+    if (currentBalance < itemPrice) return;
 
     // Save pending purchase details in session
     sessionStorage.setItem('pending_piggy_name', customName);
-    sessionStorage.setItem('pending_marketplace_item', JSON.stringify(item));
+    sessionStorage.setItem('pending_marketplace_item', JSON.stringify({ ...item, price: itemPrice }));
 
     close();
-    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${item.price}`);
+    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${itemPrice}`);
   });
 }
 
