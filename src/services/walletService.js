@@ -964,6 +964,6 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-import { getWalletTransactions } from './walletTransactionsService.js';
+import { getWalletTransactions, getCachedWalletTransactions } from './walletTransactionsService.js';
 
-export { getWalletTransactions, formatCOP };
+export { getWalletTransactions, getCachedWalletTransactions, formatCOP };

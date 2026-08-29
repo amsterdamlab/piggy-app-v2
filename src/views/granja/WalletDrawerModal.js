@@ -7,10 +7,56 @@ import { formatCOP } from '../../services/mockData.js';
 import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
 import { navigateTo } from '../../router.js';
-import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, requestMeatRedemption } from '../../services/walletService.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, getCachedWalletTransactions, requestMeatRedemption } from '../../services/walletService.js';
 import { getDashboardStats } from '../../services/piggiesService.js';
 import { openWalletRechargeSubscreen, openWalletRechargeInfo } from './WalletRechargeModal.js';
 import { openWalletWithdrawalSubscreen, showRetiroSaldoModal } from './WalletWithdrawalModal.js';
+
+/**
+ * Render transaction rows HTML for the drawer.
+ */
+export function renderTransactionsListHtml(transactions = []) {
+  if (!transactions || transactions.length === 0) {
+    return `
+      <div style="text-align: center; padding: 30px 0; color: #94a3b8; font-size: 0.85rem;">
+        <span style="font-size:24px; display:block; margin-bottom:6px;">📂</span> No hay transacciones registradas aún.
+      </div>
+    `;
+  }
+
+  return transactions.map((tx, i, arr) => {
+    const isDebit = Number(tx.amount) < 0;
+    const isConsumo = tx.wallet_type === 'consumo' || (tx.description && (tx.description.toLowerCase().includes('bono') || tx.description.toLowerCase().includes('consumo')));
+    const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(Number(tx.amount)));
+    const badgeColor = isDebit ? '#dc2626' : '#059669';
+    const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
+    const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+    const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/>
+    <path d="M13 17v2"/>
+    <path d="M13 11v2"/>
+    </svg>`;
+    const accountType = isConsumo ? couponIcon : bellIcon;
+    const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+    const isLast = i === arr.length - 1;
+    const borderBottom = isLast ? 'none' : '1px solid #e2e8f0';
+
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
+          <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
+          <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
+            <span style="font-size: 0.82rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
+          </span>
+        </div>
+        <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
+          ${amountStr}
+        </span>
+      </div>
+    `;
+  }).join('');
+}
 
 /**
  * Show the full screen / bottom sheet Wallet Drawer with complete details, actions, and transaction traceability.
@@ -23,6 +69,10 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
 
   // Bloquear el scroll del fondo (body) para evitar scrollbars dobles o largos
   document.body.style.overflow = 'hidden';
+
+  const initialTxs = (stats.transactions && stats.transactions.length > 0)
+    ? stats.transactions
+    : getCachedWalletTransactions();
 
   const modal = document.createElement('div');
   modal.id = 'wallet-drawer-modal';
@@ -197,39 +247,12 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
                </div>
 
                <div id="transactions-list-drawer" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px;">
-                  ${(stats.transactions || []).length === 0 ? `
-                     <div style="text-align: center; padding: 30px 0; color: #94a3b8; font-size: 0.85rem;">
-                        <span style="font-size:24px; display:block; margin-bottom:6px;">📂</span> No hay transacciones registradas aún.
-                     </div>
-                  ` : (stats.transactions || []).map((tx, i, arr) => {
-                     const isDebit = tx.amount < 0;
-                     const isConsumo = tx.wallet_type === 'consumo' || (tx.description && (tx.description.toLowerCase().includes('bono') || tx.description.toLowerCase().includes('consumo')));
-                     const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(tx.amount));
-                     const badgeColor = isDebit ? '#dc2626' : '#059669';
-                     const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
-                     const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
-                     const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`;
-                     const accountType = isConsumo ? couponIcon : bellIcon;
-                     const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
-                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                     });
-                     const isLast = i === arr.length - 1;
-                     const borderBottom = isLast ? 'none' : '1px solid #e2e8f0';
-                     
-                     return `
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
-                           <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
-                              <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
-                              <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
-                                <span style="font-size: 0.82rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
-                              </span>
-                           </div>
-                           <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
-                              ${amountStr}
-                           </span>
-                        </div>
-                     `;
-                  }).join('')}
+                  ${initialTxs.length > 0 ? renderTransactionsListHtml(initialTxs) : `
+                    <div style="text-align: center; padding: 24px 0; color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                      <span class="spinner" style="width: 16px; height: 16px; border: 2px solid #e2e8f0; border-top-color: #10B981; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;"></span>
+                      <span>Cargando movimientos...</span>
+                    </div>
+                  `}
                </div>
             </div>
 
@@ -247,6 +270,29 @@ export function showWalletDrawer(firstName, stats, autoOpenRecharge = false, aut
   `;
 
   document.body.appendChild(modal);
+
+  // Background refresh of transactions from DB with cache preservation
+  getWalletTransactions().then((freshTxs) => {
+    if (freshTxs && freshTxs.length > 0) {
+      stats.transactions = freshTxs;
+      const listEl = document.getElementById('transactions-list-drawer');
+      if (listEl) {
+        listEl.innerHTML = renderTransactionsListHtml(freshTxs);
+      }
+    } else if (initialTxs.length === 0) {
+      stats.transactions = [];
+      const listEl = document.getElementById('transactions-list-drawer');
+      if (listEl) {
+        listEl.innerHTML = renderTransactionsListHtml([]);
+      }
+    }
+  }).catch((e) => {
+    console.warn('Background tx refresh warning:', e);
+    const listEl = document.getElementById('transactions-list-drawer');
+    if (listEl && (!stats.transactions || stats.transactions.length === 0)) {
+      listEl.innerHTML = renderTransactionsListHtml(initialTxs);
+    }
+  });
 
   const closeDrawer = () => {
     modal.remove();
