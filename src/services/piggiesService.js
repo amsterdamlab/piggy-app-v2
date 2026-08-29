@@ -1,31 +1,30 @@
 /* ============================================
    PIGGY APP — Piggies Service
-   Handles fetching, managing, and creating piggies.
-   Syncs weights, days elapsed, and automatic cycle completion.
+   Manages piggy CRUD and ROI calculations
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
-import { MOCK_PIGGIES } from './mockData.js';
-import { AppState } from '../state.js';
-import { completeMissionOnPurchase } from './missionsService.js';
-import { calculateProjectedReturn } from './mockData.js';
-import { deductWalletBalance, addWalletBalance } from './walletService.js';
+import {
+    MOCK_PIGGIES,
+    calculateBaseROI,
+    calculateTotalReturn,
+    getProgressPercentage,
+    getDaysRemaining,
+    simulateWeight,
+    getPiggyGrowthStage,
+    formatCOP,
+    formatPercentage,
+} from './mockData.js';
 
-/** Weight configuration constants */
-const INITIAL_WEIGHT_KG = 25.0;
-const FINAL_WEIGHT_KG = 110.0;
-const TOTAL_CYCLE_DAYS = 90;
-
-/** Default image for custom named piggies */
-const DEFAULT_PIGGY_IMAGE = 'pig2.jpg';
-
-/**
- * Fallback mapping of ID to image for initial mock data
- */
-const PIGGY_IMAGE_MAP = {
-    '1': 'pig1.jpg',
-    '2': 'pig2.jpg',
-    '3': 'pig3.jpg',
+export {
+    calculateBaseROI,
+    calculateTotalReturn,
+    getProgressPercentage,
+    getDaysRemaining,
+    simulateWeight,
+    getPiggyGrowthStage,
+    formatCOP,
+    formatPercentage,
 };
 
 /**
@@ -98,48 +97,95 @@ export async function getPiggyById(id) {
 }
 
 /**
- * Calculate dashboard summary statistics.
+ * Enrich DB piggy object with calculated fields.
+ * Calculates dynamic days elapsed, remaining days, weight and progress
+ * based on real calendar days elapsed since purchase.
+ *
+ * @param {Object} p - Raw DB piggy record
+ * @returns {Object} Enriched piggy object
  */
-export async function getDashboardStats(piggies) {
-    const activePiggies = piggies.filter((p) => !p.isComplete);
-    const completedPiggies = piggies.filter((p) => p.isComplete);
+export function enrichPiggyData(p) {
+    const cycleTotalDays = parseInt(p.cycle_duration_days) || 144;
+    const inv = parseFloat(p.investment_amount) || 1000000;
+    const extraRoi = parseFloat(p.extra_roi_bonus) || 0;
+    const baseROI = 0.115;
+    const totalROI = baseROI + extraRoi;
 
-    // Sum total investment
-    const totalInvested = activePiggies.reduce((sum, p) => sum + (p.investmentAmount || 0), 0);
+    // Calcular días transcurridos reales desde la compra
+    const startDate = new Date(p.purchase_date || p.created_at || Date.now());
+    const now = new Date();
+    const msElapsed = Math.max(0, now.getTime() - startDate.getTime());
+    const realDaysElapsed = Math.floor(msElapsed / (1000 * 60 * 60 * 24));
 
-    // Sum projected return
-    const totalProjected = activePiggies.reduce((sum, p) => sum + (p.projectedReturn || 0), 0);
+    // Días transcurridos con tope en la duración del ciclo
+    const daysElapsed = Math.min(realDaysElapsed, cycleTotalDays);
+    const daysLeft = Math.max(0, cycleTotalDays - daysElapsed);
 
-    // Average progress
-    const avgProgress = activePiggies.length > 0
-        ? Math.round(activePiggies.reduce((sum, p) => sum + p.progress, 0) / activePiggies.length)
-        : 0;
+    // Progreso porcentual del ciclo (0 a 100)
+    const progress = Math.min(100, Math.round((daysElapsed / cycleTotalDays) * 100));
 
-    // Total weight
-    const totalWeight = activePiggies.reduce((sum, p) => sum + (p.currentWeight || 0), 0);
+    // Peso dinámico interpolado linealmente (de initial_weight a target_weight)
+    const initialWeight = parseFloat(p.initial_weight) || 25.0;
+    const targetWeight = parseFloat(p.target_weight) || 110.0;
+    const weightGainTotal = targetWeight - initialWeight;
+    const calculatedWeight = initialWeight + (weightGainTotal * (daysElapsed / cycleTotalDays));
+    const currentWeight = Math.min(targetWeight, Math.round(calculatedWeight * 10) / 10);
+
+    // Estado de completitud: por estado en DB o por días restantes = 0
+    const isComplete = p.status === 'completado' || daysLeft === 0;
+
+    // Retorno proyectado
+    const projectedReturn = inv * (1 + totalROI);
+
+    // Determinar etapa de crecimiento
+    const stageInfo = getPiggyGrowthStage(progress, p.name || 'Tu Piggy');
 
     return {
-        activeCount: activePiggies.length,
-        completedCount: completedPiggies.length,
-        totalInvested,
-        totalProjected,
-        totalGain: totalProjected - totalInvested,
-        avgProgress,
-        totalWeight: Math.round(totalWeight * 10) / 10,
-        baseROI: 0.115, // 11.5%
+        ...p,
+        id: p.id,
+        name: p.name || 'Mi Piggy',
+        tag: p.tag || `PG-${String(p.id).slice(0, 4).toUpperCase()}`,
+        status: isComplete ? 'completado' : (p.status || 'engorde'),
+        isComplete,
+        currentWeight,
+        initialWeight,
+        targetWeight,
+        weightGain: Math.max(0, Math.round((currentWeight - initialWeight) * 10) / 10),
+        weightRemaining: Math.max(0, Math.round((targetWeight - currentWeight) * 10) / 10),
+        daysElapsed,
+        daysLeft,
+        progress,
+        cycleDurationDays: cycleTotalDays,
+        investmentAmount: inv,
+        projectedReturn,
+        extraRoiBonus: extraRoi,
+        totalRoi: totalROI,
+        stageNumber: stageInfo.stageNumber,
+        stageName: stageInfo.stageName,
+        stageIcon: stageInfo.icon,
+        stageBadgeBg: stageInfo.badgeBg,
+        stageBadgeColor: stageInfo.badgeColor,
+        stageDescription: stageInfo.description,
+        imageUrl: p.image_url || 'pig2.jpg',
+        location: p.location || 'Granja Valle Morales · Galpón 3',
+        healthStatus: p.health_status || 'Excelente',
+        feedType: p.feed_type || 'Concentrado Premium + Suplemento Vitamínico',
+        purchaseDate: p.purchase_date || p.created_at,
+        createdAt: p.created_at,
     };
 }
 
 /**
- * Format weight helper (e.g. 52.4 -> "52.4")
+ * Format weight in kilograms helper.
  */
 export function formatWeight(weight) {
-    if (weight === null || weight === undefined) return '0.0';
-    return Number(weight).toFixed(1);
+    const num = Number(weight);
+    if (isNaN(num) || num <= 0) return '25.0 kg';
+    return `${num.toFixed(1)} kg`;
 }
 
 /**
- * Determine growth phase name based on current weight in kg.
+ * Get Growth Phase Name based on weight.
  */
 export function getGrowthPhaseName(weight) {
     const w = Number(weight) || 0;
@@ -150,7 +196,7 @@ export function getGrowthPhaseName(weight) {
 }
 
 /**
- * Determine growth phase description based on current weight in kg.
+ * Get Growth Phase Description based on weight.
  */
 export function getGrowthPhaseDescription(weight) {
     const w = Number(weight) || 0;
@@ -161,186 +207,65 @@ export function getGrowthPhaseDescription(weight) {
 }
 
 /**
- * Calculate dynamic fields for a piggy based on real calendar days elapsed.
- * Formula: weight = initial_weight + (final_weight - initial_weight) * (days_elapsed / cycle_days)
+ * Calculate dashboard summary statistics.
+ * Multi-Piggy Margin:
+ *   1-2 Piggies  → 11.5% Base ROI (standard)
+ *   3-4 Piggies  → +1% Extra Margin (+1% bonus)
+ *   5+ Piggies   → +2% Extra Margin (+2% bonus)
  */
-export function enrichPiggyData(dbPiggy) {
-    const initialWeight = parseFloat(dbPiggy.initial_weight) || INITIAL_WEIGHT_KG;
-    const targetWeight  = parseFloat(dbPiggy.target_weight)  || FINAL_WEIGHT_KG;
-    const cycleDays     = parseInt(dbPiggy.cycle_duration_days) || TOTAL_CYCLE_DAYS;
-    const invAmount     = parseFloat(dbPiggy.investment_amount) || 1000000;
-    const extraRoi      = parseFloat(dbPiggy.extra_roi_bonus) || 0;
-    const baseROI       = 0.115;
-    const totalROI      = baseROI + extraRoi;
+export async function getDashboardStats(piggies = []) {
+    const validPiggies = Array.isArray(piggies) ? piggies : [];
+    const availablePiggies = validPiggies.filter((p) => p.status === 'disponible' || p.status === 'completado');
+    const activePiggies = validPiggies.filter((p) => p.status !== 'disponible' && p.status !== 'completado');
+    const piggyCount = activePiggies.length;
 
-    // Days elapsed calculation based on purchase/created date
-    const startDate = new Date(dbPiggy.purchase_date || dbPiggy.created_at || Date.now());
-    const now = new Date();
-    const msElapsed = Math.max(0, now.getTime() - startDate.getTime());
-    const realDaysElapsed = Math.floor(msElapsed / (1000 * 60 * 60 * 24));
+    let baseROI = 0.115; // 11.5%
 
-    // Cap days elapsed at cycle duration
-    const daysElapsed = Math.min(realDaysElapsed, cycleDays);
-    const daysLeft = Math.max(0, cycleDays - daysElapsed);
+    // Calculate total investment (active piggies)
+    const adquisicionBonos = activePiggies.reduce((sum, p) => sum + (parseFloat(p.investment_amount) || 1000000), 0);
 
-    // Calculate dynamic weight (linear interpolation)
-    const weightGainTotal = targetWeight - initialWeight;
-    const calculatedWeight = initialWeight + (weightGainTotal * (daysElapsed / cycleDays));
-    const currentWeight = Math.min(targetWeight, Math.round(calculatedWeight * 10) / 10);
+    // Calculate total gains (active piggies with their respective individual extra_roi_bonus)
+    const diferencialPreventa = activePiggies.reduce((sum, p) => {
+        const inv = parseFloat(p.investment_amount) || 1000000;
+        const extra = parseFloat(p.extra_roi_bonus) || 0;
+        return sum + (inv * (baseROI + extra));
+    }, 0);
 
-    // Progress percentage
-    const progress = Math.min(100, Math.round((daysElapsed / cycleDays) * 100));
+    // Calculate total available for finished/sold piggies
+    const disponible = availablePiggies.reduce((sum, p) => {
+        const inv = parseFloat(p.investment_amount) || 1000000;
+        const extra = parseFloat(p.extra_roi_bonus) || 0;
+        return sum + (inv * (1 + baseROI + extra));
+    }, 0);
 
-    // Completion status
-    const isComplete = dbPiggy.status === 'completado' || daysLeft === 0;
-
-    // Projected return
-    const projectedReturn = invAmount * (1 + totalROI);
+    // Find the piggy with closest end date
+    let nextCloseDays = 0;
+    let nextCloseProgress = 0;
+    if (activePiggies.length > 0) {
+        const closestPiggy = activePiggies.reduce((prev, curr) =>
+            (prev.daysLeft < curr.daysLeft) ? prev : curr
+        );
+        nextCloseDays = closestPiggy.daysLeft;
+        nextCloseProgress = closestPiggy.progress;
+    }
 
     return {
-        id: dbPiggy.id,
-        name: dbPiggy.name || 'Mi Piggy',
-        tag: dbPiggy.tag || `PG-${dbPiggy.id ? String(dbPiggy.id).slice(0, 4).toUpperCase() : '001'}`,
-        initialWeight,
-        targetWeight,
-        currentWeight,
-        daysElapsed,
-        daysLeft,
-        progress,
-        cycleDurationDays: cycleDays,
-        investmentAmount: invAmount,
-        projectedReturn,
-        extraRoiBonus: extraRoi,
-        totalRoi: totalROI,
-        status: isComplete ? 'completado' : (dbPiggy.status || 'activo'),
-        isComplete,
-        imageUrl: dbPiggy.image_url || PIGGY_IMAGE_MAP[dbPiggy.id] || DEFAULT_PIGGY_IMAGE,
-        breed: dbPiggy.breed || 'Landrace x Pietrain',
-        location: dbPiggy.location || 'Granja Valle Morales · Galpón 3',
-        healthStatus: dbPiggy.health_status || 'Excelente',
-        purchaseDate: dbPiggy.purchase_date || dbPiggy.created_at,
-        estimatedCompletion: calculateCompletionDate(startDate, cycleDays),
-        weightGain: Math.max(0, Math.round((currentWeight - initialWeight) * 10) / 10),
-        weightRemaining: Math.max(0, Math.round((targetWeight - currentWeight) * 10) / 10),
-        feedType: dbPiggy.feed_type || 'Concentrado Premium + Suplemento Vitamínico',
-        phase: getGrowthPhaseName(currentWeight),
-        phaseDescription: getGrowthPhaseDescription(currentWeight),
-        createdAt: dbPiggy.created_at,
+        totalPiggies: validPiggies.length,
+        activeCount: piggyCount,
+        finishedCount: availablePiggies.length,
+        adquisicionBonos,
+        adquisicionBonosFormatted: formatCOP(adquisicionBonos),
+        diferencialPreventa,
+        diferencialPreventaFormatted: formatCOP(diferencialPreventa),
+        disponible,
+        disponibleFormatted: formatCOP(disponible),
+        nextCloseDays,
+        nextCloseProgress,
+        baseROI,
+        baseROIFormatted: formatPercentage(baseROI),
+        margenComercialFormatted: formatCOP(diferencialPreventa),
+        pagoFinalFormatted: formatCOP(adquisicionBonos + diferencialPreventa),
     };
-}
-
-/**
- * Calculate completion date based on start date and cycle days.
- */
-function calculateCompletionDate(startDate, cycleDays) {
-    const d = new Date(startDate.getTime());
-    d.setDate(d.getDate() + cycleDays);
-    return d.toLocaleDateString('es-CO', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-    });
-}
-
-/**
- * Buy a marketplace item directly using available wallet funds.
- * Deducts wallet_balance atomically in Supabase, creates a new piggy in the DB,
- * and tracks the transaction.
- *
- * @param {Object} item - Marketplace product object
- * @param {string} customName - Name chosen by the user
- * @param {number} extraRoiBonus - Optional extra ROI percentage bonus (e.g. 0.02 for +2%)
- * @returns {Promise<{success: boolean, error?: string, piggy?: Object}>}
- */
-export async function buyMarketplaceItem(item, customName, extraRoiBonus = 0) {
-    const price = parseFloat(item.price) || 1000000;
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-
-    if (!user) {
-        return { success: false, error: 'Usuario no autenticado.' };
-    }
-
-    if (isUsingMockData()) {
-        const deducted = await deductWalletBalance(price, `Compra: Piggy ${customName} (${item.title})`);
-        if (!deducted) {
-            return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
-        }
-
-        const newPiggy = {
-            id: `piggy-${Date.now()}`,
-            name: customName,
-            user_id: user.id,
-            breed: item.title,
-            initial_weight: item.weight || INITIAL_WEIGHT_KG,
-            target_weight: FINAL_WEIGHT_KG,
-            current_weight: item.weight || INITIAL_WEIGHT_KG,
-            cycle_duration_days: item.cycleDays || TOTAL_CYCLE_DAYS,
-            investment_amount: price,
-            extra_roi_bonus: extraRoiBonus,
-            status: 'activo',
-            image_url: item.imageUrl || DEFAULT_PIGGY_IMAGE,
-            location: 'Granja Valle Morales · Galpón 3',
-            health_status: 'Excelente',
-            purchase_date: new Date().toISOString(),
-            created_at: new Date().toISOString()
-        };
-
-        MOCK_PIGGIES.unshift(newPiggy);
-        await completeMissionOnPurchase();
-
-        const currentPiggies = AppState.get('piggies') || [];
-        AppState.set({ piggies: [enrichPiggyData(newPiggy), ...currentPiggies] });
-
-        return { success: true, piggy: enrichPiggyData(newPiggy) };
-    }
-
-    // 1. Deduct wallet balance atomically via RPC or walletService
-    const deducted = await deductWalletBalance(price, `Compra: Piggy ${customName} (${item.title})`);
-    if (!deducted) {
-        return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
-    }
-
-    // 2. Insert new piggy into Supabase
-    const piggyRecord = {
-        user_id: user.id,
-        name: customName,
-        breed: item.title,
-        initial_weight: item.weight || INITIAL_WEIGHT_KG,
-        target_weight: FINAL_WEIGHT_KG,
-        current_weight: item.weight || INITIAL_WEIGHT_KG,
-        cycle_duration_days: item.cycleDays || TOTAL_CYCLE_DAYS,
-        investment_amount: price,
-        extra_roi_bonus: extraRoiBonus,
-        status: 'activo',
-        image_url: item.imageUrl || DEFAULT_PIGGY_IMAGE,
-        location: 'Granja Valle Morales · Galpón 3',
-        health_status: 'Excelente',
-        purchase_date: new Date().toISOString(),
-    };
-
-    const { data, error } = await client
-        .from('piggies')
-        .insert(piggyRecord)
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error inserting piggy in Supabase:', error);
-        // Refund wallet balance if insertion failed
-        await addWalletBalance(price, `Reembolso por fallo en compra: ${item.title}`);
-        return { success: false, error: 'Hubo un error al registrar el Piggy. Tu saldo fue reembolsado.' };
-    }
-
-    // 3. Mark adoption mission M2 as completed
-    await completeMissionOnPurchase();
-
-    // 4. Update AppState with the newly purchased piggy
-    const enriched = enrichPiggyData(data);
-    const currentPiggies = AppState.get('piggies') || [];
-    AppState.set({ piggies: [enriched, ...currentPiggies] });
-
-    return { success: true, piggy: enriched };
 }
 
 /**
@@ -355,25 +280,29 @@ export async function buyPiggy({ name, breed, cycleDurationDays, investmentAmoun
         return { success: false, error: 'Usuario no autenticado.' };
     }
 
-    if (isUsingMockData()) {
-        const deducted = await deductWalletBalance(price, `Compra: Piggy ${name} (${breed})`);
-        if (!deducted) {
-            return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
-        }
+    // 1. Deduct wallet balance
+    const { deductWalletBalance, addWalletBalance } = await import('./walletService.js');
+    const { completeMissionOnPurchase } = await import('./missionsService.js');
 
+    const deducted = await deductWalletBalance(price, `Compra: Piggy ${name} (${breed})`);
+    if (!deducted) {
+        return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
+    }
+
+    if (isUsingMockData()) {
         const newPiggy = {
             id: `piggy-${Date.now()}`,
             name,
             user_id: user.id,
             breed,
-            initial_weight: initialWeight || INITIAL_WEIGHT_KG,
-            target_weight: targetWeight || FINAL_WEIGHT_KG,
-            current_weight: initialWeight || INITIAL_WEIGHT_KG,
-            cycle_duration_days: cycleDurationDays || TOTAL_CYCLE_DAYS,
+            initial_weight: initialWeight || 25.0,
+            target_weight: targetWeight || 110.0,
+            current_weight: initialWeight || 25.0,
+            cycle_duration_days: cycleDurationDays || 144,
             investment_amount: price,
             extra_roi_bonus: extraRoiBonus,
             status: 'activo',
-            image_url: imageUrl || DEFAULT_PIGGY_IMAGE,
+            image_url: imageUrl || 'pig2.jpg',
             location: location || 'Granja Valle Morales · Galpón 3',
             health_status: 'Excelente',
             purchase_date: new Date().toISOString(),
@@ -383,16 +312,11 @@ export async function buyPiggy({ name, breed, cycleDurationDays, investmentAmoun
         MOCK_PIGGIES.unshift(newPiggy);
         await completeMissionOnPurchase();
 
+        const { AppState } = await import('../state.js');
         const currentPiggies = AppState.get('piggies') || [];
         AppState.set({ piggies: [enrichPiggyData(newPiggy), ...currentPiggies] });
 
         return { success: true, piggy: enrichPiggyData(newPiggy) };
-    }
-
-    // 1. Deduct wallet balance
-    const deducted = await deductWalletBalance(price, `Compra: Piggy ${name} (${breed})`);
-    if (!deducted) {
-        return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
     }
 
     // 2. Insert new piggy into Supabase
@@ -400,14 +324,14 @@ export async function buyPiggy({ name, breed, cycleDurationDays, investmentAmoun
         user_id: user.id,
         name,
         breed,
-        initial_weight: initialWeight || INITIAL_WEIGHT_KG,
-        target_weight: targetWeight || FINAL_WEIGHT_KG,
-        current_weight: initialWeight || INITIAL_WEIGHT_KG,
-        cycle_duration_days: cycleDurationDays || TOTAL_CYCLE_DAYS,
+        initial_weight: initialWeight || 25.0,
+        target_weight: targetWeight || 110.0,
+        current_weight: initialWeight || 25.0,
+        cycle_duration_days: cycleDurationDays || 144,
         investment_amount: price,
         extra_roi_bonus: extraRoiBonus,
         status: 'activo',
-        image_url: imageUrl || DEFAULT_PIGGY_IMAGE,
+        image_url: imageUrl || 'pig2.jpg',
         location: location || 'Granja Valle Morales · Galpón 3',
         health_status: 'Excelente',
         purchase_date: new Date().toISOString(),
@@ -430,8 +354,26 @@ export async function buyPiggy({ name, breed, cycleDurationDays, investmentAmoun
 
     // 4. Update AppState
     const enriched = enrichPiggyData(data);
+    const { AppState } = await import('../state.js');
     const currentPiggies = AppState.get('piggies') || [];
     AppState.set({ piggies: [enriched, ...currentPiggies] });
 
     return { success: true, piggy: enriched };
+}
+
+/**
+ * Buy a piggy from the marketplace.
+ */
+export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
+    return buyPiggy({
+        name: customName || item.title || item.name || 'Mi Piggy',
+        breed: item.title || item.name || 'Landrace',
+        cycleDurationDays: item.cycleDays || item.cycle_duration_days || 144,
+        investmentAmount: item.price || 1000000,
+        initialWeight: item.weight || item.initial_weight || 25.0,
+        targetWeight: item.target_weight || 110.0,
+        imageUrl: item.imageUrl || item.image_url || 'pig2.jpg',
+        location: item.location || 'Granja Valle Morales · Galpón 3',
+        extraRoiBonus: item.extra_roi || item.extraRoiBonus || 0,
+    });
 }
