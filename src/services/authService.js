@@ -161,17 +161,23 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             welcome_bonus_status: 'active',
         };
 
-        const { error: profileError } = await client.from('profiles').upsert(profile);
+        const { data: createdProfile, error: profileError } = await client
+            .from('profiles')
+            .upsert(profile)
+            .select()
+            .maybeSingle();
 
         if (profileError) {
             console.warn('🐷 Profile upsert error:', profileError.message);
         }
 
+        const finalProfile = createdProfile || profile;
+
         onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
-        // Update AppState immediately
+        // Update AppState immediately with fresh profile including referral_code from DB trigger
         AppState.set({
             currentUser: data.user,
-            profile: { ...profile },
+            profile: { ...finalProfile },
             isAuthenticated: true,
         });
     }

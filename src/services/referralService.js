@@ -136,7 +136,15 @@ export async function getMyReferralCode() {
         .eq('id', user.id)
         .single();
 
-    return data?.referral_code || null;
+    const code = data?.referral_code || null;
+    if (code) {
+        const currentProf = AppState.get('profile');
+        if (currentProf && !currentProf.referral_code) {
+            AppState.set({ profile: { ...currentProf, referral_code: code } });
+        }
+    }
+
+    return code;
 }
 
 /* ─── Get My Referral Stats ─── */
