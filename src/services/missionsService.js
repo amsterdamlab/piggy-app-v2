@@ -59,138 +59,151 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm6', sortOrder: 6,
-        title: 'Completa tus Datos',
-        reward: 'Completa tus datos para que podamos enviarte tus comisiones al final de cada ciclo.',
-        icon: '💳', cta: '#/perfil?subscreen=datos',
-        autoType: 'completed_profile',
+        title: 'Añade tus Datos Bancarios',
+        reward: 'Para recibir tus ganancias directamente en tu cuenta',
+        icon: '💳', cta: '#/perfil',
+        autoType: 'bank_details',
         requires: 'm5',
     },
     {
         key: 'm7', sortOrder: 7,
-        title: 'Compra en locales aliados',
-        reward: 'Conoce los descuentos exclusivos de nuestros aliados',
-        icon: '🏛️', cta: '#/aliados',
+        title: 'Conoce a Nuestros Aliados',
+        reward: 'Descubre los aliados donde puedes redimir tus ganancias y bonos',
+        icon: '🤝', cta: '#/aliados',
         autoType: 'visited_aliados',
         requires: 'm6',
     },
-    {
-        key: 'm8', sortOrder: 8,
-        title: 'Activa tu 3er Piggy (60 días de engorde)',
-        reward: 'Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)',
-        icon: '⚡', cta: 'open_buy_advanced30',
-        autoType: 'third_piggy',
-        requires: 'm7',
-        hasFlashTimer: true,
-    },
-    {
-        key: 'm9', sortOrder: 9,
-        title: 'Refiere y logra una compra',
-        reward: 'Obtén $20.000 en tu Wallet por tu primer referido efectivo',
-        icon: '🤝', cta: 'open_referidos',
-        autoType: 'first_referral_completed',
-        requires: 'm8',
-    },
 ];
 
-/* ─── Session-level visit guard ──────────────
-   Prevents redundant DB writes when the user
-   visits the same section multiple times per session.
-   ─────────────────────────────────────────── */
+/* ─── Session State for Manual Completions ──── */
 const _sessionVisitedMissions = new Set();
+const _mockManualCompletions = new Set();
 
-/* ─── Auto-completion logic ──────────────────
-   Returns a map { 'm1': bool, 'm2': bool, … }
-   based on real AppState data.
-   ─────────────────────────────────────────── */
+/* ─── Helpers ─────────────────────────────── */
 
-function buildAutoCompletionMap(piggies, profile) {
-    const completedPiggies = piggies.filter(p => p.isComplete);
-    const referralStats    = AppState.get('referralStats') || {};
-    const completedRefs    = referralStats.completedReferrals || 0;
-    const visitedSections  = AppState.get('visitedSections') || {};
-    const pwaInstalled     = localStorage.getItem('piggy_pwa_installed') === 'true';
-
-    // Profile bank data is completed if user has filled bank_name and bank_breve_key
-    const isProfileComplete = Boolean(profile?.bank_name && profile?.bank_breve_key);
-
+/**
+ * Check which auto-completable missions are fulfilled based on real app data.
+ * Pure function — no DB side-effects.
+ * @param {Array} piggies
+ * @param {Object|null} profile
+ * @returns {Object} map of missionKey -> boolean
+ */
+function buildAutoCompletionMap(piggies = [], profile = null) {
+    const visited = AppState.get('visitedSections') || {};
     return {
-        m1: visitedSections.gourmet   || false, // visited /gourmet
-        m2: piggies.length >= 1,                 // bought 1st piggy
-        m3: visitedSections.referidos || false, // visited referidos modal
-        m4: pwaInstalled              || false, // installed PWA / accepted prompt
-        m5: piggies.length >= 2,                 // bought 2nd piggy (or timer expired)
-        m6: isProfileComplete         || false, // filled bank info in Mi Perfil
-        m7: visitedSections.aliados   || false, // visited /aliados
-        m8: piggies.length >= 3,                 // bought 3rd piggy (or timer expired)
-        m9: completedRefs >= 1,                  // referral completed a purchase
+        // M1: Visited Gourmet / Tienda section
+        m1: !!visited.gourmet,
+
+        // M2: Has at least 1 piggy
+        m2: piggies.length >= 1,
+
+        // M3: Visited Referidos section
+        m3: !!visited.referidos,
+
+        // M4: PWA installed or visit descargar section
+        m4: AppState.get('pwaInstalled') === true || !!visited.descargar,
+
+        // M5: Has at least 2 piggies
+        m5: piggies.length >= 2,
+
+        // M6: Bank details filled in profile OR visited Profile section
+        m6: !!(profile?.bank_name && profile?.bank_account_number) || !!visited.datos,
+
+        // M7: Visited Aliados section
+        m7: !!visited.aliados,
+
+        // M8 (Flash Mission): Has at least 3 piggies
+        m8: piggies.length >= 3,
+
+        // M9 (Flash Mission): Has at least 4 piggies
+        m9: piggies.length >= 4,
     };
 }
 
-/* ─── Merge DB rows with definitions ─────────
-   Applies locking rules, fills defaults, and
-   injects 72h flash timers for M5 and M8.
-   ─────────────────────────────────────────── */
+/**
+ * Merge a mission definition with its DB state and runtime auto-completion.
+ * @param {Object} def - Mission definition
+ * @param {Object|null} dbRow - Supabase missions table row
+ * @param {Object} autoMap - Map of auto-completion results
+ * @param {Map} allDbMap - Map of all mission rows by key (for requires check)
+ * @returns {Object} enriched mission object
+ */
+function enrichMission(def, dbRow, autoMap, allDbMap) {
+    const isCompleted = autoMap[def.key] || dbRow?.is_completed || false;
+    const completedAt = dbRow?.completed_at || null;
 
-function mergeWithDefinitions(dbRows, autoMap) {
-    const dbMap = new Map(dbRows.map(r => [r.mission_key, r]));
+    // Check prerequisites
+    let isUnlocked = true;
+    if (def.requires) {
+        const requiredRow = allDbMap.get(def.requires);
+        const requiredAuto = autoMap[def.requires];
+        isUnlocked = requiredAuto || requiredRow?.is_completed || false;
+    }
 
-    // Pass 1: Compute effective completion state for each mission (including flash timer expiration)
-    const effectiveCompletionMap = new Map();
+    // Dynamic Flash Countdown (72h after M4 completion for M5)
+    let flashRemainingHours = null;
+    let flashExpired = false;
+
+    if (def.hasFlashTimer && isUnlocked && !isCompleted) {
+        const m4Row = allDbMap.get('m4');
+        if (m4Row?.completed_at) {
+            const m4CompletedTime = new Date(m4Row.completed_at).getTime();
+            const expiryTime = m4CompletedTime + (72 * 60 * 60 * 1000);
+            const remainingMs = expiryTime - Date.now();
+
+            if (remainingMs <= 0) {
+                flashExpired = true;
+            } else {
+                flashRemainingHours = Math.ceil(remainingMs / (60 * 60 * 1000));
+            }
+        }
+    }
+
+    return {
+        id: def.key,
+        key: def.key,
+        missionNumber: def.sortOrder,
+        title: def.title,
+        description: def.reward,
+        reward: def.reward,
+        icon: def.icon,
+        cta: def.cta,
+        sortOrder: def.sortOrder,
+        isCompleted,
+        completedAt,
+        isUnlocked,
+        requires: def.requires,
+        hasFlashTimer: def.hasFlashTimer || false,
+        flashRemainingHours,
+        flashExpired,
+    };
+}
+
+/* ─── Mock Fallback ────────────────────────── */
+
+function syncMissionsStatus(piggiesOverride = null) {
+    const piggies = piggiesOverride ?? AppState.get('piggies') ?? [];
+    const profile = AppState.get('profile');
+    const autoMap = buildAutoCompletionMap(piggies, profile);
+
+    // Apply manual mock completions
+    _mockManualCompletions.forEach(key => { autoMap[key] = true; });
+
+    const allDbMap = new Map();
+    // Build mock DB map
     MISSION_DEFINITIONS.forEach(def => {
-        const dbRow = dbMap.get(def.key);
-        let isCompleted = dbRow?.is_completed || autoMap[def.key] || false;
-
-        if (def.key === 'm5' || def.key === 'm8') {
-            const reqKey = def.requires;
-            const reqRow = dbMap.get(reqKey);
-            if (reqRow?.completed_at) {
-                const windowHours = def.key === 'm8' ? 48 : 72;
-                const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
-                if (Date.now() > expiryMs) {
-                    isCompleted = true;
-                }
-            }
+        if (autoMap[def.key]) {
+            allDbMap.set(def.key, { is_completed: true, completed_at: new Date().toISOString() });
         }
-
-        effectiveCompletionMap.set(def.key, isCompleted);
     });
 
-    // Pass 2: Build final mission objects with correct isLocked state based on effectiveCompletionMap
-    return MISSION_DEFINITIONS.map(def => {
-        const dbRow       = dbMap.get(def.key);
-        const isCompleted = effectiveCompletionMap.get(def.key) || false;
-
-        // Lock if the required mission is not yet completed
-        let isLocked = false;
-        if (def.requires) {
-            const reqDone = effectiveCompletionMap.get(def.requires) || false;
-            if (!reqDone) isLocked = true;
-        }
-
-        // M5 (Gold): 72h Flash timer | M8 (Advanced 30): 48h Flash timer
-        let flashExpiry = null;
-        if ((def.key === 'm5' || def.key === 'm8') && !isLocked) {
-            const reqKey = def.requires;
-            const reqRow = dbMap.get(reqKey);
-            if (reqRow?.completed_at) {
-                const windowHours = def.key === 'm8' ? 48 : 72;
-                const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
-                flashExpiry = new Date(expiryMs).toISOString();
-            }
-        }
-
-        return {
-            id: def.key,
-            title: def.title,
-            reward: def.reward,
-            icon: def.icon,
-            cta: def.cta,
-            is_completed: isCompleted,
-            is_locked: isLocked,
-            completed_at: dbRow?.completed_at || null,
-            flashExpiry,
-        };
+    const enriched = MISSION_DEFINITIONS.map(def => {
+        const dbRow = allDbMap.get(def.key) || null;
+        return enrichMission(def, dbRow, autoMap, allDbMap);
     });
+
+    AppState.set({ missions: enriched });
+    return enriched;
 }
 
 /* ─── Public API ──────────────────────────── */
@@ -254,39 +267,44 @@ export async function getMissions(piggiesOverride = null) {
                 cta:          def.cta || null,
                 sort_order:   def.sortOrder,
                 is_completed: isCompleted,
-                // Preserve original completion timestamp — never overwrite
-                completed_at: isCompleted
-                    ? (existing?.completed_at || new Date().toISOString())
-                    : null,
+                completed_at: isCompleted ? (existing?.completed_at || new Date().toISOString()) : null,
             };
         });
 
     if (autoRows.length > 0) {
-        const { error } = await client
+        const { error: upsertError } = await client
             .from('missions')
             .upsert(autoRows, { onConflict: 'user_id,mission_key' });
-        if (error) console.warn('getMissions upsert error:', error.message);
+        if (upsertError) console.warn('Missions auto-upsert error:', upsertError.message);
     }
 
-    // Re-fetch fresh data (includes visit-based and manual completions from DB)
-    const { data: freshRows } = await client
+    // Re-fetch updated rows to have complete picture
+    const { data: updatedRows } = await client
         .from('missions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('sort_order', { ascending: true });
+        .eq('user_id', user.id);
 
-    return mergeWithDefinitions(freshRows || [], autoMap);
+    const updatedDbMap = new Map((updatedRows || []).map(r => [r.mission_key, r]));
+
+    const enriched = MISSION_DEFINITIONS.map(def => {
+        const dbRow = updatedDbMap.get(def.key) || null;
+        return enrichMission(def, dbRow, autoMap, updatedDbMap);
+    });
+
+    AppState.set({ missions: enriched });
+    return enriched;
 }
 
 /**
- * Mark a mission as completed when the user visits a key section.
- * Persists to DB so it survives page reloads.
- * Uses a session-level guard to avoid redundant DB calls.
- * @param {string} missionKey - e.g. 'm1', 'm3', 'm5'
+ * Mark a visit-based mission as completed (e.g. M1 on visiting Tienda, M3 on visiting Referidos).
+ * Writes to Supabase and updates AppState.
+ * Safe to call multiple times — guarded per session.
+ * @param {string} missionKey - e.g. 'm1', 'm3', 'm7'
  */
 export async function completeMissionOnVisit(missionKey) {
+    // Si el usuario completa M1 (Tienda/Gourmet), asegurar que tenga su bono de bienvenida en profiles
     if (missionKey === 'm1') {
-        ensureWelcomeBonusAssigned().catch(err => console.warn('Error assigning welcome bonus:', err));
+        ensureWelcomeBonusAssigned().catch(e => console.warn('Error asegurando bono M1:', e));
     }
 
     // Persist section visit in AppState immediately so buildAutoCompletionMap always sees it
@@ -344,6 +362,13 @@ export async function completeMissionOnVisit(missionKey) {
 }
 
 /**
+ * Auto-complete mission on piggy purchase (M2).
+ */
+export async function completeMissionOnPurchase() {
+    return completeMissionOnVisit('m2');
+}
+
+/**
  * Mark a mission as manually completed (legacy path for admin or special flows).
  * @param {string} missionKey
  */
@@ -370,7 +395,7 @@ export async function completeMissionManual(missionKey) {
     const def = MISSION_DEFINITIONS.find(d => d.key === missionKey);
     if (!def) return;
 
-    const { error } = await client
+    await client
         .from('missions')
         .upsert({
             user_id:      user.id,
@@ -384,65 +409,32 @@ export async function completeMissionManual(missionKey) {
             is_completed: true,
             completed_at: new Date().toISOString(),
         }, { onConflict: 'user_id,mission_key' });
-
-    if (error) console.warn('completeMissionManual error:', error.message);
 }
 
 /**
- * Get only active (not completed AND not locked) missions.
+ * Get the next pending (active) mission to display on the Granja dashboard banner.
+ * Priority: lowest sortOrder among uncompleted missions.
  * @param {Array|null} piggiesOverride
- * @returns {Promise<Array>}
+ * @returns {Promise<Object|null>}
  */
 export async function getActiveMissions(piggiesOverride = null) {
-    const missions = await getMissions(piggiesOverride);
-    return missions.filter(m => !m.is_completed && !m.is_locked);
+    const all = await getMissions(piggiesOverride);
+    const active = all.filter(m => !m.isCompleted);
+    return active;
 }
 
 /**
- * Get mission progress stats.
- * @returns {Promise<{ total: number, completed: number, percent: number }>}
+ * Calculate mission progress summary.
+ * @param {Array|null} piggiesOverride
+ * @returns {Promise<{completed: number, total: number, percent: number}>}
  */
-export async function getMissionsProgress() {
-    const missions = await getMissions();
-    const total     = missions.length;
-    const completed = missions.filter(m => m.is_completed).length;
-    const percent   = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, completed, percent };
-}
-
-/* ─── Mock / Backward-compat ─────────────── */
-
-const _mockManualCompletions = new Set();
-
-/**
- * Synchronous fallback used only in mock/dev mode.
- */
-export function syncMissionsStatus(piggiesOverride = null) {
-    const piggies = piggiesOverride ?? AppState.get('piggies') ?? [];
-    const profile = AppState.get('profile');
-    const autoMap = buildAutoCompletionMap(piggies, profile);
-
-    return MISSION_DEFINITIONS.map(def => {
-        const isCompleted = _mockManualCompletions.has(def.key) || autoMap[def.key] || false;
-
-        let isLocked = false;
-        if (def.requires) {
-            isLocked = !(autoMap[def.requires] || _mockManualCompletions.has(def.requires));
-        }
-
-        return {
-            id: def.key, title: def.title, reward: def.reward,
-            icon: def.icon, cta: def.cta,
-            is_completed: isCompleted, is_locked: isLocked,
-            completed_at: isCompleted ? new Date().toISOString() : null,
-            silverExpiry: null,
-        };
-    });
-}
-
-/**
- * @deprecated Use getMissions() instead.
- */
-export function isMissionCompletedManual(missionKey) {
-    return _mockManualCompletions.has(missionKey);
+export async function getMissionsProgress(piggiesOverride = null) {
+    const all = await getMissions(piggiesOverride);
+    const completed = all.filter(m => m.isCompleted).length;
+    const total = all.length;
+    return {
+        completed,
+        total,
+        percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+    };
 }
