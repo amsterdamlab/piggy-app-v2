@@ -68,7 +68,7 @@ function renderRandomNotification(notif) {
         cursor: ${cursor};
         transition: transform 0.2s, box-shadow 0.2s;
       " ${ctaAttr}
-         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
+         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
         <div style="flex:1; min-width:0;">
@@ -137,10 +137,7 @@ async function loadGranjaData(firstName, sessionId) {
   try {
     const isSessionActive = () => {
       const currentView = AppState.get('currentView');
-      const hash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'auth').toLowerCase();
-      const isGranjaOrReferidos = (currentView === 'granja' || currentView === 'referidos') &&
-        (hash === 'granja' || hash === 'referidos' || hash === '');
-      return sessionId === currentGranjaSessionId && isGranjaOrReferidos;
+      return sessionId === currentGranjaSessionId && (currentView === 'granja' || currentView === 'referidos' || !currentView);
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'piggy-app-cache-v2.7';
+const CACHE_NAME = 'piggy-app-cache-v2.8';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
