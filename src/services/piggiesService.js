@@ -29,8 +29,8 @@ export {
 
 /**
  * Fetch all piggies for the current user.
- * Ordered by purchase_date ascending.
- * @returns {Promise<Array>} List of user's piggies
+ * Auto-marks expired piggies as 'completado' in DB so the trigger
+ * can calculate ROI and credit wallet_balance automatically.
  */
 export async function getUserPiggies() {
     if (isUsingMockData()) {
@@ -39,32 +39,62 @@ export async function getUserPiggies() {
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-
     if (!user) return [];
 
+    // 1. Sincronizar pesos y marcar cerditos vencidos en DB en segundo plano (non-blocking)
+    if (user) {
+        Promise.allSettled([
+            client.rpc('sync_piggy_weights', { p_user_id: user.id }),
+            client.rpc('mark_expired_piggies', { p_user_id: user.id })
+        ]).catch(syncErr => console.warn('Sync/expired RPC error:', syncErr));
+    }
+
+    // 2. Consultar los piggies con su status y pesos actualizados
     const { data, error } = await client
         .from('piggies')
         .select('*')
         .eq('user_id', user.id)
-        .order('purchase_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching piggies:', error);
+        console.warn('Error fetching piggies:', error);
         return [];
     }
 
+    // Enrich DB data with runtime calculated fields (daysLeft, progress)
     return (data || []).map(enrichPiggyData);
 }
 
 /**
- * Fetch a single piggy by ID.
- * @param {string} id - The piggy ID
- * @returns {Promise<Object|null>} The piggy or null
+ * Identify piggies that have passed their end_date and mark them as complete.
+ * Calls the secure database RPC `mark_expired_piggies` to handle status changes
+ * safely and securely on the server side.
+ * @param {string} userId 
+ */
+export async function markExpiredPiggies(userId) {
+    if (isUsingMockData()) return;
+
+    const client = getClient();
+    
+    const { error } = await client.rpc('mark_expired_piggies', { p_user_id: userId });
+
+    if (error) {
+        console.warn('Error marking expired piggies:', error);
+    } else {
+        console.log('✅ Checked and marked expired piggies successfully in DB.');
+    }
+}
+
+/**
+ * Get a single piggy by ID.
+ * @param {string} id 
+ * @returns {Promise<Object>}
  */
 export async function getPiggyById(id) {
     if (isUsingMockData()) {
-        const found = MOCK_PIGGIES.find((p) => p.id === id);
-        return found ? enrichPiggyData(found) : null;
+        const piggy = MOCK_PIGGIES.find(p => p.id === id || p.id === Number(id));
+        if (!piggy) throw new Error('Piggy not found');
+        return enrichPiggyData(piggy);
     }
 
     const client = getClient();
@@ -74,11 +104,7 @@ export async function getPiggyById(id) {
         .eq('id', id)
         .single();
 
-    if (error || !data) {
-        console.error('Error fetching piggy by id:', error);
-        return null;
-    }
-
+    if (error || !data) throw new Error('Piggy no encontrado en DB');
     return enrichPiggyData(data);
 }
 
@@ -111,27 +137,286 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-    if (!user) throw new Error('Usuario no autenticado');
+    if (!user) throw new Error('User not logged in');
+
+    const insertPayload = {
+        user_id: user.id,
+        name: piggyName,
+        investment_amount: 1000000,
+        status: 'engorde',
+        current_weight: 15.0,
+        image_url: defaultImageUrl,
+    };
+    if (contractUrl) {
+        insertPayload.contract_url = contractUrl;
+    }
 
     const { data, error } = await client
         .from('piggies')
-        .insert({
-            user_id: user.id,
-            name: piggyName,
-            status: 'engorde',
-            purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
-            investment_amount: 250000,
-            extra_roi_bonus: 0,
-            current_weight: 15.0,
-            contract_url: contractUrl || '/contracts/contrato_base.pdf',
-            image_url: defaultImageUrl,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
-    if (error || !data) throw new Error('No se pudo registrar el Piggy en la base de datos');
+    if (error) {
+        // If contract_url or image_url column doesn't exist yet, retry without non-essential fields
+        delete insertPayload.contract_url;
+        delete insertPayload.image_url;
+        const { data: retryData, error: retryError } = await client
+            .from('piggies')
+            .insert(insertPayload)
+            .select()
+            .single();
+        if (retryError) throw new Error(retryError.message);
+        return enrichPiggyData(retryData);
+    }
     return enrichPiggyData(data);
+}
+
+/**
+ * Create a piggy (alias for adoptPiggy).
+ */
+export async function createPiggy({ name, amount = 1000000, durationMonths = 3, extraRoi = 0 }) {
+    return adoptPiggy(name);
+}
+
+/**
+ * Buy a piggy (alias for adoptPiggy).
+ */
+export async function buyPiggy(piggyName, contractUrl = null) {
+    return adoptPiggy(piggyName, contractUrl);
+}
+
+/**
+ * Generate a stable hash number from a string (piggy ID) to pick a
+ * consistent random photo (1-5) per piggy without changing on refresh.
+ * @param {string} idStr 
+ * @returns {number} 1 to 5
+ */
+function getPiggyPhotoNumber(idStr) {
+    let hash = 0;
+    const str = String(idStr || 'default');
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return (Math.abs(hash) % 5) + 1; // Returns 1, 2, 3, 4 or 5
+}
+
+/**
+ * Determine the growth stage and build the image URL for a piggy.
+ * Stage 1 → Month 1  (daysElapsed 0-30)   → et1-{n}.jpg
+ * Stage 2 → Months 2-3 (daysElapsed 31-90) → et2-{n}.jpg
+ * Stage 3 → Month 4 to end of cycle        → et3-{n}.jpg
+ *
+ * Each piggy keeps the same number (n = 1-5) across all stages,
+ * so the same animal is visually tracked through its growth.
+ * @param {string} piggyId
+ * @param {number} daysElapsed
+ * @param {boolean} isComplete
+ * @returns {string} Image URL
+ */
+function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
+    let stage;
+    if (isComplete || daysElapsed > 90) {
+        stage = 3;
+    } else if (daysElapsed > 30) {
+        stage = 2;
+    } else {
+        stage = 1;
+    }
+    const photoNum = getPiggyPhotoNumber(piggyId);
+    return `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+}
+
+/**
+ * Extract or compute the display code for a piggy:
+ * - With contract: 'PGY-TX-B843WD' (from contract_code, contract_url, or hash)
+ * - Without contract: '#173802' (last 6 chars of ID)
+ * @param {Object} piggy
+ * @returns {string}
+ */
+export function getPiggyDisplayCode(piggy) {
+    if (!piggy) return '#000000';
+
+    // 1. If explicit contract_code exists in record
+    const explicitCode = piggy.contract_code || piggy.contractCode || piggy.contract_hash;
+    if (explicitCode && typeof explicitCode === 'string' && explicitCode.trim() !== '') {
+        const clean = explicitCode.trim().toUpperCase();
+        if (clean.startsWith('PGY-TX-')) {
+            const parts = clean.split('-');
+            const lastPart = parts.length >= 4 ? parts[3] : (parts[2] || 'TX');
+            return `PGY-TX-${lastPart}`;
+        }
+        return clean.startsWith('#') ? clean : `PGY-TX-${clean}`;
+    }
+
+    // 2. Extract from contract_url if present
+    const contractUrl = piggy.contract_url || piggy.contractUrl;
+    if (contractUrl && typeof contractUrl === 'string') {
+        const match = contractUrl.match(/PGY-TX-([A-Z0-9]+)-([A-Z0-9]+)/i);
+        if (match) {
+            return `PGY-TX-${match[2].toUpperCase()}`;
+        }
+        const simpleMatch = contractUrl.match(/PGY-TX-([A-Z0-9]+)/i);
+        if (simpleMatch) {
+            return `PGY-TX-${simpleMatch[1].toUpperCase()}`;
+        }
+    }
+
+    // 3. Fallback for piggies without contract: last 6 characters of ID
+    const rawId = String(piggy.id || '000000').replace(/[^a-zA-Z0-9]/g, '');
+    const last6 = rawId.length >= 6 ? rawId.slice(-6).toUpperCase() : rawId.padStart(6, '0').toUpperCase();
+    return `#${last6}`;
+}
+
+/**
+ * Enrich a piggy record with computed fields for display.
+ */
+function enrichPiggyData(piggy) {
+    if (!piggy) return null;
+
+    // Safely extract investment amount (supports DB column names: investment_amount, price, amount)
+    const rawInvestment = piggy.investment_amount ?? piggy.price ?? piggy.amount ?? 1000000;
+    const investmentAmount = Math.max(0, parseFloat(rawInvestment) || 1000000);
+
+    // Safely extract extra ROI bonus
+    const rawBonus = piggy.extra_roi_bonus ?? piggy.extra_roi ?? 0;
+    const extraRoiBonus = parseFloat(rawBonus) || 0;
+
+    // Fixed cycle duration in days (144 days)
+    const CYCLE_TOTAL_DAYS = 144;
+
+    // Calculate days remaining with fallback
+    const endDateStr = piggy.end_date || piggy.endDate || piggy.purchase_date;
+    let daysLeft = getDaysRemaining(endDateStr);
+    if (isNaN(daysLeft)) daysLeft = 144;
+
+    // Calculate progress based on REVERSE logic (144 - daysLeft)
+    const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
+    let progress = Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100);
+    if (isNaN(progress)) progress = 0;
+    progress = Math.min(100, Math.max(0, progress));
+
+    // Use DB weight if it exists and is meaningful (>15), otherwise simulate it from progress
+    const dbWeight = parseFloat(piggy.current_weight || piggy.weight);
+    const weight = (dbWeight && !isNaN(dbWeight) && dbWeight > 15)
+        ? dbWeight
+        : simulateWeight(progress);
+
+    const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
+
+    // Determine current growth stage
+    let currentStage;
+    if (isComplete || daysElapsed > 90) {
+        currentStage = 3;
+    } else if (daysElapsed > 30) {
+        currentStage = 2;
+    } else {
+        currentStage = 1;
+    }
+
+    let imageUrl = piggy.image_url || piggy.imageUrl;
+
+    if (imageUrl) {
+        const match = imageUrl.match(/et\d-(\d)\.jpg/);
+        if (match) {
+            const photoNum = match[1];
+            imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+        }
+    } else {
+        const photoNum = getPiggyPhotoNumber(piggy.id || '1');
+        imageUrl = `assets/piggies/stage${currentStage}/et${currentStage}-${photoNum}.jpg`;
+    }
+
+    if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+        imageUrl = '/' + imageUrl;
+    }
+
+    const piggyName = piggy.name || (piggy.id ? `Piggy #${String(piggy.id).slice(-4)}` : 'Tu Piggy');
+    const growthStage = getPiggyGrowthStage(progress, piggyName);
+    const displayCode = getPiggyDisplayCode(piggy);
+
+    return {
+        ...piggy,
+        investment_amount: investmentAmount,
+        extra_roi_bonus: extraRoiBonus,
+        progress,
+        daysLeft,
+        currentWeight: (isNaN(weight) ? 15 : weight).toFixed(1),
+        isComplete,
+        imageUrl,
+        name: piggyName,
+        growthStage,
+        displayCode,
+        contract_code: displayCode,
+    };
+}
+
+/**
+ * Get summary stats for the dashboard.
+ */
+export function getDashboardStats(piggies = []) {
+    const validPiggies = (piggies || []).filter(Boolean);
+    const activePiggies = validPiggies.filter((p) => !p.isComplete);
+    const availablePiggies = validPiggies.filter((p) => p.isComplete);
+
+    const piggyCount = activePiggies.length;
+    const baseROI = calculateBaseROI(piggyCount);
+
+    // 1. Adquisición Bonos de Preventa (Active Investment)
+    const adquisicionBonos = activePiggies.reduce((sum, p) => {
+        const inv = parseFloat(p.investment_amount) || 0;
+        return sum + inv;
+    }, 0);
+
+    // 2. Diferencial de Preventa (Projected Gain for Active)
+    const diferencialPreventa = activePiggies.reduce((sum, p) => {
+        const inv = parseFloat(p.investment_amount) || 0;
+        const extraRoi = parseFloat(p.extra_roi_bonus) || 0;
+        const totalReturn = calculateTotalReturn(inv, baseROI, extraRoi);
+        const gain = totalReturn - inv;
+        return sum + (isNaN(gain) ? 0 : Math.max(0, gain));
+    }, 0);
+
+    // 3. Disponible (Finished Cycles Total Value)
+    const disponible = availablePiggies.reduce((sum, p) => {
+        if (p.final_return_amount && !isNaN(p.final_return_amount)) {
+            return sum + parseFloat(p.final_return_amount);
+        }
+        const inv = parseFloat(p.investment_amount) || 0;
+        const extraRoi = parseFloat(p.extra_roi_bonus) || 0;
+        const totalReturn = calculateTotalReturn(inv, baseROI, extraRoi);
+        return sum + (isNaN(totalReturn) ? 0 : totalReturn);
+    }, 0);
+
+    // 4. Ciclo de cierre cercano (Min days left) & Progress
+    let nextCloseDays = null;
+    let nextCloseProgress = 0;
+
+    if (activePiggies.length > 0) {
+        const closestPiggy = activePiggies.reduce((prev, curr) =>
+            (prev.daysLeft < curr.daysLeft) ? prev : curr
+        );
+        nextCloseDays = closestPiggy.daysLeft;
+        nextCloseProgress = closestPiggy.progress;
+    }
+
+    return {
+        totalPiggies: validPiggies.length,
+        activeCount: piggyCount,
+        finishedCount: availablePiggies.length,
+        adquisicionBonos,
+        adquisicionBonosFormatted: formatCOP(adquisicionBonos),
+        diferencialPreventa,
+        diferencialPreventaFormatted: formatCOP(diferencialPreventa),
+        disponible,
+        disponibleFormatted: formatCOP(disponible),
+        nextCloseDays,
+        nextCloseProgress,
+        baseROI,
+        baseROIFormatted: formatPercentage(baseROI),
+        margenComercialFormatted: formatCOP(diferencialPreventa),
+        pagoFinalFormatted: formatCOP(adquisicionBonos + diferencialPreventa),
+    };
 }
 
 /**
@@ -244,164 +529,4 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         .single();
 
     return enrichPiggyData(latest);
-}
-
-/**
- * Enrich a raw DB piggy record with calculated display properties.
- * Maps current weight dynamically to the exact Stage (1-10) using getPiggyGrowthStage().
- * @param {Object} p - Raw piggy from Supabase
- * @returns {Object} Enriched piggy
- */
-export function enrichPiggyData(p) {
-    const daysLeft = getDaysRemaining(p.end_date);
-    const progress = getProgressPercentage(p.purchase_date, p.end_date);
-    const currentWeight = Number(p.current_weight) || simulateWeight(progress);
-    const isComplete = p.status === 'disponible' || progress >= 100 || daysLeft <= 0;
-    const stageInfo = getPiggyGrowthStage(progress, p.name || 'Tu Piggy');
-
-    return {
-        ...p,
-        name: p.name || 'Tu Piggy',
-        daysLeft,
-        progress,
-        currentWeight: Math.round(currentWeight * 10) / 10,
-        weightGain: Math.max(0, Math.round((currentWeight - 6) * 10) / 10),
-        weightRemaining: Math.max(0, Math.round((120 - currentWeight) * 10) / 10),
-        isComplete,
-        stageNumber: stageInfo.stageNumber,
-        stageName: stageInfo.stageName,
-        stageIcon: stageInfo.icon,
-        stageBadgeBg: stageInfo.badgeBg,
-        stageBadgeColor: stageInfo.badgeColor,
-        stageDescription: stageInfo.description,
-        contractCode: p.contract_code || `#PIG${String(p.id).slice(-4).toUpperCase()}`,
-        imageUrl: p.image_url || 'assets/piggies/stage1/et1-1.jpg',
-    };
-}
-
-/**
- * Calculate dashboard summary statistics.
- * Multi-Piggy Margin:
- *   1 Piggy   → 8% Base ROI (80.000 / 1.000.000)
- *   2 Piggies → 9% Base ROI (+1% margin, 90.000 c/u)
- *   3+ Piggies → 10% Base ROI (+2% margin, 100.000 c/u)
- *
- * @param {Array} piggies - List of user's piggies
- * @returns {Object} Summary stats
- */
-export async function getDashboardStats(piggies) {
-    const activePiggies = piggies.filter((p) => p.status !== 'disponible' && !p.isComplete);
-    const availablePiggies = piggies.filter((p) => p.status === 'disponible' || p.isComplete);
-    const piggyCount = activePiggies.length;
-    const baseROI = calculateBaseROI(piggyCount);
-
-    // Sum total invested (active piggies)
-    const adquisicionBonos = activePiggies.reduce((sum, p) => sum + (p.investment_amount || 0), 0);
-
-    // Sum commercial margin for active piggies with individual extra_roi_bonus
-    const diferencialPreventa = activePiggies.reduce((sum, p) => {
-        const extraROI = p.extra_roi_bonus || 0;
-        return sum + (p.investment_amount * (baseROI + extraROI));
-    }, 0);
-
-    // Sum available balance for completed piggies
-    const disponible = availablePiggies.reduce((sum, p) => {
-        const extraROI = p.extra_roi_bonus || 0;
-        return sum + calculateTotalReturn(p.investment_amount || 0, baseROI, extraROI);
-    }, 0);
-
-    // Closest closing piggy
-    let nextCloseDays = 0;
-    let nextCloseProgress = 0;
-    if (activePiggies.length > 0) {
-        const closestPiggy = activePiggies.reduce((prev, curr) =>
-            (prev.daysLeft < curr.daysLeft) ? prev : curr
-        );
-        nextCloseDays = closestPiggy.daysLeft;
-        nextCloseProgress = closestPiggy.progress;
-    }
-
-    return {
-        totalPiggies: piggies.length,
-        activeCount: piggyCount,
-        finishedCount: availablePiggies.length,
-        adquisicionBonos,
-        adquisicionBonosFormatted: formatCOP(adquisicionBonos),
-        diferencialPreventa,
-        diferencialPreventaFormatted: formatCOP(diferencialPreventa),
-        disponible,
-        disponibleFormatted: formatCOP(disponible),
-        nextCloseDays,
-        nextCloseProgress,
-        baseROI,
-        baseROIFormatted: formatPercentage(baseROI),
-        margenComercialFormatted: formatCOP(diferencialPreventa),
-        pagoFinalFormatted: formatCOP(adquisicionBonos + diferencialPreventa),
-    };
-}
-
-/**
- * Sell a finished piggy and credit return to available balance.
- * @param {string} piggyId - The piggy ID
- * @returns {Promise<Object>} Updated piggy and transaction info
- */
-export async function sellPiggy(piggyId) {
-    if (isUsingMockData()) {
-        const piggy = MOCK_PIGGIES.find((p) => p.id === piggyId);
-        if (!piggy) throw new Error('Piggy no encontrado');
-        piggy.status = 'disponible';
-        return { success: true, piggy: enrichPiggyData(piggy) };
-    }
-
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) throw new Error('Usuario no autenticado');
-
-    // Call Supabase Database Function to sell piggy atomically
-    const { data, error } = await client.rpc('sell_piggy', {
-        p_piggy_id: piggyId,
-        p_user_id: user.id,
-    });
-
-    if (error) {
-        console.error('Error selling piggy:', error);
-        throw new Error(error.message);
-    }
-
-    return data;
-}
-
-/**
- * Re-invest return from a sold piggy into a new cycle.
- * @param {string} piggyId - The piggy ID to liquidate
- * @param {string} newBreed - Breed for the new piggy
- * @returns {Promise<Object>} New piggy data
- */
-export async function reinvestPiggy(piggyId, newBreed = 'Landrace x Pietrain') {
-    if (isUsingMockData()) {
-        const piggy = MOCK_PIGGIES.find((p) => p.id === piggyId);
-        if (!piggy) throw new Error('Piggy no encontrado');
-        piggy.status = 'engorde';
-        piggy.purchase_date = new Date().toISOString();
-        piggy.end_date = new Date(Date.now() + 1000 * 60 * 60 * 24 * 144).toISOString();
-        piggy.breed = newBreed;
-        return { success: true, piggy: enrichPiggyData(piggy) };
-    }
-
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) throw new Error('Usuario no autenticado');
-
-    const { data, error } = await client.rpc('reinvest_piggy', {
-        p_piggy_id: piggyId,
-        p_user_id: user.id,
-        p_new_breed: newBreed,
-    });
-
-    if (error) {
-        console.error('Error reinvesting piggy:', error);
-        throw new Error(error.message);
-    }
-
-    return data;
 }

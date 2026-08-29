@@ -204,8 +204,9 @@ export async function signIn({ email, password }, onProgress = () => {}) {
     // Fetch profile and update state
     if (data.user) {
         onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
-        await expireWelcomeBonusIfDue(data.user.id);
-        await syncAndExpireMarketingBonuses(data.user.id);
+        // Background maintenance tasks — do not block user login
+        expireWelcomeBonusIfDue(data.user.id).catch(e => console.warn('expireWelcomeBonus err:', e));
+        syncAndExpireMarketingBonuses(data.user.id).catch(e => console.warn('syncBonuses err:', e));
         const profile = await getProfile();
         onProgress('✅ Perfil verificado. Preparando tu granja agro...');
         AppState.set({
@@ -300,45 +301,30 @@ export async function checkSession() {
         return;
     }
 
-    try {
-        const client = getClient();
-        const { data: { session } } = await client.auth.getSession();
+    const client = getClient();
+    const { data: { session } } = await client.auth.getSession();
 
-        if (session?.user) {
-            await expireWelcomeBonusIfDue(session.user.id);
-            await syncAndExpireMarketingBonuses(session.user.id);
-            const profile = await getProfile();
-            const isGoogleUser = session.user.app_metadata?.provider === 'google';
-            const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
+    if (session?.user) {
+        // Background maintenance tasks — do not block session restoration
+        expireWelcomeBonusIfDue(session.user.id).catch(e => console.warn('expireWelcomeBonus err:', e));
+        syncAndExpireMarketingBonuses(session.user.id).catch(e => console.warn('syncBonuses err:', e));
+        const profile = await getProfile();
+        const isGoogleUser = session.user.app_metadata?.provider === 'google';
+        const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
 
-            AppState.set({
-                currentUser: session.user,
-                profile,
-                isAuthenticated: true,
-                authLoading: false,
-                showLegalModal: profile && !profile.terms_accepted,
-                showWhatsAppModal: needsWhatsApp,
-            });
-        } else {
-            AppState.set({
-                currentUser: null,
-                profile: null,
-                isAuthenticated: false,
-                authLoading: false,
-            });
-        }
-    } catch (err) {
-        console.warn('Session check error, defaulting to unauthenticated:', err);
         AppState.set({
-            currentUser: null,
-            profile: null,
-            isAuthenticated: false,
+            currentUser: session.user,
+            profile,
+            isAuthenticated: true,
             authLoading: false,
+            showLegalModal: profile && !profile.terms_accepted,
+            showWhatsAppModal: needsWhatsApp,
         });
+    } else {
+        AppState.set({ authLoading: false });
     }
 
     // Escuchar cambios de estado (recuperación de contraseña y login via OAuth redirect)
-    const client = getClient();
     client.auth.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
             console.log('🐷 PASSWORD_RECOVERY event caught!');
@@ -436,11 +422,4 @@ export async function updateUserProfile(updates) {
 
     console.error('Error updating profile in Supabase:', error.message);
     return { data: null, error: error.message };
-}
-
-/**
- * Update WhatsApp for Google OAuth users who registered without a phone number.
- */
-export async function updateGoogleUserWhatsApp(whatsapp) {
-    return updateUserProfile({ whatsapp });
 }

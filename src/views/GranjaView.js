@@ -83,8 +83,6 @@ function renderRandomNotification(notif) {
   `;
 }
 
-let currentGranjaSessionId = 0;
-
 /**
  * Render the Granja (Dashboard) view.
  */
@@ -92,14 +90,23 @@ export function renderGranjaView() {
   const app = document.getElementById('app');
   const profile = AppState.get('profile');
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const cachedPiggies = AppState.get('piggies');
 
-  currentGranjaSessionId++;
-  const sessionId = currentGranjaSessionId;
+  // If piggies already cached in memory, render full dashboard immediately (0ms wait)
+  if (Array.isArray(cachedPiggies) && cachedPiggies.length > 0) {
+    const stats = getDashboardStats(cachedPiggies);
+    stats.saldoDisponible = profile?.wallet_balance || 0;
+    stats.saldoDisponibleFormatted = formatCOP(stats.saldoDisponible);
+    stats.referralBonus = profile?.consumption_balance || 0;
+    stats.referralBonusFormatted = formatCOP(stats.referralBonus);
+    app.innerHTML = buildGranjaFull(firstName, cachedPiggies, stats, null, [], window._activeFlashMissions || [], window._activeCycleMissions || []);
+    attachGranjaListeners(true, stats, cachedPiggies.length, cachedPiggies);
+  } else {
+    app.innerHTML = buildGranjaShell(firstName);
+    attachGreetingActions();
+  }
 
-  app.innerHTML = buildGranjaShell(firstName);
-  attachGreetingActions();
-
-  loadGranjaData(firstName, sessionId);
+  loadGranjaData(firstName);
 
   return () => {
     // cleanup
@@ -133,98 +140,88 @@ function buildGranjaShell(firstName) {
 /**
  * Load data and update the dashboard.
  */
-async function loadGranjaData(firstName, sessionId) {
+async function loadGranjaData(firstName) {
   try {
-    const isSessionActive = () => {
-      const currentView = AppState.get('currentView');
-      const hash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'auth').toLowerCase();
-      const isGranjaOrReferidos = (currentView === 'granja' || currentView === 'referidos') &&
-        (hash === 'granja' || hash === 'referidos' || hash === '');
-      return sessionId === currentGranjaSessionId && isGranjaOrReferidos;
-    };
-
-    // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    const piggies = await getUserPiggies().catch((err) => {
-      console.warn('⚠️ getUserPiggies error, using empty array:', err);
-      return [];
-    });
-    if (!isSessionActive()) return;
-    AppState.set({ piggies: piggies || [] });
-
-    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
-    await detectAndCreateCycleMissions(piggies || []).catch((err) => {
-      console.warn('⚠️ detectAndCreateCycleMissions error:', err);
-    });
-    if (!isSessionActive()) return;
-
-    // ── Paso 3: cargar el resto de datos en paralelo de forma segura ────
+    // Cargar piggies y el resto de datos de forma paralela y resiliente
     const [
-        tipData, walletBalance, referralBonus,
-        activeMissions, flashMissions, cycleMissions, stats,
-        transactions, newsSlides,
+      piggies,
+      tipData,
+      walletBalance,
+      referralBonus,
+      flashMissions,
+      cycleMissions,
+      transactions,
+      newsSlides
     ] = await Promise.all([
+      getUserPiggies().catch((err) => {
+        console.warn('⚠️ getUserPiggies error:', err);
+        return AppState.get('piggies') || [];
+      }),
       getRandomTip().catch(() => null),
       getWalletBalance().catch(() => 0),
       getReferralBonusBalance().catch(() => 0),
-      getActiveMissions(piggies).catch(() => []),
       getActiveUserFlashMissions().catch(() => []),
       getActiveCycleMissions().catch(() => []),
-      getDashboardStats(piggies).catch(() => ({
-        activeCount: (piggies || []).filter(p => !p.isComplete).length,
-        completedCount: (piggies || []).filter(p => p.isComplete).length,
-        baseROI: 0.223,
-        totalPiggies: (piggies || []).length,
-        activePiggies: (piggies || []).filter(p => !p.isComplete),
-        completedPiggies: (piggies || []).filter(p => p.isComplete),
-      })),
       getWalletTransactions().catch(() => []),
-      getActiveNewsSlides().catch(() => []),
+      getActiveNewsSlides().catch(() => [])
     ]);
 
-    if (!isSessionActive()) return;
+    const activePiggiesList = piggies || [];
+    AppState.set({ piggies: activePiggiesList });
 
-    // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
+    // Detección de misiones de ciclo en segundo plano (non-blocking)
+    detectAndCreateCycleMissions(activePiggiesList).catch((err) => {
+      console.warn('⚠️ detectAndCreateCycleMissions err:', err);
+    });
+
+    // Misiones activas basadas en los cerditos cargados
+    const activeMissions = await getActiveMissions(activePiggiesList).catch(() => []);
+
+    // Exponer misiones globalmente para los modales
     window._activeFlashMissions = flashMissions || [];
     window._activeCycleMissions = cycleMissions || [];
 
-    // wallet_balance = real cash (ciclos completados + recargas)
-    // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
-    const resolvedStats = stats || {};
-    resolvedStats.walletBalance          = walletBalance || 0;
-    resolvedStats.referralBonus          = referralBonus || 0;
-    resolvedStats.referralBonusFormatted = formatCOP(referralBonus || 0);
-    resolvedStats.saldoDisponible        = walletBalance || 0;
-    resolvedStats.saldoDisponibleFormatted = formatCOP(walletBalance || 0);
-    resolvedStats.transactions           = transactions || [];
+    const stats = getDashboardStats(activePiggiesList);
+    stats.walletBalance          = walletBalance || 0;
+    stats.referralBonus          = referralBonus || 0;
+    stats.referralBonusFormatted = formatCOP(referralBonus || 0);
+    stats.saldoDisponible        = walletBalance || 0;
+    stats.saldoDisponibleFormatted = formatCOP(walletBalance || 0);
+    stats.transactions           = transactions || [];
 
     const app = document.getElementById('app');
-    if (!app || !isSessionActive()) return;
+    if (!app) return;
 
-    app.innerHTML = buildGranjaFull(firstName, piggies || [], resolvedStats, tipData, activeMissions || [], flashMissions || [], cycleMissions || []);
+    // Verificar si el usuario sigue en la vista de Granja
+    const currentHash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'granja').toLowerCase();
+    if (currentHash !== 'granja' && currentHash !== 'referidos' && currentHash !== '') return;
 
-    if (!isSessionActive()) return;
+    app.innerHTML = buildGranjaFull(firstName, activePiggiesList, stats, tipData, activeMissions || [], flashMissions || [], cycleMissions || []);
 
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     if (newsSlides && newsSlides.length > 0) {
       showNewsBillboardModal(newsSlides);
     }
 
-    attachGranjaListeners((piggies || []).length > 0, resolvedStats, (piggies || []).length, piggies || []);
+    attachGranjaListeners(activePiggiesList.length > 0, stats, activePiggiesList.length, activePiggiesList);
 
     // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
   } catch (error) {
-    if (sessionId !== currentGranjaSessionId || (AppState.get('currentView') !== 'granja' && AppState.get('currentView') !== 'referidos')) return;
     console.error('Error loading granja data:', error);
-    const section = document.getElementById('piggies-section');
-    if (section) {
-      section.innerHTML = `
-        <div class="auth-form__error auth-form__error--visible">
-          Error al cargar datos: ${error.message}<br/>
-          <pre style="font-size:10px; text-align:left; color:#ff0000; overflow-x:auto;">${error.stack}</pre>
-        </div>
-      `;
-    }
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    // Si ocurre un error de red, mostrar la granja con datos por defecto seguros
+    const fallbackPiggies = AppState.get('piggies') || [];
+    const stats = getDashboardStats(fallbackPiggies);
+    stats.walletBalance = 0;
+    stats.saldoDisponible = 0;
+    stats.saldoDisponibleFormatted = '$0';
+    stats.referralBonus = 0;
+    stats.referralBonusFormatted = '$0';
+    app.innerHTML = buildGranjaFull(firstName, fallbackPiggies, stats, null, [], [], []);
+    attachGranjaListeners(fallbackPiggies.length > 0, stats, fallbackPiggies.length, fallbackPiggies);
   }
 }
 
