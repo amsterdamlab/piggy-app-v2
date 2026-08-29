@@ -144,38 +144,40 @@ async function loadGranjaData(firstName, sessionId) {
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    const piggies = await getUserPiggies().catch(e => {
-        console.warn('Error fetching piggies in Granja:', e);
-        return [];
-    });
+    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
+    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
+    // con getUserPiggies(), AppState todavía está vacío → race condition.
+    const piggies = await getUserPiggies();
     if (!isSessionActive()) return;
     AppState.set({ piggies });
 
-    // ── Paso 2: detectar piggies que completaron ciclo en background ──────
-    detectAndCreateCycleMissions(piggies).catch(e => console.warn('Cycle missions check error:', e));
+    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
+    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
+    await detectAndCreateCycleMissions(piggies);
+    if (!isSessionActive()) return;
 
-    // ── Paso 3: cargar el resto de datos en paralelo de forma resiliente ─
+    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
         transactions, newsSlides,
     ] = await Promise.all([
-      getRandomTip().catch(e => { console.warn('Tip error:', e); return null; }),
-      getWalletBalance().catch(e => { console.warn('Balance error:', e); return 0; }),
-      getReferralBonusBalance().catch(e => { console.warn('Referral error:', e); return 0; }),
-      getActiveMissions(piggies).catch(e => { console.warn('Active missions error:', e); return []; }),
-      getActiveUserFlashMissions().catch(e => { console.warn('Flash missions error:', e); return []; }),
-      getActiveCycleMissions().catch(e => { console.warn('Cycle missions error:', e); return []; }),
-      getDashboardStats(piggies).catch(e => { console.warn('Dashboard stats error:', e); return {}; }),
-      getWalletTransactions().catch(e => { console.warn('Transactions error:', e); return []; }),
-      getActiveNewsSlides().catch(e => { console.warn('News error:', e); return []; }),
+      getRandomTip(),
+      getWalletBalance(),
+      getReferralBonusBalance(),
+      getActiveMissions(piggies),
+      getActiveUserFlashMissions(),
+      getActiveCycleMissions(),
+      getDashboardStats(piggies),
+      getWalletTransactions(),
+      getActiveNewsSlides(),
     ]);
 
     if (!isSessionActive()) return;
 
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
-    window._activeFlashMissions = flashMissions || [];
-    window._activeCycleMissions = cycleMissions || [];
+    window._activeFlashMissions = flashMissions;
+    window._activeCycleMissions = cycleMissions;
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)

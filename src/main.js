@@ -67,7 +67,6 @@ async function boot() {
   registerRoute('adopcion', renderAdopcionView);
   registerRoute('contrato', renderContratoView);
   registerRoute('gourmet', renderPiggyGourmetView);
-  registerRoute('tienda', renderPiggyGourmetView);
   registerRoute('referidos', renderReferidosView);
   registerRoute('perfil', renderProfileView);
   registerRoute('descargar', renderDescargarView);

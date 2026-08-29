@@ -110,10 +110,6 @@ function handleRouteChange() {
         currentCleanup = null;
     }
 
-    // Reset body overflow and remove any lingering modals or backdrops
-    document.body.style.overflow = '';
-    document.querySelectorAll('.modal-overlay, #flash-mission-modal, #cycle-mission-modal, #silver-piggy-modal, #referral-modal, #support-modal, #welcome-bonus-modal, #news-billboard-modal').forEach(el => el.remove());
-
     // Reset scroll on view change
     scrollToTop(false);
 
