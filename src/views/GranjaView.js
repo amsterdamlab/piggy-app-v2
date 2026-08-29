@@ -68,7 +68,7 @@ function renderRandomNotification(notif) {
         cursor: ${cursor};
         transition: transform 0.2s, box-shadow 0.2s;
       " ${ctaAttr}
-         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
+         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
         <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
         <div style="flex:1; min-width:0;">
@@ -137,35 +137,35 @@ async function loadGranjaData(firstName, sessionId) {
   try {
     const isSessionActive = () => {
       const currentView = AppState.get('currentView');
-      return sessionId === currentGranjaSessionId && (currentView === 'granja' || currentView === 'referidos' || !currentView);
+      const hash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'auth').toLowerCase();
+      const isGranjaOrReferidos = (currentView === 'granja' || currentView === 'referidos') &&
+        (hash === 'granja' || hash === 'referidos' || hash === '');
+      return sessionId === currentGranjaSessionId && isGranjaOrReferidos;
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    const piggies = await getUserPiggies().catch(e => {
-        console.warn('Error fetching piggies in Granja:', e);
-        return [];
-    });
+    const piggies = await getUserPiggies();
     if (!isSessionActive()) return;
     AppState.set({ piggies });
 
     // ── Paso 2: detectar piggies que completaron ciclo en background ──────
     detectAndCreateCycleMissions(piggies).catch(e => console.warn('Cycle missions check error:', e));
 
-    // ── Paso 3: cargar el resto de datos en paralelo de forma resiliente ─
+    // ── Paso 3: cargar el resto de datos en paralelo ─────────────────────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
         transactions, newsSlides,
     ] = await Promise.all([
-      getRandomTip().catch(e => { console.warn('Tip error:', e); return null; }),
-      getWalletBalance().catch(e => { console.warn('Balance error:', e); return 0; }),
-      getReferralBonusBalance().catch(e => { console.warn('Referral error:', e); return 0; }),
-      getActiveMissions(piggies).catch(e => { console.warn('Active missions error:', e); return []; }),
-      getActiveUserFlashMissions().catch(e => { console.warn('Flash missions error:', e); return []; }),
-      getActiveCycleMissions().catch(e => { console.warn('Cycle missions error:', e); return []; }),
-      getDashboardStats(piggies).catch(e => { console.warn('Dashboard stats error:', e); return {}; }),
-      getWalletTransactions().catch(e => { console.warn('Transactions error:', e); return []; }),
-      getActiveNewsSlides().catch(e => { console.warn('News error:', e); return []; }),
+      getRandomTip(),
+      getWalletBalance(),
+      getReferralBonusBalance(),
+      getActiveMissions(piggies),
+      getActiveUserFlashMissions(),
+      getActiveCycleMissions(),
+      getDashboardStats(piggies),
+      getWalletTransactions(),
+      getActiveNewsSlides(),
     ]);
 
     if (!isSessionActive()) return;
@@ -362,57 +362,19 @@ function renderGreeting(firstName) {
   `;
 }
 
-/**
- * Render empty piggies state with dashed border design.
- */
+// ... renderEmptyPiggies remains the same ...
+
 function renderEmptyPiggies() {
   return `
-    <div class="empty-state animate-fade-in-up" style="
-        background: #ffffff;
-        border: 2px dashed #f472b6;
-        border-radius: 20px;
-        padding: 32px 20px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(244, 114, 182, 0.06);
-    ">
-      <div class="empty-state__icon" style="
-          width: 76px;
-          height: 76px;
-          border-radius: 50%;
-          background: #fdf2f8;
-          border: 2px dashed #f472b6;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 14px;
-          overflow: hidden;
-      ">
+    <div class="empty-state animate-fade-in-up">
+      <div class="empty-state__icon">
         <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
       </div>
-      <div class="empty-state__title" style="font-size: 1.15rem; font-weight: 800; color: #1f2937; margin-bottom: 6px;">
-        No tienes Piggys aún
-      </div>
-      <div class="empty-state__description" style="font-size: 0.85rem; color: #6b7280; max-width: 280px; line-height: 1.45; margin-bottom: 18px;">
+      <div class="empty-state__title">No tienes Piggys aún</div>
+      <div class="empty-state__description">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
-      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="
-          width: auto;
-          min-width: 220px;
-          padding: 12px 24px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.95rem;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-      " onclick="location.hash='#/mercado'">
+      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="width:auto; padding:12px 24px;" onclick="location.hash='#/mercado'">
         <span>+</span> Compra un nuevo Piggy
       </button>
     </div>
@@ -495,19 +457,19 @@ export function renderPiggyCard(piggy, baseROI) {
 export function renderBottomNav(activeTab) {
   return `
     <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal">
-      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
+      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja" data-nav-tab="granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
       </a>
-      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
+      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado" data-nav-tab="mercado">
         <span class="bottom-nav__icon">${renderIcon('pigSide', '', '24')}</span>
         <span>Mercado</span>
       </a>
-      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet" data-nav-tab="gourmet">
         <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
         <span>Tienda</span>
       </a>
-      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
+      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados" data-nav-tab="aliados">
         <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
         <span>Aliados</span>
       </a>

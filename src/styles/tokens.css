@@ -11,7 +11,6 @@
   --color-primary-100: #F8BBD0;
 
   /* ---- Accent / CTA Gradient ---- */
-  --gradient-primary: linear-gradient(135deg, #E91E63 0%, #FF4081 50%, #F50057 100%);
   --gradient-cta: linear-gradient(135deg, #E91E63 0%, #FF4081 50%, #F50057 100%);
   --gradient-cta-hover: linear-gradient(135deg, #C2185B 0%, #E91E63 50%, #D50048 100%);
   --gradient-offer: linear-gradient(135deg, #E91E63 0%, #AD1457 100%);
