@@ -63,88 +63,84 @@ export async function getActiveUserFlashMissions() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
 
-    // Trigger RPC to clean up expired/purchased records in DB if available
     try {
-        client.rpc('expire_outdated_flash_missions').then(() => {}).catch(() => {});
-    } catch (_) {}
+        const { data, error } = await client
+            .from('user_flash_missions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .eq('is_purchased', false)
+            .order('created_at', { ascending: false });
 
-    const { data, error } = await client
-        .from('user_flash_missions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .eq('is_purchased', false)
-        .order('created_at', { ascending: false });
+        if (error) {
+            console.warn('getActiveUserFlashMissions error:', error.message);
+            return [];
+        }
 
-    if (error) {
-        console.warn('getActiveUserFlashMissions error:', error.message);
+        const now = Date.now();
+        const valid = [];
+        const expiredIds = [];
+
+        for (const m of (data || [])) {
+            let isExpired = false;
+            let remaining = 0;
+
+            if (m.expires_at) {
+                const expMs = new Date(m.expires_at).getTime();
+                remaining = expMs - now;
+                if (remaining <= 0) isExpired = true;
+            } else {
+                const activatedAt = new Date(m.activated_at || m.created_at || now);
+                const expiresAt   = new Date(activatedAt.getTime() + 72 * 3600 * 1000);
+                remaining = expiresAt.getTime() - now;
+                if (remaining <= 0) isExpired = true;
+            }
+
+            if (isExpired) {
+                expiredIds.push(m.id);
+            } else {
+                valid.push({
+                    ...m,
+                    remainingHours: Math.ceil(remaining / 3600000),
+                });
+            }
+        }
+
+        // Clean up expired records in DB asynchronously
+        if (expiredIds.length > 0) {
+            client.from('user_flash_missions')
+                .update({ is_active: false })
+                .in('id', expiredIds)
+                .then(() => console.log(`Deactivated ${expiredIds.length} expired flash missions`));
+        }
+
+        return valid;
+    } catch (err) {
+        console.warn('getActiveUserFlashMissions exception:', err);
         return [];
     }
-
-    const expiredIds = [];
-    const activeList = [];
-
-    // Check expiration using scheduled_at as the expiration deadline
-    for (const m of (data || [])) {
-        if (!m.scheduled_at) {
-            activeList.push({ ...m, expiresAt: null, remainingMs: 0 });
-            continue;
-        }
-
-        const expiry = computeExpiry(m.scheduled_at);
-        if (expiry.expired) {
-            expiredIds.push(m.id);
-            continue;
-        }
-
-        activeList.push({ ...m, expiresAt: expiry.expiresAt, remainingMs: expiry.remainingMs });
-    }
-
-    // Auto-update expired records to is_active = FALSE in Supabase DB
-    if (expiredIds.length > 0) {
-        client
-            .from('user_flash_missions')
-            .update({ is_active: false })
-            .in('id', expiredIds)
-            .then(({ error: updErr }) => {
-                if (updErr) console.warn('Error deactivating expired flash missions in DB:', updErr.message);
-            })
-            .catch(() => {});
-    }
-
-    return activeList;
 }
 
 /**
  * Purchase a flash mission piggy.
- * Creates the exclusive piggy in piggies table and marks the mission as purchased.
- * Supports advanced30 (saves 30 days) and advanced60 (saves 60 days).
- * @param {string} missionId - ID of the user_flash_missions row
- * @param {string} piggyName - Custom name given by user
+ * Inserts the new piggy and marks user_flash_missions as is_purchased = true.
+ * @param {Object} mission - user_flash_missions record
+ * @param {string} piggyName - Custom piggy name chosen by user
  * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}
  */
-export async function buyFlashMission(missionId, piggyName) {
+export async function buyFlashMission(mission, piggyName) {
     if (isUsingMockData()) return { success: false, error: 'Mock mode' };
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado' };
 
-    // Fetch the mission record
-    const { data: mission, error: mError } = await client
-        .from('user_flash_missions')
-        .select('*')
-        .eq('id', missionId)
-        .eq('user_id', user.id)
-        .single();
-
-    if (mError || !mission) return { success: false, error: 'Misión no encontrada' };
-    if (mission.is_purchased) return { success: false, error: 'Ya fue comprada' };
-
-    // Verify not expired using scheduled_at deadline
-    if (mission.scheduled_at) {
-        const expiry = computeExpiry(mission.scheduled_at);
-        if (expiry.expired) return { success: false, error: 'La oferta ha expirado' };
+    // Deduct balance from wallet first
+    const { deductWalletBalance, addWalletBalance } = await import('./walletService.js');
+    const price = parseFloat(mission.price || 1000000);
+    const deducted = await deductWalletBalance(price, `Compra Piggy Flash: ${piggyName || mission.title}`);
+    if (!deducted) {
+        return { success: false, error: 'Saldo insuficiente en tu Cuenta Agro.' };
     }
 
     const profile = AppState.get('profile');
@@ -248,76 +244,85 @@ export async function buyFlashMission(missionId, piggyName) {
             purchased_at:       new Date().toISOString(),
             purchased_piggy_id: newPiggy.id,
         })
-        .eq('id', missionId);
+        .eq('id', mission.id);
 
-    if (updateError) console.warn('buyFlashMission update error:', updateError.message);
+    if (updateError) {
+        console.warn('buyFlashMission update error:', updateError.message);
+    }
 
-    return { success: true, piggy: newPiggy };
+    // Update AppState
+    const { enrichPiggyData } = await import('./piggiesService.js');
+    const enriched = enrichPiggyData(newPiggy);
+    const currentPiggies = AppState.get('piggies') || [];
+    AppState.set({ piggies: [enriched, ...currentPiggies] });
+
+    return { success: true, piggy: enriched };
 }
 
 /* ─── M10: Cycle Completion Missions ──────── */
 
 /**
- * Detect completed piggies and auto-create M10 missions for them.
- * Evaluates user's total piggies against tiered exclusive_piggy_config rows.
- * Selects highest tier matching user's piggy count (e.g. 1 -> Plus, 2 -> Dorado, >=3 -> Premium).
- * The UNIQUE(piggy_id) DB constraint prevents duplicate M10 missions.
- * Safe to call on every dashboard load — inserts are idempotent.
- * @param {Array} piggies - Enriched array from getUserPiggies()
- * @returns {Promise<void>}
+ * Detect piggies that have reached progress >= 100% (or daysLeft <= 0)
+ * and create corresponding cycle_completion_missions records if they don't already exist.
+ * Safe to call repeatedly — uses unique piggy_id logic.
+ * @param {Array} piggies - Enriched piggy objects from AppState
  */
-export async function detectAndCreateCycleMissions(piggies) {
-    if (isUsingMockData()) return;
-    if (!piggies || piggies.length === 0) return;
+export async function detectAndCreateCycleMissions(piggies = []) {
+    if (isUsingMockData() || !piggies || piggies.length === 0) return;
 
-    // Fast-path: if no piggies completed their cycle, skip immediately (0ms, 0 DB queries)
-    const completedPiggies = piggies.filter(p => p.isComplete);
-    if (completedPiggies.length === 0) return;
+    const completed = piggies.filter(p => p.isComplete);
+    if (completed.length === 0) return;
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user) return;
 
-    // Fetch the exclusive piggy configs (all enabled rows, ordered by min_piggies DESC)
-    const { data: configs, error: configError } = await client
-        .from('exclusive_piggy_config')
-        .select('*')
-        .eq('is_enabled', true)
-        .order('min_piggies', { ascending: false });
+    for (const piggy of completed) {
+        try {
+            // Check if mission record already exists for this completed piggy
+            const { data: existing } = await client
+                .from('cycle_completion_missions')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('piggy_id', piggy.id)
+                .maybeSingle();
 
-    if (configError || !configs || configs.length === 0) return; // M10 disabled or config missing
+            if (!existing) {
+                const inv = parseFloat(piggy.investmentAmount || piggy.investment_amount || 1000000);
+                const roi = parseFloat(piggy.totalRoi || 0.115);
+                const returnAmount = inv * (1 + roi);
+                const cycleDays = piggy.cycleDurationDays || 144;
 
-    const userPiggyCount = piggies.length;
-    // Find highest tier matching user's piggy count (e.g. >= 3 -> Tier 3, >= 2 -> Tier 2, >= 1 -> Tier 1)
-    const config = configs.find(c => userPiggyCount >= (c.min_piggies || 1));
-    if (!config) return;
+                const expiresAt = new Date(Date.now() + (72 * 3600 * 1000)).toISOString();
 
-    const expiresAt = new Date(Date.now() + ((config.duration_hours || 48) * 3600000)).toISOString();
-
-    // Batch insert completed piggies
-    const inserts = completedPiggies.map(piggy => ({
-        user_id:         user.id,
-        piggy_id:        piggy.id,
-        piggy_type:      config.piggy_type,
-        piggy_label:     config.piggy_label,
-        extra_roi_bonus: config.extra_roi_bonus,
-        price:           config.price || 1000000,
-        expires_at:      expiresAt,
-    }));
-
-    try {
-        await client
-            .from('cycle_completion_missions')
-            .upsert(inserts, { onConflict: 'piggy_id', ignoreDuplicates: true });
-    } catch (err) {
-        console.warn('detectAndCreateCycleMissions error:', err);
+                await client
+                    .from('cycle_completion_missions')
+                    .insert({
+                        user_id:               user.id,
+                        piggy_id:              piggy.id,
+                        piggy_name:            piggy.name || 'Tu Piggy',
+                        investment_amount:     inv,
+                        return_amount:         returnAmount,
+                        cycle_duration_days:   cycleDays,
+                        piggy_type:            'oro_cycle',
+                        piggy_label:           'Piggy Dorado Ciclo (+2% ROI)',
+                        price:                 inv,
+                        extra_roi_bonus:       0.02,
+                        is_active:             true,
+                        is_completed:          false,
+                        expires_at:            expiresAt,
+                    });
+            }
+        } catch (err) {
+            console.warn('detectAndCreateCycleMissions item error:', err);
+        }
     }
 }
 
 /**
- * Get active M10 cycle completion missions for the current user.
- * Returns missions that are NOT completed and have NOT expired yet.
- * Ordered by expires_at ASC (most urgent first).
+ * Get active cycle completion missions for the current user.
+ * Filters: is_active=TRUE and is_completed=FALSE.
+ * Orders by created_at DESC (most recent first).
  * @returns {Promise<Array>}
  */
 export async function getActiveCycleMissions() {
@@ -327,23 +332,52 @@ export async function getActiveCycleMissions() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
 
-    const { data, error } = await client
-        .from('cycle_completion_missions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_completed', false)
-        .gt('expires_at', new Date().toISOString())
-        .order('expires_at', { ascending: true });
+    try {
+        const { data, error } = await client
+            .from('cycle_completion_missions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .eq('is_completed', false)
+            .order('created_at', { ascending: false });
 
-    if (error) {
-        console.warn('getActiveCycleMissions error:', error.message);
+        if (error) {
+            console.warn('getActiveCycleMissions error:', error.message);
+            return [];
+        }
+
+        return data || [];
+    } catch (err) {
+        console.warn('getActiveCycleMissions exception:', err);
         return [];
     }
+}
 
-    return (data || []).map(m => ({
-        ...m,
-        remainingMs: Math.max(0, new Date(m.expires_at).getTime() - Date.now()),
-    }));
+/**
+ * Mark a cycle completion mission as completed (without buying the exclusive piggy).
+ * Sets is_completed = true and is_active = false.
+ * @param {string} missionId
+ * @returns {Promise<boolean>}
+ */
+export async function completeCycleMission(missionId) {
+    if (isUsingMockData() || !missionId) return false;
+
+    try {
+        const client = getClient();
+        const { error } = await client
+            .from('cycle_completion_missions')
+            .update({
+                is_completed: true,
+                is_active:    false,
+                completed_at: new Date().toISOString(),
+            })
+            .eq('id', missionId);
+
+        return !error;
+    } catch (err) {
+        console.warn('completeCycleMission error:', err);
+        return false;
+    }
 }
 
 /**
@@ -423,4 +457,16 @@ export async function buyCycleCompletionMission(missionId, piggyName, contractUr
     if (updateError) console.warn('buyCycleCompletionMission update error:', updateError.message);
 
     return { success: true, piggy: newPiggy };
+}
+
+/**
+ * Buy Silver/Plus Piggy helper for SilverPiggyModal.
+ */
+export async function buySilverPiggy(piggyName, price = 1000000, extraRoiBonus = 0.01) {
+    return buyFlashMission({
+        piggy_type: 'silver',
+        price,
+        extra_roi_bonus: extraRoiBonus,
+        title: 'Piggy Plus',
+    }, piggyName);
 }
