@@ -107,7 +107,7 @@ ol {
 }
 
 .page--with-nav {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
 }
 
 .gourmet-page {

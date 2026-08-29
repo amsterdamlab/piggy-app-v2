@@ -497,7 +497,7 @@ export function renderPiggyCard(piggy, baseROI) {
 
 export function renderBottomNav(activeTab) {
   return `
-    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
+    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal">
       <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
