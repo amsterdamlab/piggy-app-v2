@@ -261,34 +261,36 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                 color: white; 
                 border: none; 
                 width: 100%; 
-                padding: 14px 20px; 
+                padding: 13px 18px; 
                 border-radius: 12px; 
-                font-weight: 700; 
-                font-size: 1rem; 
+                font-weight: 800; 
+                font-size: 0.85rem; 
+                white-space: nowrap;
                 cursor: pointer; 
                 display: flex; 
                 align-items: center; 
                 justify-content: center; 
-                gap: 10px;
+                gap: 8px;
                 box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
                 transition: transform 0.2s;
             " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                 <div style="
                     background: white; 
                     color: #ec4899;
-                    width: 22px; 
-                    height: 22px; 
+                    width: 20px; 
+                    height: 20px; 
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
                     justify-content: center;
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: 800;
                     padding-bottom: 2px;
                     position: relative;
                     z-index: 1;
+                    flex-shrink: 0;
                 ">+</div>
-                <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>
+                <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
             </button>
           </div>
         ` : ''}
@@ -407,34 +409,37 @@ function renderEmptyPiggies() {
           color: white; 
           border: none; 
           width: auto; 
-          padding: 14px 28px; 
+          max-width: 100%;
+          padding: 12px 22px; 
           border-radius: 14px; 
           font-weight: 800; 
-          font-size: 0.95rem; 
+          font-size: 0.82rem; 
+          white-space: nowrap;
           cursor: pointer; 
           display: inline-flex; 
           align-items: center; 
           justify-content: center; 
-          gap: 10px;
+          gap: 8px;
           box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
           transition: transform 0.2s, box-shadow 0.2s;
       " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" onclick="location.hash='#/mercado'">
           <div style="
               background: white; 
               color: #ec4899;
-              width: 22px; 
-              height: 22px; 
+              width: 19px; 
+              height: 19px; 
               border-radius: 50%; 
               display: flex; 
               align-items: center; 
               justify-content: center;
-              font-size: 18px;
+              font-size: 15px;
               font-weight: 800;
               padding-bottom: 2px;
               position: relative;
               z-index: 1;
+              flex-shrink: 0;
           ">+</div>
-          <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>
+          <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
       </button>
     </div>
   `;
