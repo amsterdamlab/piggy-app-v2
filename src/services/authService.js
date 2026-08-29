@@ -201,41 +201,56 @@ export async function signIn({ email, password }, onProgress = () => {}) {
 
     if (error) return { user: null, error: error.message };
 
-    // Fetch profile and update state
+    onProgress('👤 Descargando información de tu perfil y tu granja...');
+    // Resilient profile load: autorrecupera si el usuario no tiene perfil
+    const profile = await ensureProfileExists(client, data.user);
+
+    // Auto-expirar bono si ya pasaron 7 días (no bloqueante para UX rápida)
     if (data.user) {
-        onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
-        await expireWelcomeBonusIfDue(data.user.id);
-        await syncAndExpireMarketingBonuses(data.user.id);
-        const profile = await getProfile();
-        onProgress('✅ Perfil verificado. Preparando tu granja agro...');
-        AppState.set({
-            currentUser: data.user,
-            profile,
-            isAuthenticated: true,
-            showLegalModal: profile && !profile.terms_accepted,
-        });
+        expireWelcomeBonusIfDue(data.user.id).catch(e => console.warn('Welcome bonus check:', e));
+        syncAndExpireMarketingBonuses(data.user.id).catch(e => console.warn('Marketing bonus check:', e));
     }
+
+    onProgress('✨ ¡Listo! Abriendo tu granja...');
+    AppState.set({
+        currentUser: data.user,
+        profile,
+        isAuthenticated: true,
+        showLegalModal: profile && !profile.terms_accepted,
+    });
 
     return { user: data.user, error: null };
 }
 
 /**
- * Sign out.
+ * Sign out current user.
  */
 export async function signOut() {
     if (isUsingMockData()) {
         mockLoggedIn = false;
-        AppState.reset();
-        return;
+        AppState.set({
+            currentUser: null,
+            profile: null,
+            isAuthenticated: false,
+        });
+        return { error: null };
     }
 
     const client = getClient();
-    await client.auth.signOut();
-    AppState.reset();
+    const { error } = await client.auth.signOut();
+
+    AppState.set({
+        currentUser: null,
+        profile: null,
+        isAuthenticated: false,
+        piggies: [],
+    });
+
+    return { error: error?.message || null };
 }
 
 /**
- * Fetch user profile.
+ * Get current user profile from DB.
  */
 export async function getProfile() {
     if (isUsingMockData()) {
@@ -300,29 +315,57 @@ export async function checkSession() {
         return;
     }
 
-    const client = getClient();
-    const { data: { session } } = await client.auth.getSession();
+    try {
+        const client = getClient();
+        const { data: { session } } = await client.auth.getSession();
 
-    if (session?.user) {
-        await expireWelcomeBonusIfDue(session.user.id);
-        await syncAndExpireMarketingBonuses(session.user.id);
-        const profile = await getProfile();
-        const isGoogleUser = session.user.app_metadata?.provider === 'google';
-        const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
+        if (session?.user) {
+            // Run background expirations non-blocking so session resolves instantly
+            expireWelcomeBonusIfDue(session.user.id).catch(e => console.warn('Welcome bonus check:', e));
+            syncAndExpireMarketingBonuses(session.user.id).catch(e => console.warn('Marketing bonus check:', e));
 
+            const profile = await getProfile().catch(e => {
+                console.warn('Profile fetch warning in checkSession:', e);
+                return {
+                    id: session.user.id,
+                    full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Usuario',
+                    email: session.user.email,
+                    terms_accepted: true,
+                    habeas_data_accepted: true,
+                };
+            });
+
+            const isGoogleUser = session.user.app_metadata?.provider === 'google';
+            const needsWhatsApp = isGoogleUser && !profile?.whatsapp;
+
+            AppState.set({
+                currentUser: session.user,
+                profile,
+                isAuthenticated: true,
+                authLoading: false,
+                showLegalModal: profile && !profile.terms_accepted,
+                showWhatsAppModal: needsWhatsApp,
+            });
+        } else {
+            AppState.set({
+                currentUser: null,
+                profile: null,
+                isAuthenticated: false,
+                authLoading: false,
+            });
+        }
+    } catch (err) {
+        console.warn('Session check error, defaulting to unauthenticated:', err);
         AppState.set({
-            currentUser: session.user,
-            profile,
-            isAuthenticated: true,
+            currentUser: null,
+            profile: null,
+            isAuthenticated: false,
             authLoading: false,
-            showLegalModal: profile && !profile.terms_accepted,
-            showWhatsAppModal: needsWhatsApp,
         });
-    } else {
-        AppState.set({ authLoading: false });
     }
 
     // Escuchar cambios de estado (recuperación de contraseña y login via OAuth redirect)
+    const client = getClient();
     client.auth.onAuthStateChange(async (event, session) => {
         if (event === 'PASSWORD_RECOVERY') {
             console.log('🐷 PASSWORD_RECOVERY event caught!');
@@ -351,73 +394,58 @@ export async function checkSession() {
  */
 export async function sendPasswordReset(email) {
     if (isUsingMockData()) {
-        console.log(`🐷 Mock: Sending password reset to ${email}`);
         return { error: null };
     }
 
     const client = getClient();
     const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#auth`
+        redirectTo: window.location.origin
     });
 
     return { error: error?.message || null };
 }
 
 /**
- * Update password for current authenticated user (recovery flow).
+ * Update password (used after clicking recovery link).
  */
-export async function updateUserPassword(newPassword) {
+export async function updatePassword(newPassword) {
     if (isUsingMockData()) {
-        AppState.set({ isResettingPassword: false });
         return { error: null };
     }
 
     const client = getClient();
-    const { error } = await client.auth.updateUser({ password: newPassword });
-    if (!error) {
-        AppState.set({ isResettingPassword: false });
-    }
+    const { error } = await client.auth.updateUser({
+        password: newPassword
+    });
+
     return { error: error?.message || null };
 }
 
-export { updateUserPassword as updatePassword };
-
 /**
- * Update user profile in Supabase and AppState.
- * Updates personal and banking information.
+ * Update WhatsApp for Google OAuth users who registered without a phone number.
  */
-export async function updateUserProfile(updates) {
+export async function updateGoogleUserWhatsApp(whatsapp) {
     if (isUsingMockData()) {
-        const currentProfile = AppState.get('profile') || {};
-        mockProfile = { ...currentProfile, ...updates };
-        AppState.set({ profile: { ...mockProfile } });
-        return { data: mockProfile, error: null };
+        mockProfile.whatsapp = whatsapp;
+        AppState.set({
+            profile: { ...mockProfile },
+            showWhatsAppModal: false,
+        });
+        return { error: null };
     }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
-    if (!user) return { data: null, error: 'No hay usuario autenticado.' };
+    if (!user) return { error: 'No authenticated user' };
 
-    const currentProfile = AppState.get('profile') || {};
-
-    const payload = {
-        id: user.id,
-        email: user.email,
-        ...updates
-    };
-
-    const { data, error } = await client
-        .from('profiles')
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .maybeSingle();
+    const { error } = await client.from('profiles')
+        .update({ whatsapp })
+        .eq('id', user.id);
 
     if (!error) {
-        const newProfile = { ...currentProfile, ...(data || payload) };
-        AppState.set({ profile: newProfile });
-        return { data: newProfile, error: null };
+        const profile = await getProfile();
+        AppState.set({ profile, showWhatsAppModal: false });
     }
 
-    console.error('Error updating profile in Supabase:', error.message);
-    return { data: null, error: error.message };
+    return { error: error?.message || null };
 }

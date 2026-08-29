@@ -110,6 +110,10 @@ function handleRouteChange() {
         currentCleanup = null;
     }
 
+    // Reset body overflow and remove any lingering modals or backdrops
+    document.body.style.overflow = '';
+    document.querySelectorAll('.modal-overlay, #flash-mission-modal, #cycle-mission-modal, #silver-piggy-modal, #referral-modal, #support-modal, #welcome-bonus-modal, #news-billboard-modal').forEach(el => el.remove());
+
     // Reset scroll on view change
     scrollToTop(false);
 
@@ -132,11 +136,12 @@ export function initRouter() {
 
     // Scroll to top when tapping the current active bottom-nav tab without reloading
     document.addEventListener('click', (e) => {
-        const navLink = e.target.closest('.bottom-nav__item, [data-nav-tab]');
+        const navLink = e.target.closest('.bottom-nav a.bottom-nav__item');
         if (!navLink) return;
 
         const href = navLink.getAttribute('href') || '';
-        const targetRoute = href.replace(/^#\/?/, '').split('?')[0].split('/')[0];
+        if (!href.startsWith('#/')) return;
+        const targetRoute = href.slice(2).split('?')[0].split('/')[0];
         const currentRoute = getCurrentRoute();
 
         if (targetRoute && targetRoute === currentRoute) {

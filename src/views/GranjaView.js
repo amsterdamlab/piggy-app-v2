@@ -144,40 +144,38 @@ async function loadGranjaData(firstName, sessionId) {
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
-    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
-    // con getUserPiggies(), AppState todavía está vacío → race condition.
-    const piggies = await getUserPiggies();
+    const piggies = await getUserPiggies().catch(e => {
+        console.warn('Error fetching piggies in Granja:', e);
+        return [];
+    });
     if (!isSessionActive()) return;
     AppState.set({ piggies });
 
-    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
-    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
-    await detectAndCreateCycleMissions(piggies);
-    if (!isSessionActive()) return;
+    // ── Paso 2: detectar piggies que completaron ciclo en background ──────
+    detectAndCreateCycleMissions(piggies).catch(e => console.warn('Cycle missions check error:', e));
 
-    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
+    // ── Paso 3: cargar el resto de datos en paralelo de forma resiliente ─
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
         transactions, newsSlides,
     ] = await Promise.all([
-      getRandomTip(),
-      getWalletBalance(),
-      getReferralBonusBalance(),
-      getActiveMissions(piggies),
-      getActiveUserFlashMissions(),
-      getActiveCycleMissions(),
-      getDashboardStats(piggies),
-      getWalletTransactions(),
-      getActiveNewsSlides(),
+      getRandomTip().catch(e => { console.warn('Tip error:', e); return null; }),
+      getWalletBalance().catch(e => { console.warn('Balance error:', e); return 0; }),
+      getReferralBonusBalance().catch(e => { console.warn('Referral error:', e); return 0; }),
+      getActiveMissions(piggies).catch(e => { console.warn('Active missions error:', e); return []; }),
+      getActiveUserFlashMissions().catch(e => { console.warn('Flash missions error:', e); return []; }),
+      getActiveCycleMissions().catch(e => { console.warn('Cycle missions error:', e); return []; }),
+      getDashboardStats(piggies).catch(e => { console.warn('Dashboard stats error:', e); return {}; }),
+      getWalletTransactions().catch(e => { console.warn('Transactions error:', e); return []; }),
+      getActiveNewsSlides().catch(e => { console.warn('News error:', e); return []; }),
     ]);
 
     if (!isSessionActive()) return;
 
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
-    window._activeFlashMissions = flashMissions;
-    window._activeCycleMissions = cycleMissions;
+    window._activeFlashMissions = flashMissions || [];
+    window._activeCycleMissions = cycleMissions || [];
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
@@ -368,20 +366,57 @@ function renderGreeting(firstName) {
 }
 
 /**
- * Render empty piggies state matching screen2.png.
+ * Render empty piggies state with dashed border design.
  */
 function renderEmptyPiggies() {
   return `
-    <div class="empty-state">
-      <div class="empty-state__icon">
+    <div class="empty-state animate-fade-in-up" style="
+        background: #ffffff;
+        border: 2px dashed #f472b6;
+        border-radius: 20px;
+        padding: 32px 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(244, 114, 182, 0.06);
+    ">
+      <div class="empty-state__icon" style="
+          width: 76px;
+          height: 76px;
+          border-radius: 50%;
+          background: #fdf2f8;
+          border: 2px dashed #f472b6;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 14px;
+          overflow: hidden;
+      ">
         <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
       </div>
-      <div class="empty-state__title">No tienes Piggys aún</div>
-      <div class="empty-state__description">
+      <div class="empty-state__title" style="font-size: 1.15rem; font-weight: 800; color: #1f2937; margin-bottom: 6px;">
+        No tienes Piggys aún
+      </div>
+      <div class="empty-state__description" style="font-size: 0.85rem; color: #6b7280; max-width: 280px; line-height: 1.45; margin-bottom: 18px;">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
-      <button class="btn btn--primary" id="btn-adopt-empty" onclick="location.hash='#/mercado'">
-        Compra un nuevo Piggy
+      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="
+          width: auto;
+          min-width: 220px;
+          padding: 12px 24px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+      " onclick="location.hash='#/mercado'">
+        <span>+</span> Compra un nuevo Piggy
       </button>
     </div>
   `;

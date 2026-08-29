@@ -1,6 +1,4 @@
-/* Piggy App — Service Worker for PWA Installation */
-
-const CACHE_NAME = 'piggy-app-cache-v2.5';
+const CACHE_NAME = 'piggy-app-cache-v2.6';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
