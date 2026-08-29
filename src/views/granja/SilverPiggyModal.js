@@ -1,69 +1,68 @@
 /* ============================================
-   PIGGY APP — Silver Piggy Modal (Mission 6)
-   Shows a time-limited 72h exclusive Silver Piggy
-   offer. Triggered from MissionsBlock when M6 is
-   active and within the 72-hour window.
+   PIGGY APP — Silver Piggy Modal (M6 / Flash)
+   Presents the time-limited 72h Silver Piggy
+   exclusive offer with 72h countdown and custom name.
    ============================================ */
 
-import { renderIcon } from '../../icons.js';
 import { navigateTo } from '../../router.js';
-import { AppState } from '../../state.js';
-import { buyMarketplaceItem } from '../../services/piggiesService.js';
-import { getWalletBalance, formatCOP, deductWalletBalance } from '../../services/walletService.js';
+import { getWalletBalance } from '../../services/walletService.js';
+import { formatCOP } from '../../services/mockData.js';
+import { deductWalletBalance } from '../../services/walletService.js';
+import { buySilverPiggy } from '../../services/flashMissionsService.js';
 import { openWalletDrawer } from './WalletBlock.js';
 
-/** Silver Piggy offer definition — precio igual al estándar pero con +1% ROI */
-const SILVER_PIGGY_ITEM = {
-    id: 'plus-m6-exclusive',
-    item_name: 'Piggy Plus',
-    description: 'Oferta exclusiva de misión. Un Piggy especial de categoría Plus con bonificación adicional en tu Margen Comercial.',
-    price: 1000000,         // mismo precio que el estándar
-    extra_roi: 0.01,        // +1% extra sobre el ROI base de la granja
-    category: 'plus',
-    currentMonth: 1,
-    current_month: 1,
-    days_advanced: 0,
-    days_remaining: 144,
-    stock: 1,               // oferta única por usuario
-    current_weight: 15.0,
-    priceFormatted: '$1.000.000',
-    hasBonus: true,
-    bonusText: '+1%',
-    image_url: 'assets/piggies/stage1/et1-2.jpg',
-};
-
-/** Active countdown interval — cleaned up on modal close */
 let _countdownInterval = null;
 
-/**
- * Calculate remaining milliseconds from now until silverExpiry.
- * @param {string} silverExpiry - ISO date string (m4.completed_at + 72h)
- * @returns {{ ms: number, hours: number, minutes: number, expired: boolean }}
- */
-function getRemainingTime(silverExpiry) {
-    const ms = new Date(silverExpiry).getTime() - Date.now();
-    if (ms <= 0) return { ms: 0, hours: 0, minutes: 0, expired: true };
-    const hours   = Math.floor(ms / 3600000);
-    const minutes = Math.floor((ms % 3600000) / 60000);
-    return { ms, hours, minutes, expired: false };
+function formatCountdown(remainingMs) {
+    if (remainingMs <= 0) return '00h 00m 00s';
+    const hours   = Math.floor(remainingMs / 3600000);
+    const minutes = Math.floor((remainingMs % 3600000) / 60000);
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+}
+
+function closeSilverModal() {
+    if (_countdownInterval) {
+        clearInterval(_countdownInterval);
+        _countdownInterval = null;
+    }
+    const modal = document.getElementById('silver-piggy-modal');
+    if (modal) {
+        modal.style.opacity = '0';
+        modal.style.transition = 'opacity 0.2s';
+        setTimeout(() => {
+            modal.remove();
+            document.body.style.overflow = '';
+        }, 200);
+    }
 }
 
 /**
- * Show the Silver Piggy exclusive-offer modal.
- * @param {string} silverExpiry - ISO string for the 72h expiry timestamp
+ * Show the Silver Piggy Flash Offer modal.
+ * @param {Object} options
+ * @param {Date|number} options.expiresAt - Expiration timestamp (72h from trigger)
+ * @param {number} options.price - Purchase price (default 1,000,000 COP)
+ * @param {number} options.extraRoiBonus - Extra ROI bonus (default 0.01 = +1%)
  */
-export function showSilverPiggyModal(silverExpiry) {
-    // Safety check — should not show if expired (banner handles this)
-    const timeData = getRemainingTime(silverExpiry);
-    if (timeData.expired) {
-        navigateTo('mercado');
+export async function showSilverPiggyModal({ expiresAt = null, price = 1000000, extraRoiBonus = 0.01 } = {}) {
+    closeSilverModal();
+
+    // Default expiry: 72 hours from now if not specified
+    const targetExpiry = expiresAt
+        ? new Date(expiresAt).getTime()
+        : Date.now() + 72 * 3600 * 1000;
+
+    let remaining = Math.max(0, targetExpiry - Date.now());
+    if (remaining <= 0) {
+        console.warn('Oferta Piggy Plus expirada.');
         return;
     }
 
-    // Remove existing
-    const existing = document.getElementById('silver-piggy-modal');
-    if (existing) existing.remove();
-    if (_countdownInterval) clearInterval(_countdownInterval);
+    const baseROI         = 0.115;
+    const totalROI        = baseROI + extraRoiBonus;
+    const projectedReturn = price * (1 + totalROI);
+    const defaultNames    = ['Platino', 'Silver', 'Flash', 'Rayo', 'Sterling', 'Cometa'];
+    const names = defaultNames.sort(() => 0.5 - Math.random()).slice(0, 4);
 
     document.body.style.overflow = 'hidden';
 
@@ -71,329 +70,225 @@ export function showSilverPiggyModal(silverExpiry) {
     modal.id = 'silver-piggy-modal';
     modal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100dvh;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-        z-index: 99999; display: flex; align-items: flex-end;
-        justify-content: center;
+        background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        z-index: 99999; display: flex; align-items: flex-end; justify-content: center;
     `;
-
-    const suggestedNames = ['Platino', 'Silver', 'Luna', 'Perla', 'Astro', 'Cristal', 'Nieve', 'Stela'];
-    const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 4);
 
     modal.innerHTML = `
         <div class="animate-fade-in-up" style="
             background: white; border-radius: 28px 28px 0 0;
-            width: 100%; max-width: 480px; max-height: 88dvh;
-            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px)) 0; position: relative;
+            width: 100%; max-width: 480px; max-height: 90dvh;
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 0 0 calc(40px + env(safe-area-inset-bottom, 0px)) 0;
+            position: relative;
         ">
             <!-- Handle -->
-            <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin: 12px auto 0;"></div>
+            <div style="width:40px; height:4px; background:#e5e7eb; border-radius:2px; margin:14px auto 6px;"></div>
 
-            <!-- Close Button -->
+            <!-- Close -->
             <button id="silver-modal-close" style="
-                position:absolute; top:12px; right:16px;
+                position:absolute; top:16px; right:16px;
                 background:#f3f4f6; border:none; width:32px; height:32px;
                 border-radius:50%; cursor:pointer; font-size:18px; color:#6b7280;
                 display:flex; align-items:center; justify-content:center;
+                line-height:1; z-index:10;
             ">&times;</button>
 
-            <!-- Premium Silver Header -->
+            <!-- Plus/Silver Header -->
             <div style="
-                background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
-                margin: 20px 20px 0; border-radius: 20px; padding: 28px 24px;
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+                margin: 8px 20px 0; border-radius: 20px; padding: 24px 20px;
                 color: white; text-align: center; position: relative; overflow: hidden;
-                box-shadow: 0 12px 30px -5px rgba(139,92,246,0.5);
+                box-shadow: 0 12px 30px -5px rgba(14,165,233,0.45);
             ">
-                <!-- Decorative BG -->
-                <div style="position:absolute; top:0; left:0; right:0; bottom:0; opacity:0.07;
-                    background-image: url('data:image/svg+xml,%3Csvg width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctext x=%220%22 y=%2240%22 font-size=%2230%22%3E🌟%3C/text%3E%3C/svg%3E');
-                    pointer-events:none;">
+                <div style="
+                    background: rgba(255,255,255,0.22); display: inline-block;
+                    padding: 4px 14px; border-radius: 20px; font-size: 0.65rem;
+                    font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px;
+                ">
+                    🌟 OFERTA FLASH · PIGGY PLUS
                 </div>
 
-                <!-- Badge -->
-                <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:4px 14px;
-                    border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1.5px;
-                    text-transform:uppercase; margin-bottom:12px;">
-                    ⭐ OFERTA EXCLUSIVA · MISIÓN 6
-                </div>
-
-                <!-- Icon + Title -->
-                <div style="font-size:56px; margin-bottom:8px;">🌟</div>
-                <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">Piggy Plus</h2>
-                <p style="margin:0; font-size:0.85rem; opacity:0.9; line-height:1.4;">
-                    Tu recompensa especial por llegar hasta aquí.<br>
-                    <strong>+1% adicional</strong> en tu Margen Comercial.
+                <div style="font-size: 56px; margin-bottom: 8px;">🌟</div>
+                <h2 style="margin: 0 0 6px; font-size: 1.5rem; font-weight: 900;">
+                    Piggy Plus (+1% ROI Extra)
+                </h2>
+                <p style="margin: 0; font-size: 0.85rem; opacity: 0.92; line-height: 1.4;">
+                    Adquiere este Piggy especial con un <strong>+1% adicional</strong> en tu margen de comercialización.
                 </p>
 
-                <!-- Countdown -->
-                <div id="silver-countdown-wrapper" style="
+                <!-- Countdown Box -->
+                <div style="
                     background: rgba(0,0,0,0.25); border-radius: 14px;
                     padding: 12px 20px; margin-top: 16px;
                     display: flex; align-items: center; justify-content: center; gap: 8px;
                 ">
-                    <span style="font-size:18px;">⏳</span>
+                    <span style="font-size: 18px;">⏳</span>
                     <div>
-                        <div style="font-size:0.65rem; opacity:0.8; text-align:center; letter-spacing:1px; text-transform:uppercase;">Oferta disponible por</div>
+                        <div style="font-size:0.65rem; opacity:0.8; letter-spacing:1px; text-transform:uppercase;">
+                            Oferta disponible por
+                        </div>
                         <div id="silver-countdown-time" style="font-size:1.3rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
-                            ${String(timeData.hours).padStart(2,'0')}h ${String(timeData.minutes).padStart(2,'0')}m
+                            ${formatCountdown(remaining)}
                         </div>
                     </div>
                 </div>
-
-                <!-- Big decoration -->
-                <div style="position:absolute; bottom:-20px; right:-10px; font-size:80px; opacity:0.12; transform:rotate(-15deg);">🐷</div>
             </div>
 
-            <!-- Body -->
+            <!-- Content Area -->
             <div style="padding: 20px 20px 0;">
 
-                <!-- Benefit pill -->
+                <!-- Exclusivity Banner -->
                 <div style="
-                    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-                    border: 1px solid #a7f3d0; border-radius: 12px;
-                    padding: 10px 16px; margin-bottom: 20px;
-                    display: flex; align-items: center; gap: 10px;
+                    background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 14px;
+                    padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
                 ">
-                    <span style="font-size:22px;">📈</span>
-                    <div>
-                        <div style="font-weight:700; color:#065f46; font-size:0.85rem;">Beneficio exclusivo incluido</div>
-                        <div style="font-size:0.75rem; color:#047857;">+1% adicional sobre tu ROI base de granja.</div>
+                    <span style="font-size: 20px; flex-shrink:0;">🔒</span>
+                    <div style="font-size: 0.78rem; color: #0369a1; line-height: 1.35;">
+                        <strong>Oportunidad Exclusiva.</strong> Desbloqueada por tu actividad en Granja. Solo disponible durante la cuenta regresiva.
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 16px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px; text-align:center;">
+                        <div style="font-size:0.7rem; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Inversión</div>
+                        <div style="font-size:1.15rem; font-weight:900; color:#0f172a;">${formatCOP(price)}</div>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:14px; text-align:center;">
+                        <div style="font-size:0.7rem; color:#15803d; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Retorno Estimado</div>
+                        <div style="font-size:1.15rem; font-weight:900; color:#16a34a;">${formatCOP(projectedReturn)}</div>
+                        <div style="font-size:0.65rem; color:#16a34a; font-weight:700;">12.5% margen total</div>
                     </div>
                 </div>
 
                 <!-- Name Input -->
-                <div style="margin-bottom: 16px;">
-                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
-                        Ponle un nombre a tu Piggy Silver
+                <div style="margin-bottom: 20px;">
+                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">
+                        Ponle un nombre a tu Piggy Plus:
                     </label>
-                    <input type="text" id="silver-piggy-name"
-                        placeholder="Nombre del Piggy Silver..."
-                        autocomplete="off"
+                    <input
+                        type="text"
+                        id="silver-custom-name"
+                        placeholder="Ej: ${names[0]}"
+                        maxlength="20"
                         style="
-                            width: 100%; padding: 14px 16px; box-sizing: border-box;
-                            border: 2px solid #e0e7ff; border-radius: 14px;
-                            font-size: 1rem; font-weight: 600; color: #1f2937;
-                            outline: none; text-align: center; transition: all 0.2s;
+                            width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb;
+                            border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+                            outline: none; transition: border-color 0.2s; box-sizing: border-box;
                         "
-                        onfocus="this.style.borderColor='#6366f1'; this.style.boxShadow='0 0 0 4px rgba(99,102,241,0.1)';"
-                        onblur="this.style.borderColor='#e0e7ff'; this.style.boxShadow='none';"
+                        onfocus="this.style.borderColor='#0284c7'"
+                        onblur="this.style.borderColor='#e5e7eb'"
                     />
-                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content:center;">
-                        ${shuffled.map(n => `
-                            <button onclick="window._silverSelectName('${n}')" style="
-                                background:#f5f3ff; color:#6d28d9; border:1px solid #ede9fe;
-                                padding:6px 14px; border-radius:20px; font-size:0.82rem;
-                                font-weight:600; cursor:pointer; transition:transform 0.1s;
-                            ">${n}</button>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                        <span style="font-size:0.72rem; color:#9ca3af; align-self:center;">Sugeridos:</span>
+                        ${names.map(n => `
+                            <button
+                                type="button"
+                                class="silver-name-chip"
+                                data-name="${n}"
+                                style="
+                                    background:#f1f5f9; border:1px solid #e2e8f0; border-radius:20px;
+                                    padding:3px 10px; font-size:0.75rem; font-weight:600; color:#475569;
+                                    cursor:pointer;
+                                "
+                            >${n}</button>
                         `).join('')}
                     </div>
-                    <div id="silver-name-error" style="opacity:0; color:#6366f1; font-size:0.75rem; text-align:center; margin-top:8px;">
-                        * Escribe al menos 3 caracteres
-                    </div>
                 </div>
 
-                <!-- Wallet / Purchase Section -->
-                <div id="silver-wallet-section" style="opacity:0.5; pointer-events:none; transition:opacity 0.3s;">
-                    <!-- Balance -->
-                    <div id="silver-balance-card" style="
-                        background: linear-gradient(135deg, #6366f1, #4f46e5);
-                        border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
-                        color: white; display: flex; align-items: center; justify-content: space-between;
-                    ">
-                        <div>
-                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Cuenta Agro</div>
-                            <div id="silver-balance-display" style="font-size:1.5rem; font-weight:800;">
-                                <span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
-                            </div>
-                        </div>
-                        <div style="opacity:0.25; color:white; display:flex; align-items:center; justify-content:center;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                        </div>
-                    </div>
+                <!-- Balance / Error Container -->
+                <div id="silver-modal-error" style="
+                    display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;
+                    border-radius:10px; padding:10px 14px; font-size:0.8rem; margin-bottom:12px;
+                "></div>
 
-                    <!-- Insufficient funds notice -->
-                    <div id="silver-insufficient" style="
-                        background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
-                        padding:10px 14px; font-size:0.8rem; color:#dc2626; text-align:center;
-                        margin-bottom:10px; display:none;
-                    ">
-                        Saldo insuficiente. Recarga tu Cuenta Agro para continuar.
-                    </div>
+                <!-- CTA -->
+                <button
+                    id="btn-buy-silver-piggy"
+                    class="btn-shine-7s"
+                    style="
+                        width: 100%; padding: 16px 20px;
+                        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                        color: white; border: none; border-radius: 16px; font-size: 1rem;
+                        font-weight: 800; cursor: pointer; display: flex; align-items: center;
+                        justify-content: center; gap: 8px; box-shadow: 0 8px 20px -4px rgba(14,165,233,0.45);
+                    "
+                >
+                    <span>🌟</span>
+                    <span>Adquirir Piggy Plus (${formatCOP(price)})</span>
+                </button>
 
-                    <!-- Recharge Button -->
-                    <button id="silver-recharge-btn" style="
-                        width: 100%;
-                        background: linear-gradient(135deg, #7c3aed, #5b21b6);
-                        color: white;
-                        border: none;
-                        padding: 14px 20px;
-                        border-radius: 12px;
-                        font-weight: 700;
-                        font-size: 0.95rem;
-                        cursor: pointer;
-                        display: none;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        margin-bottom: 12px;
-                        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
-                        transition: all 0.2s;
-                    ">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
-                        Recargar mi Cuenta
-                    </button>
-
-                    <!-- Price Row -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 4px; margin-bottom:12px;">
-                        <span style="font-size:0.85rem; color:#6b7280;">Precio Piggy Silver</span>
-                        <span style="font-size:1.1rem; font-weight:800; color:#6366f1;">${SILVER_PIGGY_ITEM.priceFormatted}</span>
-                    </div>
-
-                    <!-- Confirm Button -->
-                    <button id="silver-confirm-btn" style="
-                        width: 100%; background: linear-gradient(135deg, #6366f1, #4f46e5);
-                        color: white; border: none; padding: 14px 20px;
-                        border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
-                        box-shadow: 0 6px 20px -4px rgba(99,102,241,0.4); transition: all 0.2s;
-                        opacity: 0.5; pointer-events: none; display: flex;
-                        align-items: center; justify-content: center; gap: 8px;
-                    ">
-                        🌟 Comprar mi Piggy Silver
-                    </button>
-                </div>
-
-                <!-- Footer security -->
-                <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem;">
-                    🔒 Transacción segura · Cifrado SSL
-                </div>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    // ── Logic ────────────────────────────────────────────────
-    const nameInput     = document.getElementById('silver-piggy-name');
-    const walletSection = document.getElementById('silver-wallet-section');
-    const balanceDisplay= document.getElementById('silver-balance-display');
-    const insufficient  = document.getElementById('silver-insufficient');
-    const confirmBtn    = document.getElementById('silver-confirm-btn');
-    const nameError     = document.getElementById('silver-name-error');
-    let currentBalance  = 0;
+    // Live countdown
+    const countdownEl = document.getElementById('silver-countdown-time');
+    _countdownInterval = setInterval(() => {
+        remaining -= 1000;
+        if (remaining <= 0) {
+            clearInterval(_countdownInterval);
+            _countdownInterval = null;
+            if (countdownEl) countdownEl.textContent = '¡Oferta Finalizada!';
+            return;
+        }
+        if (countdownEl) countdownEl.textContent = formatCountdown(remaining);
+    }, 1000);
 
-    // Load balance
-    getWalletBalance().then(bal => {
-        currentBalance = bal;
-        balanceDisplay.textContent = formatCOP(bal);
-        updateState(nameInput.value.trim());
-    }).catch(() => {
-        balanceDisplay.textContent = '$0';
-        updateState(nameInput.value.trim());
+    // Close handlers
+    document.getElementById('silver-modal-close').addEventListener('click', closeSilverModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeSilverModal();
     });
 
-    const updateState = (nameVal) => {
-        const nameOk  = nameVal.length >= 3;
-        const fundsOk = currentBalance >= SILVER_PIGGY_ITEM.price;
-
-        walletSection.style.opacity     = nameOk ? '1'    : '0.5';
-        walletSection.style.pointerEvents = nameOk ? 'auto' : 'none';
-        
-        const showRecharge = !fundsOk;
-        insufficient.style.display      = showRecharge ? 'block' : 'none';
-        const rechargeBtn = document.getElementById('silver-recharge-btn');
-        if (rechargeBtn) {
-            rechargeBtn.style.display = showRecharge ? 'flex' : 'none';
-        }
-
-        const canBuy = nameOk && fundsOk;
-        confirmBtn.style.opacity       = canBuy ? '1'    : '0.5';
-        confirmBtn.style.pointerEvents = canBuy ? 'auto' : 'none';
-
-        nameError.style.opacity = (nameVal.length > 0 && !nameOk) ? '1' : '0';
-        nameInput.style.borderColor = nameOk ? '#6366f1' : (nameVal.length > 0 ? '#e0e0e0' : '#e0e7ff');
-    };
-
-    nameInput.addEventListener('input', () => updateState(nameInput.value.trim()));
-
-    window._silverSelectName = (name) => {
-        nameInput.value = name;
-        updateState(name);
-        nameInput.focus();
-    };
-
-    // Countdown in modal
-    _countdownInterval = setInterval(() => {
-        const t = getRemainingTime(silverExpiry);
-        const el = document.getElementById('silver-countdown-time');
-        if (el) {
-            if (t.expired) {
-                el.textContent = '¡Oferta vencida!';
-                clearInterval(_countdownInterval);
-            } else {
-                el.textContent = `${String(t.hours).padStart(2,'0')}h ${String(t.minutes).padStart(2,'0')}m`;
-            }
-        } else {
-            clearInterval(_countdownInterval);
-        }
-    }, 30000); // update every 30s
-
-    // Close
-    const close = () => {
-        document.body.style.overflow = '';
-        delete window._silverSelectName;
-        if (_countdownInterval) { clearInterval(_countdownInterval); _countdownInterval = null; }
-        modal.remove();
-    };
-
-    document.getElementById('silver-modal-close').addEventListener('click', close);
-    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-
-    // Recharge Wallet click
-    const rechargeBtn = document.getElementById('silver-recharge-btn');
-    if (rechargeBtn) {
-        rechargeBtn.addEventListener('click', async () => {
-            const originalText = rechargeBtn.innerHTML;
-            rechargeBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
-            rechargeBtn.style.pointerEvents = 'none';
-            try {
-                await openWalletDrawer(true);
-                close();
-            } catch (e) {
-                console.error('Error opening wallet from silver piggy:', e);
-                rechargeBtn.innerHTML = originalText;
-                rechargeBtn.style.pointerEvents = 'auto';
+    // Chips
+    const nameInput = document.getElementById('silver-custom-name');
+    modal.querySelectorAll('.silver-name-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            if (nameInput) {
+                nameInput.value = chip.dataset.name;
+                nameInput.focus();
             }
         });
-    }
+    });
 
-    // Confirm Purchase
-    confirmBtn.addEventListener('click', async () => {
-        const customName = nameInput.value.trim();
-        if (customName.length < 3 || currentBalance < SILVER_PIGGY_ITEM.price) return;
-
-        confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
-        confirmBtn.style.pointerEvents = 'none';
+    // Buy handler
+    document.getElementById('btn-buy-silver-piggy').addEventListener('click', async () => {
+        const customName = (nameInput?.value || '').trim() || names[0];
+        const errEl = document.getElementById('silver-modal-error');
+        errEl.style.display = 'none';
 
         try {
-            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
-            const deductResult = await deductWalletBalance(SILVER_PIGGY_ITEM.price);
-            if (!deductResult.success) {
-                throw new Error(
-                    deductResult.reason === 'insufficient_balance'
-                        ? 'Saldo insuficiente en tu Wallet.'
-                        : 'No se pudo procesar el pago. Intenta de nuevo.'
-                );
+            const balance = await getWalletBalance();
+            if (balance < price) {
+                errEl.innerHTML = `
+                    Saldo insuficiente (${formatCOP(balance)}).
+                    <br/><a href="javascript:void(0)" id="silver-recharge" style="color:#b91c1c; font-weight:700; text-decoration:underline;">Recarga tu Cuenta Agro aquí</a>
+                `;
+                errEl.style.display = 'block';
+                document.getElementById('silver-recharge')?.addEventListener('click', () => {
+                    closeSilverModal();
+                    openWalletDrawer();
+                });
+                return;
             }
 
-            // Wallet descontada ✅ — ahora crear el piggy
-            await buyMarketplaceItem(SILVER_PIGGY_ITEM, customName);
+            const result = await buySilverPiggy(customName, price, extraRoiBonus);
+            if (!result.success) {
+                errEl.textContent = result.error || 'Error al procesar la adquisición.';
+                errEl.style.display = 'block';
+                return;
+            }
 
-            close();
+            closeSilverModal();
             navigateTo('granja');
-        } catch (error) {
-            console.error('Silver piggy purchase error:', error);
-            alert('Error en la transacción: ' + error.message);
-            confirmBtn.innerHTML = '🌟 Comprar mi Piggy Silver';
-            confirmBtn.style.pointerEvents = 'auto';
+        } catch (err) {
+            console.error('Error in buySilverPiggy:', err);
+            errEl.textContent = 'Ocurrió un error inesperado.';
+            errEl.style.display = 'block';
         }
     });
 }

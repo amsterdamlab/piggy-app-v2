@@ -49,134 +49,209 @@ export const MOCK_PIGGIES = [
         extra_roi_bonus: 0.01,
         current_weight: 84.6,
         created_at: new Date(NOW_MS - 95 * DAY_MS).toISOString(),
-        name: 'Luna',
-        image_url: 'assets/piggies/stage2/et2-3.jpg',
-        contract_code: 'PGY-TX-B843WD',
-        contract_url: 'https://elhsvitbqzivgajccify.supabase.co/storage/v1/object/public/contracts/contratos/3349c043-bd00-4937-a831-6b5e6bb91738/contrato_1787196691238_PGY-TX-RK52-B843WD.pdf',
+        name: 'Tocineta',
+        image_url: 'assets/piggies/stage3/et3-1.jpg',
+        contract_code: '#PIG002',
     },
     {
         id: 'pig-003',
         user_id: 'user-001',
-        status: 'completado',
+        status: 'engorde',
+        purchase_date: new Date(NOW_MS - 15 * DAY_MS).toISOString(),
+        end_date: new Date(NOW_MS + 129 * DAY_MS).toISOString(),
+        investment_amount: 1000000,
+        extra_roi_bonus: 0.02,
+        current_weight: 22.1,
+        created_at: new Date(NOW_MS - 15 * DAY_MS).toISOString(),
+        name: 'Gordis',
+        image_url: 'assets/piggies/stage1/et1-2.jpg',
+        contract_code: '#PIG003',
+    },
+    {
+        id: 'pig-004',
+        user_id: 'user-001',
+        status: 'disponible',
         purchase_date: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
         end_date: new Date(NOW_MS - 6 * DAY_MS).toISOString(),
         investment_amount: 1000000,
-        extra_roi_bonus: 0.02,
+        extra_roi_bonus: 0,
         current_weight: 120.0,
         created_at: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
-        name: 'Rocky',
-        image_url: 'assets/piggies/stage3/et3-1.jpg',
-        contract_code: 'PGY-TX-RCK991',
+        name: 'Rosita',
+        image_url: 'assets/piggies/stage3/et3-3.jpg',
+        contract_code: '#PIG004',
     },
 ];
 
-export const MOCK_MARKETPLACE = [
+export const MOCK_MARKETPLACE_ITEMS = [
     {
-        id: 'item-001',
-        item_name: 'Piggy Estandar',
-        description: 'Comienza tu camino en el agro. Un cerdo de raza clásica con rendimiento sólido.',
-        price: 1000000,
-        extra_roi: 0,
-        stock: 50,
-        image_url: null,
+        id: '1',
+        name: 'Piggy Destete (1 Mes)',
+        breed: 'Landrace x Pietrain',
+        description: 'Lechón recién destetado con excelente genética y adaptación.',
+        price: 250000,
+        current_weight: 15.0,
+        target_weight: 120.0,
+        days_remaining: 144,
+        days_advanced: 0,
+        current_month: 1,
+        stock: 5,
+        is_available: true,
         category: 'estandar',
+        extra_roi: 0,
+        image_url: 'assets/piggies/stage1/et1-1.jpg',
+        stage: 1,
+        sort_order: 1,
+        is_popular: true,
     },
     {
-        id: 'item-002',
-        item_name: 'Piggy Plus',
-        description: 'Cerdo con comercialización en mercado plus. Bono de +1% adicional.',
-        price: 1000000,
-        extra_roi: 0.01,
-        stock: 20,
-        image_url: null,
-        category: 'plus',
+        id: '2',
+        name: 'Piggy Crecimiento (2 Meses)',
+        breed: 'Pietrain Puro',
+        description: 'Lechón en etapa de desarrollo con ganancia de peso acelerada.',
+        price: 250000,
+        current_weight: 35.0,
+        target_weight: 120.0,
+        days_remaining: 114,
+        days_advanced: 30,
+        current_month: 2,
+        stock: 3,
+        is_available: true,
+        category: 'estandar',
+        extra_roi: 0,
+        image_url: 'assets/piggies/stage2/et2-1.jpg',
+        stage: 2,
+        sort_order: 2,
+        is_popular: false,
     },
     {
-        id: 'item-003',
-        item_name: 'Piggy Dorado',
-        description: 'Cerdo con comercialización plus premium. Bono de +2% adicional.',
-        price: 1000000,
-        extra_roi: 0.02,
-        stock: 10,
-        image_url: null,
+        id: '3',
+        name: 'Piggy Desarrollo (3 Meses)',
+        breed: 'Landrace Belga',
+        description: 'Excelente conformación muscular, ideal para ciclo medio.',
+        price: 250000,
+        current_weight: 62.0,
+        target_weight: 120.0,
+        days_remaining: 84,
+        days_advanced: 60,
+        current_month: 3,
+        stock: 4,
+        is_available: true,
+        category: 'estandar',
+        extra_roi: 0,
+        image_url: 'assets/piggies/stage2/et2-2.jpg',
+        stage: 2,
+        sort_order: 3,
+        is_popular: false,
+    },
+    {
+        id: '4',
+        name: 'Piggy Engorde (4 Meses)',
+        breed: 'Duroc Jersey',
+        description: 'Etapa final de engorde con retorno rápido de inversión.',
+        price: 250000,
+        current_weight: 98.0,
+        target_weight: 120.0,
+        days_remaining: 54,
+        days_advanced: 90,
+        current_month: 4,
+        stock: 2,
+        is_available: true,
+        category: 'avanzado',
+        badge: '⚡ Retorno Rápido',
+        extra_roi: 0,
+        image_url: 'assets/piggies/stage3/et3-1.jpg',
+        stage: 3,
+        sort_order: 4,
+        is_popular: true,
+    },
+    {
+        id: '5',
+        name: 'Piggy Dorado (Oferta Especial)',
+        breed: 'Topigs Norsvin',
+        description: 'Lote premium con bono adicional del +2% de retorno garantizado.',
+        price: 250000,
+        current_weight: 35.0,
+        target_weight: 120.0,
+        days_remaining: 114,
+        days_advanced: 30,
+        current_month: 2,
+        stock: 1,
+        is_available: true,
         category: 'dorado',
-    },
-    {
-        id: 'item-004',
-        item_name: 'Piggy Premium',
-        description: 'Cerdo con comercialización exclusiva. Bono de +3% adicional.',
-        price: 1000000,
-        extra_roi: 0.03,
-        stock: 10,
-        image_url: null,
-        category: 'premium',
+        badge: '🥇 +2% ROI Extra',
+        extra_roi: 0.02,
+        image_url: 'assets/piggies/stage2/et2-3.jpg',
+        stage: 2,
+        sort_order: 5,
+        is_offer: true,
     },
 ];
 
 export const MOCK_ALLIES = [
     {
         id: 'ally-001',
-        name: 'Carnes Don Julio',
-        category: 'Carnicería',
-        specialty: 'Cortes Premium',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
-        description: 'Cortes selectos madurados y frescos para tus asados de fin de semana.',
-        benefit: '15% de descuento en Punta de Anca',
-        phone: '310 123 4567',
-        address: 'Av. Pasoancho # 50-20',
-        discount_info: '15% de descuento en cortes premium',
+        name: 'La Casona Campestre',
+        category: 'Restaurante',
+        specialty: 'Comida Típica',
+        location: 'Rozo, Palmira',
+        image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+        description: 'Disfruta de la mejor gastronomía vallecaucana en un ambiente campestre único. Sancocho de leña, asados y más.',
+        benefit: '15% de descuento en platos fuertes',
+        phone: '312 456 7890',
+        address: 'Km 5 Vía Rozo, Palmira',
+        discount_info: '15% de descuento en platos fuertes',
     },
     {
         id: 'ally-002',
-        name: 'La Parrilla de Pepe',
-        category: 'Restaurante',
-        specialty: 'Parrilla & Barril',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&w=800&q=80',
-        description: 'Expertos en cocción lenta al barril. Chicharrón ahumado inigualable.',
-        benefit: '2x1 los jueves en platos de cerdo',
-        phone: '315 987 6543',
-        address: 'Granada Calle 9 # 12-45',
-        discount_info: '2x1 los jueves en platos de cerdo',
+        name: 'Finca Hotel Los Álamos',
+        category: 'Turismo',
+        specialty: 'Hospedaje Campestre',
+        location: 'Cerrito, Valle del Cauca',
+        image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+        description: 'Descanso total en el corazón del Valle. Piscinas, zonas verdes y paseos a caballo.',
+        benefit: '20% de descuento en estadías de fin de semana',
+        phone: '315 678 1234',
+        address: 'Vereda Santa Elena, Cerrito',
+        discount_info: '20% de descuento en estadías de fin de semana',
     },
     {
         id: 'ally-003',
-        name: 'El Fogón de la Abuela',
-        category: 'Restaurante',
-        specialty: 'Comida Típica',
-        location: 'Cali, Valle del Cauca',
-        image_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
-        description: 'Sabor tradicional con ingredientes del campo directo a tu mesa.',
-        benefit: 'Postre gratis por consumo > $50k',
-        phone: '312 456 7890',
-        address: 'San Antonio Cra 4 # 2-10',
-        discount_info: '10% en platos con cerdo',
+        name: 'Veterinaria El Ganadero',
+        category: 'Servicios',
+        specialty: 'Salud Animal',
+        location: 'Palmira, Valle',
+        image_url: 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?auto=format&fit=crop&w=800&q=80',
+        description: 'Todo en insumos agropecuarios, medicamentos y asesoría veterinaria especializada.',
+        benefit: '10% de descuento en concentrados y vitaminas',
+        phone: '318 901 2345',
+        address: 'Carrera 28 # 32-15, Palmira',
+        discount_info: '10% de descuento en concentrados y vitaminas',
     },
     {
         id: 'ally-004',
-        name: 'SuperCarnes Express',
-        category: 'Distribuidor',
-        specialty: 'Venta al Por Mayor',
-        location: 'Medellín, Antioquia',
-        image_url: 'https://images.unsplash.com/photo-1615937651188-4b92cd38052e?auto=format&fit=crop&w=800&q=80',
-        description: 'Abastecemos tu negocio con la mejor carne de cerdo de la región.',
-        benefit: 'Envío gratis en pedidos mayoristas',
-        phone: '300 555 1234',
-        address: 'Centro, Calle 50 # 40-20',
-        discount_info: 'Entrega gratuita en Medellín',
+        name: 'Gym Force Palmira',
+        category: 'Fitness',
+        specialty: 'Entrenamiento Funcional',
+        location: 'Palmira, Valle',
+        image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+        description: 'Equipos de última generación, entrenadores certificados y planes nutricionales.',
+        benefit: 'Mes gratis por compra de trimestre',
+        phone: '310 234 5678',
+        address: 'Calle 42 # 28-10, Palmira',
+        discount_info: 'Mes gratis por compra de trimestre',
     },
     {
         id: 'ally-005',
-        name: 'Huellitas Felices',
-        category: 'Petshop',
-        specialty: 'Alimentos y Spa',
-        location: 'Bogotá, Cundinamarca',
-        image_url: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
-        description: 'Todo para consentir a tu peludo. Baño, peluquería y juguetes.',
+        name: 'Pet Shop Huellitas',
+        category: 'Comercio',
+        specialty: 'Mascotas',
+        location: 'Palmira, Valle',
+        image_url: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=800&q=80',
+        description: 'Alimentos premium, accesorios y spa para tus mascotas.',
         benefit: '10% en Baño y Peluquería',
-        phone: '312 456 7890',
-        address: 'Av. Principal # 45-12',
+        phone: '314 567 8901',
+        address: 'Carrera 35 # 40-22, Palmira',
         discount_info: '10% en Baño y Peluquería',
     },
     {
@@ -238,15 +313,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm6',
         title: 'Cierra tu primer ciclo',
-        reward: 'Desbloquea Piggy Silver (24h)',
-        is_completed: false,
-        icon: '&#128260;',
-        cta: null
-    },
-    {
-        id: 'm7',
-        title: 'Activa tu 3er Piggy',
-        reward: 'Mant&eacute;n 10% Margen Comercial',
+        reward: 'Desbloquea Piggy Gold (24h)',
         is_completed: false,
         icon: '&#128048;',
         cta: '#/mercado'
@@ -350,51 +417,51 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
     if (p < 5.0) {
         return {
             stageNumber: 1,
-            stageName: 'Destete',
+            stageName: 'Destete Inicial',
             icon: '🍼',
-            badgeBg: '#fef3c7',
-            badgeColor: '#b45309',
-            description: `${piggyName} ha ingresado a las cunas de destete tras dejar su zona de lactancia calidamente.`
+            badgeBg: '#fdf2f8',
+            badgeColor: '#db2777',
+            description: `${piggyName} finaliza su etapa de lactancia y se adapta al agua potable permanente con electrolitos.`
         };
     }
-    if (p < 9.0) {
+    if (p < 10.0) {
         return {
             stageNumber: 2,
-            stageName: 'Climatización Controlada',
-            icon: '🌡️',
-            badgeBg: '#e0f2fe',
-            badgeColor: '#0369a1',
-            description: `Estamos regulando la temperatura ambiente entre 26°C y 29°C para que ${piggyName} se mantenga en óptimas condiciones.`
+            stageName: 'Preiniciador',
+            icon: '🥣',
+            badgeBg: '#fdf2f8',
+            badgeColor: '#db2777',
+            description: `${piggyName} recibe papilla tibia 4 a 6 veces al día para estimular su consumo de alimento sólido.`
         };
     }
-    if (p < 14.0) {
+    if (p < 15.0) {
         return {
             stageNumber: 3,
-            stageName: 'Adaptación de Corral',
-            icon: '🏡',
-            badgeBg: '#fdf4ff',
-            badgeColor: '#c026d3',
-            description: `${piggyName} se socializa en su nuevo espacio y reconoce los puntos de hidratación y alimentación.`
+            stageName: 'Iniciador Líquido',
+            icon: '🥣',
+            badgeBg: '#fdf2f8',
+            badgeColor: '#db2777',
+            description: `Transición a mezcla líquida de iniciador con agua para cuidar su digestión en desarrollo.`
         };
     }
-    if (p < 21.0) {
+    if (p < 20.0) {
         return {
             stageNumber: 4,
-            stageName: 'Nutrición Adaptativa',
-            icon: '🌾',
-            badgeBg: '#f0fdf4',
-            badgeColor: '#15803d',
-            description: `${piggyName} recibe su alimento pre-iniciador especializado para adaptar gradualmente su sistema digestivo.`
+            stageName: 'Iniciador Húmedo',
+            icon: '🥣',
+            badgeBg: '#fdf2f8',
+            badgeColor: '#db2777',
+            description: `Alimento en consistencia húmeda servido en comederos limpios para asegurar una ingesta óptima.`
         };
     }
-    if (p < 27.0) {
+    if (p < 25.0) {
         return {
             stageNumber: 5,
-            stageName: 'Nutrición Fortificada',
-            icon: '🍲',
-            badgeBg: '#fdf4ff',
-            badgeColor: '#a21caf',
-            description: `${piggyName} avanza en su plan nutricional con alimento de transición para fortalecer su flora intestinal.`
+            stageName: 'Alimento Seco Inicial',
+            icon: '🌾',
+            badgeBg: '#fefce8',
+            badgeColor: '#ca8a04',
+            description: `${piggyName} se alimenta con pellets secos de alta digestibilidad a libre voluntad.`
         };
     }
     if (p < 35.0) {
@@ -445,27 +512,4 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
         badgeColor: '#16a34a',
         description: `${piggyName} ha alcanzado su peso ideal de mercado y se prepara para ser trasladado de la granja.`
     };
-}
-
-/**
- * Format weight in kilograms.
- */
-export function formatWeight(weight) {
-    const num = Number(weight);
-    if (isNaN(num) || num <= 0) return '15.0 kg';
-    return `${num.toFixed(1)} kg`;
-}
-
-/**
- * Get Growth Phase Name by month number.
- */
-export function getGrowthPhaseName(monthNumber) {
-    const phases = {
-        1: 'Iniciación / Destete',
-        2: 'Crecimiento y Adaptación',
-        3: 'Desarrollo Muscular',
-        4: 'Engorde Acelerado',
-        5: 'Finalización de Engorde',
-    };
-    return phases[monthNumber] || 'Crecimiento Inicial';
 }

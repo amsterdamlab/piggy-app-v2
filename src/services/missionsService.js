@@ -362,13 +362,6 @@ export async function completeMissionOnVisit(missionKey) {
 }
 
 /**
- * Auto-complete mission on piggy purchase (M2).
- */
-export async function completeMissionOnPurchase() {
-    return completeMissionOnVisit('m2');
-}
-
-/**
  * Mark a mission as manually completed (legacy path for admin or special flows).
  * @param {string} missionKey
  */

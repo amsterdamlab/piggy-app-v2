@@ -1,145 +1,109 @@
--- ==============================================================================
--- PIGGY APP — Update Flash Missions: Custom Texts from DB
--- Ejecutar en el SQL Editor de Supabase
--- Permite personalizar desde BD: títulos, subtítulos, beneficios y etiquetas
--- ==============================================================================
-
--- 0. Eliminar triggers y funciones obsoletas que usaban la columna 'activated_at'
-DROP TRIGGER IF EXISTS trg_user_flash_mission_activated ON public.user_flash_missions;
-DROP FUNCTION IF EXISTS public.set_flash_mission_activated_at() CASCADE;
+-- ============================================================================
+-- PIGGY APP — Actualización de Textos Personalizables para Misiones Flash (M8)
+-- Permite al Administrador definir título de beneficio, descripción de beneficio,
+-- nombre comercial y duración en días para campañas Flash (30d, 45d, 60d, etc.).
+-- ============================================================================
 
 -- 1. Agregar columnas para textos personalizados a user_flash_missions
-ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS piggy_label TEXT NULL;
-ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_title TEXT NULL;
-ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS benefit_description TEXT NULL;
-ALTER TABLE public.user_flash_missions ADD COLUMN IF NOT EXISTS badge TEXT NULL;
+ALTER TABLE public.user_flash_missions
+    ADD COLUMN IF NOT EXISTS benefit_title TEXT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS benefit_description TEXT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS description TEXT DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS piggy_name TEXT DEFAULT NULL;
 
--- 2. Actualizar la función trigger para copiar y SINCRONIZAR todos los campos de texto al crear o editar plantillas globales
-CREATE OR REPLACE FUNCTION public.process_consolidated_flash_mission()
-RETURNS TRIGGER AS $$
+-- 2. Función RPC para que el Administrador asigne una Misión Flash con textos personalizables
+CREATE OR REPLACE FUNCTION public.admin_assign_flash_mission(
+    p_user_id UUID,
+    p_piggy_type TEXT,
+    p_price NUMERIC DEFAULT 1000000,
+    p_extra_roi NUMERIC DEFAULT 0,
+    p_cycle_days INT DEFAULT 30,
+    p_benefit_title TEXT DEFAULT NULL,
+    p_benefit_description TEXT DEFAULT NULL,
+    p_description TEXT DEFAULT NULL,
+    p_piggy_name TEXT DEFAULT NULL,
+    p_hours_duration INT DEFAULT 72
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-  v_profile RECORD;
-  v_template_id UUID;
+    v_mission_id BIGINT;
+    v_expires_at TIMESTAMPTZ;
 BEGIN
-  -- Solo se activa si es una PLANTILLA GLOBAL (user_id IS NULL)
-  IF NEW.user_id IS NULL THEN
-    v_template_id := NEW.id;
+    v_expires_at := NOW() + (p_hours_duration || ' hours')::INTERVAL;
 
-    -- CASO A: La plantilla está activa (is_active = TRUE)
-    IF NEW.is_active = TRUE THEN
-      FOR v_profile IN SELECT id FROM public.profiles LOOP
-        -- Si el usuario ya tiene una fila activa/no comprada de esta campaña, ACTUALIZAR TODOS los campos
-        IF EXISTS (
-          SELECT 1 FROM public.user_flash_missions
-          WHERE user_id = v_profile.id AND campaign_id = v_template_id AND is_purchased = FALSE
-        ) THEN
-          UPDATE public.user_flash_missions
-          SET
-            mission_title       = COALESCE(NEW.mission_title, 'MISIÓN FLASH'),
-            title               = NEW.title,
-            description         = NEW.description,
-            icon                = COALESCE(NEW.icon, '⚡'),
-            piggy_type          = NEW.piggy_type,
-            piggy_label         = NEW.piggy_label,
-            benefit_title       = NEW.benefit_title,
-            benefit_description = NEW.benefit_description,
-            badge               = NEW.badge,
-            price               = NEW.price,
-            is_active           = TRUE,
-            scheduled_at        = NEW.scheduled_at
-          WHERE user_id = v_profile.id AND campaign_id = v_template_id AND is_purchased = FALSE;
-        ELSE
-          -- Si no la tiene, INSERTAR copia con todos los campos
-          INSERT INTO public.user_flash_missions (
-            user_id,
-            campaign_id,
-            mission_title,
-            title,
-            description,
-            icon,
-            piggy_type,
-            piggy_label,
-            benefit_title,
-            benefit_description,
-            badge,
-            price,
-            is_active,
-            scheduled_at
-          ) VALUES (
-            v_profile.id,
-            v_template_id,
-            COALESCE(NEW.mission_title, 'MISIÓN FLASH'),
-            NEW.title,
-            NEW.description,
-            COALESCE(NEW.icon, '⚡'),
-            NEW.piggy_type,
-            NEW.piggy_label,
-            NEW.benefit_title,
-            NEW.benefit_description,
-            NEW.badge,
-            NEW.price,
-            TRUE,
-            NEW.scheduled_at
-          );
-        END IF;
-      END LOOP;
-      RAISE NOTICE 'Plantilla global de Misión Flash % sincronizada a todos los usuarios.', v_template_id;
+    -- Desactivar misiones flash previas activas del mismo tipo para este usuario
+    UPDATE public.user_flash_missions
+    SET is_active = FALSE
+    WHERE user_id = p_user_id 
+      AND piggy_type = p_piggy_type 
+      AND is_active = TRUE;
 
-    -- CASO B: La plantilla se desactiva (is_active pasa a FALSE)
-    ELSIF NEW.is_active = FALSE THEN
-      UPDATE public.user_flash_missions
-      SET is_active = FALSE
-      WHERE campaign_id = v_template_id AND is_purchased = FALSE;
-      RAISE NOTICE 'Plantilla global de Misión Flash % desactivada para todos los usuarios.', v_template_id;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 3. Actualizar trigger para nuevos usuarios registrados
-CREATE OR REPLACE FUNCTION public.assign_active_flash_missions_to_new_user()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_template RECORD;
-BEGIN
-  FOR v_template IN 
-    SELECT * FROM public.user_flash_missions 
-    WHERE user_id IS NULL AND is_active = TRUE AND (scheduled_at IS NULL OR NOW() < scheduled_at)
-  LOOP
+    -- Insertar la nueva misión flash con todos sus textos y atributos
     INSERT INTO public.user_flash_missions (
-      user_id,
-      campaign_id,
-      mission_title,
-      title,
-      description,
-      icon,
-      piggy_type,
-      piggy_label,
-      benefit_title,
-      benefit_description,
-      badge,
-      price,
-      is_active,
-      scheduled_at
+        user_id,
+        piggy_type,
+        price,
+        extra_roi_bonus,
+        cycle_duration_days,
+        benefit_title,
+        benefit_description,
+        description,
+        piggy_name,
+        is_active,
+        is_completed,
+        created_at,
+        activated_at,
+        expires_at
     ) VALUES (
-      NEW.id,
-      v_template.id,
-      COALESCE(v_template.mission_title, 'MISIÓN FLASH'),
-      v_template.title,
-      v_template.description,
-      COALESCE(v_template.icon, '⚡'),
-      v_template.piggy_type,
-      v_template.piggy_label,
-      v_template.benefit_title,
-      v_template.benefit_description,
-      v_template.badge,
-      v_template.price,
-      TRUE,
-      v_template.scheduled_at
+        p_user_id,
+        p_piggy_type,
+        p_price,
+        p_extra_roi,
+        p_cycle_days,
+        p_benefit_title,
+        p_benefit_description,
+        p_description,
+        p_piggy_name,
+        TRUE,
+        FALSE,
+        NOW(),
+        NOW(),
+        v_expires_at
+    )
+    RETURNING id INTO v_mission_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'mission_id', v_mission_id,
+        'user_id', p_user_id,
+        'piggy_type', p_piggy_type,
+        'expires_at', v_expires_at
     );
-  END LOOP;
-  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    RETURN jsonb_build_object(
+        'success', false,
+        'error', SQLERRM
+    );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
+
+-- 3. Otorgar permisos de ejecución para la función de asignación
+GRANT EXECUTE ON FUNCTION public.admin_assign_flash_mission(
+    UUID, TEXT, NUMERIC, NUMERIC, INT, TEXT, TEXT, TEXT, TEXT, INT
+) TO authenticated, service_role;
+
+-- 4. Actualizar misiones activas existentes para garantizar consistencia
+UPDATE public.user_flash_missions
+SET 
+    benefit_title = COALESCE(benefit_title, 'Retorno en Solo ' || cycle_duration_days || ' Días'),
+    benefit_description = COALESCE(benefit_description, 'Ciclo acelerado de ' || cycle_duration_days || ' días con el mismo 11.5% de retorno.'),
+    description = COALESCE(description, 'Un ciclo intensivo de ' || cycle_duration_days || ' días que maximiza tu tiempo de producción.'),
+    piggy_name = COALESCE(piggy_name, 'Piggy Avanzado (' || cycle_duration_days || ' Días)')
+WHERE is_active = TRUE 
+  AND benefit_title IS NULL;
+
+-- Notificación de éxito
+COMMENT ON TABLE public.user_flash_missions IS 'Almacena misiones flash personalizadas asignadas a usuarios con soporte de textos y duraciones dinámicas.';
