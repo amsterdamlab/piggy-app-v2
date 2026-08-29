@@ -144,40 +144,38 @@ async function loadGranjaData(firstName, sessionId) {
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    // IMPORTANTE: getActiveMissions() necesita conocer los piggies del usuario
-    // para calcular qué misiones están completadas. Si se ejecuta en paralelo
-    // con getUserPiggies(), AppState todavía está vacío → race condition.
-    const piggies = await getUserPiggies();
+    const piggies = await getUserPiggies().catch(e => {
+        console.warn('Error fetching piggies in Granja:', e);
+        return [];
+    });
     if (!isSessionActive()) return;
     AppState.set({ piggies });
 
-    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
-    // Se ejecuta antes de cargar misiones para que las M10 ya estén en BD
-    await detectAndCreateCycleMissions(piggies);
-    if (!isSessionActive()) return;
+    // ── Paso 2: detectar piggies que completaron ciclo en background ──────
+    detectAndCreateCycleMissions(piggies).catch(e => console.warn('Cycle missions check error:', e));
 
-    // ── Paso 3: cargar el resto de datos en paralelo ────────────────
+    // ── Paso 3: cargar el resto de datos en paralelo de forma resiliente ─
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
         transactions, newsSlides,
     ] = await Promise.all([
-      getRandomTip(),
-      getWalletBalance(),
-      getReferralBonusBalance(),
-      getActiveMissions(piggies),
-      getActiveUserFlashMissions(),
-      getActiveCycleMissions(),
-      getDashboardStats(piggies),
-      getWalletTransactions(),
-      getActiveNewsSlides(),
+      getRandomTip().catch(e => { console.warn('Tip error:', e); return null; }),
+      getWalletBalance().catch(e => { console.warn('Balance error:', e); return 0; }),
+      getReferralBonusBalance().catch(e => { console.warn('Referral error:', e); return 0; }),
+      getActiveMissions(piggies).catch(e => { console.warn('Active missions error:', e); return []; }),
+      getActiveUserFlashMissions().catch(e => { console.warn('Flash missions error:', e); return []; }),
+      getActiveCycleMissions().catch(e => { console.warn('Cycle missions error:', e); return []; }),
+      getDashboardStats(piggies).catch(e => { console.warn('Dashboard stats error:', e); return {}; }),
+      getWalletTransactions().catch(e => { console.warn('Transactions error:', e); return []; }),
+      getActiveNewsSlides().catch(e => { console.warn('News error:', e); return []; }),
     ]);
 
     if (!isSessionActive()) return;
 
     // Exponer misiones flash y de ciclo globalmente para que los modales puedan acceder
-    window._activeFlashMissions = flashMissions;
-    window._activeCycleMissions = cycleMissions;
+    window._activeFlashMissions = flashMissions || [];
+    window._activeCycleMissions = cycleMissions || [];
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
@@ -273,11 +271,11 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center;
-                    font-size: 18px;
-                    font-weight: 800;
-                    padding-bottom: 2px;
-                    position: relative;
+                    justify-content: center; 
+                    font-size: 18px; 
+                    font-weight: 800; 
+                    padding-bottom: 2px; 
+                    position: relative; 
                     z-index: 1;
                 ">+</div>
                 <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>

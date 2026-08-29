@@ -41,19 +41,15 @@ export async function getUserPiggies() {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return [];
 
-    // 1. Sincronizar pesos y marcar cerditos vencidos en DB ANTES de consultar
+    // 1. Sincronizar pesos y cerditos vencidos en background sin bloquear la carga inicial
     if (user) {
-        try {
-            await Promise.allSettled([
-                client.rpc('sync_piggy_weights', { p_user_id: user.id }),
-                client.rpc('mark_expired_piggies', { p_user_id: user.id })
-            ]);
-        } catch (syncErr) {
-            console.warn('Sync/expired RPC error:', syncErr);
-        }
+        Promise.allSettled([
+            client.rpc('sync_piggy_weights', { p_user_id: user.id }),
+            client.rpc('mark_expired_piggies', { p_user_id: user.id })
+        ]).catch(() => {});
     }
 
-    // 2. Consultar los piggies con su status y pesos actualizados
+    // 2. Consultar los piggies inmediatamente
     const { data, error } = await client
         .from('piggies')
         .select('*')
@@ -193,7 +189,7 @@ export async function buyPiggy(piggyName, contractUrl = null) {
 /**
  * Generate a stable hash number from a string (piggy ID) to pick a
  * consistent random photo (1-5) per piggy without changing on refresh.
- * @param {string} idStr
+ * @param {string} idStr 
  * @returns {number} 1 to 5
  */
 function getPiggyPhotoNumber(idStr) {
@@ -213,9 +209,9 @@ function getPiggyPhotoNumber(idStr) {
  *
  * Each piggy keeps the same number (n = 1-5) across all stages,
  * so the same animal is visually tracked through its growth.
- * @param {string} piggyId
- * @param {number} daysElapsed
- * @param {boolean} isComplete
+ * @param {string} piggyId 
+ * @param {number} daysElapsed 
+ * @param {boolean} isComplete 
  * @returns {string} Image URL
  */
 function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
@@ -235,7 +231,7 @@ function getPiggyImageUrl(piggyId, daysElapsed, isComplete) {
  * Extract or compute the display code for a piggy:
  * - With contract: 'PGY-TX-B843WD' (from contract_code, contract_url, or hash)
  * - Without contract: '#173802' (last 6 chars of ID)
- * @param {Object} piggy
+ * @param {Object} piggy 
  * @returns {string}
  */
 export function getPiggyDisplayCode(piggy) {
