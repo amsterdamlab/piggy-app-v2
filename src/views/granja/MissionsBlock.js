@@ -1,251 +1,396 @@
 /* ============================================
-   PIGGY APP — Missions Block (v2)
-   Granja section module: renders the top priority
-   active mission (M1-M7) as a high-visibility card,
-   and coordinates modals for M5, M6, etc.
+   PIGGY APP — Missions Block (Granja Section)
+   Renders dynamic mission banners for M1–M7.
+   M6 has a 2-stage 72h Silver Piggy countdown.
+   M8/M9: Flash missions (user-specific, manual).
+   M10: Cycle completion exclusive missions.
    ============================================ */
 
-import { renderIcon } from '../../icons.js';
 import { navigateTo } from '../../router.js';
-import { formatCOP } from '../../services/mockData.js';
 import { showSilverPiggyModal } from './SilverPiggyModal.js';
+import { showReferralModal } from './ReferralsModal.js';
+import { getMarketplaceItems } from '../../services/marketplaceService.js';
+import { showCheckoutModal } from '../MercadoView.js';
 import { showFlashMissionModal } from './FlashMissionModal.js';
 import { showCycleMissionModal } from './CycleMissionModal.js';
 import { getActiveMissions } from '../../services/missionsService.js';
-import {
-    getActiveUserFlashMissions,
-    getActiveCycleMissions,
-} from '../../services/flashMissionsService.js';
+import { getActiveUserFlashMissions, getActiveCycleMissions } from '../../services/flashMissionsService.js';
+import { AppState } from '../../state.js';
+import { triggerPWAInstall } from '../../services/pwaService.js';
+
+/** Active countdown interval for M6 banner */
+let _bannerCountdownInterval = null;
+
+/* ─── Priority Banner Entry Point ────────────
+   Shows flash missions (M8/M9) first, then
+   cycle missions (M10), then regular M1–M7.
+   ─────────────────────────────────────────── */
 
 /**
- * Render the Priority Mission Banner for Granja dashboard.
- * Priority hierarchy:
- *  1. Active Flash Mission (M8 / M9 - Gold/Advanced assigned to user)
- *  2. Completed Cycle Mission (M7 - Piggy cycle reached 100%)
- *  3. Standard pending mission with lowest sortOrder (M1 - M7)
- *  4. All completed state
- *
- * @param {Array} flashMissions - User's active flash missions from DB
- * @param {Array} cycleMissions - User's active cycle completion missions
- * @param {Array} activeMissions - Uncompleted standard missions
- * @param {number} piggyCount - Number of user piggies
- * @returns {string} HTML markup for the priority banner
+ * Refresca dinámicamente el banner de misiones en la interfaz sin recargar la página.
+ * Permite cambiar de Misión 3 a Misión 4 instantáneamente al abrir el modal de referidos.
  */
-export function renderPriorityMissionBanner(flashMissions = [], cycleMissions = [], activeMissions = [], piggyCount = 0) {
-    // ── Priority 1: Active Flash Mission (Manual Supabase campaign) ───────────
-    if (flashMissions.length > 0) {
-        const fm = flashMissions[0];
-        return renderFlashMissionCard(fm);
+export async function refreshMissionBanner() {
+    const container = document.getElementById('mission-banner-container');
+    if (!container) return;
+
+    try {
+        const piggies = AppState.get('piggies') || [];
+        const [activeMissions, flashMissions, cycleMissions] = await Promise.all([
+            getActiveMissions(piggies),
+            getActiveUserFlashMissions(),
+            getActiveCycleMissions()
+        ]);
+
+        window._activeFlashMissions = flashMissions;
+        window._activeCycleMissions = cycleMissions;
+
+        const newBannerHTML = renderPriorityMissionBanner(flashMissions || [], cycleMissions || [], activeMissions || [], piggies.length);
+        container.innerHTML = newBannerHTML;
+        attachMissionListeners();
+    } catch (e) {
+        console.warn('Error al refrescar el banner de misiones:', e);
+    }
+}
+
+/**
+ * Main entry point — renders the highest-priority mission banner.
+ * Priority: flashMissions > cycleMissions > regularMissions
+ * @param {Array} flashMissions  - Active M8/M9 records
+ * @param {Array} cycleMissions  - Active M10 records
+ * @param {Array} regularMissions - Active M1–M7 records
+ * @param {number} piggyCount
+ */
+export function renderPriorityMissionBanner(flashMissions, cycleMissions, regularMissions, piggyCount) {
+    window._refreshMissionBanner = refreshMissionBanner;
+    if (flashMissions && flashMissions.length > 0) {
+        return renderFlashMissionBanner(flashMissions[0]);
+    }
+    if (cycleMissions && cycleMissions.length > 0) {
+        return renderCycleMissionBanner(cycleMissions[0]);
+    }
+    return renderMissionBanner(regularMissions || [], piggyCount || 0);
+}
+
+/**
+ * Helper: format remaining time from a silverExpiry ISO string.
+ */
+function formatRemainingTime(silverExpiry) {
+    const ms = new Date(silverExpiry).getTime() - Date.now();
+    if (ms <= 0) return null; // expired
+    const hours   = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    return `${String(hours).padStart(2,'0')}h ${String(minutes).padStart(2,'0')}m`;
+}
+
+/**
+ * Render the banner for the first active mission.
+ * Each mission has a distinct premium banner design.
+ * @param {Array} activeMissions - List of non-completed, non-locked missions
+ * @param {number} piggyCount - Number of piggies the user has
+ */
+export function renderMissionBanner(activeMissions, piggyCount) {
+    // Clean up any previous countdown
+    if (_bannerCountdownInterval) {
+        clearInterval(_bannerCountdownInterval);
+        _bannerCountdownInterval = null;
     }
 
-    // ── Priority 2: Cycle Completion Mission (Piggy finished cycle) ──────────
-    if (cycleMissions.length > 0) {
-        const cm = cycleMissions[0];
-        return renderCycleCompletionCard(cm);
+    if (!activeMissions || activeMissions.length === 0) {
+        if (localStorage.getItem('piggy_hide_completed_missions_banner') === 'true') {
+            return '';
+        }
+
+        return `
+            <div class="section animate-fade-in-up" id="completed-missions-banner-section" style="animation-delay: 0.3s;">
+                <div style="
+                    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+                    border: 1px solid #a7f3d0; border-radius: 14px;
+                    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+                    position: relative; overflow: hidden;
+                ">
+                    <img src="/piggy-favicon.svg" alt="Piggy" style="width: 36px; height: 36px; flex-shrink: 0; object-fit: contain;" />
+                    <div style="flex: 1; padding-right: 20px; min-width: 0;">
+                        <div style="font-weight:800; color:#065f46; font-size:0.92rem; line-height:1.2;">¡Felicitaciones!</div>
+                        <div style="font-size:0.78rem; color:#047857; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.2;">Sigue creciendo tu granja Piggy.</div>
+                    </div>
+                    <button id="btn-close-completed-banner" onclick="
+                        localStorage.setItem('piggy_hide_completed_missions_banner', 'true');
+                        document.getElementById('completed-missions-banner-section')?.remove();
+                    " style="
+                        position: absolute; top: 10px; right: 12px; background: none; border: none;
+                        color: #065f46; font-size: 1.2rem; font-weight: 700; cursor: pointer;
+                        padding: 2px; line-height: 1; opacity: 0.7; transition: opacity 0.15s;
+                    " onmouseover="this.style.opacity='1';" onmouseout="this.style.opacity='0.7';">&times;</button>
+                </div>
+            </div>
+        `;
     }
 
-    // ── Priority 3: Next Uncompleted Standard Mission (M1-M7) ────────────────
-    if (activeMissions.length > 0) {
-        const next = activeMissions[0];
-        return renderStandardMissionCard(next);
-    }
+    const mission = activeMissions[0];
 
-    // ── Priority 4: All Missions Completed ──────────────────────────────────
+    switch (mission.id) {
+        case 'm1': return renderM1Banner(mission);
+        case 'm2': return renderM2Banner(mission);
+        case 'm3': return renderM3Banner(mission);
+        case 'm4': return renderM4Banner(mission);
+        case 'm5': return renderM5Banner(mission);
+        case 'm6': return renderM6Banner(mission);
+        case 'm7': return renderM7Banner(mission);
+        case 'm8': return renderM8Banner(mission);
+        case 'm9': return renderM9Banner(mission);
+        default:   return renderGenericBanner(mission);
+    }
+}
+
+/* ─── Individual Banner Renderers ─────────── */
+
+function renderM1Banner(mission) {
     return `
-        <div class="section animate-fade-in-up" id="misiones-section" style="animation-delay: 0.25s;">
-            <div class="card" style="
-                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-                border: 1px solid #bbf7d0; border-radius: 20px; padding: 20px; text-align: center;
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m1" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(245,158,11,0.4);
             ">
-                <div style="font-size: 36px; margin-bottom: 8px;">🌟</div>
-                <div style="font-weight: 800; color: #166534; font-size: 1rem; margin-bottom: 4px;">
-                    ¡Granja al Máximo Nivel!
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">🎁 MISIÓN 1</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Obtén tu Bono de Bienvenida</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Entra a nuestra Tienda y redime tu Bono de Consumo</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#d97706; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Ir a Tienda →
+                        </span>
+                    </div>
                 </div>
-                <div style="font-size: 0.8rem; color: #15803d; line-height: 1.4;">
-                    Has completado todas las misiones activas. Disfruta de tus beneficios y mantén tu producción al día.
-                </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">🎁</div>
             </div>
         </div>
     `;
 }
 
-/**
- * Render Flash Mission priority banner card.
- */
-function renderFlashMissionCard(fm) {
-    const rawType = (fm.piggy_type || 'avanzado30').toLowerCase();
-    const cycleDays = fm.cycle_duration_days || 30;
-    const price = parseFloat(fm.price || 1000000);
-
-    let gradient = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 60%, #4c1d95 100%)';
-    let shadowColor = 'rgba(109,40,217,0.35)';
-    let icon = '⚡';
-    let badgeText = `⚡ OFERTA FLASH · ${cycleDays} DÍAS`;
-    let label = fm.piggy_name || `Piggy Avanzado (${cycleDays}d)`;
-
-    if (rawType === 'gold' || rawType === 'dorado') {
-        gradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 60%, #b45309 100%)';
-        shadowColor = 'rgba(217,119,6,0.35)';
-        icon = '🥇';
-        badgeText = '🥇 OFERTA FLASH · DORADO';
-        label = fm.piggy_name || 'Piggy Dorado Flash (+2% ROI)';
-    } else if (rawType === 'plus' || rawType === 'silver') {
-        gradient = 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 60%, #0369a1 100%)';
-        shadowColor = 'rgba(2,132,199,0.35)';
-        icon = '🌟';
-        badgeText = '🌟 OFERTA FLASH · PLUS';
-        label = fm.piggy_name || 'Piggy Plus Flash (+1% ROI)';
-    } else if (rawType === 'premium') {
-        gradient = 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)';
-        shadowColor = 'rgba(219,39,119,0.35)';
-        icon = '💎';
-        badgeText = '💎 OFERTA FLASH · PREMIUM';
-        label = fm.piggy_name || 'Piggy Premium Flash (+3% ROI)';
-    }
-
+function renderM2Banner(mission) {
     return `
-        <div class="section animate-fade-in-up" id="misiones-section" style="animation-delay: 0.25s;">
-            <div class="section__header">
-                <h3 class="section__title">Misión Prioritaria</h3>
-                <span style="font-size:0.75rem; font-weight:800; color:#7c3aed; background:#f5f3ff; padding:3px 9px; border-radius:9999px;">
-                    Exclusiva
-                </span>
-            </div>
-
-            <div id="btn-open-flash-mission" class="card card--interactive btn-shine-7s" style="
-                background: ${gradient}; color: white; border: none; border-radius: 20px;
-                padding: 18px 20px; box-shadow: 0 10px 25px -5px ${shadowColor};
-                cursor: pointer; position: relative; overflow: hidden;
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m2" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(236,72,153,0.4);
             ">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="
-                        width: 52px; height: 52px; border-radius: 16px;
-                        background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 28px; flex-shrink: 0;
-                    ">
-                        ${icon}
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">🐷 MISIÓN 2</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu primer Piggy</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Recarga tu Wallet y empieza a hacer crecer tu granja</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#db2777; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Compra un Piggy →
+                        </span>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="
-                            font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
-                            text-transform: uppercase; opacity: 0.9; margin-bottom: 2px;
-                        ">
-                            ${badgeText}
-                        </div>
-                        <div style="font-weight: 900; font-size: 1.05rem; line-height: 1.2; margin-bottom: 3px;">
-                            ${label}
-                        </div>
-                        <div style="font-size: 0.78rem; opacity: 0.92;">
-                            ${fm.description || `Inversión ${formatCOP(price)} · Retorno garantizado`}
-                        </div>
-                    </div>
-                    <div style="font-size: 20px; opacity: 0.8; flex-shrink: 0;">→</div>
                 </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">🐷</div>
             </div>
         </div>
     `;
 }
 
-/**
- * Render Cycle Completion priority banner card.
- */
-function renderCycleCompletionCard(cm) {
-    const returnAmt = parseFloat(cm.return_amount || 1115000);
-    const piggyName = cm.piggy_name || 'Tu Piggy';
-
+function renderM3Banner(mission) {
     return `
-        <div class="section animate-fade-in-up" id="misiones-section" style="animation-delay: 0.25s;">
-            <div class="section__header">
-                <h3 class="section__title">Misión Prioritaria</h3>
-                <span style="font-size:0.75rem; font-weight:800; color:#059669; background:#ecfdf5; padding:3px 9px; border-radius:9999px;">
-                    ¡Completada!
-                </span>
-            </div>
-
-            <div id="btn-open-cycle-mission" class="card card--interactive btn-shine-7s" style="
-                background: linear-gradient(135deg, #059669 0%, #10b981 60%, #34d399 100%);
-                color: white; border: none; border-radius: 20px; padding: 18px 20px;
-                box-shadow: 0 10px 25px -5px rgba(16,185,129,0.4);
-                cursor: pointer; position: relative; overflow: hidden;
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m3" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(139,92,246,0.4);
             ">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="
-                        width: 52px; height: 52px; border-radius: 16px;
-                        background: rgba(255,255,255,0.22); backdrop-filter: blur(4px);
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 28px; flex-shrink: 0;
-                    ">
-                        🏆
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">📲 MISIÓN 3</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Invita a un amigo a Piggy</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Comparte tu código de referido y gana bonos de consumo</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#7c3aed; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Invitar Amigos →
+                        </span>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="
-                            font-size: 0.65rem; font-weight: 800; letter-spacing: 1px;
-                            text-transform: uppercase; opacity: 0.9; margin-bottom: 2px;
-                        ">
-                            🎉 ¡CICLO COMPLETADO!
-                        </div>
-                        <div style="font-weight: 900; font-size: 1.05rem; line-height: 1.2; margin-bottom: 3px;">
-                            ${piggyName} alcanzó peso final
-                        </div>
-                        <div style="font-size: 0.78rem; opacity: 0.92;">
-                            Liquidación: <strong>${formatCOP(returnAmt)}</strong> abonados a tu Cuenta Agro
-                        </div>
-                    </div>
-                    <div style="font-size: 20px; opacity: 0.8; flex-shrink: 0;">→</div>
                 </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">📲</div>
             </div>
         </div>
     `;
 }
 
-/**
- * Render Standard Mission priority banner card.
- */
-function renderStandardMissionCard(m) {
-    const timerBadge = m.hasFlashTimer && m.flashRemainingHours
-        ? `<span style="background:#fef2f2; color:#dc2626; font-size:0.68rem; font-weight:800; padding:2px 7px; border-radius:9999px;">⏳ ${m.flashRemainingHours}h restantes</span>`
-        : '';
-
+function renderM4Banner(mission) {
     return `
-        <div class="section animate-fade-in-up" id="misiones-section" style="animation-delay: 0.25s;">
-            <div class="section__header">
-                <h3 class="section__title">Misiones de Granja</h3>
-                <span style="font-size:0.75rem; font-weight:700; color:#ec4899; cursor:pointer;" id="btn-ver-todas-misiones">
-                    Misión ${m.missionNumber || 1} de 7
-                </span>
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m4" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(16,185,129,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">📱 MISIÓN 4</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Descarga Piggy en tu Celular</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Crea el acceso directo en tu pantalla de inicio</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#059669; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Descargar App →
+                        </span>
+                    </div>
+                </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">📱</div>
             </div>
+        </div>
+    `;
+}
 
-            <div class="card card--interactive" id="btn-mission-cta" data-cta="${m.cta || ''}" data-key="${m.key}" style="
-                background: white; border: 1px solid #fce7f3; border-radius: 20px;
-                padding: 16px 18px; box-shadow: 0 4px 15px rgba(236,72,153,0.06);
-                cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="
-                        width: 48px; height: 48px; border-radius: 14px;
-                        background: #fdf2f8; border: 1px solid #fce7f3;
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 24px; flex-shrink: 0;
-                    ">
-                        ${m.icon || '🎯'}
+function renderM5Banner(mission) {
+    return `
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m5" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #f59e0b 0%, #ca8a04 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(245,158,11,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">🏆 MISIÓN 5</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu 2do Piggy (Dorado)</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Aprovecha esta oportunidad exclusiva con comisión extra</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#ca8a04; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Ver Piggy Dorado →
+                        </span>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
-                            <span style="font-size:0.68rem; font-weight:800; color:#ec4899; text-transform:uppercase; letter-spacing:0.5px;">
-                                Misión ${m.missionNumber || 1}
-                            </span>
-                            ${timerBadge}
-                        </div>
-                        <div style="font-weight: 800; font-size: 0.98rem; color: #0f172a; line-height: 1.25; margin-bottom: 2px;">
-                            ${m.title}
-                        </div>
-                        <div style="font-size: 0.75rem; color: #64748b; line-height: 1.3;">
-                            🎁 ${m.reward}
-                        </div>
+                </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">🏆</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderM6Banner(mission) {
+    return `
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m6" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(14,165,233,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">💳 MISIÓN 6</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Añade tus Datos Bancarios</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Para recibir tus ganancias directamente en tu cuenta</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#0284c7; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Completar Datos →
+                        </span>
                     </div>
-                    <div style="font-size: 16px; color: #ec4899; flex-shrink: 0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">💳</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderM7Banner(mission) {
+    return `
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m7" data-cta="${mission.cta}" style="
+                background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(99,102,241,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">🤝 MISIÓN 7</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Conoce a Nuestros Aliados</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Descubre los aliados donde puedes redimir tus ganancias</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#4f46e5; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Ver Aliados →
+                        </span>
+                    </div>
+                </div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">🤝</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderM8Banner(mission) {
+    return renderM5Banner(mission);
+}
+
+function renderM9Banner(mission) {
+    return renderM7Banner(mission);
+}
+
+function renderGenericBanner(mission) {
+    return renderM1Banner(mission);
+}
+
+function renderFlashMissionBanner(fm) {
+    return `
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="flash-mission-banner" style="
+                background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(124,58,237,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">⚡ OFERTA FLASH EXCLUSIVA</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${fm.title || 'Piggy Flash Personalizado'}</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">${fm.description || 'Aprovecha esta oferta por tiempo limitado'}</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#6d28d9; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Ver Oferta Flash →
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderCycleMissionBanner(cm) {
+    return `
+        <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
+            <div class="banner banner--interactive" id="cycle-mission-banner" style="
+                background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+                border-radius: 16px; padding: 20px 24px; color: white;
+                position: relative; overflow: hidden; cursor: pointer;
+                box-shadow: 0 8px 25px -5px rgba(16,185,129,0.4);
+            ">
+                <div style="position:relative; z-index:2;">
+                    <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
+                        border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
+                        text-transform:uppercase; margin-bottom:10px;">🎉 CICLO COMPLETADO</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Tu Piggy finalizó su etapa</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Saldo acreditado en tu Cuenta Agro</div>
+                    <div style="margin-top:14px;">
+                        <span style="background:white; color:#059669; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Ver Liquidación →
+                        </span>
                     </div>
                 </div>
             </div>
@@ -254,46 +399,36 @@ function renderStandardMissionCard(m) {
 }
 
 /**
- * Attach listeners for mission cards and banner.
+ * Attach listeners for mission banners.
  */
 export function attachMissionListeners() {
-    // Flash mission card click
-    document.getElementById('btn-open-flash-mission')?.addEventListener('click', () => {
-        const fm = (window._activeFlashMissions || [])[0];
-        if (fm) showFlashMissionModal(fm);
-    });
+    document.getElementById('mission-banner')?.addEventListener('click', (e) => {
+        const banner = e.currentTarget;
+        const cta = banner.dataset.cta;
+        const mission = banner.dataset.mission;
 
-    // Cycle mission card click
-    document.getElementById('btn-open-cycle-mission')?.addEventListener('click', () => {
-        const cm = (window._activeCycleMissions || [])[0];
-        if (cm) showCycleMissionModal(cm);
-    });
-
-    // Standard mission CTA click
-    document.getElementById('btn-mission-cta')?.addEventListener('click', (e) => {
-        const card = e.currentTarget;
-        const cta = card.dataset.cta;
-        const key = card.dataset.key;
-
-        if (key === 'm5' || cta === 'open_buy_gold') {
-            const fm = (window._activeFlashMissions || []).find(m => m.piggy_type === 'gold' || m.piggy_type === 'dorado');
-            if (fm) {
-                showFlashMissionModal(fm);
-            } else {
-                navigateTo('mercado');
-            }
+        if (mission === 'm3' || cta === 'open_referidos') {
+            showReferralModal();
             return;
         }
 
-        if (cta === 'open_referidos' || key === 'm3') {
-            const { showReferralModal } = require ? require('./ReferralsModal.js') : {};
-            // If already loaded in GranjaView, trigger click on greeting referrals
-            document.getElementById('btn-greeting-referrals')?.click();
+        if (mission === 'm4' || cta === 'install_pwa') {
+            triggerPWAInstall();
             return;
         }
 
         if (cta && cta.startsWith('#/')) {
             navigateTo(cta.replace('#/', ''));
         }
+    });
+
+    document.getElementById('flash-mission-banner')?.addEventListener('click', () => {
+        const fm = (window._activeFlashMissions || [])[0];
+        if (fm) showFlashMissionModal(fm);
+    });
+
+    document.getElementById('cycle-mission-banner')?.addEventListener('click', () => {
+        const cm = (window._activeCycleMissions || [])[0];
+        if (cm) showCycleMissionModal(cm);
     });
 }

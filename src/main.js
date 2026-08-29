@@ -1,24 +1,27 @@
 /* ============================================
-   PIGGY APP — Main Application Entry Point
-   Initializes router, state, and services
+   PIGGY APP — Main Entry Point
+   Initializes the SPA and wires up all modules
    ============================================ */
 
+// Styles
 import './styles/tokens.css';
 import './styles/global.css';
 import './styles/components.css';
 import './styles/auth.css';
 import './styles/granja.css';
-import './styles/piggy-detail.css';
 import './styles/mercado.css';
-import './styles/adopcion.css';
-import './styles/contrato.css';
 import './styles/aliados.css';
+import './styles/piggy-detail.css';
+import './styles/adopcion.css';
+import './styles/header.css';
+import './styles/perfil.css';
+import './styles/contrato.css';
 
+// Core
 import { AppState } from './state.js';
+import { registerRoute, initRouter, navigateTo } from './router.js';
 import { initSupabase } from './services/supabase.js';
 import { checkSession } from './services/authService.js';
-import { registerRoute, initRouter, navigateTo } from './router.js';
-import { renderPiggyLoader } from './components/PiggyLoader.js';
 
 // Views
 import { renderAuthView } from './views/AuthView.js';
@@ -33,6 +36,7 @@ import { renderReferidosView } from './views/ReferidosView.js';
 import { renderProfileView } from './views/ProfileView.js';
 import { renderDescargarView } from './views/DescargarView.js';
 import { initPWAListener } from './services/pwaService.js';
+import { renderPiggyLoader } from './components/PiggyLoader.js';
 
 /**
  * Show loading screen while checking session.

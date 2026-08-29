@@ -366,16 +366,30 @@ function renderGreeting(firstName) {
 
 function renderEmptyPiggies() {
   return `
-    <div class="empty-state animate-fade-in-up">
-      <div class="empty-state__icon">
+    <div class="empty-state animate-fade-in-up" style="
+      background: white;
+      border: 2px dashed #fce7f3;
+      border-radius: 24px;
+      padding: 32px 20px;
+      text-align: center;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(236,72,153,0.04);
+    ">
+      <div class="empty-state__icon" style="
+        width: 80px; height: 80px; border-radius: 50%;
+        margin: 0 auto 16px; overflow: hidden;
+        border: 3px solid #fdf2f8; box-shadow: 0 4px 15px rgba(236,72,153,0.15);
+      ">
         <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
       </div>
-      <div class="empty-state__title">No tienes Piggys aún</div>
-      <div class="empty-state__description">
+      <div class="empty-state__title" style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin-bottom: 6px;">
+        No tienes Piggys aún
+      </div>
+      <div class="empty-state__description" style="font-size: 0.85rem; color: #64748b; line-height: 1.45; margin-bottom: 20px; max-width: 280px; margin-left: auto; margin-right: auto;">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
-      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="width:auto; padding:12px 24px;" onclick="location.hash='#/mercado'">
-        <span>+</span> Compra un nuevo Piggy
+      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="width:auto; padding:12px 28px; border-radius:12px; font-weight:800; display:inline-flex; align-items:center; gap:8px;" onclick="location.hash='#/mercado'">
+        <span style="font-size:1.1rem; font-weight:900;">+</span> Compra un nuevo Piggy
       </button>
     </div>
   `;

@@ -98,65 +98,63 @@
     /* Zoom in */
 }
 
-/* Buy Button — Full width of image container */
+/* Buy Button under Image */
 .mcard__buy-btn {
     width: 100%;
-    max-width: 110px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 0;
-    border-radius: var(--radius-md);
-    /* Less rounded for button under image */
+    padding: 9px var(--space-xs);
+    background: var(--gradient-cta);
+    color: var(--color-white);
     border: none;
-    background: var(--color-primary);
-    color: #fff;
-    font-size: 12px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
     font-weight: var(--font-bold);
     cursor: pointer;
-    transition: all var(--transition-fast);
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2xs);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: var(--shadow-primary);
 }
 
 .mcard__buy-btn:hover {
-    background: var(--color-primary-dark, #C2185B);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
 }
 
 .mcard__buy-btn:active {
-    transform: translateY(0);
+    transform: scale(0.98);
 }
 
-.mcard__buy-btn svg {
-    width: 14px;
-    height: 14px;
+.mcard__buy-btn .icon {
+    width: 15px;
+    height: 15px;
+    fill: currentColor;
 }
 
-/* ---- Right Column: Info ---- */
+/* ---- Right Column: Details ---- */
 .mcard__right {
     flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     padding: var(--space-md) var(--space-md) var(--space-md) 0;
     min-width: 0;
 }
 
 .mcard__name {
-    font-size: var(--text-lg);
-    /* Larger Name */
-    font-weight: var(--font-extrabold);
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
     color: var(--color-text-primary);
-    margin-bottom: 4px;
-    padding-right: 50px;
+    margin-bottom: 2px;
+    line-height: var(--leading-tight);
 }
 
 .mcard__desc {
     font-size: var(--text-xs);
     color: var(--color-text-secondary);
-    line-height: var(--leading-relaxed);
-    margin-bottom: var(--space-sm);
+    line-height: 1.3;
+    margin-bottom: var(--space-xs);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -164,184 +162,141 @@
     overflow: hidden;
 }
 
-/* Time Savings Badge — Green, top-left to complement ROI badge on right  */
-.mcard__time-badge {
-    position: absolute;
-    top: 10px;
-    left: 12px;
-    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
-    color: #2E7D32;
-    font-size: 10px;
-    font-weight: var(--font-bold);
-    padding: 3px 10px;
-    border-radius: var(--radius-full);
-    z-index: 2;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    letter-spacing: 0.02em;
-}
-
-/* Info Row — Structured Month / Days / Weight */
+/* ---- Info Row (Days Remaining + Weight) ---- */
 .mcard__info-row {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    background: linear-gradient(135deg, #FAFAFA, #F5F5F5);
+    gap: var(--space-md);
+    margin-bottom: var(--space-xs);
+    background: var(--color-bg);
+    padding: var(--space-xs) var(--space-sm);
     border-radius: var(--radius-md);
-    padding: 8px 10px;
-    margin-bottom: var(--space-sm);
 }
 
 .mcard__info-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    flex: 1;
-    gap: 2px;
 }
 
 .mcard__info-label {
-    font-size: 9px;
+    font-size: 10px;
+    color: var(--color-text-muted);
     font-weight: var(--font-medium);
-    color: var(--color-text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
 .mcard__info-value {
     font-size: var(--text-sm);
-    font-weight: var(--font-extrabold);
+    font-weight: var(--font-bold);
     color: var(--color-text-primary);
 }
 
-.mcard__info-value--month {
-    color: #7B1FA2;
-}
-
 .mcard__info-value--days {
-    color: #2E7D32;
+    color: var(--color-primary);
 }
 
 .mcard__info-divider {
     width: 1px;
-    height: 28px;
-    background: #E0E0E0;
-    flex-shrink: 0;
+    height: 24px;
+    background: var(--color-border);
 }
 
-/* Tags row */
-.mcard__tags {
-    display: flex;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
-}
-
-.mcard__tag {
-    font-size: 11px;
-    font-weight: var(--font-medium);
-    padding: 3px 10px;
-    border-radius: var(--radius-full);
-    background: #F5F5F5;
-    color: var(--color-text-secondary);
-}
-
-.mcard__tag--purple {
-    background: #F3E5F5;
-    color: #7B1FA2;
-}
-
-/* Price row (now just price info) */
+/* ---- Price Row ---- */
 .mcard__price-row {
     display: flex;
-    flex-direction: column;
-    margin-top: auto;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: var(--space-2xs);
+    border-top: 1px solid var(--color-border);
 }
 
 .mcard__price {
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
     font-weight: var(--font-extrabold);
     color: var(--color-text-primary);
-    line-height: 1.2;
 }
 
 .mcard__stock {
     font-size: 11px;
-    color: var(--color-text-tertiary);
-    margin-top: 2px;
+    color: var(--color-text-muted);
+    font-weight: var(--font-medium);
 }
 
-/* ---- Checkout Modal Styles (reused mostly, but good to ensure) ---- */
-.checkout-summary {
-    text-align: center;
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    margin-bottom: 20px;
+/* Category Ribbons & Time Badges */
+.mcard__ribbon {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: var(--font-bold);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.mcard__ribbon--dorado {
+    background: #FEF08A;
+    color: #854D0E;
+}
+
+.mcard__ribbon--avanzado {
+    background: #FFEDD5;
+    color: #9A3412;
+}
+
+.mcard__time-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(15, 23, 42, 0.75);
+    color: #F8FAFC;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    z-index: 2;
+    backdrop-filter: blur(4px);
 }
 
 /* ---- Empty State ---- */
 .mercado-empty {
-    text-align: center;
-    padding: var(--space-3xl) var(--space-lg);
-    color: var(--color-text-secondary);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-md);
-}
-
-/* Ribbon Styles for Piggies */
-.mcard__ribbon {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 85px;
-    height: 85px;
-    overflow: hidden;
-    z-index: 10;
-    pointer-events: none;
-}
-
-.mcard__ribbon span {
-    position: absolute;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    width: 120px;
-    height: 18px;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 800;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
-    text-transform: uppercase;
-    right: -25px;
-    top: 15px;
-    transform: rotate(45deg);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    letter-spacing: 0.05em;
-    line-height: 1;
-    padding-left: 10px;
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
 }
 
-.mcard__ribbon--advanced span,
-.mcard__ribbon--avanzado span,
-.mcard__ribbon--avanzado30 span,
-.mcard__ribbon--avanzado45 span,
-.mcard__ribbon--avanzado60 span,
-.mcard__ribbon--avanzado75 span,
-.mcard__ribbon--avanzado90 span {
-    background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+.mercado-empty__icon {
+    font-size: 48px;
+    margin-bottom: var(--space-md);
 }
 
-.mcard__ribbon--plus span,
-.mcard__ribbon--silver span {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+.mercado-empty__title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2xs);
 }
 
-.mcard__ribbon--dorado span,
-.mcard__ribbon--gold span {
-    background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);
+.mercado-empty__desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    max-width: 280px;
 }
 
-.mcard__ribbon--premium span {
-    background: linear-gradient(135deg, #EC4899 0%, #9D174D 100%);
+/* ---- Full Screen Checkout Modal ---- */
+.checkout-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background: var(--color-white);
+    z-index: 9999;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
