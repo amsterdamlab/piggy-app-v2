@@ -144,28 +144,41 @@ async function loadGranjaData(firstName, sessionId) {
     };
 
     // ── Paso 1: cargar piggies primero y actualizar AppState ────────────
-    const piggies = await getUserPiggies();
+    const piggies = await getUserPiggies().catch((err) => {
+      console.warn('⚠️ getUserPiggies error, using empty array:', err);
+      return [];
+    });
     if (!isSessionActive()) return;
-    AppState.set({ piggies });
+    AppState.set({ piggies: piggies || [] });
 
-    // ── Paso 2: detectar piggies que completaron ciclo en background ──────
-    detectAndCreateCycleMissions(piggies).catch(e => console.warn('Cycle missions check error:', e));
+    // ── Paso 2: detectar piggies que completaron ciclo y crear M10 si aplica ─
+    await detectAndCreateCycleMissions(piggies || []).catch((err) => {
+      console.warn('⚠️ detectAndCreateCycleMissions error:', err);
+    });
+    if (!isSessionActive()) return;
 
-    // ── Paso 3: cargar el resto de datos en paralelo ─────────────────────
+    // ── Paso 3: cargar el resto de datos en paralelo de forma segura ────
     const [
         tipData, walletBalance, referralBonus,
         activeMissions, flashMissions, cycleMissions, stats,
         transactions, newsSlides,
     ] = await Promise.all([
-      getRandomTip(),
-      getWalletBalance(),
-      getReferralBonusBalance(),
-      getActiveMissions(piggies),
-      getActiveUserFlashMissions(),
-      getActiveCycleMissions(),
-      getDashboardStats(piggies),
-      getWalletTransactions(),
-      getActiveNewsSlides(),
+      getRandomTip().catch(() => null),
+      getWalletBalance().catch(() => 0),
+      getReferralBonusBalance().catch(() => 0),
+      getActiveMissions(piggies).catch(() => []),
+      getActiveUserFlashMissions().catch(() => []),
+      getActiveCycleMissions().catch(() => []),
+      getDashboardStats(piggies).catch(() => ({
+        activeCount: (piggies || []).filter(p => !p.isComplete).length,
+        completedCount: (piggies || []).filter(p => p.isComplete).length,
+        baseROI: 0.223,
+        totalPiggies: (piggies || []).length,
+        activePiggies: (piggies || []).filter(p => !p.isComplete),
+        completedPiggies: (piggies || []).filter(p => p.isComplete),
+      })),
+      getWalletTransactions().catch(() => []),
+      getActiveNewsSlides().catch(() => []),
     ]);
 
     if (!isSessionActive()) return;
@@ -176,24 +189,27 @@ async function loadGranjaData(firstName, sessionId) {
 
     // wallet_balance = real cash (ciclos completados + recargas)
     // referral_balance = bonos de consumo por referidos (canje manual, NO suma al saldo)
-    stats.walletBalance          = walletBalance;
-    stats.referralBonus          = referralBonus;
-    stats.referralBonusFormatted = formatCOP(referralBonus);
-    stats.saldoDisponible        = walletBalance;
-    stats.saldoDisponibleFormatted = formatCOP(walletBalance);
-    stats.transactions           = transactions;
+    const resolvedStats = stats || {};
+    resolvedStats.walletBalance          = walletBalance || 0;
+    resolvedStats.referralBonus          = referralBonus || 0;
+    resolvedStats.referralBonusFormatted = formatCOP(referralBonus || 0);
+    resolvedStats.saldoDisponible        = walletBalance || 0;
+    resolvedStats.saldoDisponibleFormatted = formatCOP(walletBalance || 0);
+    resolvedStats.transactions           = transactions || [];
 
     const app = document.getElementById('app');
     if (!app || !isSessionActive()) return;
 
-    app.innerHTML = buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions);
+    app.innerHTML = buildGranjaFull(firstName, piggies || [], resolvedStats, tipData, activeMissions || [], flashMissions || [], cycleMissions || []);
 
     if (!isSessionActive()) return;
 
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
-    showNewsBillboardModal(newsSlides);
+    if (newsSlides && newsSlides.length > 0) {
+      showNewsBillboardModal(newsSlides);
+    }
 
-    attachGranjaListeners(piggies.length > 0, stats, piggies.length, piggies);
+    attachGranjaListeners((piggies || []).length > 0, resolvedStats, (piggies || []).length, piggies || []);
 
     // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
     startOnboardingTourIfEligible();
@@ -268,11 +284,11 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center; 
-                    font-size: 18px; 
-                    font-weight: 800; 
-                    padding-bottom: 2px; 
-                    position: relative; 
+                    justify-content: center;
+                    font-size: 18px;
+                    font-weight: 800;
+                    padding-bottom: 2px;
+                    position: relative;
                     z-index: 1;
                 ">+</div>
                 <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>
@@ -362,8 +378,9 @@ function renderGreeting(firstName) {
   `;
 }
 
-// ... renderEmptyPiggies remains the same ...
-
+/**
+ * Render empty piggies state matching screen2.png.
+ */
 function renderEmptyPiggies() {
   return `
     <div class="empty-state animate-fade-in-up" style="
@@ -470,20 +487,20 @@ export function renderPiggyCard(piggy, baseROI) {
 
 export function renderBottomNav(activeTab) {
   return `
-    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal">
-      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja" data-nav-tab="granja">
+    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
+      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
         <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
         <span>Granja</span>
       </a>
-      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado" data-nav-tab="mercado">
+      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
         <span class="bottom-nav__icon">${renderIcon('pigSide', '', '24')}</span>
         <span>Mercado</span>
       </a>
-      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet" data-nav-tab="gourmet">
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
         <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
         <span>Tienda</span>
       </a>
-      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados" data-nav-tab="aliados">
+      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
         <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
         <span>Aliados</span>
       </a>

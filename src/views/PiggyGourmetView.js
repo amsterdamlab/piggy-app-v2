@@ -92,11 +92,13 @@ export function renderPiggyGourmetView() {
 async function loadGourmetOffers() {
   try {
     const [offers, referralBonus, walletBalance, expiryInfo] = await Promise.all([
-      getGourmetOffers(),
-      getReferralBonusBalance(),
-      getWalletBalance(),
-      getWelcomeBonusExpiryInfo(),
-      new Promise(resolve => setTimeout(resolve, 500))
+      getGourmetOffers().catch(err => {
+        console.warn('⚠️ getGourmetOffers error, using fallback:', err);
+        return [];
+      }),
+      getReferralBonusBalance().catch(() => 0),
+      getWalletBalance().catch(() => 0),
+      getWelcomeBonusExpiryInfo().catch(() => null),
     ]);
 
     const userStats = {
@@ -377,335 +379,335 @@ function renderCustomOrderSection() {
       " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
         <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-        </svg>
-        Contactar Asesor
-      </button>
-    </div>
-  `;
+      </svg>
+      Contactar Asesor
+    </button>
+  </div>
+`;
 
-  document.getElementById('btn-custom-order-wa')?.addEventListener('click', () => {
-    window.open(buildCustomOrderWhatsAppLink(), '_blank');
-  });
+document.getElementById('btn-custom-order-wa')?.addEventListener('click', () => {
+  window.open(buildCustomOrderWhatsAppLink(), '_blank');
+});
 }
 
 /* ─── Interactive Checkout Modal ─── */
 
 function openGourmetCheckoutModal(offer, userStats) {
-  const existing = document.getElementById('gourmet-checkout-modal');
-  if (existing) existing.remove();
+const existing = document.getElementById('gourmet-checkout-modal');
+if (existing) existing.remove();
 
-  document.body.style.overflow = 'hidden';
+document.body.style.overflow = 'hidden';
 
-  const modal = document.createElement('div');
-  modal.id = 'gourmet-checkout-modal';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(15, 23, 42, 0.65)';
-  modal.style.backdropFilter = 'blur(8px)';
-  modal.style.webkitBackdropFilter = 'blur(8px)';
-  modal.style.zIndex = '99999';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.padding = '0';
+const modal = document.createElement('div');
+modal.id = 'gourmet-checkout-modal';
+modal.style.position = 'fixed';
+modal.style.inset = '0';
+modal.style.background = 'rgba(15, 23, 42, 0.65)';
+modal.style.backdropFilter = 'blur(8px)';
+modal.style.webkitBackdropFilter = 'blur(8px)';
+modal.style.zIndex = '99999';
+modal.style.display = 'flex';
+modal.style.alignItems = 'center';
+modal.style.justifyContent = 'center';
+modal.style.padding = '0';
 
-  const isBonusEligible = offer.price >= 150000;
-  const userBonus = userStats.referralBonus || 0;
+const isBonusEligible = offer.price >= 150000;
+const userBonus = userStats.referralBonus || 0;
 
-  // Initial payment selections
-  let useBonus = isBonusEligible && userBonus > 0;
+// Initial payment selections
+let useBonus = isBonusEligible && userBonus > 0;
 
-  const calculateTotals = () => {
-    let appliedBonus = 0;
-    if (useBonus && isBonusEligible && userBonus > 0) {
-      appliedBonus = Math.min(userBonus, offer.price);
-    }
+const calculateTotals = () => {
+  let appliedBonus = 0;
+  if (useBonus && isBonusEligible && userBonus > 0) {
+    appliedBonus = Math.min(userBonus, offer.price);
+  }
 
-    let cashDue = Math.max(0, offer.price - appliedBonus);
+  let cashDue = Math.max(0, offer.price - appliedBonus);
 
-    return {
-      appliedBonus,
-      appliedWallet: 0,
-      cashDue
-    };
+  return {
+    appliedBonus,
+    appliedWallet: 0,
+    cashDue
   };
+};
 
-  const renderContent = () => {
-    const { appliedBonus, cashDue } = calculateTotals();
+const renderContent = () => {
+  const { appliedBonus, cashDue } = calculateTotals();
 
-    return `
-      <div class="animate-scale-in" style="
-        width: 100%; max-width: 480px; max-height: 90dvh; background: white;
-        border-radius: 24px; display: flex; flex-direction: column; overflow: hidden;
-        position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); margin: 16px;
-      ">
-        <!-- Header -->
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #f1f5f9; background:white; flex-shrink:0;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:36px; height:36px; border-radius:10px; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 0 1-8 0"/>
+  return `
+    <div class="animate-scale-in" style="
+      width: 100%; max-width: 480px; max-height: 90dvh; background: white;
+      border-radius: 24px; display: flex; flex-direction: column; overflow: hidden;
+      position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35); margin: 16px;
+    ">
+      <!-- Header -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid #f1f5f9; background:white; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:1.15rem; font-weight:850; color:#0f172a; line-height:1.2;">Checkout del Pedido</div>
+            <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Granja Valle Morales</div>
+          </div>
+        </div>
+        <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:18px;">
+        
+        <!-- Selected Combo Summary -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+          <div style="width:100%;">
+            <h4 style="margin:0 0 6px; font-size:1.05rem; font-weight:850; color:#0f172a; line-height:1.3;">${offer.name}</h4>
+            <div style="font-size:0.82rem; color:#64748b; line-height:1.45;">${offer.description}</div>
+          </div>
+          <div style="border-top:1px dashed #e2e8f0; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.82rem; font-weight:700; color:#64748b;">Precio:</span>
+            <div style="font-size:1.25rem; font-weight:850; color:#0f172a;">${formatGourmetPrice(offer.price)}</div>
+          </div>
+        </div>
+
+        ${isBonusEligible ? `
+        <!-- Bono de Consumo Option -->
+        <label style="
+          background: ${userBonus > 0 ? '#fff1f2' : '#f8fafc'};
+          border: 1.5px solid ${userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
+          border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+          cursor: ${userBonus > 0 ? 'pointer' : 'default'}; opacity: ${userBonus > 0 ? '1' : '0.75'};
+          transition: all 0.2s;
+        ">
+          <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+            <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
               </svg>
             </div>
             <div>
-              <div style="font-size:1.15rem; font-weight:850; color:#0f172a; line-height:1.2;">Checkout del Pedido</div>
-              <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Granja Valle Morales</div>
-            </div>
-          </div>
-          <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
-        </div>
-
-        <!-- Scrollable Body -->
-        <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; gap:18px;">
-          
-          <!-- Selected Combo Summary -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
-            <div style="width:100%;">
-              <h4 style="margin:0 0 6px; font-size:1.05rem; font-weight:850; color:#0f172a; line-height:1.3;">${offer.name}</h4>
-              <div style="font-size:0.82rem; color:#64748b; line-height:1.45;">${offer.description}</div>
-            </div>
-            <div style="border-top:1px dashed #e2e8f0; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.82rem; font-weight:700; color:#64748b;">Precio:</span>
-              <div style="font-size:1.25rem; font-weight:850; color:#0f172a;">${formatGourmetPrice(offer.price)}</div>
+              <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Bono de Consumo</div>
+              <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Disponible: ${formatGourmetPrice(userBonus)}</div>
             </div>
           </div>
 
-          ${isBonusEligible ? `
-          <!-- Bono de Consumo Option -->
-          <label style="
-            background: ${userBonus > 0 ? '#fff1f2' : '#f8fafc'};
-            border: 1.5px solid ${userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
-            border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-            cursor: ${userBonus > 0 ? 'pointer' : 'default'}; opacity: ${userBonus > 0 ? '1' : '0.75'};
-            transition: all 0.2s;
-          ">
-            <div style="display:flex; align-items:center; gap:12px; min-width:0;">
-              <div style="width:36px; height:36px; border-radius:10px; background:white; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                </svg>
-              </div>
-              <div>
-                <div style="font-size:0.88rem; font-weight:800; color:#0f172a;">Bono de Consumo</div>
-                <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Disponible: ${formatGourmetPrice(userBonus)}</div>
-              </div>
-            </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${userBonus > 0 ? `
+              <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
+            ` : `
+              <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
+            `}
+          </div>
+        </label>
+        ` : ''}
 
-            <div style="display:flex; align-items:center; gap:8px;">
-              ${userBonus > 0 ? `
-                <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
-              ` : `
-                <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
-              `}
+        <!-- Desglose de Liquidación -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#475569;">
+            <span>Subtotal combo:</span>
+            <strong style="color:#0f172a;">${formatGourmetPrice(offer.price)}</strong>
+          </div>
+
+          ${appliedBonus > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#be1260;">
+              <span>Descuento Bono:</span>
+              <strong>-${formatGourmetPrice(appliedBonus)}</strong>
             </div>
-          </label>
           ` : ''}
 
-          <!-- Desglose de Liquidación -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#475569;">
-              <span>Subtotal combo:</span>
-              <strong style="color:#0f172a;">${formatGourmetPrice(offer.price)}</strong>
-            </div>
+          <div style="height:1px; background:#e2e8f0; margin:4px 0;"></div>
 
-            ${appliedBonus > 0 ? `
-              <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#be1260;">
-                <span>Descuento Bono:</span>
-                <strong>-${formatGourmetPrice(appliedBonus)}</strong>
-              </div>
-            ` : ''}
-
-            <div style="height:1px; background:#e2e8f0; margin:4px 0;"></div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">Total:</span>
-              <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">
-                ${formatGourmetPrice(cashDue)}
-              </span>
-            </div>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">Total:</span>
+            <span style="font-size:1.15rem; font-weight:850; color:#0f172a;">
+              ${formatGourmetPrice(cashDue)}
+            </span>
           </div>
-
         </div>
 
-        <!-- Footer Action Button -->
-        <div style="padding:16px 20px; border-top:1px solid #f1f5f9; background:white; flex-shrink:0;">
-          <button id="btn-confirm-gourmet-order" style="
-            width: 100%;
-            background: #22c55e;
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 9999px;
-            font-weight: 800;
-            font-size: 1.05rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
-            transition: all 0.2s;
-          " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-            </svg>
-            Confirmar Pedido
-          </button>
-        </div>
       </div>
-    `;
-  };
 
-  const updateModalDOM = () => {
-    modal.innerHTML = renderContent();
-    attachModalListeners();
-  };
+      <!-- Footer Action Button -->
+      <div style="padding:16px 20px; border-top:1px solid #f1f5f9; background:white; flex-shrink:0;">
+        <button id="btn-confirm-gourmet-order" style="
+          width: 100%;
+          background: #22c55e;
+          color: white;
+          border: none;
+          padding: 16px 20px;
+          border-radius: 9999px;
+          font-weight: 800;
+          font-size: 1.05rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+          </svg>
+          Confirmar Pedido
+        </button>
+      </div>
+    </div>
+  `;
+};
 
-  const closeModal = () => {
-    modal.remove();
-    document.body.style.overflow = '';
-  };
+const updateModalDOM = () => {
+  modal.innerHTML = renderContent();
+  attachModalListeners();
+};
 
-  const attachModalListeners = () => {
-    document.getElementById('btn-close-gourmet-modal')?.addEventListener('click', closeModal);
+const closeModal = () => {
+  modal.remove();
+  document.body.style.overflow = '';
+};
 
-    const bonusChk = document.getElementById('chk-use-bonus');
-    if (bonusChk) {
-      bonusChk.addEventListener('change', (e) => {
-        useBonus = e.target.checked;
-        updateModalDOM();
-      });
+const attachModalListeners = () => {
+  document.getElementById('btn-close-gourmet-modal')?.addEventListener('click', closeModal);
+
+  const bonusChk = document.getElementById('chk-use-bonus');
+  if (bonusChk) {
+    bonusChk.addEventListener('change', (e) => {
+      useBonus = e.target.checked;
+      updateModalDOM();
+    });
+  }
+
+  document.getElementById('btn-confirm-gourmet-order')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-confirm-gourmet-order');
+    if (btn) {
+      btn.innerText = 'Procesando pedido...';
+      btn.disabled = true;
     }
 
-    document.getElementById('btn-confirm-gourmet-order')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btn-confirm-gourmet-order');
-      if (btn) {
-        btn.innerText = 'Procesando pedido...';
-        btn.disabled = true;
+    const { appliedBonus, appliedWallet, cashDue } = calculateTotals();
+
+    // 1. Process bonus or wallet request in DB if applied
+    if (appliedBonus > 0) {
+      try {
+        await createWalletRequest('consumption', appliedBonus);
+      } catch (err) {
+        console.warn('Error saving consumption request:', err);
       }
+    }
 
-      const { appliedBonus, appliedWallet, cashDue } = calculateTotals();
-
-      // 1. Process bonus or wallet request in DB if applied
-      if (appliedBonus > 0) {
-        try {
-          await createWalletRequest('consumption', appliedBonus);
-        } catch (err) {
-          console.warn('Error saving consumption request:', err);
-        }
+    if (appliedWallet > 0) {
+      try {
+        await createWalletRequest('withdrawal', appliedWallet, `Compra Tienda: ${offer.name}`);
+      } catch (err) {
+        console.warn('Error saving wallet debit request:', err);
       }
+    }
 
-      if (appliedWallet > 0) {
-        try {
-          await createWalletRequest('withdrawal', appliedWallet, `Compra Tienda: ${offer.name}`);
-        } catch (err) {
-          console.warn('Error saving wallet debit request:', err);
-        }
-      }
-
-      // 2. Generate structured WhatsApp message
-      const { url, refId } = buildGourmetCheckoutWhatsAppLink({
-        offer,
-        appliedSaldo: appliedWallet,
-        appliedBonus,
-        cashDue
-      });
-
-      window.open(url, '_blank');
-
-      // 3. Close checkout and show receipt popup
-      closeModal();
-      showGourmetOrderSuccess({ offer, appliedBonus, appliedWallet, cashDue, refId });
+    // 2. Generate structured WhatsApp message
+    const { url, refId } = buildGourmetCheckoutWhatsAppLink({
+      offer,
+      appliedSaldo: appliedWallet,
+      appliedBonus,
+      cashDue
     });
-  };
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
+    window.open(url, '_blank');
+
+    // 3. Close checkout and show receipt popup
+    closeModal();
+    showGourmetOrderSuccess({ offer, appliedBonus, appliedWallet, cashDue, refId });
   });
+};
 
-  document.body.appendChild(modal);
-  updateModalDOM();
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+document.body.appendChild(modal);
+updateModalDOM();
 }
 
 /* ─── Gourmet Order Success Receipt Modal ─── */
 
 function showGourmetOrderSuccess({ offer, appliedBonus = 0, appliedWallet = 0, cashDue = 0, refId = '' }) {
-  const existing = document.getElementById('gourmet-order-success-modal');
-  if (existing) existing.remove();
+const existing = document.getElementById('gourmet-order-success-modal');
+if (existing) existing.remove();
 
-  document.body.style.overflow = 'hidden';
+document.body.style.overflow = 'hidden';
 
-  const modal = document.createElement('div');
-  modal.id = 'gourmet-order-success-modal';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(15, 23, 42, 0.7)';
-  modal.style.backdropFilter = 'blur(8px)';
-  modal.style.webkitBackdropFilter = 'blur(8px)';
-  modal.style.zIndex = '999999';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.padding = '16px';
+const modal = document.createElement('div');
+modal.id = 'gourmet-order-success-modal';
+modal.style.position = 'fixed';
+modal.style.inset = '0';
+modal.style.background = 'rgba(15, 23, 42, 0.7)';
+modal.style.backdropFilter = 'blur(8px)';
+modal.style.webkitBackdropFilter = 'blur(8px)';
+modal.style.zIndex = '999999';
+modal.style.display = 'flex';
+modal.style.alignItems = 'center';
+modal.style.justifyContent = 'center';
+modal.style.padding = '16px';
 
-  modal.innerHTML = `
-    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-      <div style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding:28px 24px; text-align:center; color:white;">
-        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#16a34a;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
-        <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:white;">¡Pedido Registrado!</h3>
-        <p style="margin:0; font-size:0.85rem; opacity:0.92;">Estamos listos para coordinar tu entrega</p>
+modal.innerHTML = `
+  <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
+    <div style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding:28px 24px; text-align:center; color:white;">
+      <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#16a34a;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
       </div>
-
-      <div style="padding:22px;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px; font-size:0.84rem; color:#334155;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Referencia:</span>
-            <strong style="color:#0f172a; font-family:monospace;">#${refId}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Combo:</span>
-            <strong style="color:#0f172a;">${offer.name}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Total Pedido:</span>
-            <strong style="color:#059669; font-size:0.95rem;">${formatGourmetPrice(offer.price)}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#64748b;">Por Pagar en Entrega:</span>
-            <strong style="color:#0f172a; font-weight:850;">${cashDue > 0 ? formatGourmetPrice(cashDue) : '$0'}</strong>
-          </div>
-        </div>
-
-        <p style="font-size:0.8rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
-          Hemos abierto el chat de WhatsApp con Granja Valle Morales para coordinar dirección y horario de entrega.
-        </p>
-
-        <button id="btn-close-gourmet-receipt" style="
-          width:100%; background:#0f172a; color:white; border:none; padding:14px;
-          border-radius:12px; font-weight:750; font-size:0.95rem; cursor:pointer;
-          box-shadow:0 4px 12px rgba(0,0,0,0.1); transition:all 0.2s;
-        " onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
-          Entendido
-        </button>
-      </div>
+      <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:white;">¡Pedido Registrado!</h3>
+      <p style="margin:0; font-size:0.85rem; opacity:0.92;">Estamos listos para coordinar tu entrega</p>
     </div>
-  `;
 
-  document.body.appendChild(modal);
+    <div style="padding:22px;">
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px; font-size:0.84rem; color:#334155;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Referencia:</span>
+          <strong style="color:#0f172a; font-family:monospace;">#${refId}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Combo:</span>
+          <strong style="color:#0f172a;">${offer.name}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Total Pedido:</span>
+          <strong style="color:#059669; font-size:0.95rem;">${formatGourmetPrice(offer.price)}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:#64748b;">Por Pagar en Entrega:</span>
+          <strong style="color:#0f172a; font-weight:850;">${cashDue > 0 ? formatGourmetPrice(cashDue) : '$0'}</strong>
+        </div>
+      </div>
 
-  const closeReceipt = () => {
-    modal.remove();
-    document.body.style.overflow = '';
-    // Refresh the view so balances are updated
-    renderPiggyGourmetView();
-  };
+      <p style="font-size:0.8rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
+        Hemos abierto el chat de WhatsApp con Granja Valle Morales para coordinar dirección y horario de entrega.
+      </p>
 
-  document.getElementById('btn-close-gourmet-receipt')?.addEventListener('click', closeReceipt);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
+      <button id="btn-close-gourmet-receipt" style="
+        width:100%; background:#0f172a; color:white; border:none; padding:14px;
+        border-radius:12px; font-weight:750; font-size:0.95rem; cursor:pointer;
+        box-shadow:0 4px 12px rgba(0,0,0,0.1); transition:all 0.2s;
+      " onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+        Entendido
+      </button>
+    </div>
+  </div>
+`;
+
+document.body.appendChild(modal);
+
+const closeReceipt = () => {
+  modal.remove();
+  document.body.style.overflow = '';
+  // Refresh the view so balances are updated
+  renderPiggyGourmetView();
+};
+
+document.getElementById('btn-close-gourmet-receipt')?.addEventListener('click', closeReceipt);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
 }

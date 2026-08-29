@@ -81,18 +81,20 @@ async function loadMarketplaceData() {
 }
 
 /**
- * Render items inside container with attached listeners.
+ * Render items list.
  */
 function renderItems(items) {
   const container = document.getElementById('mercado-content');
   if (!container) return;
 
-  if (!items || items.length === 0) {
+  // Filter out zero stock (service does it, but double check)
+  const availableItems = items.filter(item => item.stock > 0);
+
+  if (availableItems.length === 0) {
     container.innerHTML = `
-      <div class="mercado-empty">
-        <span class="mercado-empty__icon">🏷️</span>
-        <p class="mercado-empty__title">No hay productos disponibles</p>
-        <p class="mercado-empty__desc">Pronto añadiremos nuevos lotes de piggys al mercado.</p>
+      <div class="mercado-empty animate-fade-in-up">
+        <span style="font-size:48px;">🔍</span>
+        <p>No hay Piggies disponibles en este momento.</p>
       </div>
     `;
     return;
@@ -100,136 +102,81 @@ function renderItems(items) {
 
   container.innerHTML = `
     <div class="mercado-list">
-      ${items.map(renderItemCard).join('')}
+      ${availableItems.map(renderProductCard).join('')}
     </div>
   `;
 
-  // Attach Buy Action directly
-  items.forEach(item => {
-    const buyBtn = document.getElementById(`buy-${item.id}`);
-    if (buyBtn) {
-      buyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showCheckoutModal(item);
-      });
-    }
+  // Attach buy button listeners
+  availableItems.forEach(item => {
+    document.getElementById(`buy-${item.id}`)?.addEventListener('click', () => {
+      showCheckoutModal(item);
+    });
   });
 
-  // Attach Ribbon Click Listeners to show category info popup
-  document.querySelectorAll('.js-ribbon, .js-img-category').forEach(el => {
-    el.addEventListener('click', (e) => {
+  // Attach ribbon click listeners programmatically
+  container.querySelectorAll('.js-ribbon').forEach(ribbon => {
+    ribbon.addEventListener('click', (e) => {
       e.stopPropagation();
-      const cat = el.getAttribute('data-category');
-      showCategoryInfoModal(cat);
+      const category = ribbon.getAttribute('data-category');
+      if (category && window.showCategoryInfo) {
+        window.showCategoryInfo(category);
+      }
+    });
+  });
+
+  // Attach image click listeners for category info
+  container.querySelectorAll('.js-img-category').forEach(imgWrap => {
+    imgWrap.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const category = imgWrap.getAttribute('data-category');
+      if (category && window.showCategoryInfo) {
+        window.showCategoryInfo(category);
+      }
     });
   });
 }
 
 /**
- * Show Category Explanation Modal (Popup).
+ * Render a single horizontal product card.
+ * Layout: Image left, Buy button below image. Details right.
+ * Shows current_month and daysRemaining to motivate purchase of advanced piggies.
  */
-function showCategoryInfoModal(category) {
-  // Remove existing modal if any
-  const existing = document.getElementById('category-info-modal');
-  if (existing) existing.remove();
-
-  let title = '';
-  let badgeColor = '';
-  let badgeText = '';
-  let icon = '';
-  let description = '';
-
-  switch (category) {
-    case 'dorado':
-    case 'gold':
-      title = 'Categoría Dorado';
-      badgeColor = '#CA8A04';
-      badgeText = 'Dorados (+2% ROI)';
-      icon = '🥇';
-      description = 'Esta categoría es un lote premium exclusivo con un bono adicional del +2% de retorno garantizado sobre la inversión base. Ideal para maximizar tu rentabilidad en un ciclo estándar.';
-      break;
-    case 'avanzado':
-    case 'advanced':
-      title = 'Categoría Avanzado';
-      badgeColor = '#EA580C';
-      badgeText = 'Avanzados (Retorno Rápido)';
-      icon = '⚡';
-      description = 'Los cerdos de categoría Avanzado inician en etapas más maduras (mes 2 o mes 4), lo que reduce significativamente los días de ciclo restantes (114 o 54 días en lugar de 144) permitiendo liquidar tus ganancias mucho más rápido.';
-      break;
-    case 'oferta':
-    case 'offer':
-      title = 'Categoría Oferta';
-      badgeColor = '#E11D48';
-      badgeText = 'Oferta Especial';
-      icon = '🔥';
-      description = 'Lotes con precios promocionales por tiempo limitado o con bonificaciones adicionales de peso y margen comercial. ¡Aprovecha antes de que se agoten!';
-      break;
-    default:
-      return;
-  }
-
-  const modal = document.createElement('div');
-  modal.id = 'category-info-modal';
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '9999';
-
-  modal.innerHTML = `
-    <div class="modal animate-scale-in" style="max-width: 360px; padding: 24px 20px; text-align: center; border-radius: 20px;">
-      <div style="font-size: 40px; margin-bottom: 8px;">${icon}</div>
-      <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 6px;">${title}</h3>
-      <div style="display: inline-block; background: #fefce8; color: ${badgeColor}; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 12px; margin-bottom: 14px; border: 1px solid #fef08a;">
-        ${badgeText}
-      </div>
-      <p style="font-size: 0.88rem; color: #64748b; line-height: 1.5; margin-bottom: 20px; text-align: left;">
-        ${description}
-      </p>
-      <button class="btn btn--primary" id="btn-close-cat-modal" style="width: 100%; border-radius: 12px; padding: 10px 0; font-weight: 700;">
-        Entendido
-      </button>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  const closeBtn = document.getElementById('btn-close-cat-modal');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', () => modal.remove());
-  }
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.remove();
-  });
-}
-
-/**
- * Render single product card (matching exact image).
- */
-function renderItemCard(item) {
-  const currentMonth = item.current_month || item.stage || 1;
+function renderProductCard(item) {
+  const currentMonth = item.currentMonth || 1;
+  const daysRemaining = item.daysRemaining || (144 - (item.daysAdvanced || 0));
+  const daysSaved = item.daysAdvanced || Math.max(0, 144 - daysRemaining);
+  const isAdvanced = daysSaved > 0;
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  const photoNum = getMarketplacePhotoNumber(item.id);
-  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
-
-  // Determine category ribbons
-  const isDorado = item.category === 'dorado' || (item.extra_roi && item.extra_roi > 0);
-  const isAdvanced = item.days_advanced > 0;
-  const isEstandar = !isDorado && !isAdvanced;
-
-  let displayCategory = '';
-  let categoryKey = '';
-  if (isDorado) {
-    displayCategory = 'Dorado';
-    categoryKey = 'dorado';
-  } else if (isAdvanced) {
-    displayCategory = 'Avanzado';
-    categoryKey = 'avanzado';
+  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
+  if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
+    imgSrc = '/' + imgSrc;
   }
 
-  // Calculate days remaining dynamically: 144 - days_advanced
-  const CYCLE_TOTAL_DAYS = 144;
-  const daysAdvanced = item.days_advanced || 0;
-  const daysRemaining = item.days_remaining || Math.max(1, CYCLE_TOTAL_DAYS - daysAdvanced);
-  const daysSaved = daysAdvanced;
+  const categoryLabels = {
+    estandar: 'Estandar',
+    standard: 'Estandar',
+    estandard: 'Estandar',
+    avanzado: 'Avanzado',
+    advanced: 'Avanzado',
+    avanzado30: 'Avanzado',
+    advanced30: 'Avanzado',
+    avanzado45: 'Avanzado',
+    advanced45: 'Avanzado',
+    avanzado60: 'Avanzado',
+    advanced60: 'Avanzado',
+    avanzado75: 'Avanzado',
+    advanced75: 'Avanzado',
+    avanzado90: 'Avanzado',
+    advanced90: 'Avanzado',
+    plus: 'Plus',
+    silver: 'Plus',
+    dorado: 'Dorado',
+    gold: 'Dorado',
+    premium: 'Premium',
+  };
+  const categoryKey = item.category?.toLowerCase() || 'estandar';
+  const displayCategory = categoryLabels[categoryKey] || item.category;
+  const isEstandar = categoryKey === 'standard' || categoryKey === 'estandar' || categoryKey === 'estandard';
 
   const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
 
@@ -260,11 +207,11 @@ function renderItemCard(item) {
         <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
         <p class="mcard__desc">${item.description}</p>
 
-        <!-- Info Row: Days Remaining + Weight -->
+        <!-- Info Row: Month + Weight (Matches original design reference) -->
         <div class="mcard__info-row">
           <div class="mcard__info-item">
-            <span class="mcard__info-label">FALTAN</span>
-            <span class="mcard__info-value mcard__info-value--days">${daysRemaining} días</span>
+            <span class="mcard__info-label">MES</span>
+            <span class="mcard__info-value mcard__info-value--month">${currentMonth}</span>
           </div>
 
           <div class="mcard__info-divider"></div>
@@ -303,206 +250,520 @@ export function showCheckoutModal(item) {
   modal.style.position = 'fixed';
   modal.style.top = '0';
   modal.style.left = '0';
-  modal.style.width = '100vw';
+  modal.style.width = '100%';
   modal.style.height = '100dvh';
-  modal.style.background = 'white';
-  modal.style.zIndex = '9999';
-  modal.style.overflowY = 'auto';
+  modal.style.backgroundColor = 'var(--color-bg, #FDF2F5)'; // Light pink background matching app theme
+  modal.style.zIndex = '99999';
   modal.style.display = 'flex';
   modal.style.flexDirection = 'column';
+  modal.style.overflowY = 'auto'; // Internal scroll if needed
 
-  const currentMonth = item.current_month || item.stage || 1;
-  const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
-  const photoNum = getMarketplacePhotoNumber(item.id);
-  const imgSrc = item.image_url || `assets/piggies/stage${stage}/et${stage}-${photoNum}.jpg`;
+  const stage = (item.currentMonth || 1) >= 4 ? 3 : (item.currentMonth || 1) >= 2 ? 2 : 1;
+  let imgSrc = item.image_url || `/assets/piggies/stage${stage}/et${stage}-1.jpg`;
+  if (imgSrc && !imgSrc.startsWith('http') && !imgSrc.startsWith('/')) {
+    imgSrc = '/' + imgSrc;
+  }
 
-  const CYCLE_TOTAL_DAYS = 144;
-  const daysAdvanced = item.days_advanced || 0;
-  const daysRemaining = item.days_remaining || Math.max(1, CYCLE_TOTAL_DAYS - daysAdvanced);
-  const daysSaved = daysAdvanced;
-
-  const itemName = item.piggy_name || item.item_name || item.name || 'Piggy';
+  // Random names for suggestions (pick 3)
+  const suggestedNames = ['Bacon', 'Pumba', 'Rosita', 'Chuleta', 'Wilbur', 'Peggy', 'Torrezno', 'Gordi', 'Jamón'];
+  const shuffled = suggestedNames.sort(() => 0.5 - Math.random()).slice(0, 3);
 
   modal.innerHTML = `
-    <!-- Top Bar -->
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f1f5f9; position:sticky; top:0; background:white; z-index:10;">
-      <button id="btn-close-checkout" style="background:none; border:none; color:#1e293b; cursor:pointer; display:flex; align-items:center; padding:4px;">
-        ${renderIcon('arrowLeft', '', '22')}
-      </button>
-      <h3 style="margin:0; font-size:1.1rem; font-weight:800; color:#1e293b;">Resumen de Compra</h3>
-      <div style="width:24px;"></div>
-    </div>
+    <style>
+      @keyframes pulseGlow7s {
+        0%, 78%, 100% {
+          transform: scale(1);
+          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
+        }
+        83% {
+          transform: scale(1.03);
+          box-shadow: 0 12px 28px rgba(236, 72, 153, 0.7), 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+        88% {
+          transform: scale(0.99);
+          box-shadow: 0 6px 20px -4px rgba(236, 72, 153, 0.4);
+        }
+        93% {
+          transform: scale(1.02);
+          box-shadow: 0 10px 24px rgba(236, 72, 153, 0.6);
+        }
+      }
+      @keyframes shineSweep7s {
+        0%, 75% {
+          left: -120%;
+        }
+        88%, 100% {
+          left: 220%;
+        }
+      }
+      .btn-pulse-glow-7s {
+        position: relative !important;
+        overflow: hidden !important;
+        animation: pulseGlow7s 7s infinite ease-in-out !important;
+      }
+      .btn-pulse-glow-7s::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -120%;
+        width: 60%;
+        height: 200%;
+        background: linear-gradient(
+          90deg, 
+          rgba(255, 255, 255, 0) 0%, 
+          rgba(255, 255, 255, 0.55) 50%, 
+          rgba(255, 255, 255, 0) 100%
+        );
+        transform: rotate(25deg);
+        animation: shineSweep7s 7s infinite ease-in-out;
+        pointer-events: none;
+      }
+    </style>
 
-    <div style="padding: 20px; flex: 1; max-width: 480px; margin: 0 auto; width: 100%;">
-
-      <!-- Item Preview Card -->
-      <div style="display:flex; gap:16px; background:#f8fafc; padding:16px; border-radius:16px; border:1px solid #e2e8f0; margin-bottom:20px;">
-        <img src="${imgSrc}" alt="${itemName}" style="width:80px; height:80px; border-radius:12px; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
-        <div style="flex:1;">
-          <h4 style="margin:0 0 4px; font-size:1.05rem; font-weight:800; color:#0f172a;">${itemName}</h4>
-          <p style="margin:0 0 8px; font-size:0.8rem; color:#64748b;">${item.description}</p>
-          <div style="display:flex; gap:12px; font-size:0.75rem; font-weight:700;">
-            <span style="color:#0284c7; background:#e0f2fe; padding:2px 8px; border-radius:6px;">Faltan ${daysRemaining} días</span>
-            <span style="color:#475569; background:#f1f5f9; padding:2px 8px; border-radius:6px;">Peso: ${item.current_weight || 15} kg</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Piggy Name Input Field -->
-      <div style="margin-bottom: 24px;">
-        <label for="input-piggy-custom-name" style="display:block; font-size:0.85rem; font-weight:700; color:#1e293b; margin-bottom:8px;">
-          ¿Cómo quieres llamar a tu Piggy?
-        </label>
-        <div style="position:relative;">
-          <input 
-            type="text" 
-            id="input-piggy-custom-name" 
-            placeholder="Ej: Pochito, Tocino, Bacon..." 
-            value="${itemName}" 
-            maxlength="25"
-            style="
-              width: 100%;
-              padding: 12px 16px;
-              border: 1.5px solid #cbd5e1;
-              border-radius: 12px;
-              font-size: 0.95rem;
-              font-family: inherit;
-              font-weight: 600;
-              color: #0f172a;
-              background: #f8fafc;
-              outline: none;
-              transition: border-color 0.2s, background 0.2s;
-            "
-            onfocus="this.style.borderColor='#ec4899'; this.style.background='#ffffff';"
-            onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
-          />
-        </div>
-        <span style="display:block; font-size:0.72rem; color:#64748b; margin-top:4px;">
-          Este nombre se registrará en tu contrato y aparecerá en tu Granja.
-        </span>
-      </div>
-
-      <!-- Financial Calculation -->
-      <div style="background:white; border:1px solid #f1f5f9; border-radius:16px; padding:16px; box-shadow:0 4px 15px rgba(0,0,0,0.03); margin-bottom:24px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem; color:#64748b;">
-          <span>Precio del Cerdo</span>
-          <span style="font-weight:700; color:#0f172a;">${item.priceFormatted}</span>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.9rem; color:#64748b;">
-          <span>Garantía de Cuidado</span>
-          <span style="font-weight:700; color:#10b981;">Incluida (Gratis)</span>
-        </div>
-
-        <div style="height:1px; background:#f1f5f9; margin:12px 0;"></div>
-
-        <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:800; color:#0f172a;">
-          <span>Total a Pagar</span>
-          <span style="color:#ec4899;">${item.priceFormatted}</span>
-        </div>
-      </div>
-
-      <!-- Wallet Balance Check -->
-      <div id="wallet-status-box" style="padding:16px; border-radius:16px; margin-bottom:24px; background:#f8fafc; border:1px solid #e2e8f0;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <div style="font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">Saldo en Cuenta Agro</div>
-            <div id="checkout-wallet-balance" style="font-size:1.2rem; font-weight:800; color:#0f172a; margin-top:2px;">Cargando...</div>
-          </div>
-          <button id="btn-quick-recharge" class="btn btn--outline btn--sm" style="display:none; border-color:#ec4899; color:#ec4899; font-weight:700;">
-            Recargar
+    <!-- Checkout Header matching Ciclos Completados structure -->
+    <div style="padding: 20px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h2 style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Pasarela de Pago</h2>
+          <button id="checkout-close-btn" style="
+              background: none; 
+              border: none; 
+              cursor: pointer; 
+              color: #64748b; 
+              font-size: 1.3rem; 
+              font-weight: 600; 
+              padding: 4px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              transition: color 0.2s;"
+              onmouseover="this.style.color='#0f172a';"
+              onmouseout="this.style.color='#64748b'">
+              ✕
           </button>
         </div>
+        <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
+    </div>
+    
+    <!-- Checklist Body -->
+    <div class="checkout-body" style="padding: 20px 20px 16px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; background: var(--color-bg, #FDF2F5);">
+      
+      <!-- Summary Section (Integrated with light pink background) -->
+      <div class="checkout-summary" style="
+          width: 100%; 
+          max-width: 400px; 
+          text-align: center; 
+          background: transparent;
+          padding: 0;
+          margin-bottom: 20px;">
+          
+          <div style="
+              width: 76px; 
+              height: 76px; 
+              margin: 0 auto 12px; 
+              border-radius: 50%; 
+              overflow: hidden;
+              border: 3px solid white;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+              <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.src='pig2.jpg'">
+          </div>
+          
+          <h2 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em;">¡Compra tu Piggy!</h2>
+          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
+            Un nuevo integrante para que tu granja siga creciendo desde
+          </p>
+          <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price)}</div>
       </div>
 
-      <!-- Error / Notice Box -->
-      <div id="checkout-error" style="display:none; padding:12px 16px; background:#fef2f2; border:1px solid #fecaca; border-radius:12px; color:#b91c1c; font-size:0.85rem; margin-bottom:16px;"></div>
+      <!-- Custom Name Input Section -->
+      <div class="form-group" style="width: 100%; max-width: 400px; margin-bottom: 24px; text-align: center;">
+           
+           <div style="margin-bottom: 12px;">
+                <input type="text" id="piggy-custom-name" 
+                       placeholder="Ponle un nombre a tu Piggy"
+                       autocomplete="off"
+                       style="
+                           width: 100%;
+                           padding: 14px 16px;
+                           border: 2px solid #fce7f3;
+                           border-radius: 14px;
+                           font-size: 1rem;
+                           font-weight: 600;
+                           color: var(--color-text-primary);
+                           outline: none;
+                           text-align: center;
+                           transition: all 0.2s;
+                           box-sizing: border-box;
+                           background: #fff;
+                       "
+                       onfocus="this.style.borderColor='var(--color-primary)'; this.style.boxShadow='0 0 0 4px rgba(236, 72, 153, 0.1)';"
+                       onblur="this.style.borderColor='#fce7f3'; this.style.boxShadow='none';"
+                />
+           </div>
 
-      <!-- Action Button -->
-      <button id="btn-confirm-purchase" class="btn btn--primary btn--lg btn-shine-7s" style="width:100%; border-radius:14px; font-weight:800;">
-        Continuar al Contrato Digital →
-      </button>
+           <!-- Name Suggestions (3 White Pills with 1px Intense Pink Border) -->
+           <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+               ${shuffled.map(name => `
+                  <button class="name-pill" style="
+                      background: white; 
+                      color: #db2777; 
+                      border: 1px solid #ec4899; 
+                      padding: 7px 16px; 
+                      border-radius: 20px; 
+                      font-size: 0.85rem; 
+                      font-weight: 700; 
+                      cursor: pointer;
+                      box-shadow: 0 2px 6px rgba(236, 72, 153, 0.08);
+                      transition: all 0.2s;
+                  " 
+                  onmouseover="this.style.background='#fdf2f8'; this.style.transform='translateY(-1px)';"
+                  onmouseout="this.style.background='white'; this.style.transform='translateY(0)';"
+                  onclick="selectPiggyName('${name}')">${name}</button>
+               `).join('')}
+           </div>
+           
+           <div class="text-xs text-muted mt-sm fade-in" id="name-error" style="opacity:0; color:var(--color-primary); margin-top:8px;">
+                * Debes darle un nombre para continuar
+           </div>
+      </div>
 
-      <p style="text-align:center; font-size:0.75rem; color:#94a3b8; margin-top:12px;">
-        Firmarás el contrato oficial con respaldo legal de Granja Villa Morales.
-      </p>
+      <!-- Wallet Section -->
+      <div id="wallet-checkout-section" style="width: 100%; max-width: 400px; transition: opacity 0.3s;">
+        
+        <!-- Balance Display -->
+        <div style="
+          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+          border-radius: 16px;
+          padding: 18px 20px;
+          margin-bottom: 12px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Wallet</div>
+          <div id="wallet-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px; line-height:1;">
+            <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
+          </div>
+          <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.1;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+        </div>
 
+        <!-- Recharge Button -->
+        <button id="btn-recargar-checkout" style="
+          width: 100%;
+          background: linear-gradient(135deg, #7c3aed, #5b21b6);
+          color: white;
+          border: none;
+          padding: 14px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          transition: all 0.2s;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Recargar mi Cuenta
+        </button>
+
+        <!-- Insufficient funds notice (shown when balance < price) -->
+        <div id="insufficient-funds-notice" style="
+          background:#fef2f2;
+          border:1px solid #fecaca;
+          border-radius:10px;
+          padding:12px 16px;
+          font-size:0.82rem;
+          color:#dc2626;
+          text-align:center;
+          margin-bottom:12px;
+          display:none;
+        ">
+          Saldo insuficiente. Recarga tu Cuenta para continuar.
+        </div>
+
+        <!-- Confirm Purchase Button (with 7s pulse & glow animation) -->
+        <button id="btn-confirm-purchase" class="btn-pulse-glow-7s" style="
+          width: 100%;
+          background: linear-gradient(135deg, #ec4899, #db2777);
+          color: white;
+          border: none;
+          padding: 14px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 6px 20px -4px rgba(236,72,153,0.4);
+          transition: all 0.2s;
+          opacity: 0.5;
+          pointer-events: none;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+          <span>Confirmar Compra</span>
+        </button>
+      </div>
+
+      <div class="checkout-footer" style="margin-top: 16px; padding-top: 12px; padding-bottom: 16px; display: flex; justify-content: center;">
+         <div class="secure-badge" style="display: flex; gap: 20px; color: #94a3b8; font-size: 0.78rem; font-weight: 600; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Pagos seguros
+            </span>
+            <span style="display: flex; align-items: center; gap: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Cifrado SSL
+            </span>
+         </div>
+      </div>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // 2. Check Balance and Wire Up Listeners
+  // --- Logic ---
+
+  const input = document.getElementById('piggy-custom-name');
+  const walletSection = document.getElementById('wallet-checkout-section');
+  const balanceDisplay = document.getElementById('wallet-balance-display');
+  const insufficientNotice = document.getElementById('insufficient-funds-notice');
+  const confirmBtn = document.getElementById('btn-confirm-purchase');
+  const errorMsg = document.getElementById('name-error');
+  const recargarBtn = document.getElementById('btn-recargar-checkout');
+  const ADMIN_WHATSAPP = '573154870448';
+
   let currentBalance = 0;
+
+  // Load wallet balance
   getWalletBalance().then(balance => {
     currentBalance = balance;
-    const balanceEl = document.getElementById('checkout-wallet-balance');
-    const rechargeBtn = document.getElementById('btn-quick-recharge');
-    const confirmBtn = document.getElementById('btn-confirm-purchase');
+    balanceDisplay.textContent = formatCOP(balance);
+    updatePurchaseState(input.value.trim());
+  }).catch(() => {
+    balanceDisplay.textContent = '$0';
+    updatePurchaseState(input.value.trim());
+  });
 
-    if (balanceEl) {
-      balanceEl.textContent = formatCOP(balance);
+  // Helper: update button states based on name + balance
+  const updatePurchaseState = (nameVal) => {
+    const nameValid = nameVal.length >= 3;
+    const hasFunds = currentBalance >= item.price;
+
+    // The wallet section itself should always be visible and active so the user can see their balance and click "Recargar mi Cuenta"
+    walletSection.style.opacity = '1';
+    walletSection.style.pointerEvents = 'auto';
+
+    // Show/hide insufficient funds notice and recharge button
+    insufficientNotice.style.display = !hasFunds ? 'block' : 'none';
+    recargarBtn.style.display = !hasFunds ? 'flex' : 'none';
+
+    // Enable confirm button directly if they have sufficient funds
+    if (hasFunds) {
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.pointerEvents = 'auto';
+    } else {
+      confirmBtn.style.opacity = '0.5';
+      confirmBtn.style.pointerEvents = 'none';
     }
 
-    if (balance < item.price) {
-      if (rechargeBtn) rechargeBtn.style.display = 'block';
-      if (confirmBtn) {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Saldo Insuficiente';
-        confirmBtn.style.opacity = '0.6';
-      }
+    // Name validation feedback
+    if (nameValid) {
+      errorMsg.style.opacity = '0';
+      input.style.borderColor = '#10B981';
+    } else if (nameVal.length > 0) {
+      errorMsg.style.opacity = '1';
+      errorMsg.textContent = '* El nombre debe tener al menos 3 caracteres';
+      input.style.borderColor = '#dc2626';
+    } else {
+      errorMsg.style.opacity = '0';
+      input.style.borderColor = '#fce7f3';
+    }
+  };
+
+  // Input listener
+  input.addEventListener('input', () => updatePurchaseState(input.value.trim()));
+
+  // Suggestion Pills
+  window.selectPiggyName = (name) => {
+    input.value = name;
+    updatePurchaseState(name);
+    input.focus();
+  };
+
+  // Close Logic
+  const close = () => {
+    document.body.style.overflow = '';
+    delete window.selectPiggyName;
+    modal.remove();
+  };
+
+  document.getElementById('checkout-close-btn').addEventListener('click', close);
+
+  // Recargar Wallet
+  recargarBtn.addEventListener('click', async () => {
+    const originalText = recargarBtn.innerHTML;
+    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+    recargarBtn.style.pointerEvents = 'none';
+    try {
+      await openWalletDrawer(true);
+      close();
+    } catch (e) {
+      console.error('Error opening wallet from mercado view:', e);
+      recargarBtn.innerHTML = originalText;
+      recargarBtn.style.pointerEvents = 'auto';
     }
   });
 
-  // Close Modal Handler
-  document.getElementById('btn-close-checkout').addEventListener('click', () => {
-    document.body.style.overflow = '';
-    modal.remove();
-  });
-
-  // Quick Recharge Button -> Opens recharge instruction modal
-  document.getElementById('btn-quick-recharge').addEventListener('click', () => {
-    document.body.style.overflow = '';
-    modal.remove();
-    openWalletRechargeInfo();
-  });
-
-  // Confirm Purchase Handler -> Navigate directly to ContratoView
-  document.getElementById('btn-confirm-purchase').addEventListener('click', async () => {
-    const confirmBtn = document.getElementById('btn-confirm-purchase');
-    const errorEl = document.getElementById('checkout-error');
-    const customNameInput = document.getElementById('input-piggy-custom-name');
-    const chosenName = (customNameInput ? customNameInput.value.trim() : '') || itemName;
-
-    if (currentBalance < item.price) {
-      errorEl.textContent = 'Saldo insuficiente para completar la compra.';
-      errorEl.style.display = 'block';
+  // Confirm Purchase -> Navigate to Contract Signing
+  confirmBtn.addEventListener('click', () => {
+    const customName = input.value.trim();
+     
+    // Check name validation on click
+    if (customName.length < 3) {
+      errorMsg.style.opacity = '1';
+      errorMsg.textContent = '* Debes darle un nombre de al menos 3 letras a tu cerdito';
+      input.style.borderColor = '#dc2626';
+      input.focus();
       return;
     }
 
-    // Set pending adoption in AppState and navigate to ContratoView for digital signature
-    AppState.set({
-      pendingAdoption: {
-        item: {
-          ...item,
-          name: chosenName,
-          piggy_name: chosenName,
-          title: chosenName,
-          price: item.price,
-          cycleDays: daysRemaining,
-          cycle_duration_days: daysRemaining,
-          initial_weight: item.current_weight || 15.0,
-          target_weight: 110.0,
-          image_url: imgSrc,
-          imageUrl: imgSrc,
-          extraRoi: item.extra_roi || 0,
-        },
-        customName: chosenName,
-      }
-    });
+    if (currentBalance < item.price) return;
 
-    document.body.style.overflow = '';
-    modal.remove();
-    navigateTo('contrato');
+    // Save pending purchase details in session
+    sessionStorage.setItem('pending_piggy_name', customName);
+    sessionStorage.setItem('pending_marketplace_item', JSON.stringify(item));
+
+    close();
+    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${item.price}`);
   });
 }
+
+/**
+ * Show premium, dorado, plus, avanzado category explanations in a custom popup modal.
+ */
+window.showCategoryInfo = (category) => {
+  const existing = document.getElementById('category-info-popup');
+  if (existing) existing.remove();
+
+  const normalized = (category || '').toLowerCase();
+  const infoTexts = {
+    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
+    dorado: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
+    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
+    plus: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
+    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
+    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    avanzado30: 'Cerdito con 30 días de engorde avanzado (114 días restantes). Ahorra 1 mes de espera.',
+    avanzado45: 'Cerdito con 45 días de engorde avanzado (99 días restantes). Ahorra 1.5 meses de espera.',
+    avanzado60: 'Cerdito con 60 días de engorde avanzado (84 días restantes). Ahorra 2 meses de espera.',
+    avanzado75: 'Cerdito con 75 días de engorde avanzado (69 días restantes). Ahorra 2.5 meses de espera.',
+    avanzado90: 'Cerdito con 90 días de engorde avanzado (54 días restantes). Máximo ahorro de tiempo.',
+    estandar: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
+    standard: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
+  };
+
+  const text = infoTexts[normalized] || 'Cerdito exclusivo disponible en el mercado Piggy.';
+
+  const colors = {
+    premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
+    dorado: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
+    gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
+    plus: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
+    silver: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
+    avanzado: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado45: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado60: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado75: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado90: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    estandar: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' },
+    standard: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' }
+  };
+
+  const theme = colors[normalized] || { bg: 'var(--color-primary)', color: '#FFF' };
+
+  const popup = document.createElement('div');
+  popup.id = 'category-info-popup';
+  popup.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100dvh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+  `;
+
+  const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
+
+  popup.innerHTML = `
+    <div class="animate-scale-in" style="
+      background: white;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 340px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    ">
+      <div style="
+        background: ${theme.bg};
+        color: ${theme.color};
+        width: 100%;
+        padding: 20px 24px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 1.15rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      ">
+        Categoría ${capitalizedCat}
+      </div>
+
+      <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
+        ${text}
+      </div>
+
+      <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
+        <button id="btn-close-cat-popup" style="
+          width: 100%;
+          background: #f3f4f6;
+          color: #1f2937;
+          border: none;
+          padding: 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: background 0.2s;
+        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+          Entendido
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  const close = () => popup.remove();
+  document.getElementById('btn-close-cat-popup').addEventListener('click', close);
+  popup.addEventListener('click', (e) => {
+    if (e.target === popup) close();
+  });
+};
