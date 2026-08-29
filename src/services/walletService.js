@@ -964,27 +964,6 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
-/** Fetch all wallet transactions for the current user. */
-export async function getWalletTransactions() {
-    if (isUsingMockData()) {
-        initMockState();
-        return mockTransactions;
-    }
-    const client = getClient();
-    const { data: { user } } = await client.auth.getUser();
-    if (!user) return [];
+import { getWalletTransactions } from './walletTransactionsService.js';
 
-    const { data, error } = await client
-        .from('wallet_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Error fetching wallet transactions:', error);
-        return [];
-    }
-    return data || [];
-}
-
-export { formatCOP };
+export { getWalletTransactions, formatCOP };
