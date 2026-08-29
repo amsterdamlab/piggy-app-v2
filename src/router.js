@@ -85,12 +85,38 @@ function authGuard(route) {
  */
 export function scrollToTop(smooth = true) {
     const behavior = smooth ? 'smooth' : 'auto';
-    window.scrollTo({ top: 0, left: 0, behavior });
-    document.documentElement.scrollTo({ top: 0, left: 0, behavior });
-    document.body.scrollTo({ top: 0, left: 0, behavior });
-    document.querySelectorAll('.page, .page__content, #app').forEach((el) => {
-        if (el && typeof el.scrollTo === 'function') {
-            el.scrollTo({ top: 0, left: 0, behavior });
+
+    // 1. Primary window scroll
+    try {
+        window.scrollTo({ top: 0, left: 0, behavior });
+    } catch (e) {
+        window.scrollTo(0, 0);
+    }
+
+    // 2. Element fallbacks
+    if (!smooth) {
+        if (document.scrollingElement) {
+            document.scrollingElement.scrollTop = 0;
+        }
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }
+
+    // 3. Scroll any inner container that has active scroll
+    const scrollContainers = document.querySelectorAll(
+        '#ui-shell, #app, .page, .page__content, .granja-page, .mercado-page, .aliados-page, .gourmet-page, .profile-page, .section'
+    );
+    scrollContainers.forEach((el) => {
+        if (el && el.scrollTop > 0) {
+            try {
+                if (typeof el.scrollTo === 'function') {
+                    el.scrollTo({ top: 0, left: 0, behavior });
+                } else {
+                    el.scrollTop = 0;
+                }
+            } catch (e) {
+                el.scrollTop = 0;
+            }
         }
     });
 }
@@ -109,10 +135,6 @@ function handleRouteChange() {
         currentCleanup();
         currentCleanup = null;
     }
-
-    // Reset body overflow and remove any lingering modals or backdrops
-    document.body.style.overflow = '';
-    document.querySelectorAll('.modal-overlay, #flash-mission-modal, #cycle-mission-modal, #silver-piggy-modal, #referral-modal, #support-modal, #welcome-bonus-modal, #news-billboard-modal').forEach(el => el.remove());
 
     // Reset scroll on view change
     scrollToTop(false);
@@ -135,18 +157,23 @@ export function initRouter() {
     window.addEventListener('hashchange', handleRouteChange);
 
     // Scroll to top when tapping the current active bottom-nav tab without reloading
-    document.addEventListener('click', (e) => {
-        const navLink = e.target.closest('[data-nav-tab]');
+    const handleNavClick = (e) => {
+        const navLink = e.target.closest('.bottom-nav__item, [data-nav-tab]');
         if (!navLink) return;
 
-        const targetTab = navLink.getAttribute('data-nav-tab');
-        const activeTab = AppState.get('activeTab');
+        const href = navLink.getAttribute('href') || '';
+        const targetRoute = href.replace(/^#\/?/, '').split('?')[0].split('/')[0].toLowerCase();
+        const currentRoute = getCurrentRoute().toLowerCase();
+        const isActive = navLink.classList.contains('bottom-nav__item--active') || (targetRoute && targetRoute === currentRoute);
 
-        if (targetTab && targetTab === activeTab) {
+        if (isActive) {
             e.preventDefault();
+            e.stopPropagation();
             scrollToTop(true);
         }
-    });
+    };
+
+    document.addEventListener('click', handleNavClick, { capture: true });
 
     // Handle initial route
     handleRouteChange();
