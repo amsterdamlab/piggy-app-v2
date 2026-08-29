@@ -61,3 +61,8 @@ trigger: always_on
      - Ir a `https://github.com/amsterdamlab/piggy-app-v2/edit/main/<ruta_del_archivo>`
      - Borrar el contenido, copiar/pegar desde el archivo local, y hacer commit.
   3. *Prevención:* Cuando un archivo se acerque a las 800+ líneas, sugiere proactivamente **dividirlo en módulos más pequeños** (componentización).
+
+**VII. PROTOCOLO DE ALERTA DE SATURACIÓN DE CONTEXTO (Chat Health)**
+
+* **Monitoreo Proactivo de Memoria:** Cuando la conversación alcance un volumen alto de mensajes o se active un resumen de contexto automático (`<CONTEXT_SUMMARY>`), el agente DEBE avisar al usuario de forma clara y proactiva.
+* **Mensaje de Sugerencia:** Recomendar amablemente abrir un chat nuevo cuando un hito técnico quede completado y desplegado, para mantener la máxima velocidad y precisión sin riesgo de saturación.
