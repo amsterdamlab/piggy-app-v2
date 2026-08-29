@@ -402,8 +402,39 @@ function renderEmptyPiggies() {
       <div class="empty-state__description" style="font-size: 0.85rem; color: #64748b; line-height: 1.45; margin-bottom: 20px; max-width: 280px; margin-left: auto; margin-right: auto;">
         Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
       </div>
-      <button class="btn btn--primary btn-shine-7s" id="btn-adopt-empty" style="width:auto; padding:12px 28px; border-radius:12px; font-weight:800; display:inline-flex; align-items:center; gap:8px;" onclick="location.hash='#/mercado'">
-        <span style="font-size:1.1rem; font-weight:900;">+</span> Compra un nuevo Piggy
+      <button id="btn-adopt-empty" class="btn-shine-7s" style="
+          background: #ec4899; 
+          color: white; 
+          border: none; 
+          width: auto; 
+          padding: 14px 28px; 
+          border-radius: 14px; 
+          font-weight: 800; 
+          font-size: 0.95rem; 
+          cursor: pointer; 
+          display: inline-flex; 
+          align-items: center; 
+          justify-content: center; 
+          gap: 10px;
+          box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+          transition: transform 0.2s, box-shadow 0.2s;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" onclick="location.hash='#/mercado'">
+          <div style="
+              background: white; 
+              color: #ec4899;
+              width: 22px; 
+              height: 22px; 
+              border-radius: 50%; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              font-size: 18px;
+              font-weight: 800;
+              padding-bottom: 2px;
+              position: relative;
+              z-index: 1;
+          ">+</div>
+          <span style="position: relative; z-index: 1;">Compra un Nuevo Piggy</span>
       </button>
     </div>
   `;
@@ -546,6 +577,14 @@ function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
   const quickBuyBtn = document.getElementById('btn-quick-buy');
   if (quickBuyBtn) {
     quickBuyBtn.addEventListener('click', () => {
+      navigateTo('mercado');
+    });
+  }
+
+  // Adopt Empty Action -> Redirect to Mercado
+  const adoptEmptyBtn = document.getElementById('btn-adopt-empty');
+  if (adoptEmptyBtn) {
+    adoptEmptyBtn.addEventListener('click', () => {
       navigateTo('mercado');
     });
   }
