@@ -223,7 +223,7 @@
 /* Trust Badges — Centered & Mobile Responsive */
 .auth-trust {
     text-align: center;
-    padding: var(--space-lg);
+    padding: var(--space-lg) var(--space-md) var(--space-xl);
     background: transparent;
     border-radius: var(--radius-xl);
     width: 100%;
@@ -236,12 +236,12 @@
 
 .auth-trust__label {
     font-size: 0.72rem;
-    font-weight: var(--font-extrabold);
-    color: #eae6ea;
-    letter-spacing: 0.8px;
+    font-weight: 800;
+    color: #7b93ab;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    line-height: 1.35;
-    margin: 0 auto var(--space-md) auto;
+    line-height: 1.45;
+    margin: 8px auto 14px auto;
     text-align: center;
     max-width: 320px;
     width: 100%;
@@ -254,11 +254,11 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: var(--space-xl);
+    gap: 24px;
     width: 100%;
 }
 
 .auth-trust__icon {
-    color: #eae6ea;
+    color: #7b93ab;
     opacity: 0.9;
 }

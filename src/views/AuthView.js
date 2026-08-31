@@ -115,11 +115,14 @@ export function renderAuthView() {
           <div style="display: flex; justify-content: center; margin-bottom: 8px;">
             <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" style="height: 45px; width: auto; object-fit: contain; max-width: 100%;" />
           </div>
-          <p class="auth-trust__label" style="color: #eae6ea;">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</p>
-          <div class="auth-trust__icons" style="display: flex; justify-content: center; gap: 24px; color: #eae6ea;">
+          <p class="auth-trust__label">RESPALDADO POR<br>GRANJA VILLA MORALES DEL VALLE SAS</p>
+          <div class="auth-trust__icons">
             ${renderIcon('bolt', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
             ${renderIcon('verified', 'auth-trust__icon', '20')}
+          </div>
+          <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 14px; font-weight: 500; text-align: center;">
+            © Todos los derechos reservados Piggy App. 2026
           </div>
         </div>
 
