@@ -3,7 +3,7 @@
    ============================================ */
 
 .auth-page {
-    background: linear-gradient(180deg, var(--color-white) 0%, var(--color-bg) 100%);
+    background: #FFFFFF !important;
     min-height: 100dvh;
 }
 
@@ -12,6 +12,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    background: #FFFFFF !important;
 }
 
 /* Logo */
@@ -70,11 +71,11 @@
     margin-bottom: var(--space-lg);
 }
 
-/* Tabs — Capsule / Pill Design */
+/* Tabs — Capsule / Pill Design with #f9f5f6 */
 .auth-tabs {
     width: 100%;
     margin-bottom: var(--space-xl);
-    background: #edf2f7;
+    background: #f9f5f6;
     border-radius: var(--radius-full);
     padding: 5px;
     display: flex;
@@ -97,7 +98,7 @@
 }
 
 .auth-tabs .tabs__tab--active {
-    background: var(--color-white) !important;
+    background: #ffffff !important;
     color: #fb2c74 !important;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;
     font-weight: var(--font-extrabold);
@@ -126,9 +127,9 @@
     text-align: left;
 }
 
-/* Text Inputs — Rounded Rectangles with Darker Grey & No Border */
+/* Text Inputs — Rounded Rectangles in #f9f5f6 & No Border */
 .auth-form .input-wrapper {
-    background: #edf2f7 !important;
+    background: #f9f5f6 !important;
     border: none !important;
     border-radius: 14px !important;
     padding: 14px 18px !important;
@@ -140,7 +141,7 @@
 }
 
 .auth-form .input-wrapper:focus-within {
-    background: #e2e8f0 !important;
+    background: #f3edf0 !important;
     box-shadow: 0 0 0 2.5px rgba(251, 44, 116, 0.2) !important;
 }
 
@@ -168,6 +169,15 @@
     font-weight: var(--font-normal);
 }
 
+.auth-checkboxes {
+    margin-top: 18px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
 .auth-form__error {
     font-size: var(--text-sm);
     color: var(--color-danger);
@@ -185,7 +195,7 @@
 }
 
 .auth-submit {
-    margin-top: var(--space-sm);
+    margin-top: 16px;
     font-size: var(--text-lg) !important;
     padding: var(--space-md) var(--space-xl) !important;
 }
@@ -214,7 +224,7 @@
 .auth-trust {
     text-align: center;
     padding: var(--space-lg);
-    background: var(--color-bg);
+    background: transparent;
     border-radius: var(--radius-xl);
     width: 100%;
     box-sizing: border-box;
@@ -227,7 +237,7 @@
 .auth-trust__label {
     font-size: 0.72rem;
     font-weight: var(--font-extrabold);
-    color: var(--color-text-secondary);
+    color: #eae6ea;
     letter-spacing: 0.8px;
     text-transform: uppercase;
     line-height: 1.35;
@@ -243,10 +253,12 @@
 .auth-trust__icons {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: var(--space-xl);
+    width: 100%;
 }
 
 .auth-trust__icon {
-    color: var(--color-text-muted);
-    opacity: 0.8;
+    color: #eae6ea;
+    opacity: 0.9;
 }
