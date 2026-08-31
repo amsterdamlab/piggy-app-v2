@@ -1,60 +1,58 @@
 /* ==========================================================================
-   PIGGY APP — Wallet Drawer Modal (Tu Cuenta Agro)
-   Full-featured bottom sheet / drawer modal with transaction traceability.
-   Refactored from monolithic WalletBlock to maintain modularity.
+   PIGGY APP — Wallet Drawer Modal & Sliding Subscreens
+   Modular subcomponent for the main Wallet Drawer (Explorar mi cuenta).
    ========================================================================== */
 
 import { formatCOP } from '../../services/mockData.js';
+import { renderIcon } from '../../icons.js';
 import { AppState } from '../../state.js';
-import { getWalletBalance, getReferralBonusBalance } from '../../services/walletService.js';
-import { getWalletTransactions, getCachedWalletTransactions } from '../../services/walletTransactionsService.js';
+import { navigateTo } from '../../router.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions, getCachedWalletTransactions, requestMeatRedemption } from '../../services/walletService.js';
 import { getDashboardStats } from '../../services/piggiesService.js';
-import { openWalletRechargeInfo } from './WalletRechargeModal.js';
-import { showRetiroSaldoModal } from './WalletWithdrawalModal.js';
+import { openWalletRechargeSubscreen, openWalletRechargeInfo } from './WalletRechargeModal.js';
+import { openWalletWithdrawalSubscreen, showRetiroSaldoModal } from './WalletWithdrawalModal.js';
 
 /**
- * Helper to render individual transaction item.
+ * Render transaction rows HTML for the drawer.
  */
-function renderTransactionItem(tx) {
-  const isCredit = tx.type === 'credit' || tx.type === 'recharge' || (tx.type === 'simulation_recharge' && tx.simulation_status === 'simulated_approved');
-  const isPending = tx.simulation_status === 'PENDING';
-  const isRejected = tx.simulation_status === 'REJECTED' || tx.simulation_status === 'simulated_rejected';
-  
-  const sign = isCredit ? '+' : (tx.amount < 0 ? '-' : '');
-  const absAmount = Math.abs(tx.amount);
-  const color = isRejected ? '#94a3b8' : (isPending ? '#f59e0b' : (isCredit ? '#10B981' : '#0f172a'));
-  
-  const dateStr = tx.created_at ? new Date(tx.created_at).toLocaleDateString('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  }) : 'Reciente';
-
-  let badge = '';
-  if (isPending) {
-    badge = `<span style="font-size:0.65rem; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:6px;">EN PROCESO</span>`;
-  } else if (isRejected) {
-    badge = `<span style="font-size:0.65rem; background:#f1f5f9; color:#64748b; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:6px;">RECHAZADA</span>`;
-  } else if (tx.wallet_type === 'consumo' || tx.wallet_type === 'bono_consumo') {
-    badge = `<span style="font-size:0.65rem; background:#ffe4e6; color:#e11d48; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:6px;">BONO CARNE</span>`;
+export function renderTransactionsListHtml(transactions = []) {
+  if (!transactions || transactions.length === 0) {
+    return `
+      <div style="text-align: center; padding: 30px 0; color: #94a3b8; font-size: 0.85rem;">
+        <span style="font-size:24px; display:block; margin-bottom:6px;">📂</span> No hay transacciones registradas aún.
+      </div>
+    `;
   }
 
-  return `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; padding:12px 0; border-bottom:1px solid #f1f5f9; text-decoration:${isRejected ? 'line-through' : 'none'}; opacity:${isRejected ? 0.6 : 1};">
-      <div style="max-width:70%;">
-        <div style="font-size:0.85rem; font-weight:700; color:#1e293b; line-height:1.25; margin-bottom:3px;">
-          ${tx.description || 'Movimiento de cuenta'} ${badge}
+  return transactions.map((tx, i, arr) => {
+    const isDebit = Number(tx.amount) < 0;
+    const isConsumo = tx.wallet_type === 'consumo' || (tx.description && (tx.description.toLowerCase().includes('bono') || tx.description.toLowerCase().includes('consumo')));
+    const amountStr = (isDebit ? '-' : '+') + formatCOP(Math.abs(Number(tx.amount)));
+    const badgeColor = isDebit ? '#dc2626' : '#059669';
+    const badgeBg = isDebit ? '#fef2f2' : '#ecfdf5';
+    const bellIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+    const couponIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px; margin-right: 2px;"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>`;
+    const accountType = isConsumo ? couponIcon : bellIcon;
+    const dateStr = new Date(tx.created_at).toLocaleDateString('es-CO', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+    const isLast = i === arr.length - 1;
+    const borderBottom = isLast ? 'none' : '1px solid #e2e8f0';
+
+    return `
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: ${borderBottom};">
+        <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; padding-right: 12px; min-width: 0;">
+          <span style="font-size: 0.88rem; font-weight: 700; color: #1e293b; word-break: break-word; line-height: 1.3;">${tx.description || 'Movimiento de Cuenta'}</span>
+          <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; white-space: nowrap;">
+            <span style="font-size: 0.82rem; margin-right: 2px;">${accountType}</span> &bull; ${dateStr}
+          </span>
         </div>
-        <div style="font-size:0.72rem; color:#94a3b8; font-weight:500;">
-          ${dateStr}
-        </div>
+        <span style="font-size: 0.88rem; font-weight: 800; color: ${badgeColor}; background: ${badgeBg}; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;">
+          ${amountStr}
+        </span>
       </div>
-      <div style="font-size:0.92rem; font-weight:800; color:${color}; text-align:right; white-space:nowrap;">
-        ${sign}${formatCOP(absAmount)}
-      </div>
-    </div>
-  `;
+    `;
+  }).join('');
 }
 
 /**
@@ -246,93 +244,248 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
                ` : ''}
             </div>
 
-            <!-- Transaction History Section -->
-            <div>
-               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                  <h4 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f172a;">Historial de Movimientos</h4>
-                  <span style="font-size:0.75rem; color:#64748b; font-weight:600;" id="tx-count-label">
-                     ${initialTxs.length} movimiento${initialTxs.length === 1 ? '' : 's'}
-                  </span>
+            <!-- Trazabilidad de Movimientos (Transaction History) -->
+            <div style="padding: 20px; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+               <div style="margin-bottom: 12px; display:flex; align-items:center; justify-content:space-between;">
+                  <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: #0f172a;">
+                     Historial de Movimientos
+                  </h4>
+                  <span style="font-size:0.75rem; color:#64748b; font-weight:600;">Recientes</span>
                </div>
 
-               <div id="drawer-tx-list">
-                  ${initialTxs.length > 0
-                    ? initialTxs.map(renderTransactionItem).join('')
-                    : `<div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.85rem; font-weight:500;">
-                         Aún no tienes movimientos registrados en tu Cuenta Agro.
-                       </div>`
-                  }
+               <div id="transactions-list-drawer" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; padding-right: 4px;">
+                  ${initialTxs.length > 0 ? renderTransactionsListHtml(initialTxs) : `
+                    <div style="text-align: center; padding: 24px 0; color: #94a3b8; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                      <span class="spinner" style="width: 16px; height: 16px; border: 2px solid #e2e8f0; border-top-color: #10B981; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;"></span>
+                      <span>Cargando movimientos...</span>
+                    </div>
+                  `}
                </div>
             </div>
 
+            <!-- Footer note -->
+            <div style="text-align:center; color:#94a3b8; font-size:0.75rem; margin-top: 10px; padding-bottom: 10px; display:flex; align-items:center; justify-content:center; gap:5px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align: -2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>Cuentas Agro seguras y cifradas bajo protocolos SSL</span>
+            </div>
          </div>
       </div>
+
+      <!-- Dedicated Subscreen Container (Mounts sliding screens above base content) -->
+      <div id="wallet-subscreen-container" style="position:absolute; inset:0; pointer-events:none; z-index:50;"></div>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // Background fetch of latest transactions to update seamlessly if cache was shown
-  getWalletTransactions().then(freshTxs => {
+  // Background refresh of transactions from DB with cache preservation
+  getWalletTransactions().then((freshTxs) => {
     if (freshTxs && freshTxs.length > 0) {
-      const container = document.getElementById('drawer-tx-list');
-      const countLabel = document.getElementById('tx-count-label');
-      if (container && countLabel) {
-        container.innerHTML = freshTxs.map(renderTransactionItem).join('');
-        countLabel.textContent = `${freshTxs.length} movimiento${freshTxs.length === 1 ? '' : 's'}`;
+      stats.transactions = freshTxs;
+      const listEl = document.getElementById('transactions-list-drawer');
+      if (listEl) {
+        listEl.innerHTML = renderTransactionsListHtml(freshTxs);
+      }
+    } else if (initialTxs.length === 0) {
+      stats.transactions = [];
+      const listEl = document.getElementById('transactions-list-drawer');
+      if (listEl) {
+        listEl.innerHTML = renderTransactionsListHtml([]);
       }
     }
-  }).catch(err => {
-    console.warn('Silent tx fetch warning in drawer:', err);
+  }).catch((e) => {
+    console.warn('Background tx refresh warning:', e);
+    const listEl = document.getElementById('transactions-list-drawer');
+    if (listEl && (!stats.transactions || stats.transactions.length === 0)) {
+      listEl.innerHTML = renderTransactionsListHtml(initialTxs);
+    }
   });
 
-  // Attach Close handlers
-  const closeModal = () => {
-    document.body.style.overflow = ''; // Restaurar scroll del body
-    modal.classList.add('animate-fade-out');
-    setTimeout(() => modal.remove(), 200);
+  const closeDrawer = () => {
+    modal.remove();
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal')) {
+      document.body.style.overflow = '';
+    }
   };
 
-  const btnBack = document.getElementById('btn-back-wallet-drawer');
-  if (btnBack) btnBack.addEventListener('click', closeModal);
+  document.getElementById('btn-back-wallet-drawer')?.addEventListener('click', closeDrawer);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeDrawer(); });
+
+  const subscreenContainer = document.getElementById('wallet-subscreen-container');
+
+  const updateDrawerState = (newBalance, newBonus) => {
+    if (newBalance !== undefined) {
+      stats.saldoDisponible = newBalance;
+      stats.saldoDisponibleFormatted = formatCOP(newBalance);
+      const balEl = document.getElementById('drawer-main-balance');
+      if (balEl) balEl.textContent = stats.saldoDisponibleFormatted;
+      const bannerBalEl = document.getElementById('granja-banner-balance');
+      if (bannerBalEl) bannerBalEl.textContent = stats.saldoDisponibleFormatted;
+    }
+    if (newBonus !== undefined) {
+      stats.referralBonus = newBonus;
+      stats.referralBonusFormatted = formatCOP(newBonus);
+      const bonEl = document.getElementById('drawer-bonos-balance');
+      if (bonEl) bonEl.textContent = stats.referralBonusFormatted;
+    }
+  };
+
+  // Recharge trigger -> Open Sliding Subscreen
+  document.getElementById('btn-recargar-wallet-drawer')?.addEventListener('click', () => {
+    openWalletRechargeSubscreen(subscreenContainer, stats, updateDrawerState, closeDrawer);
+  });
+
+  // Withdrawal trigger -> Open Sliding Subscreen
+  document.getElementById('btn-retirar-saldo-drawer')?.addEventListener('click', () => {
+    openWalletWithdrawalSubscreen(subscreenContainer, stats?.saldoDisponible || 0, updateDrawerState, closeDrawer);
+  });
+
+  // Meat coupon redemption trigger -> Redirect to Tienda (#/gourmet)
+  document.getElementById('btn-canjear-carne-drawer')?.addEventListener('click', () => {
+    closeDrawer();
+    window.location.hash = '#/gourmet';
+    navigateTo('gourmet');
+  });
+
+  if (autoOpenRecharge) {
+    openWalletRechargeSubscreen(subscreenContainer, stats, updateDrawerState, closeDrawer);
+  } else if (autoOpenWithdrawal) {
+    openWalletWithdrawalSubscreen(subscreenContainer, stats?.saldoDisponible || 0, updateDrawerState, closeDrawer);
+  }
+}
+
+/**
+ * Show the Meat Redemption pending popup (identical to Bre-B / QR confirmation design).
+ */
+export function openMeatRedemptionModal({ amount = null, referralBonus = 0, userName = 'Usuario', refId = null } = {}) {
+  const existing = document.getElementById('meat-redemption-modal');
+  if (existing) existing.remove();
+
+  document.body.style.overflow = 'hidden';
+
+  const finalRefId = refId || ('PGY-CRN-' + Math.floor(100000 + Math.random() * 900000));
+  const displayAmount = amount !== null && amount !== undefined ? amount : referralBonus;
+  const displayAmountStr = formatCOP(displayAmount);
+
+  const modal = document.createElement('div');
+  modal.id = 'meat-redemption-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100vw';
+  modal.style.height = '100dvh';
+  modal.style.background = 'rgba(15, 23, 42, 0.6)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
+  modal.style.zIndex = '99999';
+  modal.style.display = 'flex';
+  modal.style.flexDirection = 'column';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '0';
+
+  const container = document.createElement('div');
+  container.className = 'animate-scale-in';
+  container.style.width = '100%';
+  container.style.maxWidth = '520px';
+  container.style.height = '100dvh';
+  container.style.maxHeight = '100dvh';
+  container.style.background = 'white';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.overflow = 'hidden';
+  container.style.position = 'relative';
+  container.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)';
+
+  container.innerHTML = `
+      <div style="background:linear-gradient(135deg,#16a34a,#15803d); padding:28px 24px; text-align:center; color:white; flex-shrink:0;">
+        <div style="margin-bottom:12px;">
+          <div style="width:58px; height:58px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.12);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:900; font-size:0.9rem; opacity:0.9; display:inline-flex; align-items:center; justify-content:center; gap:5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+              <path d="M13 5v2"/>
+              <path d="M13 17v2"/>
+              <path d="M13 11v2"/>
+            </svg>
+            <span>CANJE POR CARNE</span>
+          </div>
+        </div>
+        <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">¡Solicitud en Proceso!</h3>
+        <p style="margin:0; font-size:0.85rem; opacity:0.92;">Estamos listos para atender tu pedido</p>
+      </div>
+
+      <div style="flex:1; overflow-y:auto; padding:24px 20px; -webkit-overflow-scrolling:touch;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed #cbd5e1;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:700;">REFERENCIA</span>
+            <span style="font-size:0.85rem; color:#0f172a; font-weight:900; font-family:monospace;">#${finalRefId}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Monto a Canjear</span>
+            <span style="font-size:0.95rem; font-weight:850; color:#be1260;">${displayAmountStr}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Tipo de Canje</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#0f172a;">Cortes Gourmet y Carne</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Estado</span>
+            <span style="font-size:0.78rem; font-weight:800; background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:8px;">EN ATENCIÓN</span>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#065f46; line-height:1.45; display:flex; align-items:flex-start; gap:10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Ya nos pondremos en contacto contigo para coordinar tu compra y gestionar la entrega de tus productos de carne.</span>
+        </div>
+
+        <button id="meat-redemption-close" style="
+          width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
+          padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px rgba(22,163,74,0.35); transition:opacity 0.2s;
+          display:flex; align-items:center; justify-content:center; gap:8px;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Ir a Mi Granja</span>
+        </button>
+      </div>
+
+      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Canjes seguros · Piggy App</span>
+        </p>
+      </div>
+  `;
+
+  modal.appendChild(container);
+  document.body.appendChild(modal);
+
+  const closeModal = () => {
+    modal.remove();
+    if (!document.querySelector('#wallet-drawer-modal, #wallet-recharge-modal, #retiro-modal, #meat-redemption-modal')) {
+      document.body.style.overflow = '';
+    }
+  };
 
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
 
-  // Attach Action Handlers
-  const btnRecargar = document.getElementById('btn-recargar-wallet-drawer');
-  if (btnRecargar) {
-    btnRecargar.addEventListener('click', () => {
-      openWalletRechargeInfo();
-    });
-  }
-
-  const btnRetirar = document.getElementById('btn-retirar-saldo-drawer');
-  if (btnRetirar) {
-    btnRetirar.addEventListener('click', () => {
-      showRetiroSaldoModal();
-    });
-  }
-
-  const btnCanjearCarne = document.getElementById('btn-canjear-carne-drawer');
-  if (btnCanjearCarne) {
-    btnCanjearCarne.addEventListener('click', () => {
-      closeModal();
-      window.location.hash = '#/tienda';
-    });
-  }
-
-  // Auto Open features if requested
-  if (autoOpenRecharge) {
-    setTimeout(() => openWalletRechargeInfo(), 250);
-  } else if (autoOpenWithdrawal && safeStats.saldoDisponible > 0) {
-    setTimeout(() => showRetiroSaldoModal(), 250);
-  }
+  document.getElementById('meat-redemption-close')?.addEventListener('click', () => {
+    closeModal();
+    window.location.href = '/#/granja';
+    window.location.reload();
+  });
 }
 
 /**
- * Open the Wallet Drawer by fetching latest profile and stats.
+ * Load wallet data autonomously and show the Wallet Drawer.
  */
 export async function openWalletDrawer(autoOpenRecharge = false, autoOpenWithdrawal = false) {
   try {
@@ -356,9 +509,9 @@ export async function openWalletDrawer(autoOpenRecharge = false, autoOpenWithdra
     stats.transactions             = transactions;
 
     showWalletDrawer(firstName, stats, autoOpenRecharge, autoOpenWithdrawal);
-  } catch (err) {
-    console.error('Error opening wallet drawer:', err);
-    // Fallback drawer with zero balance
+  } catch (error) {
+    console.error('Error opening autonomous wallet drawer:', error);
+    // Fallback in case of failure
     const profile = AppState.get('profile');
     const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
     showWalletDrawer(firstName, {
