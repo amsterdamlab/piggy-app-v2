@@ -86,7 +86,7 @@ export function renderAuthView() {
             type="submit"
             class="btn btn--block btn--lg auth-submit"
             id="auth-submit"
-            style="background: #fb2c74; color: white; border-radius: 30px; box-shadow: 0 8px 25px -5px rgba(251, 44, 116, 0.5); font-weight: 700; border: none; font-size: 1.1rem; padding: 14px 20px; transition: transform 0.2s, box-shadow 0.2s;"
+            style="margin-top: 20px; background: #fb2c74; color: white; border-radius: 30px; box-shadow: 0 8px 25px -5px rgba(251, 44, 116, 0.5); font-weight: 700; border: none; font-size: 1.1rem; padding: 14px 20px; transition: transform 0.2s, box-shadow 0.2s;"
             ${isSubmitting ? 'disabled' : ''}
           >
             ${isSubmitting ? '<span class="spinner" style="width:24px;height:24px;border-width:2px;border-color:white;border-right-color:transparent;margin-right:8px;"></span>' : ''}
@@ -115,12 +115,11 @@ export function renderAuthView() {
           <div style="display: flex; justify-content: center; margin-bottom: 8px;">
             <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" style="height: 45px; width: auto; object-fit: contain; max-width: 100%;" />
           </div>
-          <p class="auth-trust__label">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</p>
-          <div class="auth-trust__icons">
-            ${renderIcon('heart', 'auth-trust__icon', '20')}
+          <p class="auth-trust__label" style="color: #eae6ea;">RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS</p>
+          <div class="auth-trust__icons" style="display: flex; justify-content: center; gap: 24px; color: #eae6ea;">
+            ${renderIcon('bolt', 'auth-trust__icon', '20')}
             ${renderIcon('shield', 'auth-trust__icon', '20')}
             ${renderIcon('verified', 'auth-trust__icon', '20')}
-            ${renderIcon('bolt', 'auth-trust__icon', '20')}
           </div>
         </div>
 
@@ -268,7 +267,7 @@ function renderFormFields() {
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:2px;"></div>
       </div>
       <!-- Checkboxes de Términos y Tratamiento de Datos -->
-      <div class="auth-checkboxes" style="margin-top: -4px; display: flex; flex-direction: column; gap: 6px; text-align: left;">
+      <div class="auth-checkboxes" style="margin-top: 18px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 10px; text-align: left;">
         <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
           <span>
