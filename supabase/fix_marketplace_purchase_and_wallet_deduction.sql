@@ -1,40 +1,29 @@
 -- ==============================================================================
--- PIGGY APP: CORRECCIÓN ATÓMICA DE COMPRA EN MERCADO Y DÉBITO DE SALDO AGRO
+-- PIGGY APP: CORRECCIÓN ATÓMICA DE COMPRA EN MERCADO Y DÉBITO DE SALDO AGRO (V2)
 -- Ejecuta este script en el SQL Editor de Supabase (Dashboard -> SQL Editor)
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. ASEGURAR COMPATIBILIDAD DE TIPOS EN WALLET_TRANSACTIONS
+-- 1. ASEGURAR QUE LA COLUMNA 'type' DE WALLET_TRANSACTIONS SEA VARCHAR FLEXIBLE
 -- ------------------------------------------------------------------------------
-DO $$ BEGIN
-  -- Si existe el enum transaction_type_enum, agregar los valores necesarios
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'debit';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'credit';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'recharge';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'withdrawal';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'simulation_recharge';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'purchase';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'bono';
-  ALTER TYPE public.transaction_type_enum ADD VALUE IF NOT EXISTS 'canje';
-EXCEPTION WHEN OTHERS THEN null;
-END $$;
-
--- Convertir columna 'type' a VARCHAR para evitar bloqueos por enums rígidos
 DO $$ BEGIN
   ALTER TABLE public.wallet_transactions ALTER COLUMN type TYPE VARCHAR(50) USING type::VARCHAR;
 EXCEPTION WHEN OTHERS THEN null;
 END $$;
 
 -- ------------------------------------------------------------------------------
--- 2. TRIGGER DE FORMATEO DE MONTO (SIGNO POSITIVO / NEGATIVO)
+-- 2. TRIGGER BEFORE: FORMATEO UNIFORME DE MONTO (SIGNO POSITIVO / NEGATIVO)
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.format_transaction_amount()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_type_str text;
 BEGIN
-  IF LOWER(NEW.type::text) LIKE '%debit%' 
-     OR LOWER(NEW.type::text) LIKE '%retiro%' 
-     OR LOWER(NEW.type::text) LIKE '%canje%' 
-     OR LOWER(NEW.type::text) LIKE '%withdrawal%' THEN
+  v_type_str := LOWER(COALESCE(NEW.type::text, ''));
+  IF v_type_str IN ('debit', 'withdrawal', 'purchase', 'canje', 'compra') 
+     OR v_type_str LIKE '%debit%' 
+     OR v_type_str LIKE '%retiro%' 
+     OR v_type_str LIKE '%canje%' THEN
     NEW.amount := -ABS(NEW.amount);
   ELSE
     NEW.amount := ABS(NEW.amount);
@@ -50,7 +39,62 @@ FOR EACH ROW
 EXECUTE FUNCTION public.format_transaction_amount();
 
 -- ------------------------------------------------------------------------------
--- 3. RPC DEDICADA PARA DÉBITO SEGURO DE WALLET (Flash Missions / Silver Piggy)
+-- 3. TRIGGER AFTER: SINCRONIZACIÓN AUTOMÁTICA DE SALDO (handle_wallet_transaction_sync)
+-- Usa texto nativo (NEW.type::text) para evitar errores 55P04 de ENUMs en PostgreSQL
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_wallet_transaction_sync()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_type_str text;
+  v_delta numeric;
+BEGIN
+  v_type_str := LOWER(COALESCE(NEW.type::text, ''));
+  
+  -- Si es recarga simulada pendiente o rechazada, no altera saldo real
+  IF NEW.simulation_status IS NOT NULL AND NEW.simulation_status NOT IN ('APPROVED', 'simulated_approved') THEN
+    RETURN NEW;
+  END IF;
+
+  -- Solo afecta saldo de dinero si wallet_type es 'dinero' o nulo (no bonos de consumo)
+  IF NEW.wallet_type IS NOT NULL AND NEW.wallet_type NOT IN ('dinero', 'wallet', 'principal') THEN
+    RETURN NEW;
+  END IF;
+
+  -- Calcular el delta
+  IF v_type_str IN ('credit', 'recharge', 'simulation_recharge', 'bono', 'cycle_completion', 'liquidation') THEN
+    v_delta := ABS(NEW.amount);
+  ELSIF v_type_str IN ('debit', 'withdrawal', 'purchase', 'canje', 'compra') THEN
+    v_delta := -ABS(NEW.amount);
+  ELSE
+    v_delta := NEW.amount;
+  END IF;
+
+  -- Autorizar actualización para pasar el trigger de veeduría
+  PERFORM set_config('app.wallet_update_authorized', 'true', true);
+
+  UPDATE public.profiles
+  SET wallet_balance = GREATEST(0, COALESCE(wallet_balance, 0) + v_delta)
+  WHERE id = NEW.user_id;
+
+  PERFORM set_config('app.wallet_update_authorized', '', true);
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Enganchar trigger de sincronización
+DROP TRIGGER IF EXISTS trg_handle_wallet_transaction_sync ON public.wallet_transactions;
+DROP TRIGGER IF EXISTS trg_wallet_transaction_sync ON public.wallet_transactions;
+DROP TRIGGER IF EXISTS trg_update_wallet_balance ON public.wallet_transactions;
+DROP TRIGGER IF EXISTS on_wallet_transaction_insert ON public.wallet_transactions;
+
+CREATE TRIGGER trg_handle_wallet_transaction_sync
+AFTER INSERT ON public.wallet_transactions
+FOR EACH ROW
+EXECUTE FUNCTION public.handle_wallet_transaction_sync();
+
+-- ------------------------------------------------------------------------------
+-- 4. RPC DEDICADA PARA DÉBITO SEGURO DE WALLET (Flash Missions / Silver Piggy)
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.deduct_wallet_balance(
   p_amount numeric,
@@ -88,12 +132,7 @@ BEGIN
     );
   END IF;
 
-  v_new_bal := v_current_bal - p_amount;
-
-  -- 🟢 Autorización para pasar Veeduría
-  PERFORM set_config('app.wallet_update_authorized', 'true', true);
-
-  -- Registrar movimiento en libro contable
+  -- Registrar movimiento en libro contable (el trigger trg_handle_wallet_transaction_sync sincroniza el saldo en profiles)
   INSERT INTO public.wallet_transactions (
     user_id,
     amount,
@@ -113,13 +152,9 @@ BEGIN
     'APPROVED'
   );
 
-  -- Actualizar saldo en profiles
-  UPDATE public.profiles
-  SET wallet_balance = v_new_bal
+  SELECT wallet_balance INTO v_new_bal
+  FROM public.profiles
   WHERE id = v_user_id;
-
-  -- 🔴 Cerrar autorización
-  PERFORM set_config('app.wallet_update_authorized', '', true);
 
   RETURN jsonb_build_object('success', true, 'new_balance', v_new_bal);
 END;
@@ -129,8 +164,8 @@ GRANT EXECUTE ON FUNCTION public.deduct_wallet_balance TO authenticated;
 GRANT EXECUTE ON FUNCTION public.deduct_wallet_balance TO service_role;
 
 -- ------------------------------------------------------------------------------
--- 4. FUNCIÓN TRANSACCIONAL ATÓMICA DE COMPRA (buy_piggy)
--- Descuenta saldo + crea movimiento contable + descuenta stock + crea piggy
+-- 5. FUNCIÓN TRANSACCIONAL ATÓMICA DE COMPRA (buy_piggy)
+-- Valida saldo + descuenta stock + crea piggy + registra débito (que descuenta saldo vía trigger)
 -- ------------------------------------------------------------------------------
 DO $$ 
 DECLARE 
@@ -164,6 +199,7 @@ DECLARE
   v_new_piggy_id uuid;
   v_current_stock int;
   v_wallet_balance numeric;
+  v_new_balance numeric;
   v_referral_result jsonb;
   v_days_elapsed int;
   v_days_remaining int;
@@ -255,9 +291,8 @@ BEGIN
     v_final_contract_code
   );
 
-  -- 7. REGISTRAR DÉBITO Y ACTUALIZAR SALDO ATÓMICAMENTE EN DB
-  PERFORM set_config('app.wallet_update_authorized', 'true', true);
-
+  -- 7. REGISTRAR DÉBITO EN WALLET_TRANSACTIONS
+  -- El trigger trg_handle_wallet_transaction_sync sincroniza automáticamente el saldo en profiles
   INSERT INTO public.wallet_transactions (
     user_id,
     amount,
@@ -277,23 +312,22 @@ BEGIN
     'APPROVED'
   );
 
-  UPDATE public.profiles
-  SET wallet_balance = wallet_balance - p_price
+  -- 8. Leer saldo real actualizado
+  SELECT wallet_balance INTO v_new_balance
+  FROM public.profiles
   WHERE id = p_user_id;
 
-  PERFORM set_config('app.wallet_update_authorized', '', true);
-
-  -- 8. Procesar comisión por referidos si aplica
+  -- 9. Procesar comisión por referidos si aplica
   BEGIN
     v_referral_result := process_referral_on_purchase(p_user_id);
   EXCEPTION WHEN OTHERS THEN
     v_referral_result := jsonb_build_object('triggered', false, 'reason', 'error');
   END;
 
-  RETURN jsonb_build_object(
+  RETURN json_build_object(
     'success', true,
     'piggy_id', v_new_piggy_id,
-    'new_balance', (v_wallet_balance - p_price),
+    'new_balance', COALESCE(v_new_balance, v_wallet_balance - p_price),
     'days_remaining', v_days_remaining,
     'contract_code', v_final_contract_code,
     'referral', v_referral_result
@@ -305,7 +339,7 @@ GRANT EXECUTE ON FUNCTION public.buy_piggy TO authenticated;
 GRANT EXECUTE ON FUNCTION public.buy_piggy TO service_role;
 
 -- ------------------------------------------------------------------------------
--- 5. AJUSTE DE CUENTA DE DIOMEDES (APLICAR DÉBITO PENDIENTE DE "Timón")
+-- 6. AJUSTE DE CUENTA DE DIOMEDES (APLICAR DÉBITO PENDIENTE DE "Timón")
 -- ------------------------------------------------------------------------------
 DO $$
 DECLARE
@@ -320,9 +354,8 @@ BEGIN
   ) INTO v_has_tx;
 
   IF NOT v_has_tx THEN
-    PERFORM set_config('app.wallet_update_authorized', 'true', true);
-
     -- Insertar el movimiento oficial de débito por 1.200.000 COP
+    -- El trigger trg_handle_wallet_transaction_sync actualiza automáticamente profiles.wallet_balance
     INSERT INTO public.wallet_transactions (
       user_id,
       amount,
@@ -343,13 +376,6 @@ BEGIN
       'APPROVED',
       '2026-08-29 16:37:52.336583-05:00'::timestamptz
     );
-
-    -- Descontar el valor del saldo de la cuenta agro de Diomedes
-    UPDATE public.profiles
-    SET wallet_balance = wallet_balance - 1200000
-    WHERE id = v_diomedes_id;
-
-    PERFORM set_config('app.wallet_update_authorized', '', true);
 
     RAISE NOTICE 'Transacción de Timón registrada y saldo descontado a Diomedes correctamente.';
   END IF;
