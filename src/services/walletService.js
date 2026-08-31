@@ -30,7 +30,6 @@ function initMockState() {
         ];
         if (storedTxs === null) localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
     }
-    // Guaranteed Option A refund ($2.000.000 COP) check
     if (localStorage.getItem('mock_refund_applied_v3') !== 'true') {
         mockBalance = (mockBalance || 0) + 2000000;
         localStorage.setItem('mock_wallet_balance', mockBalance.toString());
@@ -427,41 +426,66 @@ export async function getWelcomeBonusExpiryInfo() {
  * @param {number} amount - Amount in COP to deduct
  * @returns {{ success: boolean, newBalance?: number, reason?: string }}
  */
-export async function deductWalletBalance(amount) {
+export async function deductWalletBalance(amount, description = 'Débito: compra de Piggy') {
     if (isUsingMockData()) {
-        return { success: true, newBalance: 0 };
+        initMockState();
+        mockBalance = Math.max(0, (mockBalance || 0) - amount);
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description, wallet_type: 'dinero', created_at: new Date().toISOString() };
+        if (!mockTransactions) mockTransactions = [];
+        mockTransactions.unshift(debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        const curProf = AppState.get('profile') || {};
+        AppState.set({ profile: { ...curProf, wallet_balance: mockBalance } });
+        return { success: true, newBalance: mockBalance };
     }
 
     const client = getClient();
+    if (!client) return { success: false, reason: 'no_client' };
+
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, reason: 'not_authenticated' };
 
-    // Read current wallet_balance to validate funds
+    // 1. Try secure RPC deduct_wallet_balance
+    try {
+        const { data: rpcRes, error: rpcErr } = await client.rpc('deduct_wallet_balance', {
+            p_amount: amount,
+            p_description: description
+        });
+
+        if (!rpcErr && rpcRes && rpcRes.success) {
+            const curProf = AppState.get('profile') || {};
+            AppState.set({ profile: { ...curProf, wallet_balance: rpcRes.new_balance } });
+            return { success: true, newBalance: rpcRes.new_balance };
+        }
+    } catch (rpcEx) {
+        console.warn('deduct_wallet_balance RPC call failed, using fallback:', rpcEx);
+    }
+
+    // 2. Fallback: Read balance & insert debit transaction
     const { data: profile, error: readError } = await client
         .from('profiles')
         .select('wallet_balance')
         .eq('id', user.id)
         .single();
 
-    if (readError || !profile) {
-        return { success: false, reason: 'could_not_read_balance' };
-    }
+    if (readError || !profile) return { success: false, reason: 'could_not_read_balance' };
 
-    const currentBalance = profile.wallet_balance || 0;
+    const currentBalance = Number(profile.wallet_balance) || 0;
+    if (currentBalance < amount) return { success: false, reason: 'insufficient_balance' };
 
-    // Guard: never allow negative balance
-    if (currentBalance < amount) {
-        return { success: false, reason: 'insufficient_balance' };
-    }
+    const newBalance = currentBalance - amount;
 
-    // Insert a debit transaction — the DB trigger auto-updates wallet_balance in profiles
     const { error: txError } = await client
         .from('wallet_transactions')
         .insert({
             user_id: user.id,
-            amount:  -amount,    // negative = debit
-            type:    'debit',
-            description: 'Débito: compra de Piggy',
+            amount: -amount,
+            type: 'debit',
+            description,
+            wallet_type: 'dinero',
+            payment_method: 'SALDO_AGRO',
+            simulation_status: 'APPROVED'
         });
 
     if (txError) {
@@ -469,7 +493,13 @@ export async function deductWalletBalance(amount) {
         return { success: false, reason: txError.message };
     }
 
-    return { success: true, newBalance: currentBalance - amount };
+    // Explicitly update profiles.wallet_balance in case trigger didn't catch it
+    await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+
+    const curProf = AppState.get('profile') || {};
+    AppState.set({ profile: { ...curProf, wallet_balance: newBalance } });
+
+    return { success: true, newBalance };
 }
 
 /**
@@ -965,5 +995,4 @@ export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsA
 }
 
 import { getWalletTransactions, getCachedWalletTransactions } from './walletTransactionsService.js';
-
 export { getWalletTransactions, getCachedWalletTransactions, formatCOP };

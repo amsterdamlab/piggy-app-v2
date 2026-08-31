@@ -4,6 +4,7 @@
    ============================================ */
 
 import { getClient, isUsingMockData } from './supabase.js';
+import { AppState } from '../state.js';
 import {
     MOCK_PIGGIES,
     calculateBaseROI,
@@ -189,7 +190,7 @@ export async function buyPiggy(piggyName, contractUrl = null) {
 /**
  * Generate a stable hash number from a string (piggy ID) to pick a
  * consistent random photo (1-5) per piggy without changing on refresh.
- * @param {string} idStr 
+ * @param {string} idStr
  * @returns {number} 1 to 5
  */
 function getPiggyPhotoNumber(idStr) {
@@ -354,7 +355,7 @@ function enrichPiggyData(piggy) {
 /**
  * Get summary stats for the dashboard.
  */
-export function getDashboardStats(piggies = []) {
+export async function getDashboardStats(piggies = []) {
     const validPiggies = (piggies || []).filter(Boolean);
     const activePiggies = validPiggies.filter((p) => !p.isComplete);
     const availablePiggies = validPiggies.filter((p) => p.isComplete);
@@ -498,6 +499,12 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
     }
 
+    // Update wallet balance in AppState if returned by RPC
+    if (rpcData?.new_balance !== undefined && rpcData?.new_balance !== null) {
+        const curProf = AppState.get('profile') || {};
+        AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcData.new_balance) } });
+    }
+
     // If contractUrl, contractCode or finalImageUrl provided, update them on the created piggy
     const createdPiggyId = rpcData?.piggy_id;
     if (createdPiggyId) {
@@ -517,7 +524,11 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
 
     // Success! Fetch the created piggy to return it
     if (createdPiggyId) {
-        return getPiggyById(createdPiggyId);
+        const createdPiggy = await getPiggyById(createdPiggyId);
+        if (createdPiggy) {
+            createdPiggy.walletDeducted = true;
+        }
+        return createdPiggy;
     }
 
     // Fallback just for fetching data, not for logic
@@ -528,5 +539,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         .limit(1)
         .single();
 
-    return enrichPiggyData(latest);
+    const enriched = enrichPiggyData(latest);
+    if (enriched) enriched.walletDeducted = true;
+    return enriched;
 }

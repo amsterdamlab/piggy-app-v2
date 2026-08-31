@@ -392,10 +392,12 @@ function attachContratoListeners() {
                 AppState.set({ profile: { ...currentProfile, cedula: userCedula } });
             }
 
-            // 4. Deduct Wallet Balance — ONLY AFTER CONTRACT & PIGGY ARE SUCCESSFULLY PROCESSED
-            const deductResult = await deductWalletBalance(currentItemPrice);
-            if (!deductResult.success) {
-                console.warn('[WALLET] Deduct balance warning:', deductResult.reason);
+            // 4. Deduct Wallet Balance (if not already deducted atomically by buy_piggy RPC)
+            if (!newPiggy?.walletDeducted) {
+                const deductResult = await deductWalletBalance(currentItemPrice, `Débito: compra de Piggy "${currentPiggyName}"`);
+                if (!deductResult.success) {
+                    console.warn('[WALLET] Deduct balance warning:', deductResult.reason);
+                }
             }
 
             // 5. Clear pending session storage
