@@ -252,7 +252,7 @@ function renderFormFields() {
       <div class="input-group" style="margin-bottom: 2px;">
         <label class="input-group__label" for="field-referral">¿Tienes un código de invitación? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
-          <span class="input-wrapper__icon">🎁</span>
+          <span class="input-wrapper__icon">${renderIcon('giftBox', '', '18')}</span>
           <input
             type="text"
             class="input-wrapper__field"
