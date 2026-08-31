@@ -8,11 +8,9 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "devDependencies": {
-    "vite": "^6.1.0"
-  },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "vite": "^6.1.0"
   }
 }
