@@ -4,10 +4,15 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. ASEGURAR QUE LA COLUMNA 'type' DE WALLET_TRANSACTIONS SEA VARCHAR FLEXIBLE
+-- 1. ASEGURAR QUE LAS COLUMNAS 'type' Y 'wallet_type' SEAN VARCHAR FLEXIBLE
 -- ------------------------------------------------------------------------------
 DO $$ BEGIN
   ALTER TABLE public.wallet_transactions ALTER COLUMN type TYPE VARCHAR(50) USING type::VARCHAR;
+EXCEPTION WHEN OTHERS THEN null;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.wallet_transactions ALTER COLUMN wallet_type TYPE VARCHAR(50) USING wallet_type::VARCHAR;
 EXCEPTION WHEN OTHERS THEN null;
 END $$;
 
@@ -40,30 +45,38 @@ EXECUTE FUNCTION public.format_transaction_amount();
 
 -- ------------------------------------------------------------------------------
 -- 3. TRIGGER AFTER: SINCRONIZACIÓN AUTOMÁTICA DE SALDO (handle_wallet_transaction_sync)
--- Usa texto nativo (NEW.type::text) para evitar errores 55P04 de ENUMs en PostgreSQL
+-- Usa variables de texto nativas (text) para evitar errores 22P02 / 55P04 de ENUMs
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.handle_wallet_transaction_sync()
 RETURNS TRIGGER AS $$
 DECLARE
   v_type_str text;
+  v_wallet_type text;
   v_delta numeric;
 BEGIN
   v_type_str := LOWER(COALESCE(NEW.type::text, ''));
+  v_wallet_type := LOWER(COALESCE(NEW.wallet_type::text, ''));
   
   -- Si es recarga simulada pendiente o rechazada, no altera saldo real
   IF NEW.simulation_status IS NOT NULL AND NEW.simulation_status NOT IN ('APPROVED', 'simulated_approved') THEN
     RETURN NEW;
   END IF;
 
-  -- Solo afecta saldo de dinero si wallet_type es 'dinero' o nulo (no bonos de consumo)
-  IF NEW.wallet_type IS NOT NULL AND NEW.wallet_type NOT IN ('dinero', 'wallet', 'principal') THEN
+  -- Si es bono de consumo / tienda de carne, no afecta el saldo de dinero de la cuenta agro
+  IF v_wallet_type LIKE '%consumo%' THEN
     RETURN NEW;
   END IF;
 
-  -- Calcular el delta
-  IF v_type_str IN ('credit', 'recharge', 'simulation_recharge', 'bono', 'cycle_completion', 'liquidation') THEN
+  -- Calcular el delta de dinero
+  IF v_type_str IN ('credit', 'recharge', 'simulation_recharge', 'bono', 'cycle_completion', 'liquidation') 
+     OR v_type_str LIKE '%credit%' 
+     OR v_type_str LIKE '%recarga%' THEN
     v_delta := ABS(NEW.amount);
-  ELSIF v_type_str IN ('debit', 'withdrawal', 'purchase', 'canje', 'compra') THEN
+  ELSIF v_type_str IN ('debit', 'withdrawal', 'purchase', 'canje', 'compra') 
+     OR v_type_str LIKE '%debit%' 
+     OR v_type_str LIKE '%retiro%' 
+     OR v_type_str LIKE '%compra%' 
+     OR v_type_str LIKE '%canje%' THEN
     v_delta := -ABS(NEW.amount);
   ELSE
     v_delta := NEW.amount;
