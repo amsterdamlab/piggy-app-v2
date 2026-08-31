@@ -165,8 +165,8 @@ export function renderProfileView() {
             <!-- Footer Institucional Centrado -->
             <div class="profile-footer">
                 <div style="text-align: center;">
-                    <div class="profile-footer__label" style="line-height: 1.45; margin-bottom: 12px;">RESPALDADO POR<br>GRANJA VILLA MORALES DEL VALLE SAS</div>
                     <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" class="profile-footer__valle-logo" onerror="this.style.display='none'" />
+                    <div class="profile-footer__label">RESPALDADO POR<br>GRANJA VILLA MORALES DEL VALLE SAS</div>
                 </div>
 
                 <!-- Derechos Reservados -->

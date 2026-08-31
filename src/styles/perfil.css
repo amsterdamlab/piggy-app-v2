@@ -246,7 +246,8 @@
     letter-spacing: 1.2px;
     text-transform: uppercase;
     line-height: 1.45;
-    margin-bottom: 12px;
+    margin-top: 12px;
+    margin-bottom: 0;
     text-align: center;
 }
 
