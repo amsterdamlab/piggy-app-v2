@@ -249,11 +249,11 @@ function renderProductCard(item) {
         <h4 class="mcard__name" style="${!isEstandar ? 'padding-right: 65px;' : ''}">${itemName}</h4>
         <p class="mcard__desc">${item.description || 'Cerdo con excelente rendimiento y cuidado óptimo.'}</p>
 
-        <!-- Info Row: Días + Weight (Matches original design reference) -->
+        <!-- Info Row: Faltan + Weight (Countdown to cycle completion) -->
         <div class="mcard__info-row">
           <div class="mcard__info-item">
-            <span class="mcard__info-label">DÍAS</span>
-            <span class="mcard__info-value mcard__info-value--days">${daysAdvanced}</span>
+            <span class="mcard__info-label">FALTAN</span>
+            <span class="mcard__info-value mcard__info-value--days">${daysRemaining} días</span>
           </div>
 
           <div class="mcard__info-divider"></div>

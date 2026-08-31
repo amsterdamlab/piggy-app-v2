@@ -203,9 +203,10 @@
 }
 
 .mcard__info-value {
-    font-size: 1.05rem;
+    font-size: 1.02rem;
     font-weight: 800;
     color: #0f172a;
+    white-space: nowrap;
 }
 
 .mcard__info-value--month {
