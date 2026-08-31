@@ -312,7 +312,7 @@ function enrichPiggyData(piggy) {
     } else if (daysElapsed > 30) {
         currentStage = 2;
     } else {
-        stage = 1;
+        currentStage = 1;
     }
 
     let imageUrl = piggy.image_url || piggy.imageUrl;
