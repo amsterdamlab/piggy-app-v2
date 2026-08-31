@@ -302,7 +302,8 @@ export async function syncAndExpireMarketingBonuses(userId = null) {
 
 /**
  * Calculates active bonus status (Welcome Bonus or Active Marketing Bonus) with unified countdown info.
- * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string, campaignName: string }>}\n */
+ * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string, campaignName: string }>}
+ */
 export async function getWelcomeBonusExpiryInfo() {
     const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);
     let createdAt = profile?.created_at;
@@ -428,7 +429,8 @@ export async function deductWalletBalance(amount, description = 'Débito: compra
             AppState.set({ profile: { ...curProf, wallet_balance: rpcRes.new_balance } });
             return { success: true, newBalance: rpcRes.new_balance };
         }
-    } catch (rpcEx) {\n        console.warn('deduct_wallet_balance RPC call failed, using fallback:', rpcEx);
+    } catch (rpcEx) {
+        console.warn('deduct_wallet_balance RPC call failed, using fallback:', rpcEx);
     }
 
     // 2. Fallback: Read balance & insert debit transaction
@@ -447,7 +449,8 @@ export async function deductWalletBalance(amount, description = 'Débito: compra
 
     const { error: txError } = await client
         .from('wallet_transactions')
-        .insert({\n            user_id: user.id,
+        .insert({
+            user_id: user.id,
             amount: -amount,
             type: 'debit',
             description,
@@ -589,7 +592,8 @@ export async function rechargeWallet(amount, paymentMethod, simulationStatus, mo
         const { data: existingTx } = await client
             .from('wallet_transactions')
             .select('id')
-            .eq('description', description)\n            .single();
+            .eq('description', description)
+            .single();
 
         if (existingTx) {
             const { data: profile } = await client
