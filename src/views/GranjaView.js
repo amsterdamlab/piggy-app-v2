@@ -1,639 +1,613 @@
 /* ============================================
-   PIGGY APP — Granja View (Dashboard)
-   Displays user piggies, growth tracker,
-   summary stats, and quick actions
+   PIGGY APP — Granja (Dashboard) View
+   Matches screen2.png design
    ============================================ */
 
 import { renderIcon } from '../icons.js';
+import { getProfile, signOut, getUserInitials } from '../services/authService.js';
 import { AppState } from '../state.js';
 import { getUserPiggies, getDashboardStats } from '../services/piggiesService.js';
+import { formatCOP } from '../services/mockData.js';
+import { navigateTo } from '../router.js';
+import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
+import { getRandomTip } from '../services/tipsService.js';
+import { getActiveMissions } from '../services/missionsService.js';
 import {
-    formatCOP,
-    getDaysRemaining,
-    getProgressPercentage,
-    getPiggyGrowthStage,
-    getCategoryBadge,
-} from '../services/mockData.js';
-import { getProfile } from '../services/authService.js';
-import {
-    getWalletBalance,
-    getReferralBonusBalance,
-    getWelcomeBonusExpiryInfo,
-} from '../services/walletService.js';
-import { getWalletTransactions } from '../services/walletTransactionsService.js';
+    getActiveUserFlashMissions,
+    getActiveCycleMissions,
+    detectAndCreateCycleMissions,
+} from '../services/flashMissionsService.js';
+
+import { startOnboardingTourIfEligible } from './granja/OnboardingTourModal.js';
+
+/* ── Module imports (Granja Section blocks) ───────── */
 import { renderWalletBanner, renderWalletSkeleton, attachWalletListeners } from './granja/WalletBlock.js';
+import { renderPriorityMissionBanner, attachMissionListeners } from './granja/MissionsBlock.js';
+import { showReferralModal, loadGreetingReferralCode } from './granja/ReferralsModal.js';
+import { showSupportModal, HEADSET_ICON_SVG } from './granja/SupportModal.js';
+import { removeBonusModal } from './granja/WelcomeBonusModal.js';
+import { showCompletedPiggiesModal } from './granja/CompletedPiggiesModal.js';
 
-// Cache for quick re-renders
-let cachedPiggies = null;
+/* ── News Billboard Imports ── */
+import { getActiveNewsSlides } from '../services/newsService.js';
+import { renderPiggyLoader } from '../components/PiggyLoader.js';
+import { showNewsBillboardModal } from '../components/NewsBillboardModal.js';
 
-/**
- * Build the complete Granja screen HTML using live data.
- * @param {string} firstName
- * @param {Array} piggies
- * @param {Object} stats
- * @param {number} totalCerditosCount
- * @param {Array} allPiggies
- * @returns {string} Complete HTML string
- */
-function buildGranjaFull(firstName, piggies, stats, totalCerditosCount, allPiggies = []) {
-    return `
-    <div class="granja-view animate-fade-in" style="padding-bottom: 90px;">
-      <!-- Main Container (Standard max-width: 480px) -->
-      <div class="container" style="max-width: 480px; margin: 0 auto; padding: 0 16px;">
-        
-        <!-- Welcome Header with Referral Pill -->
-        <div class="granja-header" style="margin-bottom: 20px; padding-top: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-            <div style="flex: 1; min-width: 0;">
-              <h1 style="font-size: 1.6rem; font-weight: 800; color: #1e293b; margin: 0 0 4px 0; letter-spacing: -0.02em;">
-                ¡Hola, ${firstName}! 👋
-              </h1>
-              <p style="color: #64748b; font-size: 0.88rem; margin: 0;">
-                Bienvenido a tu granja digital
-              </p>
-            </div>
-            <!-- Referral Pill -->
-            <button id="btn-header-referral" class="animate-pulse" style="
-              display: inline-flex;
-              align-items: center;
-              gap: 6px;
-              background: #fdf2f8;
-              border: 1px solid #fbcfe8;
-              padding: 6px 12px;
-              border-radius: 20px;
-              cursor: pointer;
-              flex-shrink: 0;
-              transition: all 0.2s;
-            ">
-              <span style="color: #db2777; display: flex; align-items: center;">${renderIcon('giftBox', '', '15')}</span>
-              <span style="font-size: 0.75rem; font-weight: 700; color: #be185d;">Gana $20.000</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 30-Day Welcome Bonus Countdown Banner -->
-        ${renderWelcomeBonusBanner()}
-
-        <!-- Wallet Card (Compact Green Section) -->
-        ${renderWalletBanner(firstName, stats)}
-
-        <!-- Active Engorde Piggies Section -->
-        <div class="section" style="margin-bottom: 28px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <h2 style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0;">
-                Mis Cerditos en Engorde
-              </h2>
-              <span style="
-                background: #f0fdf4;
-                color: #16a34a;
-                border: 1px solid #bbf7d0;
-                font-size: 0.72rem;
-                font-weight: 700;
-                padding: 2px 8px;
-                border-radius: 12px;
-              ">
-                ${piggies.length} activo${piggies.length === 1 ? '' : 's'}
-              </span>
-            </div>
-            <a href="#/mercado" style="
-              color: #db2777;
-              font-size: 0.82rem;
-              font-weight: 600;
-              text-decoration: none;
-              display: inline-flex;
-              align-items: center;
-              gap: 2px;
-            ">
-              Comprar +
-            </a>
-          </div>
-
-          ${piggies.length > 0 ? renderPiggiesList(piggies) : renderEmptyPiggiesState()}
-        </div>
-
-        <!-- Historial de Cerditos (Expandable) -->
-        ${renderCompletedPiggiesHistory(allPiggies)}
-
-        <!-- Quick Access Section (2-Col Grid) -->
-        <div class="section" style="margin-bottom: 28px;">
-          <h2 style="font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0 0 14px 0;">
-            Explora tu Granja
-          </h2>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <!-- Tienda Gourmet Card -->
-            <a href="#/tienda" style="
-              background: #ffffff;
-              border: 1px solid #f1f5f9;
-              border-radius: 16px;
-              padding: 16px;
-              text-decoration: none;
-              display: flex;
-              flex-direction: column;
-              gap: 8px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-              transition: all 0.2s;
-            ">
-              <div style="
-                width: 36px;
-                height: 36px;
-                background: #fdf2f8;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #db2777;
-              ">
-                ${renderIcon('shoppingBag', '', '20')}
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.92rem; color: #1e293b;">Tienda de Carne</div>
-                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Canjea tus bonos</div>
-              </div>
-            </a>
-
-            <!-- Aliados Card -->
-            <a href="#/aliados" style="
-              background: #ffffff;
-              border: 1px solid #f1f5f9;
-              border-radius: 16px;
-              padding: 16px;
-              text-decoration: none;
-              display: flex;
-              flex-direction: column;
-              gap: 8px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-              transition: all 0.2s;
-            ">
-              <div style="
-                width: 36px;
-                height: 36px;
-                background: #eff6ff;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #2563eb;
-              ">
-                ${renderIcon('store', '', '20')}
-              </div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.92rem; color: #1e293b;">Restaurantes Aliados</div>
-                <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">Descuentos exclusivos</div>
-              </div>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-    `;
-}
+/* =========================================
+   DYNAMIC NOTIFICATIONS
+   Fetched from Supabase dynamic_tips table.
+   Managed manually by admin — no hardcoding.
+   ========================================= */
 
 /**
- * Render the Granja skeleton placeholder while data loads.
- * @param {string} firstName
- * @returns {string} Skeleton HTML string
+ * Render the notification strip.
+ * @param {Object} notif - Tip data from tipsService (already resolved)
  */
-function buildGranjaShell(firstName) {
-    return `
-    <div class="granja-view animate-fade-in" style="padding-bottom: 90px;">
-      <div class="container" style="max-width: 480px; margin: 0 auto; padding: 0 16px;">
-        <!-- Header Skeleton -->
-        <div class="granja-header" style="margin-bottom: 20px; padding-top: 8px;">
-          <h1 style="font-size: 1.6rem; font-weight: 800; color: #1e293b; margin: 0 0 4px 0;">
-            ¡Hola, ${firstName}! 👋
-          </h1>
-          <p style="color: #64748b; font-size: 0.88rem; margin: 0;">
-            Cargando tu granja digital...
-          </p>
+function renderRandomNotification(notif) {
+  // Guard: if no tip data provided, render nothing
+  if (!notif) return '';
+
+  const ctaAttr = notif.ctaUrl ? `data-cta="${notif.ctaUrl}"` : '';
+  const cursor  = notif.ctaUrl ? 'pointer' : 'default';
+
+  // Unified background & border style matching exact image reference for ALL tips
+  const tipBgColor     = '#fff1f2';
+  const tipBorderColor = '#ffe4e6';
+  const tipTitleColor  = '#be123c';
+
+  return `
+    <div class="animate-fade-in-up" style="animation-delay: 0.05s; margin-bottom: 16px;">
+      <div id="dynamic-notification" style="
+        background: ${tipBgColor};
+        border: 1px solid ${tipBorderColor};
+        border-radius: 14px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: ${cursor};
+        transition: transform 0.2s, box-shadow 0.2s;
+      " ${ctaAttr}
+         onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(190,18,60,0.1)'"
+         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+        <div style="font-size:24px; flex-shrink:0;">${notif.icon}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; color:${tipTitleColor}; font-size:0.82rem; line-height:1.3;">${notif.title}</div>
+          <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">&#10024; ${notif.reward}</div>
         </div>
-
-        <!-- Wallet Skeleton -->
-        ${renderWalletSkeleton(firstName)}
-
-        <!-- Piggies Loading Skeleton -->
-        <div class="section" style="margin-bottom: 28px;">
-          <div class="skeleton" style="width: 140px; height: 20px; margin-bottom: 14px; border-radius: 6px;"></div>
-          <div class="skeleton" style="width: 100%; height: 160px; border-radius: 16px;"></div>
+        <div style="font-size:14px; color:${tipTitleColor}; opacity:0.6; flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
         </div>
       </div>
     </div>
-    `;
+  `;
 }
 
 /**
- * Fetch all required data for the Granja screen and render the full view.
- * @param {HTMLElement} container
- * @param {string} firstName
- */
-async function loadGranjaData(container, firstName) {
-    try {
-        const [piggiesData, walletBalance, referralBonus, transactions] = await Promise.all([
-            getUserPiggies(),
-            getWalletBalance(),
-            getReferralBonusBalance(),
-            getWalletTransactions(),
-        ]);
-
-        const allPiggies = piggiesData || [];
-        const activePiggiesList = allPiggies.filter((p) => p.status === 'engorde' && !p.isComplete);
-        const stats = getDashboardStats(activePiggiesList);
-
-        stats.walletBalance            = walletBalance;
-        stats.referralBonus            = referralBonus;
-        stats.referralBonusFormatted   = formatCOP(referralBonus);
-        stats.saldoDisponible          = walletBalance;
-        stats.saldoDisponibleFormatted = formatCOP(walletBalance);
-        stats.transactions             = transactions || [];
-
-        // Save to AppState for sync across views
-        AppState.set({
-            piggies: allPiggies,
-            stats,
-            granjaLoaded: true,
-        });
-        cachedPiggies = allPiggies;
-
-        // Render the full screen with live data
-        container.innerHTML = buildGranjaFull(
-            firstName,
-            activePiggiesList,
-            stats,
-            allPiggies.length,
-            allPiggies
-        );
-
-        // Attach listeners once DOM is ready
-        attachGranjaListeners(activePiggiesList.length > 0, stats, activePiggiesList.length, activePiggiesList);
-    } catch (err) {
-        console.error('🐷 Error loading Granja data:', err);
-        // Fallback: render with empty/safe defaults
-        const fallbackPiggies = cachedPiggies || [];
-        const stats = getDashboardStats(fallbackPiggies);
-        stats.walletBalance = 0;
-        stats.referralBonus = 0;
-        stats.referralBonusFormatted = '$ 0';
-        stats.saldoDisponible = 0;
-        stats.saldoDisponibleFormatted = '$ 0';
-        stats.transactions = [];
-
-        container.innerHTML = buildGranjaFull(
-            firstName,
-            fallbackPiggies,
-            stats,
-            fallbackPiggies.length,
-            fallbackPiggies
-        );
-        attachGranjaListeners(fallbackPiggies.length > 0, stats, fallbackPiggies.length, fallbackPiggies);
-    }
-}
-
-/**
- * Main render function for the Granja view.
- * Renders the skeleton shell first to eliminate any initial balance flicker,
- * then fetches fresh data asynchronously from Supabase.
- * @returns {string} Initial skeleton HTML
+ * Render the Granja (Dashboard) view.
  */
 export function renderGranjaView() {
-    const profile = AppState.get('profile');
-    const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const app = document.getElementById('app');
+  const profile = AppState.get('profile');
+  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
 
-    // Asynchronously load real Supabase data after initial paint
-    setTimeout(() => {
-        const viewEl = document.getElementById('view-granja');
-        if (viewEl) {
-            loadGranjaData(viewEl, firstName);
-        }
-    }, 0);
+  // Mostrar el skeleton loader limpio mientras carga la información real de la BD
+  app.innerHTML = buildGranjaShell(firstName);
+  attachGreetingActions();
 
-    // Always render clean skeleton shell on initial navigation
-    return buildGranjaShell(firstName);
+  loadGranjaData(firstName);
+
+  return () => {
+    // cleanup
+    removeBonusModal();
+  };
 }
 
 /**
- * Render the 30-day welcome bonus expiration countdown banner.
- * @returns {string} HTML string
+ * Build the shell (before data is loaded).
  */
-function renderWelcomeBonusBanner() {
-    const profile = AppState.get('profile');
-    const bonusBal = profile?.consumption_balance ?? profile?.referral_balance ?? 0;
-    if (bonusBal <= 0) return '';
+function buildGranjaShell(firstName) {
+  return `
+    <div class="page page--with-nav granja-page">
+      <div class="page__content">
+        ${renderGreeting(firstName)}
+        <h2 class="granja-title">Mi Granja</h2>
 
-    return `
-    <div id="welcome-bonus-banner" class="animate-fade-in" style="
-      background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-      border: 1px solid #fecdd3;
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    ">
-      <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-        <span style="font-size: 1.4rem; flex-shrink: 0;">🎁</span>
-        <div style="min-width: 0;">
-          <div style="font-size: 0.82rem; font-weight: 700; color: #9f1239; line-height: 1.2;">
-            Bono de Bienvenida: ${formatCOP(bonusBal)}
-          </div>
-          <div style="font-size: 0.72rem; color: #be123c; margin-top: 2px;" id="welcome-bonus-timer-text">
-            Válido para redimir en Tienda de Carne
-          </div>
-        </div>
-      </div>
-      <a href="#/tienda" style="
-        background: #e11d48;
-        color: white;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 6px 10px;
-        border-radius: 8px;
-        text-decoration: none;
-        white-space: nowrap;
-        flex-shrink: 0;
-      ">
-        Redimir
-      </a>
-    </div>
-    `;
-}
+        ${renderWalletSkeleton(firstName)}
 
-/**
- * Render the active piggies list cards.
- * @param {Array} piggies
- * @returns {string} HTML string
- */
-function renderPiggiesList(piggies) {
-    return `
-    <div style="display: flex; flex-direction: column; gap: 14px;">
-      ${piggies.map((p, idx) => renderPiggyCard(p, idx)).join('')}
-    </div>
-    `;
-}
-
-/**
- * Render an individual Piggy Card for the active list.
- * @param {Object} piggy
- * @param {number} idx
- * @returns {string} HTML string
- */
-function renderPiggyCard(piggy, idx) {
-    const progress = piggy.progress || getProgressPercentage(piggy.purchase_date, piggy.end_date);
-    const daysLeft = piggy.daysLeft !== undefined ? piggy.daysLeft : getDaysRemaining(piggy.end_date);
-    const stage = piggy.growthStage || getPiggyGrowthStage(progress, piggy.name);
-    const categoryBadge = piggy.categoryBadge || getCategoryBadge(piggy.category);
-    const weight = piggy.currentWeight || 25;
-
-    return `
-    <div class="piggy-card animate-fade-in-up" style="
-      background: #ffffff;
-      border: 1px solid #f1f5f9;
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      animation-delay: ${idx * 0.05}s;
-    ">
-      <!-- Top Row: Avatar + Name + Category Badge -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <!-- Piggy Photo Avatar -->
-          <div style="
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            overflow: hidden;
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            flex-shrink: 0;
-          ">
-            <img 
-              src="${piggy.image_url || stage.image}" 
-              alt="${piggy.name}"
-              style="width: 100%; height: 100%; object-fit: cover;"
-              onerror="this.onerror=null; this.src='assets/piggies/stage1/et1-1.jpg';"
-            />
-          </div>
-          <div>
-            <div style="font-weight: 800; font-size: 1rem; color: #1e293b; line-height: 1.2;">
-              ${piggy.name || 'Mi Piggy'}
-            </div>
-            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;">
-              ${stage.title || 'Engorde Activo'}
-            </div>
-          </div>
-        </div>
-
-        <!-- Category Badge -->
-        <span style="
-          background: ${categoryBadge.color}18;
-          color: ${categoryBadge.color};
-          border: 1px solid ${categoryBadge.color}35;
-          font-size: 0.72rem;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 10px;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        ">
-          ${categoryBadge.icon} ${categoryBadge.label}
-        </span>
-      </div>
-
-      <!-- Growth Progress Bar -->
-      <div style="margin-bottom: 12px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 5px;">
-          <span style="color: #64748b; font-weight: 600;">Progreso de Engorde</span>
-          <span style="font-weight: 700; color: #16a34a;">${progress}% (${daysLeft} días rest.)</span>
-        </div>
-        <div style="
-          width: 100%;
-          height: 8px;
-          background: #f1f5f9;
-          border-radius: 6px;
-          overflow: hidden;
-        ">
-          <div style="
-            width: ${progress}%;
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #059669);
-            border-radius: 6px;
-            transition: width 0.6s ease;
-          "></div>
+        <!-- Piggies section skeleton -->
+        <div class="section" id="piggies-section">
+          ${renderPiggyLoader('Cargando tu granja...')}
         </div>
       </div>
 
-      <!-- Stats Grid (Weight, Investment, Gain) -->
-      <div style="
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 8px;
-        background: #f8fafc;
-        border-radius: 12px;
-        padding: 10px 8px;
-        margin-bottom: 12px;
-        text-align: center;
-      ">
-        <div>
-          <div style="font-size: 0.68rem; color: #64748b; font-weight: 600;">Peso Est.</div>
-          <div style="font-weight: 800; font-size: 0.88rem; color: #1e293b; margin-top: 1px;">
-            ${weight} kg
-          </div>
-        </div>
-        <div>
-          <div style="font-size: 0.68rem; color: #64748b; font-weight: 600;">Inversión</div>
-          <div style="font-weight: 800; font-size: 0.88rem; color: #1e293b; margin-top: 1px;">
-            ${piggy.investmentFormatted || formatCOP(piggy.investment_amount || 0)}
-          </div>
-        </div>
-        <div>
-          <div style="font-size: 0.68rem; color: #64748b; font-weight: 600;">Retorno Est.</div>
-          <div style="font-weight: 800; font-size: 0.88rem; color: #16a34a; margin-top: 1px;">
-            +${piggy.returnGainFormatted || formatCOP(piggy.returnGain || 0)}
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Row: Ver Contrato -->
-      <div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-        ${piggy.contractUrl ? `
-        <a 
-          href="${piggy.contractUrl}" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style="
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 8px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-          "
-        >
-          📄 Ver Contrato
-        </a>
-        ` : ''}
-      </div>
+      ${renderBottomNav('granja')}
     </div>
-    `;
+  `;
 }
 
 /**
- * Render empty state when user has no active piggies.
- * @returns {string} HTML string
+ * Load data and update the dashboard.
  */
-function renderEmptyPiggiesState() {
-    return `
-    <div style="
-      background: #ffffff;
-      border: 2px dashed #e2e8f0;
-      border-radius: 18px;
-      padding: 32px 20px;
-      text-align: center;
-    ">
-      <div style="font-size: 2.5rem; margin-bottom: 10px;">🐷</div>
-      <h3 style="font-weight: 800; font-size: 1.05rem; color: #1e293b; margin: 0 0 6px 0;">
-        ¡Aún no tienes cerditos en engorde!
-      </h3>
-      <p style="color: #64748b; font-size: 0.83rem; margin: 0 0 18px 0; line-height: 1.4;">
-        Comienza hoy tu participación en la porcicultura digital con respaldo real.
-      </p>
-      <a href="#/mercado" style="
-        background: #db2777;
-        color: white;
-        font-weight: 700;
-        font-size: 0.88rem;
-        padding: 11px 22px;
-        border-radius: 12px;
-        text-decoration: none;
-        display: inline-block;
-        box-shadow: 0 4px 12px rgba(219, 39, 119, 0.3);
-      ">
-        Explorar Cerdos Disponibles
-      </a>
-    </div>
-    `;
-}
+async function loadGranjaData(firstName) {
+  try {
+    // Cargar piggies y el resto de datos de forma paralela y resiliente
+    const [
+      piggies,
+      tipData,
+      walletBalance,
+      referralBonus,
+      flashMissions,
+      cycleMissions,
+      transactions,
+      newsSlides
+    ] = await Promise.all([
+      getUserPiggies().catch((err) => {
+        console.warn('⚠️ getUserPiggies error:', err);
+        return AppState.get('piggies') || [];
+      }),
+      getRandomTip().catch(() => null),
+      getWalletBalance().catch(() => 0),
+      getReferralBonusBalance().catch(() => 0),
+      getActiveUserFlashMissions().catch(() => []),
+      getActiveCycleMissions().catch(() => []),
+      getWalletTransactions().catch(() => []),
+      getActiveNewsSlides().catch(() => [])
+    ]);
 
-/**
- * Render completed piggies expandable history block.
- * @param {Array} allPiggies
- * @returns {string} HTML string
- */
-function renderCompletedPiggiesHistory(allPiggies) {
-    const completed = (allPiggies || []).filter((p) => p.status === 'completado' || p.isComplete);
-    if (completed.length === 0) return '';
+    const activePiggiesList = piggies || [];
+    AppState.set({ piggies: activePiggiesList });
 
-    return `
-    <div class="section" style="margin-bottom: 28px;">
-      <details style="
-        background: #ffffff;
-        border: 1px solid #f1f5f9;
-        border-radius: 16px;
-        padding: 14px 16px;
-      ">
-        <summary style="
-          font-weight: 700;
-          font-size: 0.95rem;
-          color: #475569;
-          cursor: pointer;
-          user-select: none;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        ">
-          <span>🏆 Cerditos Completados (${completed.length})</span>
-          <span style="font-size: 0.8rem; color: #94a3b8;">Ver historial ▾</span>
-        </summary>
-        <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
-          ${completed.map((p) => `
-            <div style="
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 10px 0;
-              border-top: 1px solid #f1f5f9;
-            ">
-              <div>
-                <div style="font-weight: 700; font-size: 0.88rem; color: #1e293b;">${p.name || 'Piggy'}</div>
-                <div style="font-size: 0.72rem; color: #16a34a; font-weight: 600;">✓ Ciclo Finalizado</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-weight: 800; font-size: 0.88rem; color: #059669;">
-                  ${p.finalReturnFormatted || formatCOP(p.investment_amount || 0)}
-                </div>
-                <div style="font-size: 0.7rem; color: #94a3b8;">Liquidado</div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </details>
-    </div>
-    `;
-}
+    // Detección de misiones de ciclo en segundo plano (non-blocking)
+    detectAndCreateCycleMissions(activePiggiesList).catch((err) => {
+      console.warn('⚠️ detectAndCreateCycleMissions err:', err);
+    });
 
-/**
- * Attach event listeners to Granja interactive elements.
- * @param {boolean} hasPiggies
- * @param {Object} stats
- * @param {number} piggiesCount
- * @param {Array} piggiesList
- */
-function attachGranjaListeners(hasPiggies, stats, piggiesCount, piggiesList) {
-    // Referral Pill button listener
-    const btnReferral = document.getElementById('btn-header-referral');
-    if (btnReferral) {
-        btnReferral.addEventListener('click', () => {
-            window.location.hash = '#/referidos';
-        });
+    // Misiones activas basadas en los cerditos cargados
+    const activeMissions = await getActiveMissions(activePiggiesList).catch(() => []);
+
+    // Exponer misiones globalmente para los modales
+    window._activeFlashMissions = flashMissions || [];
+    window._activeCycleMissions = cycleMissions || [];
+
+    const stats = getDashboardStats(activePiggiesList);
+    stats.walletBalance          = walletBalance || 0;
+    stats.referralBonus          = referralBonus || 0;
+    stats.referralBonusFormatted = formatCOP(referralBonus || 0);
+    stats.saldoDisponible        = walletBalance || 0;
+    stats.saldoDisponibleFormatted = formatCOP(walletBalance || 0);
+    stats.transactions           = transactions || [];
+
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    // Verificar si el usuario sigue en la vista de Granja
+    const currentHash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'granja').toLowerCase();
+    if (currentHash !== 'granja' && currentHash !== 'referidos' && currentHash !== '') return;
+
+    app.innerHTML = buildGranjaFull(firstName, activePiggiesList, stats, tipData, activeMissions || [], flashMissions || [], cycleMissions || []);
+
+    // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
+    if (newsSlides && newsSlides.length > 0) {
+      showNewsBillboardModal(newsSlides);
     }
 
-    // Attach Wallet block event listeners (explorar cuenta, etc.)
-    attachWalletListeners(stats);
+    attachGranjaListeners(activePiggiesList.length > 0, stats, activePiggiesList.length, activePiggiesList);
+
+    // Lanza el tutorial interactivo si el usuario es nuevo y no lo ha completado aún
+    startOnboardingTourIfEligible();
+  } catch (error) {
+    console.error('Error loading granja data:', error);
+    const app = document.getElementById('app');
+    if (!app) return;
+
+    // Si ocurre un error de red, mostrar la granja con datos por defecto seguros
+    const fallbackPiggies = AppState.get('piggies') || [];
+    const stats = getDashboardStats(fallbackPiggies);
+    stats.walletBalance = 0;
+    stats.saldoDisponible = 0;
+    stats.saldoDisponibleFormatted = '$0';
+    stats.referralBonus = 0;
+    stats.referralBonusFormatted = '$0';
+    app.innerHTML = buildGranjaFull(firstName, fallbackPiggies, stats, null, [], [], []);
+    attachGranjaListeners(fallbackPiggies.length > 0, stats, fallbackPiggies.length, fallbackPiggies);
+  }
+}
+
+/**
+ * Build the full dashboard with data.
+ */
+function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions) {
+  const activePiggies    = piggies.filter(p => !p.isComplete);
+  const completedPiggies = piggies.filter(p => p.isComplete);
+  const piggyCount       = piggies.length;
+  const missionBanner = renderPriorityMissionBanner(
+      flashMissions  || [],
+      cycleMissions  || [],
+      activeMissions || [],
+      piggyCount
+  );
+  const notification = renderRandomNotification(tipData);
+
+  return `
+    <div class="page page--with-nav granja-page">
+      <div class="page__content">
+        ${renderGreeting(firstName)}
+        <h2 class="granja-title animate-fade-in-up">Mi Granja</h2>
+
+        <!-- Dynamic Notification (rotates on refresh) -->
+        ${notification}
+
+        ${renderWalletBanner(firstName, stats)}
+
+
+
+        <!-- ROI Info -->
+        ${stats.activeCount > 0 ? `
+          <div class="animate-fade-in-up" style="animation-delay: 0.18s; margin-top: 16px; margin-bottom: 28px;">
+            <button id="btn-quick-buy" class="btn-shine-7s" style="
+                background: #ec4899; 
+                color: white; 
+                border: none; 
+                width: 100%; 
+                padding: 13px 18px; 
+                border-radius: 12px; 
+                font-weight: 800; 
+                font-size: 0.85rem; 
+                white-space: nowrap;
+                cursor: pointer; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                gap: 8px;
+                box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+                transition: transform 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div style="
+                    background: white; 
+                    color: #ec4899;
+                    width: 20px; 
+                    height: 20px; 
+                    border-radius: 50%; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center;
+                    font-size: 16px;
+                    font-weight: 800;
+                    padding-bottom: 2px;
+                    position: relative;
+                    z-index: 1;
+                    flex-shrink: 0;
+                ">+</div>
+                <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- Mis Cerdos -->
+        <div class="section animate-fade-in-up" id="mis-piggies-section" style="animation-delay: 0.2s;">
+          <div class="section__header" id="mis-piggies-header">
+            <h3 class="section__title">Mis Piggys</h3>
+            <button id="btn-ver-completados" class="section__link" style="background:none; border:none; cursor:pointer; font-size:0.85rem; font-weight:700; color:#ec4899; display:flex; align-items:center; gap:4px; padding:0; font-family:inherit;">
+              Completados ${completedPiggies.length > 0 ? `(${completedPiggies.length})` : ''} ${renderIcon('arrowRight', '', '14')}
+            </button>
+          </div>
+
+          ${activePiggies.length === 0 ? renderEmptyPiggies() : renderPiggiesList(activePiggies, stats.baseROI)}
+        </div>
+
+        <!-- Dynamic Mission Banner -->
+        <div id="mission-banner-container">
+          ${missionBanner}
+        </div>
+
+      </div>
+
+      ${renderBottomNav('granja')}
+    </div>
+  `;
+}
+
+function renderGreeting(firstName) {
+  const profile = AppState.get('profile') || {};
+  const initials = getUserInitials(profile.full_name || firstName);
+  const initialsFontSize = initials.length > 1 ? '1rem' : '1.15rem';
+
+  // Gift icon (stroke style, consistent with bottom nav)
+  const giftIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <rect x="3" y="8" width="18" height="4" rx="1"/>
+    <path d="M12 8v13"/>
+    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
+    <path d="M7.5 8C6.12 8 5 6.88 5 5.5C5 4.12 6.12 3 7.5 3C10 3 12 8 12 8C12 8 14 3 16.5 3C17.88 3 19 4.12 19 5.5C19 6.88 17.88 8 16.5 8"/>
+  </svg>`;
+
+  // Headset icon (stroke style)
+  const headsetIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5z"/>
+    <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
+  </svg>`;
+
+  // Logout icon (stroke style)
+  const logoutIconSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+    <polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>`;
+
+  return `
+    <div class="granja-greeting animate-fade-in" id="granja-header" style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil" onclick="location.hash='#/perfil'">
+        <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+          <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
+          <span class="granja-greeting__online"></span>
+        </div>
+        <div class="granja-greeting__text">
+          <span class="granja-greeting__welcome">¡Bienvenido!</span>
+          <span class="granja-greeting__name">${firstName}</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons: Referidos | Soporte | Salir -->
+      <div class="greeting-actions">
+        <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
+          ${giftIconSVG}
+        </button>
+        <button class="greeting-action-btn" id="btn-greeting-support" aria-label="Atención al Cliente" title="Soporte">
+          ${headsetIconSVG}
+        </button>
+        <button class="greeting-action-btn" id="btn-greeting-logout" aria-label="Cerrar sesión" title="Salir">
+          ${logoutIconSVG}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Render empty piggies state matching screen2.png.
+ */
+function renderEmptyPiggies() {
+  return `
+    <div class="empty-state animate-fade-in-up" style="
+      background: white;
+      border: 2px dashed #fce7f3;
+      border-radius: 24px;
+      padding: 32px 20px;
+      text-align: center;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(236,72,153,0.04);
+    ">
+      <div class="empty-state__icon" style="
+        width: 80px; height: 80px; border-radius: 50%;
+        margin: 0 auto 16px; overflow: hidden;
+        border: 3px solid #fdf2f8; box-shadow: 0 4px 15px rgba(236,72,153,0.15);
+      ">
+        <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
+      </div>
+      <div class="empty-state__title" style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin-bottom: 6px;">
+        No tienes Piggys aún
+      </div>
+      <div class="empty-state__description" style="font-size: 0.85rem; color: #64748b; line-height: 1.45; margin-bottom: 20px; max-width: 280px; margin-left: auto; margin-right: auto;">
+        Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
+      </div>
+      <button id="btn-adopt-empty" class="btn-shine-7s" style="
+          background: #ec4899; 
+          color: white; 
+          border: none; 
+          width: auto; 
+          max-width: 100%;
+          padding: 12px 22px; 
+          border-radius: 14px; 
+          font-weight: 800; 
+          font-size: 0.82rem; 
+          white-space: nowrap;
+          cursor: pointer; 
+          display: inline-flex; 
+          align-items: center; 
+          justify-content: center; 
+          gap: 8px;
+          box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
+          transition: transform 0.2s, box-shadow 0.2s;
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" onclick="location.hash='#/mercado'">
+          <div style="
+              background: white; 
+              color: #ec4899;
+              width: 19px; 
+              height: 19px; 
+              border-radius: 50%; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              font-size: 15px;
+              font-weight: 800;
+              padding-bottom: 2px;
+              position: relative;
+              z-index: 1;
+              flex-shrink: 0;
+          ">+</div>
+          <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
+      </button>
+    </div>
+  `;
+}
+
+export function renderPiggiesList(piggies, baseROI) {
+  return `
+    <div class="piggies-list">
+      ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
+    </div>
+  `;
+}
+
+export function renderPiggyCard(piggy, baseROI) {
+  const inv = parseFloat(piggy.investment_amount) || 1000000;
+  const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
+  const totalROI = baseROI + extraRoi;
+  const projectedReturn = inv * (1 + totalROI);
+  const progressPercent = typeof piggy.progress === 'number' ? piggy.progress : 0;
+
+  return `
+    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}" style="
+      background: white;
+      border: 1px solid #f1f5f9;
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      margin-bottom: 14px;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.08)'"
+       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.04)'">
+      <div class="piggy-card__header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+        <div class="piggy-card__avatar" style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #FCE4EC; flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
+        </div>
+        <div class="piggy-card__info" style="flex: 1; min-width: 0;">
+          <div class="piggy-card__name" style="font-weight: 800; font-size: 1.05rem; color: #0f172a; line-height: 1.2; margin-bottom: 3px;">${piggy.name}</div>
+          <div class="piggy-card__status">
+            ${piggy.isComplete
+              ? '<span class="badge badge--success" style="background: #ecfdf5; color: #059669; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">✓ Completado</span>'
+              : `<span class="badge badge--primary" style="background: #FCE4EC; color: #E91E63; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">${piggy.daysLeft} días restantes</span>`
+            }
+          </div>
+        </div>
+        ${extraRoi > 0 ? `
+          <span class="badge badge--warning" style="background: #fffbeb; color: #b45309; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 9999px;">+${(extraRoi * 100).toFixed(0)}%</span>
+        ` : ''}
+      </div>
+
+      <div class="piggy-card__progress" style="margin-bottom: 14px;">
+        <div class="piggy-card__progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span class="text-sm text-muted" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Progreso del ciclo</span>
+          <span class="text-sm font-semibold" style="font-size: 0.85rem; font-weight: 800; color: #E91E63;">${progressPercent}%</span>
+        </div>
+        <div class="progress" style="height: 10px; background: #FCE4EC; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
+          <div class="progress__bar" style="width: ${progressPercent}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #E91E63 0%, #FF4081 100%)'}; border-radius: 9999px; transition: width 0.8s ease-out; min-width: ${progressPercent > 0 ? '6px' : '0'};"></div>
+        </div>
+      </div>
+
+      <div class="piggy-card__stats grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+        <div>
+          <div class="text-xs text-muted" style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-bottom: 2px;">Peso actual</div>
+          <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="font-semibold text-primary" style="font-size: 0.95rem; font-weight: 800; color: #E91E63;">
+            <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
+          </div>
+          ${extraRoi > 0 ? `<div class="text-xs" style="font-size: 10px; color: #b45309; margin-top: 2px; font-weight: 700;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function renderBottomNav(activeTab) {
+  return `
+    <nav class="bottom-nav" id="granja-bottom-nav" aria-label="Navegación principal" style="grid-template-columns: repeat(4, 1fr);">
+      <a href="#/granja" class="bottom-nav__item ${activeTab === 'granja' ? 'bottom-nav__item--active' : ''}" id="nav-granja">
+        <span class="bottom-nav__icon">${renderIcon('farm', '', '24')}</span>
+        <span>Granja</span>
+      </a>
+      <a href="#/mercado" class="bottom-nav__item ${activeTab === 'mercado' ? 'bottom-nav__item--active' : ''}" id="nav-mercado">
+        <span class="bottom-nav__icon">${renderIcon('pigSide', '', '24')}</span>
+        <span>Mercado</span>
+      </a>
+      <a href="#/gourmet" class="bottom-nav__item ${activeTab === 'gourmet' ? 'bottom-nav__item--active' : ''}" id="nav-gourmet">
+        <span class="bottom-nav__icon">${renderIcon('shoppingBag', '', '24')}</span>
+        <span>Tienda</span>
+      </a>
+      <a href="#/aliados" class="bottom-nav__item ${activeTab === 'aliados' ? 'bottom-nav__item--active' : ''}" id="nav-aliados">
+        <span class="bottom-nav__icon">${renderIcon('people', '', '24')}</span>
+        <span>Aliados</span>
+      </a>
+    </nav>
+  `;
+}
+
+/**
+ * Attach event listeners.
+ */
+function attachGranjaListeners(hasPiggies, stats, piggyCount, piggies = []) {
+  // Piggy card click
+  document.querySelectorAll('.piggy-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const piggyId = card.dataset.piggyId;
+      navigateTo(`piggy/${piggyId}`);
+    });
+  });
+
+  // Completed piggies modal trigger
+  const btnCompletados = document.getElementById('btn-ver-completados');
+  if (btnCompletados) {
+    btnCompletados.addEventListener('click', () => {
+      const completedPiggies = (piggies || []).filter(p => p.isComplete);
+      showCompletedPiggiesModal(completedPiggies, stats.baseROI);
+    });
+  }
+
+  // Mission listeners (delegated to module)
+  attachMissionListeners();
+
+  // Dynamic Notification click
+  const notifEl = document.getElementById('dynamic-notification');
+  if (notifEl && notifEl.dataset.cta) {
+    notifEl.addEventListener('click', () => {
+      const cta = notifEl.dataset.cta;
+      if (cta.startsWith('#/')) {
+        navigateTo(cta.replace('#/', ''));
+      } else {
+        window.open(cta, '_blank');
+      }
+    });
+  }
+
+  // Quick Buy Action -> Redirect to Mercado
+  const quickBuyBtn = document.getElementById('btn-quick-buy');
+  if (quickBuyBtn) {
+    quickBuyBtn.addEventListener('click', () => {
+      navigateTo('mercado');
+    });
+  }
+
+  // Adopt Empty Action -> Redirect to Mercado
+  const adoptEmptyBtn = document.getElementById('btn-adopt-empty');
+  if (adoptEmptyBtn) {
+    adoptEmptyBtn.addEventListener('click', () => {
+      navigateTo('mercado');
+    });
+  }
+
+  // Wallet listeners (delegated to module)
+  attachWalletListeners(stats);
+
+  // Greeting actions (profile, referrals, support, logout)
+  attachGreetingActions();
+}
+
+/**
+ * Attach listeners for greeting action bar (works in both skeleton and full state).
+ */
+export function attachGreetingActions() {
+  // Greeting avatar / profile trigger
+  document.getElementById('btn-greeting-profile')?.addEventListener('click', () => {
+    navigateTo('perfil');
+  });
+
+  // Greeting action buttons
+  document.getElementById('btn-greeting-referrals')?.addEventListener('click', () => {
+    showReferralModal();
+  });
+
+  document.getElementById('btn-greeting-support')?.addEventListener('click', () => {
+    showSupportModal();
+  });
+
+  document.getElementById('btn-greeting-logout')?.addEventListener('click', async () => {
+    if (confirm('¿Cerrar sesión?')) {
+      await signOut();
+      navigateTo('auth');
+    }
+  });
 }
