@@ -93,7 +93,6 @@ export function renderWalletCard(firstName, stats = {}) {
                    ` : ''}
                 </div>
              </div>
-             </div>
 
              ${stats.disponible > 0 ? `
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -105,64 +104,27 @@ export function renderWalletCard(firstName, stats = {}) {
                       border-radius: 12px; 
                       font-weight: 700; 
                       font-size: 0.9rem; 
-                      cursor: pointer; 
-                      flex: 1; 
-                      white-space: nowrap; 
+                      cursor: pointer;
+                      flex: 1;
+                      white-space: nowrap;
                       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                      transition: transform 0.2s, box-shadow 0.2s;
-                   " 
-                   onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)';"
-                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';"
-                   >
-                      Retirar Saldo
-                   </button>
-                   <button id="btn-convert" style="
-                      background: rgba(255,255,255,0.2); 
+                      transition: transform 0.2s;
+                   ">Convertir Bono en Efectivo</button>
+                   <button id="btn-meat" style="
+                      background: rgba(255,255,255,0.15); 
                       color: white; 
-                      border: 1px solid rgba(255,255,255,0.4); 
+                      border: 1px solid rgba(255,255,255,0.3); 
                       padding: 10px 20px; 
                       border-radius: 12px; 
                       font-weight: 600; 
                       font-size: 0.9rem; 
-                      cursor: pointer; 
-                      flex: 1; 
+                      cursor: pointer;
+                      flex: 1;
                       white-space: nowrap;
-                      transition: background 0.2s;
-                   "
-                   onmouseover="this.style.background='rgba(255,255,255,0.3)';"
-                   onmouseout="this.style.background='rgba(255,255,255,0.2)';"
-                   >
-                      Canjear por Carne
-                   </button>
+                      backdrop-filter: blur(5px);
+                   ">Solicitar Entrega de Carne</button>
                 </div>
-             ` : `
-                <div style="font-size:0.75rem; opacity:0.8; line-height:1.4;">
-                   Los fondos estarán disponibles para retiro o consumo al finalizar el ciclo de engorde (19 semanas).
-                </div>
-             `}
-          </div>
-       </div>
-    </div>
-  `;
-}
-
-/**
- * Render the Wallet skeleton (loading state)
- */
-export function renderWalletSkeleton(firstName) {
-  return `
-    <div class="section animate-fade-in-up">
-       <div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 24px; border-radius: 16px; margin-bottom: 24px; color: white;">
-          <h3 style="margin:0 0 20px 0; font-size:1.25rem; opacity:0.8;">Wallet de ${firstName}</h3>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-             <div>
-                <span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2); display:block; margin-bottom:6px;"></span>
-                <div class="skeleton" style="width:100px; height:20px; background:rgba(255,255,255,0.3);"></div>
-             </div>
-             <div>
-                <span class="skeleton" style="width:80px; height:12px; background:rgba(255,255,255,0.2); display:block; margin-bottom:6px;"></span>
-                <div class="skeleton" style="width:120px; height:28px; background:rgba(255,255,255,0.3);"></div>
-             </div>
+              ` : ''}
           </div>
        </div>
     </div>
