@@ -90,21 +90,10 @@ export function renderGranjaView() {
   const app = document.getElementById('app');
   const profile = AppState.get('profile');
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  const cachedPiggies = AppState.get('piggies');
 
-  // If piggies already cached in memory, render full dashboard immediately (0ms wait)
-  if (Array.isArray(cachedPiggies) && cachedPiggies.length > 0) {
-    const stats = getDashboardStats(cachedPiggies);
-    stats.saldoDisponible = profile?.wallet_balance || 0;
-    stats.saldoDisponibleFormatted = formatCOP(stats.saldoDisponible);
-    stats.referralBonus = profile?.consumption_balance || 0;
-    stats.referralBonusFormatted = formatCOP(stats.referralBonus);
-    app.innerHTML = buildGranjaFull(firstName, cachedPiggies, stats, null, [], window._activeFlashMissions || [], window._activeCycleMissions || []);
-    attachGranjaListeners(true, stats, cachedPiggies.length, cachedPiggies);
-  } else {
-    app.innerHTML = buildGranjaShell(firstName);
-    attachGreetingActions();
-  }
+  // Mostrar el skeleton loader limpio mientras carga la información real de la BD
+  app.innerHTML = buildGranjaShell(firstName);
+  attachGreetingActions();
 
   loadGranjaData(firstName);
 
@@ -276,18 +265,18 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
             " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                 <div style="
                     background: white; 
-                    color: #ec4899;
+                    color: #ec4899; 
                     width: 20px; 
                     height: 20px; 
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center;
-                    font-size: 16px;
-                    font-weight: 800;
-                    padding-bottom: 2px;
-                    position: relative;
-                    z-index: 1;
+                    justify-content: center; 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    padding-bottom: 2px; 
+                    position: relative; 
+                    z-index: 1; 
                     flex-shrink: 0;
                 ">+</div>
                 <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
@@ -349,27 +338,112 @@ function renderGreeting(firstName) {
   </svg>`;
 
   return `
-    <div class="granja-greeting animate-fade-in" id="granja-header" style="display:flex; align-items:center; justify-content:space-between;">
-      <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" id="btn-greeting-profile" title="Ver Mi Perfil" onclick="location.hash='#/perfil'">
-        <div class="granja-greeting__avatar" style="aspect-ratio:1/1; border-radius:50%; display:flex; align-items:center; justify-content:center;">
-          <span class="granja-greeting__initial" style="font-size:${initialsFontSize}; font-weight:800; line-height:1; letter-spacing:-0.5px;">${initials}</span>
-          <span class="granja-greeting__online"></span>
-        </div>
-        <div class="granja-greeting__text">
-          <span class="granja-greeting__welcome">¡Bienvenido!</span>
-          <span class="granja-greeting__name">${firstName}</span>
+    <div class="greeting-bar" style="margin-bottom: 24px;">
+      <!-- Left: Avatar Button (links to Perfil) + Text -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button id="btn-greeting-profile" style="
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          border-radius: 50%;
+          outline: none;
+          transition: transform 0.2s, box-shadow 0.2s;
+        "
+        onmouseover="this.style.transform='scale(1.06)'"
+        onmouseout="this.style.transform='scale(1)'"
+        title="Ver mi perfil">
+          <div class="greeting-bar__avatar" style="
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary, #E91E63), #FF4081);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: ${initialsFontSize};
+            box-shadow: 0 4px 12px rgba(233,30,99,0.3);
+            border: 2px solid #ffffff;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+          ">${initials}</div>
+        </button>
+        <div>
+          <div class="greeting-bar__sub" style="font-size: 0.78rem; color: #64748b; font-weight: 500;">Bienvenido de nuevo</div>
+          <div class="greeting-bar__name" style="font-size: 1.15rem; font-weight: 800; color: #1e293b; letter-spacing: -0.01em;">${firstName}</div>
         </div>
       </div>
 
-      <!-- Action Buttons: Referidos | Soporte | Salir -->
-      <div class="greeting-actions">
-        <button class="greeting-action-btn" id="btn-greeting-referrals" aria-label="Programa de Referidos" title="Referidos">
+      <!-- Right: Action Icons (Referidos, Soporte, Logout) -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <!-- Botón Referidos -->
+        <button id="btn-greeting-referrals" class="greeting-action-btn" title="Invitar y ganar" style="
+          background: #fdf2f8;
+          border: 1px solid #fce7f3;
+          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: var(--color-primary, #E91E63);
+          transition: all 0.2s ease;
+          position: relative;
+        "
+        onmouseover="this.style.background='#fce7f3'; this.style.transform='translateY(-1px)'"
+        onmouseout="this.style.background='#fdf2f8'; this.style.transform='translateY(0)'">
           ${giftIconSVG}
+          <!-- Badge indicador de beneficio -->
+          <span style="
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+          "></span>
         </button>
-        <button class="greeting-action-btn" id="btn-greeting-support" aria-label="Atención al Cliente" title="Soporte">
+
+        <!-- Botón Soporte -->
+        <button id="btn-greeting-support" class="greeting-action-btn" title="Soporte y ayuda" style="
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #475569;
+          transition: all 0.2s ease;
+        "
+        onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b'; this.style.transform='translateY(-1px)'"
+        onmouseout="this.style.background='#f8fafc'; this.style.color='#475569'; this.style.transform='translateY(0)'">
           ${headsetIconSVG}
         </button>
-        <button class="greeting-action-btn" id="btn-greeting-logout" aria-label="Cerrar sesión" title="Salir">
+
+        <!-- Botón Cerrar Sesión -->
+        <button id="btn-greeting-logout" class="greeting-action-btn" title="Cerrar sesión" style="
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #94a3b8;
+          transition: all 0.2s ease;
+        "
+        onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fecaca'; this.style.transform='translateY(-1px)'"
+        onmouseout="this.style.background='#f8fafc'; this.style.color='#94a3b8'; this.style.borderColor='#e2e8f0'; this.style.transform='translateY(0)'">
           ${logoutIconSVG}
         </button>
       </div>
@@ -377,126 +451,135 @@ function renderGreeting(firstName) {
   `;
 }
 
-/**
- * Render empty piggies state matching screen2.png.
- */
 function renderEmptyPiggies() {
   return `
-    <div class="empty-state animate-fade-in-up" style="
-      background: white;
-      border: 2px dashed #fce7f3;
-      border-radius: 24px;
-      padding: 32px 20px;
-      text-align: center;
-      margin-top: 10px;
-      box-shadow: 0 4px 15px rgba(236,72,153,0.04);
-    ">
-      <div class="empty-state__icon" style="
-        width: 80px; height: 80px; border-radius: 50%;
-        margin: 0 auto 16px; overflow: hidden;
-        border: 3px solid #fdf2f8; box-shadow: 0 4px 15px rgba(236,72,153,0.15);
+    <div class="empty-state">
+      <div class="empty-state__icon animate-bounce-slow" style="font-size: 52px; margin-bottom: 12px;">🐷</div>
+      <div class="empty-state__title" style="font-size: 1.15rem; font-weight: 700; color: #1e293b;">¡Tu granja está lista para crecer!</div>
+      <div class="empty-state__text" style="font-size: 0.85rem; color: #64748b; max-width: 280px; margin: 0 auto 20px auto; line-height: 1.4;">Comienza adoptando tu primer Piggy y gana hasta un 12% de margen comercial en cada ciclo.</div>
+      <button class="btn btn--primary" id="btn-adopt-empty" style="
+        padding: 12px 28px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(233, 30, 99, 0.35);
+        cursor: pointer;
       ">
-        <img src="pig2.jpg" alt="Piggy" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='pig2.jpg'" />
-      </div>
-      <div class="empty-state__title" style="font-weight: 800; font-size: 1.15rem; color: #0f172a; margin-bottom: 6px;">
-        No tienes Piggys aún
-      </div>
-      <div class="empty-state__description" style="font-size: 0.85rem; color: #64748b; line-height: 1.45; margin-bottom: 20px; max-width: 280px; margin-left: auto; margin-right: auto;">
-        Comienza tu granja comprando tu primer piggy y empieza a generar beneficios.
-      </div>
-      <button id="btn-adopt-empty" class="btn-shine-7s" style="
-          background: #ec4899; 
-          color: white; 
-          border: none; 
-          width: auto; 
-          max-width: 100%;
-          padding: 12px 22px; 
-          border-radius: 14px; 
-          font-weight: 800; 
-          font-size: 0.82rem; 
-          white-space: nowrap;
-          cursor: pointer; 
-          display: inline-flex; 
-          align-items: center; 
-          justify-content: center; 
-          gap: 8px;
-          box-shadow: 0 8px 20px -5px rgba(236, 72, 153, 0.5);
-          transition: transform 0.2s, box-shadow 0.2s;
-      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" onclick="location.hash='#/mercado'">
-          <div style="
-              background: white; 
-              color: #ec4899;
-              width: 19px; 
-              height: 19px; 
-              border-radius: 50%; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center;
-              font-size: 15px;
-              font-weight: 800;
-              padding-bottom: 2px;
-              position: relative;
-              z-index: 1;
-              flex-shrink: 0;
-          ">+</div>
-          <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
+        Adoptar mi Primer Piggy
       </button>
     </div>
   `;
 }
 
-// ... renderPiggiesList and renderPiggyCard remain the same ...
-
-export function renderPiggiesList(piggies, baseROI) {
+function renderPiggiesList(piggies, baseROI) {
   return `
     <div class="piggies-list">
-      ${piggies.map((piggy) => renderPiggyCard(piggy, baseROI)).join('')}
+      ${piggies.map(p => renderPiggyCard(p, baseROI)).join('')}
     </div>
   `;
 }
 
-export function renderPiggyCard(piggy, baseROI) {
-  const inv = parseFloat(piggy.investment_amount) || 1000000;
+function renderPiggyCard(piggy, baseROI) {
+  const inv = parseFloat(piggy.investment_amount) || 0;
   const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
-  const totalROI = baseROI + extraRoi;
-  const projectedReturn = inv * (1 + totalROI);
-  const progressPercent = typeof piggy.progress === 'number' ? piggy.progress : 0;
+  const projectedReturn = calculateTotalReturn(inv, baseROI, extraRoi);
+
+  // Growth stage text (Etapa 1, 2 o 3)
+  const growthStageText = piggy.growthStage || (
+    piggy.progress > 90 ? 'Etapa 3 · Acabado' :
+    piggy.progress > 30 ? 'Etapa 2 · Desarrollo' :
+    'Etapa 1 · Inicio'
+  );
+
+  // Status badge config
+  const statusConfig = {
+    engorde: { label: 'En engorde', class: 'status-badge--engorde', bg: '#fdf2f8', color: '#be123c', border: '#fce7f3' },
+    completado: { label: 'Completado', class: 'status-badge--completado', bg: '#f0fdf4', color: '#15803d', border: '#dcfce7' },
+    liquidado: { label: 'Liquidado', class: 'status-badge--liquidado', bg: '#f8fafc', color: '#475569', border: '#e2e8f0' },
+  };
+
+  const status = statusConfig[piggy.status] || statusConfig.engorde;
+  const progressPercent = Math.min(100, Math.max(0, piggy.progress || 0));
 
   return `
-    <div class="piggy-card card card--interactive" data-piggy-id="${piggy.id}" style="
-      background: white;
-      border: 1px solid #f1f5f9;
-      border-radius: 20px;
-      padding: 18px 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    <div class="piggy-card card animate-scale-in" data-piggy-id="${piggy.id}" style="
+      cursor: pointer; 
+      border-radius: 16px; 
+      border: 1px solid #f1f5f9; 
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04); 
+      padding: 16px; 
+      margin-bottom: 16px; 
+      background: #ffffff;
       transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-      margin-bottom: 14px;
-    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(0, 0, 0, 0.08)'"
-       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 0, 0, 0.04)'">
-      <div class="piggy-card__header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
-        <div class="piggy-card__avatar" style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: #FCE4EC; flex-shrink: 0; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <img src="${piggy.imageUrl}" alt="${piggy.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='pig2.jpg'" />
-        </div>
-        <div class="piggy-card__info" style="flex: 1; min-width: 0;">
-          <div class="piggy-card__name" style="font-weight: 800; font-size: 1.05rem; color: #0f172a; line-height: 1.2; margin-bottom: 3px;">${piggy.name}</div>
-          <div class="piggy-card__status">
-            ${piggy.isComplete
-              ? '<span class="badge badge--success" style="background: #ecfdf5; color: #059669; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">✓ Completado</span>'
-              : `<span class="badge badge--primary" style="background: #FCE4EC; color: #E91E63; font-weight: 750; font-size: 0.72rem; padding: 3px 9px; border-radius: 9999px;">${piggy.daysLeft} días restantes</span>`
-            }
+    "
+    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)';"
+    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(0,0,0,0.04)';">
+      
+      <!-- Top row: Avatar + Name/ID + Status Badge -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <!-- Piggy Photo (Fallback to SVG if image fails) -->
+          <div style="
+            width: 48px; 
+            height: 48px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            background: #fdf2f8; 
+            border: 2px solid #fce7f3; 
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <img 
+              src="${piggy.imageUrl}" 
+              alt="${piggy.name}" 
+              style="width: 100%; height: 100%; object-fit: cover;"
+              onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg, #fce4ec, #f8bbd0);">
+              ${renderIcon('pigFace', '', '28')}
+            </div>
+          </div>
+
+          <!-- Name & ID -->
+          <div>
+            <div style="font-weight: 800; font-size: 1rem; color: #0f172a; line-height: 1.2; margin-bottom: 2px;">
+              ${piggy.name}
+            </div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; font-family: monospace;">
+              ${piggy.displayCode || `#${String(piggy.id).slice(-6).toUpperCase()}`}
+            </div>
           </div>
         </div>
-        ${extraRoi > 0 ? `
-          <span class="badge badge--warning" style="background: #fffbeb; color: #b45309; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 9999px;">+${(extraRoi * 100).toFixed(0)}%</span>
-        ` : ''}
+
+        <!-- Status Badge -->
+        <span style="
+          background: ${status.bg}; 
+          color: ${status.color}; 
+          border: 1px solid ${status.border}; 
+          font-size: 0.72rem; 
+          font-weight: 700; 
+          padding: 4px 10px; 
+          border-radius: 20px;
+          letter-spacing: 0.2px;
+        ">
+          ${status.label}
+        </span>
       </div>
 
-      <div class="piggy-card__progress" style="margin-bottom: 14px;">
-        <div class="piggy-card__progress-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span class="text-sm text-muted" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Progreso del ciclo</span>
-          <span class="text-sm font-semibold" style="font-size: 0.85rem; font-weight: 800; color: #E91E63;">${progressPercent}%</span>
+      <!-- Growth Stage & Progress Section -->
+      <div style="margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 0.75rem; color: #475569; font-weight: 700;">
+            ${growthStageText}
+          </span>
+          <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">
+            ${piggy.isComplete ? 'Ciclo finalizado' : `${piggy.daysLeft} días restantes`}
+          </span>
         </div>
+
+        <!-- Progress Bar -->
         <div class="progress" style="height: 10px; background: #FCE4EC; border-radius: 9999px; overflow: hidden; width: 100%; position: relative;">
           <div class="progress__bar" style="width: ${progressPercent}%; height: 100%; background: ${piggy.isComplete ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #E91E63 0%, #FF4081 100%)'}; border-radius: 9999px; transition: width 0.8s ease-out; min-width: ${progressPercent > 0 ? '6px' : '0'};"></div>
         </div>

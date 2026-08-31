@@ -355,7 +355,7 @@ function enrichPiggyData(piggy) {
 /**
  * Get summary stats for the dashboard.
  */
-export async function getDashboardStats(piggies = []) {
+export function getDashboardStats(piggies = []) {
     const validPiggies = (piggies || []).filter(Boolean);
     const activePiggies = validPiggies.filter((p) => !p.isComplete);
     const availablePiggies = validPiggies.filter((p) => p.isComplete);

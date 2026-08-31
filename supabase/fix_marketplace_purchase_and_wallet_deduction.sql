@@ -352,14 +352,19 @@ GRANT EXECUTE ON FUNCTION public.buy_piggy TO authenticated;
 GRANT EXECUTE ON FUNCTION public.buy_piggy TO service_role;
 
 -- ------------------------------------------------------------------------------
--- 6. AJUSTE DE CUENTA DE DIOMEDES (APLICAR DÉBITO PENDIENTE DE "Timón")
+-- 6. AJUSTE DE CUENTA DE DIOMEDES (REMOVER REEMBOLSO INDEBIDO Y APLICAR DÉBITO DE "Timón")
 -- ------------------------------------------------------------------------------
 DO $$
 DECLARE
   v_diomedes_id uuid := '3349c043-bd00-4937-a831-6b5e6bb91738';
   v_has_tx boolean;
 BEGIN
-  -- Verificar si ya existe la transacción de Timón
+  -- 1. Eliminar cualquier registro de reembolso erróneo de $2.000.000 (Opción A)
+  DELETE FROM public.wallet_transactions 
+  WHERE user_id = v_diomedes_id 
+  AND description ILIKE '%Reembolso por compra de Piggys%';
+
+  -- 2. Verificar e insertar el débito de Timón por $1.200.000 COP
   SELECT EXISTS(
     SELECT 1 FROM public.wallet_transactions 
     WHERE user_id = v_diomedes_id 
@@ -367,8 +372,6 @@ BEGIN
   ) INTO v_has_tx;
 
   IF NOT v_has_tx THEN
-    -- Insertar el movimiento oficial de débito por 1.200.000 COP
-    -- El trigger trg_handle_wallet_transaction_sync actualiza automáticamente profiles.wallet_balance
     INSERT INTO public.wallet_transactions (
       user_id,
       amount,
@@ -389,7 +392,16 @@ BEGIN
       'APPROVED',
       '2026-08-29 16:37:52.336583-05:00'::timestamptz
     );
-
-    RAISE NOTICE 'Transacción de Timón registrada y saldo descontado a Diomedes correctamente.';
   END IF;
+
+  -- 3. Establecer el saldo contable exacto y real de Diomedes en $1.300.577 COP
+  PERFORM set_config('app.wallet_update_authorized', 'true', true);
+
+  UPDATE public.profiles
+  SET wallet_balance = 1300577
+  WHERE id = v_diomedes_id;
+
+  PERFORM set_config('app.wallet_update_authorized', '', true);
+
+  RAISE NOTICE 'Cuenta de Diomedes regularizada con éxito: Reembolso eliminado, débito de Timón registrado y saldo ajustado a $1.300.577 COP.';
 END $$;
