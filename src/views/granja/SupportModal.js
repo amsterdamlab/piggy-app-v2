@@ -118,7 +118,7 @@ export function showSupportModal() {
 
       <!-- Subtitle -->
       <p style="margin:0 0 24px 0; font-size:0.88rem; color:#6b7280; text-align:center; line-height:1.5;">
-        Mariana, nuestra asesora virtual responde al instante — dudas, transferencias, estado de tu cuenta y más.
+        ClaudIA, nuestra asesora virtual responde al instante — dudas, transferencias, estado de tu cuenta y más.
       </p>
 
       <!-- Action Rows -->
@@ -128,7 +128,7 @@ export function showSupportModal() {
         overflow: hidden;
         margin-bottom: 24px;
       ">
-        <!-- Row 1: Habla con MarIAna -->
+        <!-- Row 1: Habla con ClaudIA -->
         <button id="btn-support-talk" style="
           width: 100%;
           background: white;
@@ -141,7 +141,7 @@ export function showSupportModal() {
           transition: background 0.15s;
           font-family: inherit;
         " onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
-          <span style="font-size:0.95rem; font-weight:600; color:#111827;">Habla con MarIAna</span>
+          <span style="font-size:0.95rem; font-weight:600; color:#111827;">Habla con ClaudIA</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
@@ -180,9 +180,9 @@ export function showSupportModal() {
   document.getElementById('support-modal-close').addEventListener('click', close);
   modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-  // Action: Habla con MarIAna → WhatsApp
+  // Action: Habla con ClaudIA → WhatsApp
   document.getElementById('btn-support-talk')?.addEventListener('click', () => {
-    const link = buildWhatsAppLink('¡Hola Mariana 👋! Ayudame con algo por favor...');
+    const link = buildWhatsAppLink('¡Hola ClaudIA 👋! Ayudame con algo por favor...');
     window.open(link, '_blank');
   });
 
