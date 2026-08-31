@@ -20,7 +20,12 @@ export { showRetiroSaldoModal, showWalletRequestSuccess } from './WalletWithdraw
  * @param {Object} stats
  * @returns {string} HTML
  */
-export function renderWalletBanner(firstName, stats) {
+export function renderWalletBanner(firstName, stats = {}) {
+  const saldoFormatted = stats?.saldoDisponibleFormatted || formatCOP(stats?.saldoDisponible || stats?.walletBalance || 0);
+  const baseRoiFormatted = stats?.baseROIFormatted || (stats?.baseROI ? `${(Number(stats.baseROI) * 100).toFixed(0)}%` : '12%');
+  const bonusFormatted = stats?.referralBonusFormatted || formatCOP(stats?.referralBonus || 0);
+  const hasBonus = (stats?.referralBonus || 0) > 0;
+
   return `
         <!-- Wallet Banner Compact Card (Green) -->
         <div class="section animate-fade-in-up" style="animation-delay: 0.1s;">
@@ -44,17 +49,17 @@ export function renderWalletBanner(firstName, stats) {
                  
                  <div style="margin-bottom: 16px;">
                     <div style="font-size:0.75rem; opacity:0.85; margin-bottom:4px;">Saldo Disponible</div>
-                    <div style="font-size:1.8rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;" id="granja-banner-balance">${stats.saldoDisponibleFormatted}</div>
+                    <div style="font-size:1.8rem; font-weight:850; letter-spacing: -0.5px; line-height: 1;" id="granja-banner-balance">${saldoFormatted}</div>
                  </div>
 
                  <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.15); padding-top:12px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
                     <span style="font-size:0.75rem; opacity:0.9;">
-                       Margen Comercial Granja: <strong style="color:white; font-weight:800;">${stats.baseROIFormatted}</strong>
+                       Margen Comercial Granja: <strong style="color:white; font-weight:800;">${baseRoiFormatted}</strong>
                     </span>
-                    ${stats.referralBonus > 0 ? `
+                    ${hasBonus ? `
                     <span style="background: rgba(255, 255, 255, 0.22); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
                        ${renderIcon('giftBox', '', '14')}
-                       <span>Bono Consumo: ${stats.referralBonusFormatted}</span>
+                       <span>Bono Consumo: ${bonusFormatted}</span>
                     </span>
                     ` : ''}
                  </div>
@@ -119,7 +124,11 @@ export function attachWalletListeners(stats) {
     btnExplorar.addEventListener('click', () => {
       const profile = AppState.get('profile');
       const firstName = profile?.full_name?.split(' ')[0] || 'Usuario';
-      showWalletDrawer(firstName, stats);
+      if (stats && stats.transactions && stats.transactions.length > 0) {
+        showWalletDrawer(firstName, stats);
+      } else {
+        openWalletDrawer();
+      }
     });
   }
 }
