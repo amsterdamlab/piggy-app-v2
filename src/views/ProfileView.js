@@ -134,11 +134,11 @@ export function renderProfileView() {
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
-                <!-- 4. Términos y Condiciones (Hoja / Documento en líneas) -->
+                <!-- 4. Documentos - Legal (Hoja / Documento en líneas) -->
                 <button class="profile-menu-item" id="btn-menu-terminos">
                     <div class="profile-menu-item__left">
                         <span class="profile-menu-item__icon">${renderIcon('documentText', '', '22')}</span>
-                        <span class="profile-menu-item__text">Términos y condiciones</span>
+                        <span class="profile-menu-item__text">Documentos - Legal</span>
                     </div>
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
@@ -507,7 +507,7 @@ function openLegalSubscreen() {
                 <button class="profile-header__back" id="btn-subscreen-back" aria-label="Volver" title="Volver">
                     ${renderIcon('arrowLeft', '', '22')}
                 </button>
-                <h1 class="profile-header__title">Términos y Condiciones</h1>
+                <h1 class="profile-header__title">Documentos - Legal</h1>
             </div>
 
             <div style="padding: 24px 20px;">
