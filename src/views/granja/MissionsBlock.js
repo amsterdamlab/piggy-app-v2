@@ -1,13 +1,11 @@
 /* ============================================
    PIGGY APP — Missions Block (Granja Section)
-   Renders dynamic mission banners for M1–M7.
-   M6 has a 2-stage 72h Silver Piggy countdown.
+   Renders dynamic mission banners for M1–M9.
    M8/M9: Flash missions (user-specific, manual).
    M10: Cycle completion exclusive missions.
    ============================================ */
 
 import { navigateTo } from '../../router.js';
-import { showSilverPiggyModal } from './SilverPiggyModal.js';
 import { showReferralModal } from './ReferralsModal.js';
 import { getMarketplaceItems } from '../../services/marketplaceService.js';
 import { showCheckoutModal } from '../MercadoView.js';
@@ -366,25 +364,25 @@ function renderM8Banner(mission) {
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">⚡ MISIÓN 8 - SUBE TU NIVEL</div>
+                        text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu Piggy Avanzado</div>
                     <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(60 días de engorde)</div>
                     <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
-                            <span>⏳</span>
+                            <span>&#9203;</span>
                             <span style="font-size:0.85rem; font-weight:800; font-family:monospace;">${remaining}</span>
                         </div>
                     ` : ''}
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#5b21b6; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Avanzado ⚡
+                            Comprar Piggy Avanzado &#9889;
                         </span>
                     </div>
                 </div>
-                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">⚡</div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">&#9889;</div>
             </div>
         </div>
     `;
@@ -496,8 +494,6 @@ function renderFlashMissionBanner(mission) {
     } else {
         defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>+1% en Margen Comercial</strong>`;
     }
-
-    const benefitText = (mission.description && mission.description.trim() !== '') ? mission.description : defaultBenefitText;
 
     const hasExpiry = mission.remainingMs !== null && mission.remainingMs !== undefined && mission.remainingMs > 0;
     const remaining = hasExpiry ? mission.remainingMs : 0;
@@ -689,27 +685,9 @@ export function attachMissionListeners() {
         }, 1000);
     }
 
-    // Start live countdown for M6 if within silver window
-    const missionId  = missionBanner.dataset.mission;
-    const silverExpiry = missionBanner.dataset.silverExpiry;
-    if (missionId === 'm6' && silverExpiry) {
-        _bannerCountdownInterval = setInterval(() => {
-            const el = document.getElementById('m6-banner-countdown');
-            if (!el) { clearInterval(_bannerCountdownInterval); return; }
-            const remaining = formatRemainingTime(silverExpiry);
-            if (!remaining) {
-                el.textContent = '¡Oferta vencida!';
-                clearInterval(_bannerCountdownInterval);
-            } else {
-                el.textContent = remaining;
-            }
-        }, 30000); // update every 30s
-    }
-
     missionBanner.addEventListener('click', async () => {
         const ctaUrl   = missionBanner.dataset.cta;
         const mId      = missionBanner.dataset.mission;
-        const sExpiry  = missionBanner.dataset.silverExpiry;
         const flashId  = missionBanner.dataset.flashId;
         const cycleId  = missionBanner.dataset.cycleId;
 
@@ -785,47 +763,31 @@ export function attachMissionListeners() {
         if (ctaUrl === 'open_buy_piggy') {
             try {
                 const items = await getMarketplaceItems();
-                const standardPiggy = items.find(i => i.category === 'estandar' || i.category === 'standard' || i.current_month === 1) || items[0];
+                const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
                 if (standardPiggy) showCheckoutModal(standardPiggy);
                 else navigateTo('mercado');
-            } catch (err) {
-                console.warn('Error launching standard checkout:', err);
+            } catch {
                 navigateTo('mercado');
             }
             return;
         }
 
-        // ── Special CTA: open referidos modal
+        // ── Special CTA: install PWA / add to home screen
+        if (ctaUrl === 'install_pwa') {
+            triggerPWAInstall();
+            return;
+        }
+
+        // ── Special CTA: open Referidos modal
         if (ctaUrl === 'open_referidos') {
             showReferralModal();
             return;
         }
 
-        // ── Special CTA: open 72h Silver Piggy modal (M6 stage 1)
-        if (ctaUrl === 'open_silver_modal') {
-            showSilverPiggyModal();
-            return;
-        }
-
-        // ── Special CTA: trigger PWA install prompt (M4)
-        if (ctaUrl === 'install_pwa') {
-            const installed = await triggerPWAInstall();
-            if (installed) {
-                window.location.reload();
-            } else {
-                navigateTo('descargar');
-            }
-            return;
-        }
-
-        // ── Standard navigation URL
+        // ── Standard navigation route
         if (ctaUrl && ctaUrl.startsWith('#/')) {
-            const route = ctaUrl.slice(2);
-            navigateTo(route);
+            navigateTo(ctaUrl.replace('#/', ''));
             return;
         }
-
-        // Default fallback to market
-        navigateTo('mercado');
     });
 }
