@@ -465,3 +465,10 @@ export async function buyCycleCompletionMission(missionId, piggyName, contractUr
 
     return { success: true, piggy: newPiggy };
 }
+
+/**
+ * @deprecated Legacy wrapper alias for buyCycleCompletionMission
+ */
+export async function completeCycleMission(missionId, piggyName, contractUrl = null, contractCode = null) {
+    return buyCycleCompletionMission(missionId, piggyName, contractUrl, contractCode);
+}
