@@ -161,6 +161,29 @@ export async function buyFlashMission(missionId, piggyName) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado' };
 
+    // 1. Intentar Compra Atómica Transaccional en Base de Datos (PostgreSQL RPC)
+    try {
+        const { data: rpcRes, error: rpcErr } = await client.rpc('buy_flash_mission_atomic', {
+            p_mission_id: missionId,
+            p_custom_name: piggyName || ''
+        });
+
+        if (!rpcErr && rpcRes && rpcRes.success) {
+            if (rpcRes.new_balance !== undefined && rpcRes.new_balance !== null) {
+                const curProf = AppState.get('profile') || {};
+                AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcRes.new_balance) } });
+            }
+            return { success: true, piggy: rpcRes.piggy, walletDeducted: true };
+        }
+
+        if (rpcRes && !rpcRes.success) {
+            return { success: false, error: rpcRes.error || 'Error al procesar la compra flash' };
+        }
+    } catch (rpcEx) {
+        console.warn('buy_flash_mission_atomic RPC failed, using fallback:', rpcEx);
+    }
+
+    // 2. Fallback de cliente si la RPC aún no ha sido instalada
     // Fetch the mission record
     const { data: mission, error: mError } = await client
         .from('user_flash_missions')
@@ -403,6 +426,31 @@ export async function buyCycleCompletionMission(missionId, piggyName, contractUr
     const { data: { user } } = await client.auth.getUser();
     if (!user) return { success: false, error: 'No autenticado' };
 
+    // 1. Intentar Compra Atómica Transaccional en Base de Datos (PostgreSQL RPC)
+    try {
+        const { data: rpcRes, error: rpcErr } = await client.rpc('buy_cycle_mission_atomic', {
+            p_mission_id: missionId,
+            p_custom_name: piggyName || '',
+            p_contract_url: contractUrl,
+            p_contract_code: contractCode
+        });
+
+        if (!rpcErr && rpcRes && rpcRes.success) {
+            if (rpcRes.new_balance !== undefined && rpcRes.new_balance !== null) {
+                const curProf = AppState.get('profile') || {};
+                AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcRes.new_balance) } });
+            }
+            return { success: true, piggy: rpcRes.piggy, walletDeducted: true };
+        }
+
+        if (rpcRes && !rpcRes.success) {
+            return { success: false, error: rpcRes.error || 'Error al procesar la compra de ciclo' };
+        }
+    } catch (rpcEx) {
+        console.warn('buy_cycle_mission_atomic RPC failed, using fallback:', rpcEx);
+    }
+
+    // 2. Fallback de cliente si la RPC aún no ha sido instalada
     // Fetch the mission record
     const { data: mission, error: mError } = await client
         .from('cycle_completion_missions')

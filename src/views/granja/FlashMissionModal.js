@@ -601,19 +601,17 @@ export function showFlashMissionModal(mission) {
         confirmBtn.style.pointerEvents = 'none';
 
         try {
-            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
-            const deductResult = await deductWalletBalance(price);
-            if (!deductResult.success) {
-                throw new Error(
-                    deductResult.reason === 'insufficient_balance'
-                        ? 'Saldo insuficiente en tu Wallet.'
-                        : 'No se pudo procesar el pago. Intenta de nuevo.'
-                );
-            }
-
-            // Wallet descontada ✅ — ahora crear el piggy
+            // Ejecutar compra atómica de Misión Flash
             const result = await buyFlashMission(mission.id, customName);
             if (!result.success) throw new Error(result.error || 'Error al registrar el piggy');
+
+            // Fallback de respaldo solo si la operación no fue descontada atómicamente por la RPC
+            if (!result.walletDeducted) {
+                const deductResult = await deductWalletBalance(price, `Débito: compra Piggy Flash "${customName}"`);
+                if (!deductResult.success) {
+                    console.warn('[FlashMissionModal] Fallback deduct warning:', deductResult.reason);
+                }
+            }
 
             close();
             // Navegar al piggy recién comprado: la URL #/piggy/{id} activa PiggyDetailView.
