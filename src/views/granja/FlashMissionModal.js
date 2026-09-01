@@ -105,161 +105,166 @@ function getTypeTheme(piggyType) {
             bonusIcon:'📈',
         },
         avanzado45: {
-            gradient: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 50%, #5B21B6 100%)',
-            shadow:   'rgba(124,58,237,0.45)',
-            color:    '#5B21B6',
-            btnGrad:  'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            btnShadow:'rgba(124,58,237,0.3)',
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
             icon:     '⚡',
             badge:    '⚡ OFERTA FLASH · AVANZADO 45D',
             bonusIcon:'📈',
         },
         advanced45: {
-            gradient: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 50%, #5B21B6 100%)',
-            shadow:   'rgba(124,58,237,0.45)',
-            color:    '#5B21B6',
-            btnGrad:  'linear-gradient(135deg, #7C3AED, #6D28D9)',
-            btnShadow:'rgba(124,58,237,0.3)',
+            gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)',
+            shadow:   'rgba(139,92,246,0.45)',
+            color:    '#6B21A8',
+            btnGrad:  'linear-gradient(135deg, #8B5CF6, #7E22CE)',
+            btnShadow:'rgba(139,92,246,0.3)',
             icon:     '⚡',
             badge:    '⚡ OFERTA FLASH · AVANZADO 45D',
             bonusIcon:'📈',
         },
         avanzado60: {
-            gradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%)',
-            shadow:   'rgba(99,102,241,0.45)',
-            color:    '#3730A3',
-            btnGrad:  'linear-gradient(135deg, #6366F1, #4F46E5)',
-            btnShadow:'rgba(99,102,241,0.3)',
-            icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · AVANZADO 60D',
-            bonusIcon:'📈',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 60D',
+            bonusIcon:'🚀',
         },
         advanced60: {
-            gradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #3730A3 100%)',
-            shadow:   'rgba(99,102,241,0.45)',
-            color:    '#3730A3',
-            btnGrad:  'linear-gradient(135deg, #6366F1, #4F46E5)',
-            btnShadow:'rgba(99,102,241,0.3)',
-            icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · AVANZADO 60D',
-            bonusIcon:'📈',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 60D',
+            bonusIcon:'🚀',
         },
         avanzado75: {
-            gradient: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 50%, #312E81 100%)',
-            shadow:   'rgba(79,70,229,0.45)',
-            color:    '#312E81',
-            btnGrad:  'linear-gradient(135deg, #4F46E5, #4338CA)',
-            btnShadow:'rgba(79,70,229,0.3)',
-            icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · AVANZADO 75D',
-            bonusIcon:'📈',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 75D',
+            bonusIcon:'🚀',
         },
         advanced75: {
-            gradient: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 50%, #312E81 100%)',
-            shadow:   'rgba(79,70,229,0.45)',
-            color:    '#312E81',
-            btnGrad:  'linear-gradient(135deg, #4F46E5, #4338CA)',
-            btnShadow:'rgba(79,70,229,0.3)',
-            icon:     '⚡',
-            badge:    '⚡ OFERTA FLASH · AVANZADO 75D',
-            bonusIcon:'📈',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
+            icon:     '🚀',
+            badge:    '🚀 OFERTA FLASH · AVANZADO 75D',
+            bonusIcon:'🚀',
         },
         avanzado90: {
-            gradient: 'linear-gradient(135deg, #4338CA 0%, #3730A3 50%, #1E1B4B 100%)',
-            shadow:   'rgba(67,56,202,0.45)',
-            color:    '#1E1B4B',
-            btnGrad:  'linear-gradient(135deg, #4338CA, #3730A3)',
-            btnShadow:'rgba(67,56,202,0.3)',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
             icon:     '⚡',
             badge:    '⚡ OFERTA FLASH · AVANZADO 90D',
-            bonusIcon:'📈',
+            bonusIcon:'⚡',
         },
         advanced90: {
-            gradient: 'linear-gradient(135deg, #4338CA 0%, #3730A3 50%, #1E1B4B 100%)',
-            shadow:   'rgba(67,56,202,0.45)',
-            color:    '#1E1B4B',
-            btnGrad:  'linear-gradient(135deg, #4338CA, #3730A3)',
-            btnShadow:'rgba(67,56,202,0.3)',
+            gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)',
+            shadow:   'rgba(147,51,234,0.45)',
+            color:    '#4C1D95',
+            btnGrad:  'linear-gradient(135deg, #9333EA, #6D28D9)',
+            btnShadow:'rgba(147,51,234,0.3)',
             icon:     '⚡',
             badge:    '⚡ OFERTA FLASH · AVANZADO 90D',
-            bonusIcon:'📈',
+            bonusIcon:'⚡',
         },
     };
-    return themes[raw] || themes.avanzado30;
+    return themes[raw] || themes['avanzado30'];
 }
 
 /**
- * Clean up interval and close modal.
+ * Show the Flash Mission purchase modal (M8 or M9).
+ * @param {Object} mission - Active flash mission record with expiresAt, remainingMs, etc.
  */
-function closeFlashModal() {
-    if (_flashCountdownInterval) {
-        clearInterval(_flashCountdownInterval);
-        _flashCountdownInterval = null;
-    }
-    const modal = document.getElementById('flash-mission-modal');
-    if (modal) {
-        modal.style.opacity = '0';
-        modal.style.transition = 'opacity 0.2s';
-        setTimeout(() => {
-            modal.remove();
-            document.body.style.overflow = '';
-        }, 200);
-    }
-}
+export function showFlashMissionModal(mission) {
+    // Remove existing modal if any
+    const existing = document.getElementById('flash-mission-modal');
+    if (existing) existing.remove();
+    if (_flashCountdownInterval) { clearInterval(_flashCountdownInterval); _flashCountdownInterval = null; }
 
-/**
- * Show the Flash Mission modal.
- * @param {Object} mission - Flash mission record from Supabase
- */
-export async function showFlashMissionModal(mission) {
-    // Remove any existing
-    closeFlashModal();
+    if (!mission) return;
 
+    const theme = getTypeTheme(mission.piggy_type);
+    if (mission.icon) {
+        theme.icon = mission.icon;
+    }
+    if (mission.badge) {
+        theme.badge = mission.badge;
+    } else if (mission.mission_title) {
+        theme.badge = `${theme.icon} ${mission.mission_title}`;
+    }
+
+    const expiresAtMs = mission.scheduled_at
+        ? new Date(mission.scheduled_at).getTime()
+        : (Date.now() + (mission.remainingMs || 0));
+    let remaining = Math.max(0, expiresAtMs - Date.now());
+    let currentBalance = 0;
+
+    const defaultPrice = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
+    const price        = mission.price || defaultPrice;
+    const priceStr     = formatCOP(price);
+
+    const piggyLabels = {
+        silver:     'Piggy Silver',
+        gold:       'Piggy Gold',
+        dorado:     'Piggy Dorado',
+        premium:    'Piggy Premium',
+        plus:       'Piggy Plus',
+        advanced30: 'Piggy Advanced (30d)',
+        avanzado30: 'Piggy Avanzado (30d)',
+        advanced45: 'Piggy Advanced (45d)',
+        avanzado45: 'Piggy Avanzado (45d)',
+        advanced60: 'Piggy Advanced (60d)',
+        avanzado60: 'Piggy Avanzado (60d)',
+        advanced75: 'Piggy Advanced (75d)',
+        avanzado75: 'Piggy Avanzado (75d)',
+        advanced90: 'Piggy Advanced (90d)',
+        avanzado90: 'Piggy Avanzado (90d)',
+    };
     const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
-    const theme   = getTypeTheme(rawType);
+    const piggyLabel = mission.piggy_label || (mission.title && !mission.title.toLowerCase().includes('misión') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
 
-    // Calculate time left from activated_at (72 hours)
-    let remaining = 0;
-    if (mission.expires_at) {
-        remaining = Math.max(0, new Date(mission.expires_at).getTime() - Date.now());
-    } else {
-        const activatedAt = new Date(mission.activated_at || mission.created_at || Date.now());
-        const expiresAt   = new Date(activatedAt.getTime() + 72 * 3600 * 1000);
-        remaining = Math.max(0, expiresAt.getTime() - Date.now());
-    }
-
-    if (remaining <= 0) {
-        console.warn('Oferta flash expirada.');
-        return;
-    }
-
-    const price = parseFloat(mission.price || 1000000);
-    let extraRoiBonus = parseFloat(mission.extra_roi_bonus || 0);
-    if (!extraRoiBonus) {
-        if (rawType === 'plus' || rawType === 'silver') extraRoiBonus = 0.01;
-        else if (rawType === 'gold' || rawType === 'dorado') extraRoiBonus = 0.02;
-        else if (rawType === 'premium') extraRoiBonus = 0.03;
-    }
-
-    const cycleDays = parseInt(mission.cycle_duration_days || 30);
-    const baseROI   = 0.115;
-    const totalROI  = baseROI + extraRoiBonus;
-    const projectedReturn = price * (1 + totalROI);
-    const piggyLabel = mission.piggy_name || (
-        rawType === 'gold' || rawType === 'dorado' ? 'Piggy Dorado Flash' :
-        rawType === 'plus' || rawType === 'silver' ? 'Piggy Plus Flash' :
-        rawType === 'premium' ? 'Piggy Premium Flash' :
-        `Piggy Avanzado (${cycleDays} Días)`
-    );
-
+    // DB Texts or smart fallbacks — lee de Supabase si están configurados
     let defaultBenefitTitle = '';
     let defaultBenefitSub   = '';
     let defaultDescription  = '';
 
-    if (rawType.startsWith('avanzado') || rawType.startsWith('advanced')) {
-        defaultBenefitTitle = `Retorno en Solo ${cycleDays} Días`;
-        defaultBenefitSub   = `Ciclo acelerado de ${cycleDays} días con el mismo 11.5% de retorno.`;
-        defaultDescription  = `Un ciclo intensivo de ${cycleDays} días que maximiza tu tiempo de producción.`;
+    if (rawType.includes('30')) {
+        defaultBenefitTitle = 'Reducción de 30 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el 2do mes ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 30 días de crecimiento incluidos.';
+    } else if (rawType.includes('45')) {
+        defaultBenefitTitle = 'Reducción de 45 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el día 45 ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 45 días de crecimiento incluidos.';
+    } else if (rawType.includes('60')) {
+        defaultBenefitTitle = 'Reducción de 60 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito en el 3er mes ahorrando tiempo.';
+        defaultDescription  = 'Piggy acelerado con 60 días de crecimiento incluidos.';
+    } else if (rawType.includes('75')) {
+        defaultBenefitTitle = 'Reducción de 75 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 75 días de tiempo.';
+        defaultDescription  = 'Piggy cuántico con 75 días de crecimiento incluidos.';
+    } else if (rawType.includes('90')) {
+        defaultBenefitTitle = 'Reducción de 90 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 90 días de tiempo.';
+        defaultDescription  = 'Piggy cuántico con 90 días de crecimiento incluidos.';
     } else {
         let extraPct = '+1%';
         if (rawType === 'gold' || rawType === 'dorado') extraPct = '+2%';
@@ -269,16 +274,22 @@ export async function showFlashMissionModal(mission) {
         defaultDescription  = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
     }
 
+    // Prioridad: texto de BD → fallback hardcodeado
     const benefitTitle    = mission.benefit_title || defaultBenefitTitle;
     const benefitSub      = mission.benefit_description || mission.benefit_sub || defaultBenefitSub;
     const descriptionText = mission.description || defaultDescription;
 
     const suggestedNames = {
         advanced30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        avanzado30: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         advanced45: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        avanzado45: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         advanced60: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        avanzado60: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         advanced75: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        avanzado75: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         advanced90: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
+        avanzado90: ['Rayo', 'Thunder', 'Bolt', 'Flash', 'Nova', 'Turbo', 'Storm', 'Ace'],
         plus:       ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
         silver:     ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
         gold:       ['Midas', 'Oro', 'Crown', 'Rex', 'Luxe', 'Dorado', 'Kaiser', 'Royal'],
@@ -309,17 +320,17 @@ export async function showFlashMissionModal(mission) {
 
             <!-- Close -->
             <button id="flash-modal-close" style="
-                position:absolute; top:16px; right:16px;
-                background:#f3f4f6; border:none; width:32px; height:32px;
-                border-radius:50%; cursor:pointer; font-size:18px; color:#6b7280;
+                position:absolute; top:12px; right:16px;
+                background:transparent; border:none; width:32px; height:32px;
+                cursor:pointer; font-size:24px; color:#9ca3af;
                 display:flex; align-items:center; justify-content:center;
-                line-height:1; z-index:10;
-            ">&times;</button>
+                line-height:1; z-index:10; transition:color 0.15s;
+            " onmouseover="this.style.color='#4b5563'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
             <!-- Premium Header -->
             <div style="
                 background: ${theme.gradient};
-                margin: 8px 20px 0; border-radius: 20px; padding: 24px 20px;
+                margin: 14px 20px 0; border-radius: 20px; padding: 28px 24px;
                 color: white; text-align: center; position: relative; overflow: hidden;
                 box-shadow: 0 12px 30px -5px ${theme.shadow};
             ">
@@ -352,300 +363,269 @@ export async function showFlashMissionModal(mission) {
                     </div>
                 </div>
 
-                <!-- Decorative circles -->
-                <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px;
-                    background:rgba(255,255,255,0.08); border-radius:50%; pointer-events:none;"></div>
-                <div style="position:absolute; bottom:-40px; left:-20px; width:100px; height:100px;
-                    background:rgba(255,255,255,0.06); border-radius:50%; pointer-events:none;"></div>
+                <!-- Single bottom-left piggy icon -->
+                <div style="position:absolute; bottom:-18px; left:-8px; font-size:75px; opacity:0.12; transform:rotate(15deg); pointer-events:none; user-select:none;">🐷</div>
             </div>
 
-            <!-- Content Area -->
+            <!-- Body -->
             <div style="padding: 20px 20px 0;">
 
-                <!-- Exclusivity Banner -->
+                <!-- Benefit pill -->
                 <div style="
-                    background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px;
-                    padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+                    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+                    border: 1px solid #fde68a; border-radius: 12px;
+                    padding: 10px 16px; margin-bottom: 20px;
+                    display: flex; align-items: center; gap: 10px;
                 ">
-                    <span style="font-size:20px; flex-shrink:0;">🔒</span>
-                    <div style="font-size:0.78rem; color:#92400e; line-height:1.35;">
-                        <strong>Oferta Única y Personalizada.</strong> Asignada exclusivamente a tu cuenta. Solo puedes activar una unidad por periodo flash.
+                    <span style="font-size:22px;">${theme.bonusIcon}</span>
+                    <div>
+                        <div style="font-weight:700; color:#92400e; font-size:0.85rem;">${benefitTitle}</div>
+                        <div style="font-size:0.75rem; color:#b45309;">${benefitSub}</div>
                     </div>
                 </div>
 
-                <!-- Key Metrics Grid -->
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 16px;">
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px; text-align:center;">
-                        <div style="font-size:0.7rem; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Inversión</div>
-                        <div style="font-size:1.15rem; font-weight:900; color:#0f172a;">${formatCOP(price)}</div>
-                    </div>
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:14px; text-align:center;">
-                        <div style="font-size:0.7rem; color:#15803d; font-weight:600; text-transform:uppercase; margin-bottom:4px;">Retorno Estimado</div>
-                        <div style="font-size:1.15rem; font-weight:900; color:#16a34a;">${formatCOP(projectedReturn)}</div>
-                        <div style="font-size:0.65rem; color:#16a34a; font-weight:700;">${(totalROI * 100).toFixed(1)}% margen total</div>
-                    </div>
-                </div>
-
-                <!-- Benefits List -->
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom: 16px;">
-                    <div style="font-size:0.75rem; font-weight:800; color:#334155; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">
-                        Beneficios Exclusivos
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:10px;">
-                        <div style="display:flex; align-items:flex-start; gap:10px;">
-                            <span style="font-size:16px; flex-shrink:0; margin-top:1px;">${theme.bonusIcon}</span>
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:700; color:#0f172a;">
-                                    ${benefitTitle}
-                                </div>
-                                <div style="font-size:0.75rem; color:#64748b;">
-                                    ${benefitSub}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex; align-items:flex-start; gap:10px;">
-                            <span style="font-size:16px; flex-shrink:0; margin-top:1px;">⏱️</span>
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:700; color:#0f172a;">Ciclo de ${cycleDays} Días</div>
-                                <div style="font-size:0.75rem; color:#64748b;">Producción y seguimiento en tiempo real desde tu Granja.</div>
-                            </div>
-                        </div>
-                        <div style="display:flex; align-items:flex-start; gap:10px;">
-                            <span style="font-size:16px; flex-shrink:0; margin-top:1px;">🛡️</span>
-                            <div>
-                                <div style="font-size:0.85rem; font-weight:700; color:#0f172a;">Garantía Valle Morales</div>
-                                <div style="font-size:0.75rem; color:#64748b;">Cuidado profesional, alimentación balanceada y retorno automático.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Name Section -->
-                <div style="margin-bottom: 20px;">
-                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:6px;">
-                        Ponle un nombre a tu Oferta Única:
+                <!-- Name Input -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size:0.8rem; font-weight:700; color:#374151; display:block; margin-bottom:8px;">
+                        Ponle un nombre a tu Piggy
                     </label>
-                    <div style="position:relative; margin-bottom:8px;">
-                        <input
-                            type="text"
-                            id="flash-custom-name"
-                            placeholder="Ej: ${names[0]}"
-                            maxlength="20"
-                            style="
-                                width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb;
-                                border-radius: 12px; font-size: 0.95rem; font-weight: 600;
-                                outline: none; transition: border-color 0.2s; box-sizing: border-box;
-                            "
-                            onfocus="this.style.borderColor='${theme.color}'"
-                            onblur="this.style.borderColor='#e5e7eb'"
-                        />
-                    </div>
-                    <!-- Quick Name Chips -->
-                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                        <span style="font-size:0.72rem; color:#9ca3af; align-self:center;">Sugeridos:</span>
+                    <input type="text" id="flash-piggy-name"
+                        placeholder="Nombre del piggy..."
+                        autocomplete="off"
+                        style="
+                            width: 100%; padding: 14px 16px; box-sizing: border-box;
+                            border: 2px solid #fde68a; border-radius: 14px;
+                            font-size: 1rem; font-weight: 600; color: #1f2937;
+                            outline: none; text-align: center; transition: all 0.2s;
+                        "
+                        onfocus="this.style.borderColor='${theme.color}'; this.style.boxShadow='0 0 0 4px rgba(245,158,11,0.12)';"
+                        onblur="this.style.borderColor='#fde68a'; this.style.boxShadow='none';"
+                    />
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content:center;">
                         ${names.map(n => `
-                            <button
-                                type="button"
-                                class="flash-name-chip"
-                                data-name="${n}"
-                                style="
-                                    background:#f1f5f9; border:1px solid #e2e8f0; border-radius:20px;
-                                    padding:3px 10px; font-size:0.75rem; font-weight:600; color:#475569;
-                                    cursor:pointer; transition:all 0.15s;
-                                "
-                                onmouseover="this.style.background='#e2e8f0'"
-                                onmouseout="this.style.background='#f1f5f9'"
-                            >${n}</button>
+                            <button onclick="window._flashSelectName('${n}')" style="
+                                background:#fffbeb; color:#92400e; border:1px solid #fde68a;
+                                padding:6px 14px; border-radius:20px; font-size:0.82rem;
+                                font-weight:600; cursor:pointer; transition:transform 0.1s;
+                            ">${n}</button>
                         `).join('')}
                     </div>
+                    <div id="flash-name-error" style="opacity:0; color:#f59e0b; font-size:0.75rem; text-align:center; margin-top:8px;">
+                        * Escribe al menos 3 caracteres
+                    </div>
                 </div>
 
-                <!-- Balance / Account Agro Indicator -->
-                <div id="flash-wallet-indicator" style="
-                    background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;
-                    padding:10px 14px; display:flex; align-items:center; justify-content:space-between;
-                    margin-bottom:14px; font-size:0.8rem;
-                ">
-                    <span style="color:#64748b;">Saldo en Cuenta Agro:</span>
-                    <span id="flash-modal-balance" style="font-weight:800; color:#0f172a;">Cargando...</span>
+                <!-- Wallet / Purchase Section -->
+                <div id="flash-wallet-section" style="opacity:0.5; pointer-events:none; transition:opacity 0.3s;">
+
+                    <!-- Balance -->
+                    <div style="
+                        background: ${theme.gradient};
+                        border-radius: 14px; padding: 16px 20px; margin-bottom: 12px;
+                        color: white; display: flex; align-items: center; justify-content: space-between;
+                    ">
+                        <div>
+                            <div style="font-size:0.72rem; opacity:0.85; margin-bottom:2px;">Saldo en tu Cuenta Agro</div>
+                            <div id="flash-balance-display" style="font-size:1.5rem; font-weight:800;">
+                                <span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
+                            </div>
+                        </div>
+                        <div style="opacity:0.25; color:white; display:flex; align-items:center; justify-content:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Insufficient funds -->
+                    <div id="flash-insufficient" style="
+                        background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+                        padding:10px 14px; font-size:0.8rem; color:#dc2626; text-align:center;
+                        margin-bottom:10px; display:none;
+                    ">
+                        Saldo insuficiente. Recarga tu Cuenta Agro para continuar.
+                    </div>
+
+                    <!-- Recharge Button -->
+                    <button id="flash-recharge-btn" style="
+                        width: 100%;
+                        background: linear-gradient(135deg, #7c3aed, #5b21b6);
+                        color: white;
+                        border: none;
+                        padding: 14px 20px;
+                        border-radius: 12px;
+                        font-weight: 700;
+                        font-size: 0.95rem;
+                        cursor: pointer;
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        margin-bottom: 12px;
+                        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+                        transition: all 0.2s;
+                    ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                        Recargar mi Cuenta
+                    </button>
+
+                    <!-- Price Row -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 4px; margin-bottom:12px;">
+                        <span style="font-size:0.85rem; color:#6b7280;">Precio ${piggyLabel}</span>
+                        <span style="font-size:1.1rem; font-weight:800; color:${theme.color};">${priceStr}</span>
+                    </div>
+
+                    <!-- Confirm Button -->
+                    <button id="flash-confirm-btn" style="
+                        width: 100%; background: ${theme.btnGrad};
+                        color: white; border: none; padding: 14px 20px;
+                        border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer;
+                        box-shadow: 0 6px 20px -4px ${theme.btnShadow}; transition: all 0.2s;
+                        opacity: 0.5; pointer-events: none;
+                        display: flex; align-items: center; justify-content: center; gap: 8px;
+                    ">
+                        ${theme.icon} Comprar ${piggyLabel}
+                    </button>
                 </div>
 
-                <!-- Error Container -->
-                <div id="flash-modal-error" style="
-                    display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c;
-                    border-radius:10px; padding:10px 14px; font-size:0.8rem; margin-bottom:12px;
-                "></div>
-
-                <!-- CTA Button -->
-                <button
-                    id="btn-buy-flash-piggy"
-                    class="btn-shine-7s"
-                    style="
-                        width: 100%; padding: 16px 20px; background: ${theme.btnGrad};
-                        color: white; border: none; border-radius: 16px; font-size: 1rem;
-                        font-weight: 800; cursor: pointer; display: flex; align-items: center;
-                        justify-content: center; gap: 8px; box-shadow: 0 8px 20px -4px ${theme.btnShadow};
-                        transition: transform 0.15s;
-                    "
-                    onmouseover="this.style.transform='translateY(-1px)'"
-                    onmouseout="this.style.transform='translateY(0)'"
-                >
-                    <span>⚡</span>
-                    <span>Adquirir por ${formatCOP(price)}</span>
-                </button>
-
-                <p style="text-align:center; font-size:0.72rem; color:#9ca3af; margin:10px 0 0;">
-                    El cobro se realizará de tu saldo disponible en Cuenta Agro.
-                </p>
-
+                <!-- Footer -->
+                <div style="text-align:center; margin-top:16px; color:#9ca3af; font-size:0.72rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Transacción segura · Oferta exclusiva por tiempo limitado</span>
+                </div>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
 
-    // Live countdown update
-    const countdownEl = document.getElementById('flash-countdown-time');
-    _flashCountdownInterval = setInterval(() => {
-        remaining -= 1000;
-        if (remaining <= 0) {
-            clearInterval(_flashCountdownInterval);
-            _flashCountdownInterval = null;
-            if (countdownEl) countdownEl.textContent = '¡Oferta Finalizada!';
-            const buyBtn = document.getElementById('btn-buy-flash-piggy');
-            if (buyBtn) {
-                buyBtn.disabled = true;
-                buyBtn.style.opacity = '0.5';
-                buyBtn.style.cursor = 'not-allowed';
-            }
-            return;
+    // ── Logic ─────────────────────────────────────────────────────
+    const nameInput     = document.getElementById('flash-piggy-name');
+    const walletSection = document.getElementById('flash-wallet-section');
+    const balanceDisplay= document.getElementById('flash-balance-display');
+    const insufficient  = document.getElementById('flash-insufficient');
+    const confirmBtn    = document.getElementById('flash-confirm-btn');
+    const nameError     = document.getElementById('flash-name-error');
+    // price is already calculated at function scope (line 102)
+
+    // Load wallet balance
+    getWalletBalance().then(bal => {
+        currentBalance = bal;
+        balanceDisplay.textContent = formatCOP(bal);
+        updateState(nameInput.value.trim());
+    }).catch(() => {
+        balanceDisplay.textContent = '$0';
+        updateState(nameInput.value.trim());
+    });
+
+    const updateState = (nameVal) => {
+        const nameOk  = nameVal.length >= 3;
+        const fundsOk = currentBalance >= price;
+
+        walletSection.style.opacity       = nameOk ? '1'    : '0.5';
+        walletSection.style.pointerEvents = nameOk ? 'auto' : 'none';
+        
+        const showRecharge = !fundsOk;
+        insufficient.style.display = showRecharge ? 'block' : 'none';
+        const rechargeBtn = document.getElementById('flash-recharge-btn');
+        if (rechargeBtn) {
+            rechargeBtn.style.display = showRecharge ? 'flex' : 'none';
         }
-        if (countdownEl) {
-            countdownEl.textContent = formatCountdown(remaining);
+
+        const canBuy = nameOk && fundsOk;
+        confirmBtn.style.opacity       = canBuy ? '1'    : '0.5';
+        confirmBtn.style.pointerEvents = canBuy ? 'auto' : 'none';
+        nameError.style.opacity = (nameVal.length > 0 && !nameOk) ? '1' : '0';
+    };
+
+    nameInput.addEventListener('input', () => updateState(nameInput.value.trim()));
+
+    window._flashSelectName = (name) => {
+        nameInput.value = name;
+        updateState(name);
+        nameInput.focus();
+    };
+
+    // Live countdown in modal (updates every second)
+    _flashCountdownInterval = setInterval(() => {
+        remaining = Math.max(0, expiresAtMs - Date.now());
+        const el = document.getElementById('flash-countdown-time');
+        if (!el) { clearInterval(_flashCountdownInterval); return; }
+        if (remaining <= 0) {
+            el.textContent = '¡Oferta vencida!';
+            clearInterval(_flashCountdownInterval);
+            deactivateFlashMission(mission.id);
+            if (typeof window._refreshMissionBanner === 'function') {
+                window._refreshMissionBanner();
+            }
+        } else {
+            el.textContent = formatCountdown(remaining);
         }
     }, 1000);
 
     // Close handlers
-    document.getElementById('flash-modal-close').addEventListener('click', closeFlashModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeFlashModal();
-    });
+    const close = () => {
+        document.body.style.overflow = '';
+        delete window._flashSelectName;
+        if (_flashCountdownInterval) { clearInterval(_flashCountdownInterval); _flashCountdownInterval = null; }
+        modal.remove();
+    };
 
-    // Name chips
-    const nameInput = document.getElementById('flash-custom-name');
-    modal.querySelectorAll('.flash-name-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            if (nameInput) {
-                nameInput.value = chip.dataset.name;
-                nameInput.focus();
+    document.getElementById('flash-modal-close').addEventListener('click', close);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+    // Recharge Wallet click
+    const rechargeBtn = document.getElementById('flash-recharge-btn');
+    if (rechargeBtn) {
+        rechargeBtn.addEventListener('click', async () => {
+            const originalText = rechargeBtn.innerHTML;
+            rechargeBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+            rechargeBtn.style.pointerEvents = 'none';
+            try {
+                await openWalletDrawer(true);
+                close();
+            } catch (e) {
+                console.error('Error opening wallet from flash mission:', e);
+                rechargeBtn.innerHTML = originalText;
+                rechargeBtn.style.pointerEvents = 'auto';
             }
         });
-    });
-
-    // Load wallet balance
-    let currentBalance = 0;
-    try {
-        currentBalance = await getWalletBalance();
-        const balEl = document.getElementById('flash-modal-balance');
-        if (balEl) balEl.textContent = formatCOP(currentBalance);
-    } catch {
-        const balEl = document.getElementById('flash-modal-balance');
-        if (balEl) balEl.textContent = 'Error al consultar';
     }
 
-    // Purchase handler
-    const buyBtn = document.getElementById('btn-buy-flash-piggy');
-    const errEl  = document.getElementById('flash-modal-error');
+    // Confirm Purchase
+    confirmBtn.addEventListener('click', async () => {
+        const customName = nameInput.value.trim();
+        if (customName.length < 3 || currentBalance < price) return;
 
-    buyBtn.addEventListener('click', async () => {
-        const customName = (nameInput?.value || '').trim() || names[0];
-        errEl.style.display = 'none';
-
-        // Check funds
-        if (currentBalance < price) {
-            errEl.innerHTML = `
-                Saldo insuficiente (${formatCOP(currentBalance)}). Necesitas ${formatCOP(price)}.
-                <br/><a href="javascript:void(0)" id="flash-recharge-link" style="color:#b91c1c; font-weight:700; text-decoration:underline;">Recarga tu Cuenta Agro aquí</a>
-            `;
-            errEl.style.display = 'block';
-
-            document.getElementById('flash-recharge-link')?.addEventListener('click', () => {
-                closeFlashModal();
-                openWalletDrawer();
-            });
-            return;
-        }
-
-        // Disable button while processing
-        buyBtn.disabled = true;
-        buyBtn.innerHTML = `<span>⏳</span><span>Procesando adquisición...</span>`;
-        buyBtn.style.opacity = '0.8';
+        confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
+        confirmBtn.style.pointerEvents = 'none';
 
         try {
-            const result = await buyFlashMission(mission, customName);
-            if (!result.success) {
-                errEl.textContent = result.error || 'No se pudo completar la adquisición. Intenta de nuevo.';
-                errEl.style.display = 'block';
-                buyBtn.disabled = false;
-                buyBtn.innerHTML = `<span>⚡</span><span>Adquirir por ${formatCOP(price)}</span>`;
-                buyBtn.style.opacity = '1';
-                return;
+            // ── CRÍTICO: Descontar wallet PRIMERO antes de crear el piggy ──
+            const deductResult = await deductWalletBalance(price);
+            if (!deductResult.success) {
+                throw new Error(
+                    deductResult.reason === 'insufficient_balance'
+                        ? 'Saldo insuficiente en tu Wallet.'
+                        : 'No se pudo procesar el pago. Intenta de nuevo.'
+                );
             }
 
-            // Success animation
-            modal.querySelector('.animate-fade-in-up').innerHTML = `
-                <div style="padding: 40px 24px; text-align: center;">
-                    <div style="font-size: 64px; margin-bottom: 12px; animation: bounce 0.6s ease;">🎉</div>
-                    <h2 style="font-size: 1.6rem; font-weight: 900; color: #0f172a; margin: 0 0 8px;">
-                        ¡${customName} ya está en tu Granja!
-                    </h2>
-                    <p style="color: #64748b; font-size: 0.9rem; line-height: 1.4; margin: 0 0 24px;">
-                        Has adquirido tu <strong>${piggyLabel}</strong> con éxito. Comenzará su ciclo de producción hoy mismo.
-                    </p>
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:16px; padding:16px; margin-bottom:24px; text-align:left;">
-                        <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; margin-bottom:6px;">Detalles de la Operación</div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#374151; margin-bottom:4px;">
-                            <span>Inversión:</span>
-                            <strong>${formatCOP(price)}</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#374151; margin-bottom:4px;">
-                            <span>Duración:</span>
-                            <strong>${cycleDays} días</strong>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:#16a34a;">
-                            <span>Retorno Total Estimado:</span>
-                            <strong>${formatCOP(projectedReturn)}</strong>
-                        </div>
-                    </div>
-                    <button
-                        id="btn-flash-success-ok"
-                        style="
-                            width: 100%; padding: 15px; background: ${theme.btnGrad};
-                            color: white; border: none; border-radius: 14px; font-size: 1rem;
-                            font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px ${theme.btnShadow};
-                        "
-                    >
-                        Ver mi Granja
-                    </button>
-                </div>
-            `;
+            // Wallet descontada ✅ — ahora crear el piggy
+            const result = await buyFlashMission(mission.id, customName);
+            if (!result.success) throw new Error(result.error || 'Error al registrar el piggy');
 
-            document.getElementById('btn-flash-success-ok')?.addEventListener('click', () => {
-                closeFlashModal();
-                if (result.piggy?.id) {
-                    window.location.hash = `#/piggy/${result.piggy.id}`;
-                } else {
-                    navigateTo('granja');
-                }
-            });
-
-        } catch (err) {
-            console.error('Error in buyFlashMission:', err);
-            errEl.textContent = 'Ocurrió un error inesperado. Por favor intenta de nuevo.';
-            errEl.style.display = 'block';
-            buyBtn.disabled = false;
-            buyBtn.innerHTML = `<span>⚡</span><span>Adquirir por ${formatCOP(price)}</span>`;
-            buyBtn.style.opacity = '1';
+            close();
+            // Navegar al piggy recién comprado: la URL #/piggy/{id} activa PiggyDetailView.
+            // Al volver atrás, el dashboard recarga desde BD sin la misión.
+            if (result.piggy && result.piggy.id) {
+                window.location.hash = `#/piggy/${result.piggy.id}`;
+            } else {
+                navigateTo('granja');
+            }
+        } catch (error) {
+            console.error('Flash mission purchase error:', error);
+            alert('Error en la transacción: ' + error.message);
+            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
+            confirmBtn.style.pointerEvents = 'auto';
         }
     });
 }
