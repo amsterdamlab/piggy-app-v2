@@ -210,10 +210,10 @@ export function showFlashMissionModal(mission) {
         theme.badge = `${theme.icon} ${mission.mission_title}`;
     }
 
-    const expiresAtMs = mission.scheduled_at
-        ? new Date(mission.scheduled_at).getTime()
-        : (Date.now() + (mission.remainingMs || 0));
-    let remaining = Math.max(0, expiresAtMs - Date.now());
+    const expiresAtMs = mission.expires_at
+        ? new Date(mission.expires_at).getTime()
+        : (mission.remainingMs ? (Date.now() + mission.remainingMs) : null);
+    let remaining = expiresAtMs ? Math.max(0, expiresAtMs - Date.now()) : null;
     let currentBalance = 0;
 
     const defaultPrice = (mission.piggy_type === 'advanced60' || mission.piggy_type === 'advanced30') ? 1300000 : 1000000;
@@ -358,7 +358,7 @@ export function showFlashMissionModal(mission) {
                     <div>
                         <div style="font-size:0.65rem; opacity:0.8; text-align:center; letter-spacing:1px; text-transform:uppercase;">Oferta disponible por</div>
                         <div id="flash-countdown-time" style="font-size:1.3rem; font-weight:800; font-family:monospace; letter-spacing:2px;">
-                            ${formatCountdown(remaining)}
+                            ${expiresAtMs ? formatCountdown(remaining) : 'Oferta Exclusiva'}
                         </div>
                     </div>
                 </div>
@@ -544,22 +544,24 @@ export function showFlashMissionModal(mission) {
         nameInput.focus();
     };
 
-    // Live countdown in modal (updates every second)
-    _flashCountdownInterval = setInterval(() => {
-        remaining = Math.max(0, expiresAtMs - Date.now());
-        const el = document.getElementById('flash-countdown-time');
-        if (!el) { clearInterval(_flashCountdownInterval); return; }
-        if (remaining <= 0) {
-            el.textContent = '¡Oferta vencida!';
-            clearInterval(_flashCountdownInterval);
-            deactivateFlashMission(mission.id);
-            if (typeof window._refreshMissionBanner === 'function') {
-                window._refreshMissionBanner();
+    // Live countdown in modal (updates every second) if expiration deadline is set
+    if (expiresAtMs) {
+        _flashCountdownInterval = setInterval(() => {
+            remaining = Math.max(0, expiresAtMs - Date.now());
+            const el = document.getElementById('flash-countdown-time');
+            if (!el) { clearInterval(_flashCountdownInterval); return; }
+            if (remaining <= 0) {
+                el.textContent = '¡Oferta vencida!';
+                clearInterval(_flashCountdownInterval);
+                deactivateFlashMission(mission.id);
+                if (typeof window._refreshMissionBanner === 'function') {
+                    window._refreshMissionBanner();
+                }
+            } else {
+                el.textContent = formatCountdown(remaining);
             }
-        } else {
-            el.textContent = formatCountdown(remaining);
-        }
-    }, 1000);
+        }, 1000);
+    }
 
     // Close handlers
     const close = () => {

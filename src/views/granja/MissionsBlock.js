@@ -366,25 +366,25 @@ function renderM8Banner(mission) {
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
+                        text-transform:uppercase; margin-bottom:10px;">⚡ MISIÓN 8 - SUBE TU NIVEL</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu Piggy Avanzado</div>
                     <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(60 días de engorde)</div>
                     <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
-                            <span>&#9203;</span>
+                            <span>⏳</span>
                             <span style="font-size:0.85rem; font-weight:800; font-family:monospace;">${remaining}</span>
                         </div>
                     ` : ''}
 
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#5b21b6; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Avanzado &#9889;
+                            Comprar Piggy Avanzado ⚡
                         </span>
                     </div>
                 </div>
-                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">&#9889;</div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">⚡</div>
             </div>
         </div>
     `;
@@ -499,7 +499,8 @@ function renderFlashMissionBanner(mission) {
 
     const benefitText = (mission.description && mission.description.trim() !== '') ? mission.description : defaultBenefitText;
 
-    const remaining = mission.remainingMs || 0;
+    const hasExpiry = mission.remainingMs !== null && mission.remainingMs !== undefined && mission.remainingMs > 0;
+    const remaining = hasExpiry ? mission.remainingMs : 0;
     const hours     = String(Math.floor(remaining / 3600000)).padStart(2, '0');
     const mins      = String(Math.floor((remaining % 3600000) / 60000)).padStart(2, '0');
     const secs      = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
@@ -527,6 +528,7 @@ function renderFlashMissionBanner(mission) {
                 <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">${mission.title || '¡Oferta Especial de Granja!'}</div>
                 <div style="font-size:0.82rem; opacity:0.92;">${benefitText}</div>
 
+                ${hasExpiry ? `
                 <!-- Countdown -->
                 <div style="background:rgba(0,0,0,0.2); border-radius:10px;
                     padding:8px 14px; margin-top:10px; display:inline-flex;
@@ -541,6 +543,7 @@ function renderFlashMissionBanner(mission) {
                         </div>
                     </div>
                 </div>
+                ` : ''}
 
                 <div style="margin-top:14px;">
                     <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
@@ -649,18 +652,23 @@ export function attachMissionListeners() {
     const flashCountdownEl = document.querySelector('[id^="flash-banner-countdown-"]');
     if (flashCountdownEl) {
         let remMs = parseInt(flashCountdownEl.dataset.expiresMs, 10) || 0;
-        _bannerCountdownInterval = setInterval(() => {
-            remMs = Math.max(0, remMs - 1000);
-            if (remMs <= 0) {
-                flashCountdownEl.textContent = '¡Oferta vencida!';
-                clearInterval(_bannerCountdownInterval);
-                return;
-            }
-            const h = String(Math.floor(remMs / 3600000)).padStart(2, '0');
-            const m = String(Math.floor((remMs % 3600000) / 60000)).padStart(2, '0');
-            const s = String(Math.floor((remMs % 60000) / 1000)).padStart(2, '0');
-            flashCountdownEl.textContent = `${h}h ${m}m ${s}s`;
-        }, 1000);
+        if (remMs > 0) {
+            _bannerCountdownInterval = setInterval(() => {
+                remMs = Math.max(0, remMs - 1000);
+                if (remMs <= 0) {
+                    flashCountdownEl.textContent = '¡Oferta vencida!';
+                    clearInterval(_bannerCountdownInterval);
+                    if (typeof window._refreshMissionBanner === 'function') {
+                        window._refreshMissionBanner();
+                    }
+                    return;
+                }
+                const h = String(Math.floor(remMs / 3600000)).padStart(2, '0');
+                const m = String(Math.floor((remMs % 3600000) / 60000)).padStart(2, '0');
+                const s = String(Math.floor((remMs % 60000) / 1000)).padStart(2, '0');
+                flashCountdownEl.textContent = `${h}h ${m}m ${s}s`;
+            }, 1000);
+        }
     }
 
     // Start live countdown for Cycle Mission if present
@@ -777,37 +785,47 @@ export function attachMissionListeners() {
         if (ctaUrl === 'open_buy_piggy') {
             try {
                 const items = await getMarketplaceItems();
-                const standardPiggy = items.find(i => i.currentMonth === 1 && i.category === 'standard') || items[0];
+                const standardPiggy = items.find(i => i.category === 'estandar' || i.category === 'standard' || i.current_month === 1) || items[0];
                 if (standardPiggy) showCheckoutModal(standardPiggy);
                 else navigateTo('mercado');
-            } catch {
+            } catch (err) {
+                console.warn('Error launching standard checkout:', err);
                 navigateTo('mercado');
             }
             return;
         }
 
-        // ── Special CTA: open Silver Piggy modal
-        if (ctaUrl === 'open_silver_modal' && sExpiry) {
-            showSilverPiggyModal(sExpiry);
-            return;
-        }
-
-        // ── Special CTA: install PWA / add to home screen
-        if (ctaUrl === 'install_pwa') {
-            triggerPWAInstall();
-            return;
-        }
-
-        // ── Special CTA: open Referidos modal
+        // ── Special CTA: open referidos modal
         if (ctaUrl === 'open_referidos') {
             showReferralModal();
             return;
         }
 
-        // ── Standard navigation route
-        if (ctaUrl && ctaUrl.startsWith('#/')) {
-            navigateTo(ctaUrl.replace('#/', ''));
+        // ── Special CTA: open 72h Silver Piggy modal (M6 stage 1)
+        if (ctaUrl === 'open_silver_modal') {
+            showSilverPiggyModal();
             return;
         }
+
+        // ── Special CTA: trigger PWA install prompt (M4)
+        if (ctaUrl === 'install_pwa') {
+            const installed = await triggerPWAInstall();
+            if (installed) {
+                window.location.reload();
+            } else {
+                navigateTo('descargar');
+            }
+            return;
+        }
+
+        // ── Standard navigation URL
+        if (ctaUrl && ctaUrl.startsWith('#/')) {
+            const route = ctaUrl.slice(2);
+            navigateTo(route);
+            return;
+        }
+
+        // Default fallback to market
+        navigateTo('mercado');
     });
 }
