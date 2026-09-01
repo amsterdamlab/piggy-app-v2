@@ -289,6 +289,13 @@ export async function buyFlashMission(missionId, piggyName) {
     return { success: true, piggy: newPiggy };
 }
 
+/**
+ * @deprecated Legacy wrapper for buying silver piggy in M6 / flash missions
+ */
+export async function buySilverPiggy(customName, price = 1000000, extraRoiBonus = 0.01) {
+    return buyFlashMission('silver', customName);
+}
+
 /* ─── M10: Cycle Completion Missions ──────── */
 
 /**
