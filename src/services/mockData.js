@@ -125,7 +125,7 @@ export const MOCK_ALLIES = [
         benefit: '15% de descuento en Punta de Anca',
         phone: '310 123 4567',
         address: 'Av. Pasoancho # 50-20',
-        discount_info: '15% de descuento en cortes premium',
+        display_order: 1,
     },
     {
         id: 'ally-002',
@@ -138,7 +138,7 @@ export const MOCK_ALLIES = [
         benefit: '2x1 los jueves en platos de cerdo',
         phone: '315 987 6543',
         address: 'Granada Calle 9 # 12-45',
-        discount_info: '2x1 los jueves en platos de cerdo',
+        display_order: 2,
     },
     {
         id: 'ally-003',
@@ -151,7 +151,7 @@ export const MOCK_ALLIES = [
         benefit: 'Postre gratis por consumo > $50k',
         phone: '312 456 7890',
         address: 'San Antonio Cra 4 # 2-10',
-        discount_info: '10% en platos con cerdo',
+        display_order: 3,
     },
     {
         id: 'ally-004',
@@ -164,7 +164,7 @@ export const MOCK_ALLIES = [
         benefit: 'Envío gratis en pedidos mayoristas',
         phone: '300 555 1234',
         address: 'Centro, Calle 50 # 40-20',
-        discount_info: 'Entrega gratuita en Medellín',
+        display_order: null,
     },
     {
         id: 'ally-005',
@@ -177,7 +177,7 @@ export const MOCK_ALLIES = [
         benefit: '10% en Baño y Peluquería',
         phone: '312 456 7890',
         address: 'Av. Principal # 45-12',
-        discount_info: '10% en Baño y Peluquería',
+        display_order: null,
     },
     {
         id: 'ally-006',
@@ -190,7 +190,7 @@ export const MOCK_ALLIES = [
         benefit: '2x1 en corte de cabello y barba',
         phone: '315 789 1234',
         address: 'Calle 10 # 20-30',
-        discount_info: '2x1 en corte de cabello y barba',
+        display_order: null,
     }
 ];
 

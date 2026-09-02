@@ -125,8 +125,8 @@ function renderAlliesList(allies) {
 function renderAllyCard(ally) {
   const imageUrl = ally.image_url || getFallbackImage(ally.category);
   const specialty = ally.specialty || ally.category || '';
-  const description = ally.description || ally.discount_info || '';
-  const benefitText = ally.benefit || ally.discount_info || '';
+  const description = ally.description || '';
+  const benefitText = ally.benefit || '';
   const phone = ally.phone || '300 123 4567';
   const address = ally.address || ally.location || 'Calle Principal # 123';
 
