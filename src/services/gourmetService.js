@@ -27,7 +27,7 @@ const DEFAULT_OFFERS = [
     {
         id: 'combo-parrilla',
         name: 'Combo Parrillero Familiar',
-        description: '3kg Costilla de cerdo + 2kg Chorizo artesanal + 1kg Chicharrón',
+        description: '- 3kg Costilla de cerdo\n- 2kg Chorizo artesanal\n- 1kg Chicharrón',
         original_price: 185000,
         price: 149000,
         tag: '🔥 Más vendido',
@@ -39,7 +39,7 @@ const DEFAULT_OFFERS = [
     {
         id: 'combo-premium',
         name: 'Combo Premium Mixto',
-        description: '2kg Lomo de cerdo + 2kg Pechuga de pollo + 1.5kg Carne de res molida',
+        description: '- 2kg Lomo de cerdo\n- 2kg Pechuga de pollo\n- 1.5kg Carne de res molida',
         original_price: 210000,
         price: 178000,
         tag: '⭐ Premium',
@@ -51,7 +51,7 @@ const DEFAULT_OFFERS = [
     {
         id: 'combo-semanal',
         name: 'Combo Semanal Hogar',
-        description: '2kg Pernil de cerdo + 2kg Muslo de pollo + 1kg Carne para guisar',
+        description: '- 2kg Pernil de cerdo\n- 2kg Muslo de pollo\n- 1kg Carne para guisar',
         original_price: 160000,
         price: 135000,
         tag: '💰 Ahorra más',
