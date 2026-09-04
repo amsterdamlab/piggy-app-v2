@@ -26,25 +26,25 @@ const DAYS_PER_MONTH_ELAPSED = {
  * Category metadata definitions for days, ROI and display labels.
  */
 const CATEGORY_MAP = {
-    estandar:    { label: 'Estandar', extraRoi: 0.00, daysAdvanced: 0,  defaultWeight: 15.0 },
-    standard:    { label: 'Estandar', extraRoi: 0.00, daysAdvanced: 0,  defaultWeight: 15.0 },
-    plus:        { label: 'Plus',     extraRoi: 0.01, daysAdvanced: 0,  defaultWeight: 15.0 },
-    silver:      { label: 'Plus',     extraRoi: 0.01, daysAdvanced: 0,  defaultWeight: 15.0 },
-    dorado:      { label: 'Dorado',   extraRoi: 0.02, daysAdvanced: 0,  defaultWeight: 15.0 },
-    gold:        { label: 'Dorado',   extraRoi: 0.02, daysAdvanced: 0,  defaultWeight: 15.0 },
-    premium:     { label: 'Premium',  extraRoi: 0.03, daysAdvanced: 0,  defaultWeight: 15.0 },
-    avanzado30:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 35.0 },
-    advanced30:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 35.0 },
-    avanzado45:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 45, defaultWeight: 45.0 },
-    advanced45:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 45, defaultWeight: 45.0 },
-    avanzado60:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 60, defaultWeight: 55.0 },
-    advanced60:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 60, defaultWeight: 55.0 },
-    avanzado75:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 75, defaultWeight: 65.0 },
-    advanced75:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 75, defaultWeight: 65.0 },
-    avanzado90:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 90, defaultWeight: 75.0 },
-    advanced90:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 90, defaultWeight: 75.0 },
-    avanzado:    { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 35.0 },
-    advanced:    { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 35.0 },
+    estandar:    { label: 'Estandar', extraRoi: 0.00, daysAdvanced: 0,  defaultWeight: 6.0 },
+    standard:    { label: 'Estandar', extraRoi: 0.00, daysAdvanced: 0,  defaultWeight: 6.0 },
+    plus:        { label: 'Plus',     extraRoi: 0.01, daysAdvanced: 0,  defaultWeight: 6.0 },
+    silver:      { label: 'Plus',     extraRoi: 0.01, daysAdvanced: 0,  defaultWeight: 6.0 },
+    dorado:      { label: 'Dorado',   extraRoi: 0.02, daysAdvanced: 0,  defaultWeight: 6.0 },
+    gold:        { label: 'Dorado',   extraRoi: 0.02, daysAdvanced: 0,  defaultWeight: 6.0 },
+    premium:     { label: 'Premium',  extraRoi: 0.03, daysAdvanced: 0,  defaultWeight: 6.0 },
+    avanzado30:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 22.5 },
+    advanced30:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 22.5 },
+    avanzado45:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 45, defaultWeight: 30.7 },
+    advanced45:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 45, defaultWeight: 30.7 },
+    avanzado60:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 60, defaultWeight: 39.0 },
+    advanced60:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 60, defaultWeight: 39.0 },
+    avanzado75:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 75, defaultWeight: 47.1 },
+    advanced75:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 75, defaultWeight: 47.1 },
+    avanzado90:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 90, defaultWeight: 55.4 },
+    advanced90:  { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 90, defaultWeight: 55.4 },
+    avanzado:    { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 22.5 },
+    advanced:    { label: 'Avanzado', extraRoi: 0.00, daysAdvanced: 30, defaultWeight: 22.5 },
 };
 
 /**
@@ -60,7 +60,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 25,
         category: 'estandar',
         days_advanced: 0,
-        current_weight: 15.0,
+        current_weight: 6.0,
         current_month: 1,
         image_url: 'assets/piggies/stage1/et1-1.jpg',
     },
@@ -73,7 +73,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 15,
         category: 'avanzado30',
         days_advanced: 30,
-        current_weight: 35.0,
+        current_weight: 22.5,
         current_month: 2,
         image_url: 'assets/piggies/stage2/et2-1.jpg',
     },
@@ -86,7 +86,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 10,
         category: 'avanzado60',
         days_advanced: 60,
-        current_weight: 55.0,
+        current_weight: 39.0,
         current_month: 3,
         image_url: 'assets/piggies/stage2/et2-2.jpg',
     },
@@ -99,7 +99,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 20,
         category: 'plus',
         days_advanced: 0,
-        current_weight: 15.0,
+        current_weight: 6.0,
         current_month: 1,
         image_url: 'assets/piggies/stage1/et1-2.jpg',
     },
@@ -112,7 +112,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 12,
         category: 'dorado',
         days_advanced: 0,
-        current_weight: 15.0,
+        current_weight: 6.0,
         current_month: 1,
         image_url: 'assets/piggies/stage1/et1-3.jpg',
     },
@@ -125,7 +125,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         stock: 8,
         category: 'premium',
         days_advanced: 0,
-        current_weight: 15.0,
+        current_weight: 6.0,
         current_month: 1,
         image_url: 'assets/piggies/stage1/et1-4.jpg',
     }
@@ -199,7 +199,7 @@ function enrichItem(item) {
         }
     }
 
-    const catMeta = CATEGORY_MAP[rawCat] || { label: item.category || 'Estandar', extraRoi: 0, daysAdvanced: (currentMonth - 1) * 30, defaultWeight: 15.0 };
+    const catMeta = CATEGORY_MAP[rawCat] || { label: item.category || 'Estandar', extraRoi: 0, daysAdvanced: (currentMonth - 1) * 30, defaultWeight: 6.0 };
 
     // Calculate days advanced and days remaining accurately
     let daysAdvanced = item.days_advanced !== undefined && item.days_advanced !== null && Number(item.days_advanced) > 0
@@ -220,7 +220,9 @@ function enrichItem(item) {
     const price = Number(rawPrice) || 1000000;
 
     // Weight
-    const currentWeight = item.current_weight || (currentMonth === 4 ? 98 : currentMonth === 3 ? 62 : currentMonth === 2 ? 35 : 15);
+    const currentWeight = (item.current_weight !== undefined && item.current_weight !== null)
+        ? Number(item.current_weight)
+        : (catMeta.defaultWeight ?? (daysAdvanced > 0 ? Number((6.0 + (85.0 - 6.0) * (daysAdvanced / 144)).toFixed(1)) : 6.0));
 
     // Deterministic image URL based on stage
     const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;

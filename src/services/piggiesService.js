@@ -12,6 +12,7 @@ import {
     getProgressPercentage,
     getDaysRemaining,
     simulateWeight,
+    getCategoryFinalWeight,
     getPiggyGrowthStage,
     formatCOP,
     formatPercentage,
@@ -23,6 +24,7 @@ export {
     getProgressPercentage,
     getDaysRemaining,
     simulateWeight,
+    getCategoryFinalWeight,
     getPiggyGrowthStage,
     formatCOP,
     formatPercentage,
@@ -118,17 +120,20 @@ export async function getPiggyById(id) {
 export async function adoptPiggy(piggyName, contractUrl = null) {
     const defaultImageUrl = 'assets/piggies/stage1/et1-1.jpg';
     if (isUsingMockData()) {
+        const mockId = `mock-${Date.now()}`;
         const newPiggy = {
-            id: `mock-${Date.now()}`,
+            id: mockId,
             user_id: 'mock-user',
             name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
             // default ~4mo 3wk
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 120).toISOString(),
-            investment_amount: 250000,
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 144).toISOString(),
+            investment_amount: 1000000,
             extra_roi_bonus: 0,
-            current_weight: 15.0,
+            category: 'estandar',
+            current_weight: 6.0,
+            final_weight: getCategoryFinalWeight('estandar', mockId),
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
             image_url: defaultImageUrl,
         };
@@ -145,7 +150,8 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         name: piggyName,
         investment_amount: 1000000,
         status: 'engorde',
-        current_weight: 15.0,
+        current_weight: 6.0,
+        final_weight: getCategoryFinalWeight('estandar'),
         image_url: defaultImageUrl,
     };
     if (contractUrl) {
@@ -159,9 +165,10 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         .single();
 
     if (error) {
-        // If contract_url or image_url column doesn't exist yet, retry without non-essential fields
+        // If contract_url or image_url or final_weight column doesn't exist yet, retry without non-essential fields
         delete insertPayload.contract_url;
         delete insertPayload.image_url;
+        delete insertPayload.final_weight;
         const { data: retryData, error: retryError } = await client
             .from('piggies')
             .insert(insertPayload)
@@ -297,13 +304,21 @@ function enrichPiggyData(piggy) {
     if (isNaN(progress)) progress = 0;
     progress = Math.min(100, Math.max(0, progress));
 
-    // Use DB weight if it exists and is meaningful (>15), otherwise simulate it from progress
-    const dbWeight = parseFloat(piggy.current_weight || piggy.weight);
-    const weight = (dbWeight && !isNaN(dbWeight) && dbWeight > 15)
-        ? dbWeight
-        : simulateWeight(progress);
+    // Determine category and target final weight
+    const rawCategory = String(piggy.category || (extraRoiBonus >= 0.03 ? 'premium' : extraRoiBonus >= 0.02 ? 'dorado' : extraRoiBonus >= 0.01 ? 'plus' : 'estandar')).toLowerCase();
+    const finalWeight = parseFloat(piggy.final_weight) || getCategoryFinalWeight(rawCategory, piggy.id);
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
+    const dbWeight = parseFloat(piggy.current_weight || piggy.weight);
+
+    let weight;
+    if (isComplete) {
+        weight = finalWeight;
+    } else if (dbWeight && !isNaN(dbWeight) && dbWeight > 6.0 && progress === 0) {
+        weight = dbWeight;
+    } else {
+        weight = simulateWeight(progress, finalWeight, 6.0);
+    }
 
     // Determine current growth stage
     let currentStage;
@@ -340,9 +355,11 @@ function enrichPiggyData(piggy) {
         ...piggy,
         investment_amount: investmentAmount,
         extra_roi_bonus: extraRoiBonus,
+        category: rawCategory,
+        final_weight: finalWeight,
         progress,
         daysLeft,
-        currentWeight: (isNaN(weight) ? 15 : weight).toFixed(1),
+        currentWeight: (isNaN(weight) ? 6.0 : weight).toFixed(1),
         isComplete,
         imageUrl,
         name: piggyName,
@@ -454,6 +471,9 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
 
     if (isUsingMockData()) {
         const mockId = `mock-${Date.now()}`;
+        const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', mockId);
+        const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysRemaining);
+        const currentWeight = item.current_weight || (daysElapsed > 0 ? Number((6.0 + (finalWeight - 6.0) * (daysElapsed / CYCLE_TOTAL_DAYS)).toFixed(1)) : 6.0);
         const newPiggy = {
             id: mockId,
             user_id: 'mock-user',
@@ -464,7 +484,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
             category: item.category || 'estandar',
-            current_weight: item.current_weight || 15.0,
+            current_weight: currentWeight,
+            final_weight: finalWeight,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
             image_url: finalImageUrl,
             contract_code: calculatedCode || `#${mockId.slice(-6).toUpperCase()}`,
@@ -513,11 +534,15 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         if (calculatedCode) updatePayload.contract_code = calculatedCode;
         if (finalImageUrl) updatePayload.image_url = finalImageUrl;
 
+        // Ensure final_weight is set according to category range
+        const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', createdPiggyId);
+        if (finalWeight) updatePayload.final_weight = finalWeight;
+
         if (Object.keys(updatePayload).length > 0) {
             try {
                 await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
             } catch (e) {
-                console.warn('No se pudo actualizar contract_url / contract_code / image_url en piggy recién creado:', e);
+                console.warn('No se pudo actualizar contract_url / contract_code / image_url / final_weight en piggy recién creado:', e);
             }
         }
     }

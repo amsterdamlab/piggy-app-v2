@@ -259,7 +259,7 @@ function renderProductCard(item) {
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
             <span class="mcard__info-label">PESO</span>
-            <span class="mcard__info-value">${item.current_weight || (daysAdvanced >= 90 ? 75 : daysAdvanced >= 60 ? 55 : daysAdvanced >= 30 ? 35 : 15)} kg</span>
+            <span class="mcard__info-value">${item.current_weight !== undefined && item.current_weight !== null ? item.current_weight : (daysAdvanced >= 90 ? 55.4 : daysAdvanced >= 60 ? 39.0 : daysAdvanced >= 30 ? 22.5 : 6.0)} kg</span>
           </div>
         </div>
 

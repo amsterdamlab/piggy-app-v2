@@ -33,7 +33,9 @@ export const MOCK_PIGGIES = [
         end_date: new Date(NOW_MS + 84 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0,
-        current_weight: 52.4,
+        current_weight: 39.0,
+        final_weight: 86.4,
+        category: 'estandar',
         created_at: new Date(NOW_MS - 60 * DAY_MS).toISOString(),
         name: 'Pochito',
         image_url: 'assets/piggies/stage2/et2-1.jpg',
@@ -47,7 +49,9 @@ export const MOCK_PIGGIES = [
         end_date: new Date(NOW_MS + 49 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0.01,
-        current_weight: 84.6,
+        current_weight: 65.5,
+        final_weight: 96.2,
+        category: 'plus',
         created_at: new Date(NOW_MS - 95 * DAY_MS).toISOString(),
         name: 'Luna',
         image_url: 'assets/piggies/stage2/et2-3.jpg',
@@ -62,7 +66,9 @@ export const MOCK_PIGGIES = [
         end_date: new Date(NOW_MS - 6 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0.02,
-        current_weight: 120.0,
+        current_weight: 104.5,
+        final_weight: 104.5,
+        category: 'dorado',
         created_at: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
         name: 'Rocky',
         image_url: 'assets/piggies/stage3/et3-1.jpg',
@@ -78,6 +84,7 @@ export const MOCK_MARKETPLACE = [
         price: 1000000,
         extra_roi: 0,
         stock: 50,
+        current_weight: 6.0,
         image_url: null,
         category: 'estandar',
     },
@@ -88,6 +95,7 @@ export const MOCK_MARKETPLACE = [
         price: 1000000,
         extra_roi: 0.01,
         stock: 20,
+        current_weight: 6.0,
         image_url: null,
         category: 'plus',
     },
@@ -98,6 +106,7 @@ export const MOCK_MARKETPLACE = [
         price: 1000000,
         extra_roi: 0.02,
         stock: 10,
+        current_weight: 6.0,
         image_url: null,
         category: 'dorado',
     },
@@ -108,6 +117,7 @@ export const MOCK_MARKETPLACE = [
         price: 1000000,
         extra_roi: 0.03,
         stock: 10,
+        current_weight: 6.0,
         image_url: null,
         category: 'premium',
     },
@@ -334,12 +344,49 @@ export function formatPercentage(value) {
     return `${(num * 100).toFixed(0)}%`;
 }
 
-/** Simulate weight based on progress (6kg to 120kg over 144 days) */
-export function simulateWeight(progressPercent) {
-    const minWeight = 6;
-    const maxWeight = 120;
+/**
+ * Returns a target final weight within the defined category range:
+ * - Estándar / Avanzados: 80.0 kg - 90.0 kg
+ * - Plus: 90.1 kg - 100.0 kg
+ * - Dorado: 100.1 kg - 110.0 kg
+ * - Premium: 110.1 kg - 120.0 kg
+ * If a seedId is provided, returns a stable deterministic value.
+ */
+export function getCategoryFinalWeight(category, seedId = null) {
+    const cat = String(category || 'estandar').toLowerCase();
+    let min = 80.0;
+    let max = 90.0;
+
+    if (cat.includes('premium')) {
+        min = 110.1;
+        max = 120.0;
+    } else if (cat.includes('dorado') || cat.includes('gold')) {
+        min = 100.1;
+        max = 110.0;
+    } else if (cat.includes('plus') || cat.includes('silver')) {
+        min = 90.1;
+        max = 100.0;
+    }
+
+    if (seedId) {
+        let hash = 0;
+        const str = String(seedId);
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const ratio = (Math.abs(hash) % 1000) / 1000;
+        return Number((min + (max - min) * ratio).toFixed(1));
+    }
+
+    return Number((min + Math.random() * (max - min)).toFixed(1));
+}
+
+/** Simulate weight based on progress (6kg to target final weight over 144 days) */
+export function simulateWeight(progressPercent, targetFinalWeight = 85.0, minWeight = 6.0) {
+    const maxWeight = Number(targetFinalWeight) || 85.0;
+    const minW = Number(minWeight) || 6.0;
     const p = Math.min(100, Math.max(0, Number(progressPercent) || 0));
-    return minWeight + ((maxWeight - minWeight) * p / 100);
+    return minW + ((maxWeight - minW) * p / 100);
 }
 
 /**
