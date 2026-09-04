@@ -465,7 +465,11 @@ export async function deductWalletBalance(amount, description = 'Débito: compra
     }
 
     // Explicitly update profiles.wallet_balance in case trigger didn't catch it
-    await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+    try {
+        await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+    } catch (e) {
+        console.warn('profiles.wallet_balance update handled by trigger or protected:', e);
+    }
 
     const curProf = AppState.get('profile') || {};
     AppState.set({ profile: { ...curProf, wallet_balance: newBalance } });

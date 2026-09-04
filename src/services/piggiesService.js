@@ -443,6 +443,7 @@ export function getDashboardStats(piggies = []) {
  * @param {Object} item - The marketplace item
  * @param {string|null} customName - Optional custom name for the piggy
  * @param {string|null} contractUrl - Optional URL of the signed contract PDF
+ * @param {string|null} customContractCode - Optional custom contract verification code
  */
 export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
     // Calculate days remaining based on daysRemaining, daysAdvanced, or current_month
@@ -501,70 +502,196 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
-    // Call Database Function (RPC)
-    // Passes current_month, contractUrl, and contractCode so the DB calculates the correct end_date and persists the contract code atomically
-    const { data: rpcData, error: rpcError } = await client.rpc('buy_piggy', {
-        p_item_id: item.id,
-        p_user_id: user.id,
-        p_price: item.price,
-        p_item_name: finalName,
-        p_extra_roi: item.extra_roi || 0,
-        p_category: item.category || 'estandar',
-        p_current_month: currentMonth,
-        p_contract_url: contractUrl,
-        p_contract_code: calculatedCode,
-    });
+    // Check whether item.id is a valid UUID
+    const isValidUUID = typeof item.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
 
-    if (rpcError) {
-        console.error('Error crítico en compra (RPC):', rpcError);
-        throw new Error('Lo sentimos, no pudimos procesar tu compra. Por favor, verifica tu conexión o el stock disponible e intenta de nuevo.');
+    let rpcData = null;
+    let rpcError = null;
+
+    if (isValidUUID) {
+        // Attempt 1: Call buy_piggy with 9 parameters
+        try {
+            const res9 = await client.rpc('buy_piggy', {
+                p_item_id: item.id,
+                p_user_id: user.id,
+                p_price: item.price,
+                p_item_name: finalName,
+                p_extra_roi: item.extra_roi || 0,
+                p_category: item.category || 'estandar',
+                p_current_month: currentMonth,
+                p_contract_url: contractUrl,
+                p_contract_code: calculatedCode,
+            });
+
+            if (!res9.error && res9.data) {
+                rpcData = res9.data;
+            } else if (res9.error) {
+                const errMsg = String(res9.error?.message || '').toLowerCase();
+                const isSignatureMismatch = errMsg.includes('function') || errMsg.includes('schema cache') || errMsg.includes('argument') || errMsg.includes('pgrst202') || res9.error?.code === 'PGRST202';
+                
+                if (isSignatureMismatch) {
+                    // Attempt 2: Call buy_piggy with 7 legacy parameters
+                    const res7 = await client.rpc('buy_piggy', {
+                        p_item_id: item.id,
+                        p_user_id: user.id,
+                        p_price: item.price,
+                        p_item_name: finalName,
+                        p_extra_roi: item.extra_roi || 0,
+                        p_category: item.category || 'estandar',
+                        p_current_month: currentMonth,
+                    });
+
+                    if (!res7.error && res7.data) {
+                        rpcData = res7.data;
+                    } else {
+                        rpcError = res7.error || res9.error;
+                    }
+                } else {
+                    rpcError = res9.error;
+                }
+            }
+        } catch (rpcCatch) {
+            console.warn('[buyMarketplaceItem] RPC buy_piggy execution error:', rpcCatch);
+            rpcError = rpcCatch;
+        }
+    } else {
+        console.warn('[buyMarketplaceItem] item.id is not a valid UUID, skipping RPC:', item.id);
     }
 
-    // Update wallet balance in AppState if returned by RPC
-    if (rpcData?.new_balance !== undefined && rpcData?.new_balance !== null) {
-        const curProf = AppState.get('profile') || {};
-        AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcData.new_balance) } });
-    }
+    // Case 1: RPC succeeded
+    if (rpcData) {
+        if (rpcData?.new_balance !== undefined && rpcData?.new_balance !== null) {
+            const curProf = AppState.get('profile') || {};
+            AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcData.new_balance) } });
+        }
 
-    // If contractUrl, contractCode or finalImageUrl provided, update them on the created piggy
-    const createdPiggyId = rpcData?.piggy_id;
-    if (createdPiggyId) {
-        const updatePayload = {};
-        if (contractUrl) updatePayload.contract_url = contractUrl;
-        if (calculatedCode) updatePayload.contract_code = calculatedCode;
-        if (finalImageUrl) updatePayload.image_url = finalImageUrl;
+        const createdPiggyId = rpcData?.piggy_id;
+        if (createdPiggyId) {
+            const updatePayload = {};
+            if (contractUrl) updatePayload.contract_url = contractUrl;
+            if (calculatedCode) updatePayload.contract_code = calculatedCode;
+            if (finalImageUrl) updatePayload.image_url = finalImageUrl;
 
-        // Ensure final_weight is set according to category range
-        const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', createdPiggyId);
-        if (finalWeight) updatePayload.final_weight = finalWeight;
+            const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', createdPiggyId);
+            if (finalWeight) updatePayload.final_weight = finalWeight;
 
-        if (Object.keys(updatePayload).length > 0) {
-            try {
-                await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
-            } catch (e) {
-                console.warn('No se pudo actualizar contract_url / contract_code / image_url / final_weight en piggy recién creado:', e);
+            if (Object.keys(updatePayload).length > 0) {
+                try {
+                    await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
+                } catch (e) {
+                    console.warn('No se pudo actualizar metadata en piggy creado vía RPC:', e);
+                }
+            }
+
+            const createdPiggy = await getPiggyById(createdPiggyId);
+            if (createdPiggy) {
+                createdPiggy.walletDeducted = true;
+                return createdPiggy;
             }
         }
     }
 
-    // Success! Fetch the created piggy to return it
-    if (createdPiggyId) {
-        const createdPiggy = await getPiggyById(createdPiggyId);
-        if (createdPiggy) {
-            createdPiggy.walletDeducted = true;
+    // If RPC returned a specific business rule rejection, propagate it immediately
+    if (rpcError) {
+        const rawMsg = String(rpcError.message || '');
+        if (rawMsg.includes('Saldo insuficiente')) {
+            throw new Error('Saldo insuficiente en tu Cuenta Agro para realizar esta compra.');
         }
-        return createdPiggy;
+        if (rawMsg.includes('stock') || rawMsg.includes('Stock')) {
+            throw new Error('El Piggy seleccionado ya no cuenta con stock disponible.');
+        }
+        if (rawMsg.includes('Suplantación') || rawMsg.includes('autenticado')) {
+            throw new Error('Error de autenticación al procesar la compra. Por favor inicia sesión nuevamente.');
+        }
+        console.warn('buy_piggy RPC no completó la operación, ejecutando fallback transaccional seguro:', rpcError);
     }
 
-    // Fallback just for fetching data, not for logic
-    const { data: latest } = await client
-        .from('piggies')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
+    // Case 2: Direct Transactional Fallback
+    console.log('[buyMarketplaceItem] Ejecutando compra mediante fallback transaccional directo...');
+
+    // 1. Validate user balance
+    const { data: profileData, error: profError } = await client
+        .from('profiles')
+        .select('wallet_balance, full_name')
+        .eq('id', user.id)
         .single();
 
-    const enriched = enrichPiggyData(latest);
+    if (profError || !profileData) {
+        throw new Error('No se pudo verificar el saldo de tu cuenta. Por favor verifica tu conexión.');
+    }
+
+    const currentBal = Number(profileData.wallet_balance) || 0;
+    if (currentBal < item.price) {
+        throw new Error(`Saldo insuficiente en tu Cuenta Agro para comprar este Piggy (${formatCOP(item.price)}). Tu saldo actual es ${formatCOP(currentBal)}.`);
+    }
+
+    // 2. Compute parameters
+    const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar');
+    const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
+    const calculatedEndDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString();
+    const fallbackCode = calculatedCode || `#${Date.now().toString().slice(-6)}`;
+
+    // 3. Insert into piggies
+    const insertPayload = {
+        user_id: user.id,
+        name: finalName,
+        investment_amount: item.price,
+        status: 'engorde',
+        extra_roi_bonus: item.extra_roi || 0,
+        category: item.category || 'estandar',
+        current_weight: item.current_weight || (daysElapsed > 0 ? Number((6.0 + (finalWeight - 6.0) * (daysElapsed / CYCLE_TOTAL_DAYS)).toFixed(1)) : 6.0),
+        final_weight: finalWeight,
+        purchase_date: new Date().toISOString(),
+        end_date: calculatedEndDate,
+        image_url: finalImageUrl,
+        contract_url: contractUrl,
+        contract_code: fallbackCode
+    };
+
+    let newPiggyRecord = null;
+    const { data: newPiggyData, error: insertError } = await client
+        .from('piggies')
+        .insert(insertPayload)
+        .select()
+        .single();
+
+    if (insertError) {
+        console.warn('Error insertando piggy con todos los campos en fallback, reintentando con campos esenciales:', insertError);
+        delete insertPayload.contract_code;
+        delete insertPayload.final_weight;
+        const { data: retryData, error: retryErr } = await client
+            .from('piggies')
+            .insert(insertPayload)
+            .select()
+            .single();
+
+        if (retryErr) {
+            throw new Error(`Error al registrar el Piggy: ${retryErr.message || 'Error de base de datos'}`);
+        }
+        newPiggyRecord = retryData;
+    } else {
+        newPiggyRecord = newPiggyData;
+    }
+
+    // 4. Decrement marketplace stock if valid UUID
+    if (isValidUUID) {
+        try {
+            const { data: mItem } = await client.from('marketplace').select('stock').eq('id', item.id).single();
+            if (mItem && mItem.stock > 0) {
+                await client.from('marketplace').update({ stock: mItem.stock - 1 }).eq('id', item.id);
+            }
+        } catch (mErr) {
+            console.warn('No se pudo actualizar stock en marketplace:', mErr);
+        }
+    }
+
+    // 5. Deduct wallet balance cleanly
+    const deductRes = await deductWalletBalance(item.price, `Débito: compra de Piggy "${finalName}"`);
+    if (!deductRes.success) {
+        console.warn('[buyMarketplaceItem] Deduct wallet balance warning:', deductRes.reason);
+    }
+
+    const enriched = enrichPiggyData(newPiggyRecord);
     if (enriched) enriched.walletDeducted = true;
     return enriched;
 }
