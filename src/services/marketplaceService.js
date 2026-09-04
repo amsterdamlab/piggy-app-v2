@@ -136,7 +136,7 @@ const MOCK_MARKETPLACE_ITEMS = [
  */
 export async function getMarketplaceItems() {
     if (isUsingMockData()) {
-        return MOCK_MARKETPLACE_ITEMS.map(enrichItem);
+        return MOCK_MARKETPLACE_ITEMS.filter(i => (i.stock ?? 1) > 0).map(enrichItem);
     }
 
     const client = getClient();
@@ -271,12 +271,57 @@ export async function getMarketplaceStats() {
  * Update stock for a marketplace item.
  */
 export async function updateItemStock(itemId, quantity = 1) {
-    if (isUsingMockData()) return true;
+    if (isUsingMockData()) {
+        const mockItem = MOCK_MARKETPLACE_ITEMS.find(m => String(m.id) === String(itemId));
+        if (mockItem) {
+            mockItem.stock = Math.max(0, (mockItem.stock || 0) - quantity);
+            return true;
+        }
+        return true;
+    }
     try {
         const client = getClient();
-        const { error } = await client.rpc('decrement_marketplace_stock', { item_id: itemId, qty: quantity });
-        return !error;
-    } catch {
+
+        // 1. Try secure RPC with standard signature (p_item_id, p_qty)
+        const { error: rpcErr } = await client.rpc('decrement_marketplace_stock', {
+            p_item_id: String(itemId),
+            p_qty: quantity
+        });
+
+        if (!rpcErr) {
+            return true;
+        }
+
+        // 2. Fallback: try legacy parameter names (item_id, qty)
+        const { error: altRpcErr } = await client.rpc('decrement_marketplace_stock', {
+            item_id: String(itemId),
+            qty: quantity
+        });
+
+        if (!altRpcErr) {
+            return true;
+        }
+
+        // 3. Fallback: direct table update
+        const { data: mItem, error: fetchErr } = await client
+            .from('marketplace')
+            .select('stock')
+            .eq('id', itemId)
+            .single();
+
+        if (!fetchErr && mItem && mItem.stock > 0) {
+            const newStock = Math.max(0, mItem.stock - quantity);
+            const { error: updateErr } = await client
+                .from('marketplace')
+                .update({ stock: newStock })
+                .eq('id', itemId);
+
+            return !updateErr;
+        }
+
+        return false;
+    } catch (err) {
+        console.warn('[updateItemStock] Error actualizando stock del mercado:', err);
         return false;
     }
 }

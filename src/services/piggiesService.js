@@ -6,6 +6,7 @@
 import { getClient, isUsingMockData } from './supabase.js';
 import { AppState } from '../state.js';
 import { deductWalletBalance } from './walletService.js';
+import { updateItemStock } from './marketplaceService.js';
 import {
     MOCK_PIGGIES,
     calculateBaseROI,
@@ -513,6 +514,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
 
         // Reduce local stock reference for immediate UI feedback
         if (item.stock > 0) item.stock--;
+        await updateItemStock(item.id, 1);
         return enrichPiggyData(newPiggy);
     }
 
@@ -520,13 +522,10 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('Usuario no autenticado');
 
-    // Check whether item.id is a valid UUID
-    const isValidUUID = typeof item.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id);
-
     let rpcData = null;
     let rpcError = null;
 
-    if (isValidUUID) {
+    if (item?.id !== undefined && item?.id !== null) {
         // Attempt 1: Call buy_piggy with 9 parameters
         try {
             const res9 = await client.rpc('buy_piggy', {
@@ -572,8 +571,6 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             console.warn('[buyMarketplaceItem] RPC buy_piggy execution error:', rpcCatch);
             rpcError = rpcCatch;
         }
-    } else {
-        console.warn('[buyMarketplaceItem] item.id is not a valid UUID, skipping RPC:', item.id);
     }
 
     // Case 1: RPC succeeded
@@ -792,15 +789,15 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         newPiggyRecord = newPiggyData;
     }
 
-    // 4. Decrement marketplace stock if valid UUID
-    if (isValidUUID) {
+    // 4. Decrement marketplace stock reliably
+    if (item?.id !== undefined && item?.id !== null) {
         try {
-            const { data: mItem } = await client.from('marketplace').select('stock').eq('id', item.id).single();
-            if (mItem && mItem.stock > 0) {
-                await client.from('marketplace').update({ stock: mItem.stock - 1 }).eq('id', item.id);
+            await updateItemStock(item.id, 1);
+            if (item.stock !== undefined && item.stock > 0) {
+                item.stock = Math.max(0, item.stock - 1);
             }
         } catch (mErr) {
-            console.warn('No se pudo actualizar stock en marketplace:', mErr);
+            console.warn('[buyMarketplaceItem] No se pudo actualizar stock en marketplace:', mErr);
         }
     }
 
