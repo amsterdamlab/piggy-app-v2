@@ -62,7 +62,7 @@ export function renderPiggyGourmetView() {
             <div style="position: absolute; bottom: -8px; right: -8px; opacity: 0.15; transform: rotate(-5deg); color: #166534; pointer-events: none;">
                <svg xmlns="http://www.w3.org/2000/svg" width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                  <rect x="1" y="3" width="15" height="13" rx="1"/>
-                 <polygon points="16 8 20 8 23 11 23 16 16 8"/>
+                 <polygon points="16 8 20 8 23 11 23 16 16 16 8"/>
                  <circle cx="5.5" cy="18.5" r="2.5"/>
                  <circle cx="18.5" cy="18.5" r="2.5"/>
                </svg>
@@ -258,7 +258,7 @@ function renderOfferCard(offer, index) {
               border-radius: 9999px;
               letter-spacing: 0.2px;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-            ">${offer.tag ? offer.tag.replace(/^[^\w\s]+/, '').trim() : 'Granja Valle Morales'}</span>
+            ">${offer.tag ? offer.tag.replace(/^[^\\w\\s]+/, '').trim() : 'Granja Valle Morales'}</span>
           </div>
 
           <!-- Title Overlay -->
@@ -385,7 +385,7 @@ function renderCustomOrderSection() {
       Contactar Asesor
     </button>
   </div>
-`;
+  `;
 
   document.getElementById('btn-custom-order-wa')?.addEventListener('click', () => {
     window.open(buildCustomOrderWhatsAppLink(), '_blank');
@@ -656,14 +656,14 @@ function showGourmetOrderSuccess({ offer, appliedBonus = 0, appliedWallet = 0, c
 
   modal.innerHTML = `
     <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-      <div style="background:linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding:28px 24px; text-align:center; color:white;">
-        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#16a34a;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
+        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
-        <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:white;">¡Pedido Registrado!</h3>
-        <p style="margin:0; font-size:0.85rem; opacity:0.92;">Estamos listos para coordinar tu entrega</p>
+        <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:#0f172a;">¡Pedido Registrado!</h3>
+        <p style="margin:0; font-size:0.85rem; color:#64748b;">Estamos listos para coordinar tu entrega</p>
       </div>
 
       <div style="padding:22px;">
@@ -691,10 +691,10 @@ function showGourmetOrderSuccess({ offer, appliedBonus = 0, appliedWallet = 0, c
         </p>
 
         <button id="btn-close-gourmet-receipt" style="
-          width:100%; background:#0f172a; color:white; border:none; padding:14px;
-          border-radius:12px; font-weight:750; font-size:0.95rem; cursor:pointer;
-          box-shadow:0 4px 12px rgba(0,0,0,0.1); transition:all 0.2s;
-        " onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+          width:100%; background:#BE1260; color:white; border:none; padding:15px;
+          border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
+        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
           Entendido
         </button>
       </div>

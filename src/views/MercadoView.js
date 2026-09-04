@@ -786,16 +786,17 @@ window.showCategoryInfo = (category) => {
       <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
         <button id="btn-close-cat-popup" style="
           width: 100%;
-          background: #f3f4f6;
-          color: #1f2937;
+          background: #BE1260;
+          color: white;
           border: none;
-          padding: 12px;
+          padding: 13px;
           border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.9rem;
+          font-weight: 750;
+          font-size: 0.95rem;
           cursor: pointer;
-          transition: background 0.2s;
-        " onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+          box-shadow: 0 4px 14px rgba(190, 18, 96, 0.25);
+          transition: all 0.2s;
+        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
           Entendido
         </button>
       </div>
