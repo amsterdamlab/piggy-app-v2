@@ -4,7 +4,23 @@
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. FUNCIÓN RPC SEGURA PARA DESCONTAR STOCK DEL MARKETPLACE
+-- 1. ELIMINAR VERSIONES PREVIAS DE LA FUNCIÓN PARA EVITAR CONFLICTO DE PARÁMETROS
+-- ------------------------------------------------------------------------------
+DO $$ 
+DECLARE 
+    func_record RECORD;
+BEGIN
+    FOR func_record IN 
+        SELECT oid::regprocedure as proc_name
+        FROM pg_proc 
+        WHERE proname = 'decrement_marketplace_stock'
+    LOOP
+        EXECUTE 'DROP FUNCTION IF EXISTS ' || func_record.proc_name || ' CASCADE;';
+    END LOOP;
+END $$;
+
+-- ------------------------------------------------------------------------------
+-- 2. FUNCIÓN RPC SEGURA PARA DESCONTAR STOCK DEL MARKETPLACE
 -- Permite que las compras descuenten exactamente el stock sin trabas de RLS
 -- ------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.decrement_marketplace_stock(
@@ -61,27 +77,13 @@ BEGIN
 END;
 $$;
 
--- Sobrecarga para parámetros alternativos (item_id, qty)
-CREATE OR REPLACE FUNCTION public.decrement_marketplace_stock(
-  item_id text,
-  qty integer DEFAULT 1
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN public.decrement_marketplace_stock(item_id, qty);
-END;
-$$;
-
 -- Otorgar permisos de ejecución a los roles de Supabase
 GRANT EXECUTE ON FUNCTION public.decrement_marketplace_stock(text, integer) TO anon;
 GRANT EXECUTE ON FUNCTION public.decrement_marketplace_stock(text, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.decrement_marketplace_stock(text, integer) TO service_role;
 
 -- ------------------------------------------------------------------------------
--- 2. POLÍTICA RLS PARA UPDATE EN MARKETPLACE (REDUNDANCIA DE SEGURIDAD)
+-- 3. POLÍTICA RLS PARA UPDATE EN MARKETPLACE (REDUNDANCIA DE SEGURIDAD)
 -- ------------------------------------------------------------------------------
 DO $$ BEGIN
   -- Eliminar política previa si existe
