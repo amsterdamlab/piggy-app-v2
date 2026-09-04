@@ -49,7 +49,7 @@ END $$;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS days_advanced INTEGER DEFAULT 0;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS days_remaining INTEGER DEFAULT 144;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_month INTEGER DEFAULT 1;
-ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 15.0;
+ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS current_weight NUMERIC DEFAULT 6.0;
 ALTER TABLE public.marketplace ADD COLUMN IF NOT EXISTS extra_roi NUMERIC DEFAULT 0.00;
 
 -- ──────────────────────────────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ BEGIN
   -- 3. Calcular días restantes exactos (Ciclo total 144 días)
   NEW.days_remaining := GREATEST(1, v_total_days - NEW.days_advanced);
 
-  -- 4. Calcular peso aproximado según los días adelantados (15.0 kg inicial -> 110.0 kg final en 144 días)
-  NEW.current_weight := ROUND((15.0 + (NEW.days_advanced::NUMERIC / v_total_days::NUMERIC) * (110.0 - 15.0)), 1);
+  -- 4. Calcular peso inicial/actual según avance (Base 6.0 kg destete -> 85.0 kg promedio)
+  NEW.current_weight := ROUND((6.0 + (NEW.days_advanced::NUMERIC / v_total_days::NUMERIC) * (85.0 - 6.0)), 1);
 
   -- 5. Calcular mes representativo para compatibilidad de vistas
   NEW.current_month := CASE
@@ -228,7 +228,7 @@ DECLARE
   v_total_cycle_days int := 144;
   v_extra_roi numeric := 0;
   v_category text;
-  v_weight numeric := 15.0;
+  v_weight numeric := 6.0;
 BEGIN
   -- Bloquear fila del marketplace
   SELECT * INTO v_item
@@ -250,21 +250,21 @@ BEGIN
 
   IF v_item.days_remaining IS NOT NULL AND v_item.days_remaining > 0 THEN
     v_days_remaining := v_item.days_remaining;
-    v_weight := COALESCE(v_item.current_weight, 15.0);
+    v_weight := COALESCE(v_item.current_weight, 6.0);
   ELSIF v_item.days_advanced IS NOT NULL AND v_item.days_advanced > 0 THEN
     v_days_remaining := GREATEST(1, v_total_cycle_days - v_item.days_advanced);
-    v_weight := COALESCE(v_item.current_weight, ROUND((15.0 + (v_item.days_advanced::numeric / v_total_cycle_days::numeric) * (110.0 - 15.0)), 1));
+    v_weight := COALESCE(v_item.current_weight, ROUND((6.0 + (v_item.days_advanced::numeric / v_total_cycle_days::numeric) * (85.0 - 6.0)), 1));
   ELSE
     -- Cálculo fallback por categoría o mes
-    IF v_category = 'avanzado30' THEN v_days_remaining := 114; v_weight := 35.0;
-    ELSIF v_category = 'avanzado45' THEN v_days_remaining := 99; v_weight := 45.0;
-    ELSIF v_category = 'avanzado60' THEN v_days_remaining := 84; v_weight := 55.0;
-    ELSIF v_category = 'avanzado75' THEN v_days_remaining := 69; v_weight := 65.0;
-    ELSIF v_category = 'avanzado90' THEN v_days_remaining := 54; v_weight := 75.0;
+    IF v_category = 'avanzado30' THEN v_days_remaining := 114; v_weight := 22.5;
+    ELSIF v_category = 'avanzado45' THEN v_days_remaining := 99; v_weight := 30.7;
+    ELSIF v_category = 'avanzado60' THEN v_days_remaining := 84; v_weight := 39.0;
+    ELSIF v_category = 'avanzado75' THEN v_days_remaining := 69; v_weight := 47.1;
+    ELSIF v_category = 'avanzado90' THEN v_days_remaining := 54; v_weight := 55.4;
     ELSE
       v_days_advanced := GREATEST(0, (COALESCE(p_current_month, 1) - 1) * 30);
       v_days_remaining := GREATEST(1, v_total_cycle_days - v_days_advanced);
-      v_weight := 15.0;
+      v_weight := 6.0;
     END IF;
   END IF;
 
