@@ -217,13 +217,13 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
               </div>
             </div>
           ` : `
-            <div style="text-align:center; padding:10px 0;">
+            <div style="text-align:center; padding:6px 0 2px 0;">
               <p style="font-size:0.85rem; color:#64748b; margin:0 0 10px 0;">Aún no tienes un banco y Llave Bre-B registrados en tu perfil.</p>
               <button id="btn-goto-profile-setup" style="
-                background: #fdf2f5; color: #be1260; border: 1.5px solid #fbcfe8;
-                padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 0.82rem;
-                cursor: pointer; transition: all 0.2s;
-              " onmouseover="this.style.background='#fce7ed'" onmouseout="this.style.background='#fdf2f5'">
+                background: none; color: #be1260; border: none;
+                padding: 0; font-weight: 700; font-size: 0.84rem;
+                cursor: pointer; text-decoration: underline; transition: opacity 0.2s;
+              " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
                 Actualizar mis datos en Mi Perfil →
               </button>
             </div>
@@ -303,7 +303,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         </div>
         
         <div>
-          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Retiro de Dinero</h2>
+          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Comprar Carne</h2>
           <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
         </div>
       </div>
@@ -417,8 +417,6 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
       const curProfile = AppState.get('profile') || profile || {};
       const userBank = curProfile.bank_name || '';
       const userBreveKey = curProfile.bank_breve_key || '';
-      const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
-      const userCedula = curProfile.cedula || curProfile.document_id || '';
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
