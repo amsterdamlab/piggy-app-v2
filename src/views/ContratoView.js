@@ -20,9 +20,11 @@ let currentSignatureDataUrl = null;
 let currentPiggyName = 'Mi Piggy';
 let currentItemPrice = 1000000;
 let currentMarketplaceItem = null;
+let isProcessingPurchase = false;
 
 export function renderContratoView() {
     preloadPDFLib();
+    isProcessingPurchase = false;
     const app = document.getElementById('app');
     const profile = AppState.get('profile') || {};
     const user = AppState.get('currentUser') || {};
@@ -281,6 +283,11 @@ function attachContratoListeners() {
     // Finalize Contract and Purchase
     const finalizeBtn = document.getElementById('btn-finalizar-contrato');
     finalizeBtn?.addEventListener('click', async () => {
+        if (isProcessingPurchase) {
+            console.warn('[ContratoView] Compra ya en proceso, ignorando clic duplicado.');
+            return;
+        }
+
         const userName = nameInput?.value?.trim();
         const userCedula = cedulaInput?.value?.trim();
         const agreed = document.getElementById('contrato-agree-check')?.checked;
@@ -308,7 +315,11 @@ function attachContratoListeners() {
             return;
         }
 
+        // Activación inmediata del candado de procesamiento
+        isProcessingPurchase = true;
+
         // Set Loading state
+        finalizeBtn.disabled = true;
         finalizeBtn.innerHTML = `
             <span class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span>
             Estampando firma y generando contrato...
@@ -417,6 +428,8 @@ function attachContratoListeners() {
         } catch (error) {
             console.error('Error finalizando contrato:', error);
             alert('Hubo un error al procesar el contrato: ' + error.message);
+            isProcessingPurchase = false;
+            finalizeBtn.disabled = false;
             finalizeBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
                 <span>Confirmar Compra</span>

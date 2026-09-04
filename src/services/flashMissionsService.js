@@ -284,6 +284,33 @@ export async function buyFlashMission(missionId, piggyName) {
 
     const endDate = new Date(Date.now() + (daysRemaining * 24 * 3600000)).toISOString();
 
+    // 0. Guardia de idempotencia: Verificar si ya existe un piggy creado recientemente para esta misión o usuario
+    try {
+        const { data: existingRecent } = await client
+            .from('piggies')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('name', finalName)
+            .gte('created_at', new Date(Date.now() - 10000).toISOString())
+            .limit(1);
+
+        if (existingRecent && existingRecent.length > 0) {
+            console.warn('[buyFlashMission] Piggy ya creado recientemente, vinculando misión y retornando existente.');
+            await client
+                .from('user_flash_missions')
+                .update({
+                    is_purchased: true,
+                    is_active: false,
+                    purchased_at: new Date().toISOString(),
+                    purchased_piggy_id: existingRecent[0].id,
+                })
+                .eq('id', missionId);
+            return { success: true, piggy: existingRecent[0] };
+        }
+    } catch (idempErr) {
+        console.warn('[buyFlashMission] Idempotency check warning:', idempErr);
+    }
+
     // Create the exclusive piggy
     const { data: newPiggy, error: piggyError } = await client
         .from('piggies')
@@ -497,6 +524,32 @@ export async function buyCycleCompletionMission(missionId, piggyName, contractUr
     };
     if (contractUrl) insertPayload.contract_url = contractUrl;
     if (contractCode) insertPayload.contract_code = contractCode;
+
+    // 0. Guardia de idempotencia: Verificar si ya existe un piggy creado recientemente para esta misión o usuario
+    try {
+        const { data: existingRecent } = await client
+            .from('piggies')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('name', finalName)
+            .gte('created_at', new Date(Date.now() - 10000).toISOString())
+            .limit(1);
+
+        if (existingRecent && existingRecent.length > 0) {
+            console.warn('[buyCycleCompletionMission] Piggy ya creado recientemente, marcando misión y retornando existente.');
+            await client
+                .from('cycle_completion_missions')
+                .update({
+                    is_completed: true,
+                    purchased_piggy_id: existingRecent[0].id,
+                    purchased_at: new Date().toISOString(),
+                })
+                .eq('id', missionId);
+            return { success: true, piggy: existingRecent[0] };
+        }
+    } catch (idempErr) {
+        console.warn('[buyCycleCompletionMission] Idempotency check warning:', idempErr);
+    }
 
     // Create the exclusive piggy
     const { data: newPiggy, error: piggyError } = await client

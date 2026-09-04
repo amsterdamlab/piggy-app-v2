@@ -146,6 +146,24 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
     const { data: { user } } = await client.auth.getUser();
     if (!user) throw new Error('User not logged in');
 
+    // 0. Guardia de idempotencia: Evitar duplicados por doble envío en adopción
+    try {
+        const { data: existingRecent } = await client
+            .from('piggies')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('name', piggyName)
+            .gte('created_at', new Date(Date.now() - 10000).toISOString())
+            .limit(1);
+
+        if (existingRecent && existingRecent.length > 0) {
+            console.warn('[adoptPiggy] Piggy ya adoptado recientemente, retornando registro existente.');
+            return enrichPiggyData(existingRecent[0]);
+        }
+    } catch (idempErr) {
+        console.warn('[adoptPiggy] Idempotency check warning:', idempErr);
+    }
+
     const insertPayload = {
         user_id: user.id,
         name: piggyName,
@@ -444,7 +462,6 @@ export function getDashboardStats(piggies = []) {
  * @param {Object} item - The marketplace item
  * @param {string|null} customName - Optional custom name for the piggy
  * @param {string|null} contractUrl - Optional URL of the signed contract PDF
- * @param {string|null} customContractCode - Optional custom contract verification code
  */
 export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
     // Calculate days remaining based on daysRemaining, daysAdvanced, or current_month
@@ -561,12 +578,29 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
 
     // Case 1: RPC succeeded
     if (rpcData) {
-        if (rpcData?.new_balance !== undefined && rpcData?.new_balance !== null) {
-            const curProf = AppState.get('profile') || {};
-            AppState.set({ profile: { ...curProf, wallet_balance: Number(rpcData.new_balance) } });
+        let parsedRpcData = rpcData;
+        if (typeof parsedRpcData === 'string') {
+            try {
+                parsedRpcData = JSON.parse(parsedRpcData);
+            } catch (parseErr) {
+                const trimmed = parsedRpcData.trim();
+                if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+                    parsedRpcData = { piggy_id: trimmed, success: true };
+                }
+            }
         }
 
-        const createdPiggyId = rpcData?.piggy_id;
+        if (parsedRpcData?.new_balance !== undefined && parsedRpcData?.new_balance !== null) {
+            const curProf = AppState.get('profile') || {};
+            AppState.set({ profile: { ...curProf, wallet_balance: Number(parsedRpcData.new_balance) } });
+        }
+
+        const createdPiggyId = parsedRpcData?.piggy_id
+            || parsedRpcData?.id
+            || parsedRpcData?.new_piggy_id
+            || parsedRpcData?.piggy?.id
+            || (typeof parsedRpcData === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsedRpcData.trim()) ? parsedRpcData.trim() : null);
+
         if (createdPiggyId) {
             const updatePayload = {};
             if (contractUrl) updatePayload.contract_url = contractUrl;
@@ -580,16 +614,80 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
                 try {
                     await client.from('piggies').update(updatePayload).eq('id', createdPiggyId);
                 } catch (e) {
-                    console.warn('No se pudo actualizar metadata en piggy creado vía RPC:', e);
+                    console.warn('[buyMarketplaceItem] No se pudo actualizar metadata en piggy creado vía RPC:', e);
                 }
             }
 
-            const createdPiggy = await getPiggyById(createdPiggyId);
+            let createdPiggy = null;
+            try {
+                createdPiggy = await getPiggyById(createdPiggyId);
+            } catch (fetchErr) {
+                console.warn('[buyMarketplaceItem] getPiggyById warning, sintetizando objeto local enriquecido:', fetchErr);
+            }
+
             if (createdPiggy) {
                 createdPiggy.walletDeducted = true;
                 return createdPiggy;
             }
+
+            // Fallback sintético en memoria para respuesta inmediata sin reinsertar
+            const synthetic = enrichPiggyData({
+                id: createdPiggyId,
+                user_id: user.id,
+                name: finalName,
+                investment_amount: item.price,
+                status: 'engorde',
+                extra_roi_bonus: item.extra_roi || 0,
+                category: item.category || 'estandar',
+                current_weight: item.current_weight || 15.0,
+                final_weight: finalWeight,
+                purchase_date: new Date().toISOString(),
+                end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
+                image_url: finalImageUrl,
+                contract_url: contractUrl,
+                contract_code: calculatedCode || `#${String(createdPiggyId).slice(-6).toUpperCase()}`
+            });
+            synthetic.walletDeducted = true;
+            return synthetic;
         }
+
+        // Si rpcData es válido pero no expuso el ID directamente, buscar el último Piggy creado en los últimos 10s
+        try {
+            const { data: recentPiggies } = await client
+                .from('piggies')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (recentPiggies && recentPiggies.length > 0) {
+                const latest = enrichPiggyData(recentPiggies[0]);
+                latest.walletDeducted = true;
+                return latest;
+            }
+        } catch (recentErr) {
+            console.warn('[buyMarketplaceItem] Error consultando piggies recientes:', recentErr);
+        }
+
+        // Si el RPC se ejecutó pero no pudimos resolver el ID, no ejecutar fallback para evitar duplicados
+        console.warn('[buyMarketplaceItem] RPC buy_piggy finalizó exitosamente. Evitando inserción duplicada en fallback.');
+        return enrichPiggyData({
+            id: `pgy-${Date.now()}`,
+            user_id: user.id,
+            name: finalName,
+            investment_amount: item.price,
+            status: 'engorde',
+            extra_roi_bonus: item.extra_roi || 0,
+            category: item.category || 'estandar',
+            current_weight: item.current_weight || 15.0,
+            final_weight: parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar'),
+            purchase_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
+            image_url: finalImageUrl,
+            contract_url: contractUrl,
+            contract_code: calculatedCode || `#${Date.now().toString().slice(-6)}`,
+            walletDeducted: true
+        });
     }
 
     // If RPC returned a specific business rule rejection, propagate it immediately
@@ -607,8 +705,28 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         console.warn('buy_piggy RPC no completó la operación, ejecutando fallback transaccional seguro:', rpcError);
     }
 
-    // Case 2: Direct Transactional Fallback
+    // Case 2: Direct Transactional Fallback (Solo si RPC no existía o falló completamente)
     console.log('[buyMarketplaceItem] Ejecutando compra mediante fallback transaccional directo...');
+
+    // 0. Guardia de idempotencia: Verificar si ya existe un Piggy con el mismo nombre y usuario creado en los últimos 10 segundos
+    try {
+        const { data: existingRecent } = await client
+            .from('piggies')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('name', finalName)
+            .gte('created_at', new Date(Date.now() - 10000).toISOString())
+            .limit(1);
+
+        if (existingRecent && existingRecent.length > 0) {
+            console.warn('[buyMarketplaceItem] Piggy ya registrado recientemente en DB, evitando inserción duplicada en fallback.');
+            const existing = enrichPiggyData(existingRecent[0]);
+            existing.walletDeducted = true;
+            return existing;
+        }
+    } catch (idempErr) {
+        console.warn('[buyMarketplaceItem] Idempotency check warning:', idempErr);
+    }
 
     // 1. Validate user balance
     const { data: profileData, error: profError } = await client

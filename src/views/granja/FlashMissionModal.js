@@ -593,10 +593,14 @@ export function showFlashMissionModal(mission) {
     }
 
     // Confirm Purchase
+    let isBuying = false;
     confirmBtn.addEventListener('click', async () => {
+        if (isBuying) return;
         const customName = nameInput.value.trim();
         if (customName.length < 3 || currentBalance < price) return;
 
+        isBuying = true;
+        confirmBtn.disabled = true;
         confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
         confirmBtn.style.pointerEvents = 'none';
 
@@ -624,6 +628,8 @@ export function showFlashMissionModal(mission) {
         } catch (error) {
             console.error('Flash mission purchase error:', error);
             alert('Error en la transacción: ' + error.message);
+            isBuying = false;
+            confirmBtn.disabled = false;
             confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
             confirmBtn.style.pointerEvents = 'auto';
         }
