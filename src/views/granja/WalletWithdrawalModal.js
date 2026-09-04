@@ -417,6 +417,9 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
       const curProfile = AppState.get('profile') || profile || {};
       const userBank = curProfile.bank_name || '';
       const userBreveKey = curProfile.bank_breve_key || '';
+      const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
+      const userFullName = curProfile.full_name || userName || 'Usuario';
+      const userPhoneNum = curProfile.whatsapp || curProfile.phone_number || userPhone || '';
       const errDiv = document.getElementById('retiro-amount-error');
       const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
@@ -442,16 +445,52 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
 
       errDiv.style.display = 'none';
       
-      const res = await requestBankWithdrawal({
-        amount,
-        bankName: userBank || 'Banco Registrado',
-        accountType: userAccountType || 'Cuenta de Ahorros',
-        breveKey: userBreveKey || '',
-        notes: `Retiro bancario solicitado por ${userName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
-      });
+      try {
+        const res = await requestBankWithdrawal({
+          amount,
+          bankName: userBank || 'Banco Registrado',
+          accountType: userAccountType,
+          breveKey: userBreveKey,
+          notes: `Retiro bancario solicitado por ${userFullName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
+        });
 
-      if (!res.success) {
-        errDiv.textContent = res.reason || 'Error al procesar la solicitud'; 
+        if (!res || !res.success) {
+          errDiv.textContent = res?.reason || 'Error al procesar la solicitud'; 
+          errDiv.style.display = 'block';
+          btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+            </svg>
+            Solicitar Retiro
+          `;
+          btn.disabled = false;
+          return;
+        }
+
+        // 1. Mostrar Toast de éxito inmediato
+        showToast('Solicitud enviada y saldo retenido para transferencia', { type: 'success' });
+
+        // 2. Actualizar estado visual de saldo en tiempo real
+        if (onUpdated && res.newBalance !== undefined) {
+          onUpdated(res.newBalance);
+        }
+
+        const bankFullLabel = `${userBank} (${userAccountType})`;
+        const refFinal = res.reference || res.requestId;
+
+        // 3. Notificar a WhatsApp de administración
+        try {
+          notifyAdminViaWhatsApp('withdrawal', amount, userFullName, userPhoneNum, bankFullLabel, refFinal, userBreveKey);
+        } catch (waErr) {
+          console.warn('Advertencia al abrir WhatsApp:', waErr);
+        }
+        
+        // 4. Cerrar subscreen y abrir recibo de confirmación
+        closeSubscreen();
+        showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
+      } catch (err) {
+        console.error('Error procesando retiro:', err);
+        errDiv.textContent = 'Ocurrió un error inesperado al procesar el retiro: ' + (err.message || err);
         errDiv.style.display = 'block';
         btn.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
@@ -460,23 +499,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           Solicitar Retiro
         `;
         btn.disabled = false;
-        return;
       }
-
-      // 1. Mostrar Toast de éxito inmediato
-      showToast('Solicitud enviada y saldo retenido para transferencia', { type: 'success' });
-
-      // 2. Actualizar estado visual de saldo en tiempo real
-      if (onUpdated && res.newBalance !== undefined) {
-        onUpdated(res.newBalance);
-      }
-
-      // 3. Notificar a WhatsApp de administración
-      notifyAdminViaWhatsApp('withdrawal', amount, userName, userPhone, userBank || 'Banco Registrado', res.reference || res.requestId, userBreveKey);
-      
-      // 4. Cerrar subscreen y abrir recibo de confirmación
-      closeSubscreen();
-      showWalletRequestSuccess('withdrawal', amount, userBank || 'Banco Registrado', res.reference || res.requestId, onUpdated);
     });
   };
 
@@ -503,7 +526,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
 /**
  * Show success confirmation after wallet request.
  */
-export function showWalletRequestSuccess(requestType, amount, bank, requestId, onUpdated = null) {
+export function showWalletRequestSuccess(requestType, amount, bank, requestId, onUpdated = null, userName = '', userPhone = '', userBreveKey = '') {
   const isWithdrawal = requestType === 'withdrawal';
   const modal = document.createElement('div');
   modal.id = 'wallet-success-modal';
@@ -518,6 +541,20 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
   modal.style.justifyContent = 'center';
   modal.style.padding = '20px';
 
+  const refCode = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
+  const typeLabel = isWithdrawal ? '💰 RETIRO' : '🥩 CONSUMO';
+  const waText = encodeURIComponent(
+    `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
+    `👤 *Usuario:* ${userName || 'Usuario'}\n` +
+    `📱 *WhatsApp:* ${userPhone || 'No registrado'}\n` +
+    `💵 *Monto:* ${formatCOP(amount)}\n` +
+    `🏦 *Banco:* ${bank}\n` +
+    (userBreveKey ? `⚡ *Llave Bre-B:* ${userBreveKey}\n` : '') +
+    `🎫 *ID Solicitud:* #${refCode}\n` +
+    `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+    `Hola, confirmo mi solicitud de retiro en Piggy App.`
+  );
+
   modal.innerHTML = `
     <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
       <div style="background:linear-gradient(135deg, #10B981 0%, #059669 100%); padding:28px 24px; text-align:center; color:white;">
@@ -531,10 +568,10 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
       </div>
 
       <div style="padding:24px;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:20px; font-size:0.85rem; color:#334155;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:18px; font-size:0.85rem; color:#334155;">
           <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
             <span style="color:#64748b;">Referencia:</span>
-            <strong style="color:#0f172a; font-family:monospace;">#${requestId || 'REQ-' + Math.floor(1000 + Math.random() * 9000)}</strong>
+            <strong style="color:#0f172a; font-family:monospace;">#${refCode}</strong>
           </div>
           <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
             <span style="color:#64748b;">Monto:</span>
@@ -550,9 +587,22 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
           </div>
         </div>
 
-        <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 20px 0; text-align:center;">
-          Hemos abierto WhatsApp para que confirmes la solicitud con administración. Tu saldo ha sido retenido para la transferencia bancaria.
+        <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 16px 0; text-align:center;">
+          Tu solicitud fue registrada en el sistema y tu saldo ha sido retenido. Puedes contactar a administración por WhatsApp para seguimiento inmediato.
         </p>
+
+        <a href="https://wa.me/573154870448?text=${waText}" target="_blank" style="
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; background: #22c55e; color: white; border: none; padding: 14px;
+          border-radius: 12px; font-weight: 700; font-size: 0.95rem; text-decoration: none;
+          box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); transition: all 0.2s; margin-bottom: 10px;
+          box-sizing: border-box;
+        " onmouseover="this.style.background='#16a34a'" onmouseout="this.style.background='#22c55e'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+          </svg>
+          Abrir WhatsApp con Soporte
+        </a>
 
         <button id="btn-close-success-modal" style="
           width:100%; background:#0f172a; color:white; border:none; padding:14px;

@@ -794,8 +794,8 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
             type: 'debit',
             description: `Retención por solicitud de retiro bancario (${bankName || 'Bancario'}) [Ref: ${refCode}]`,
             wallet_type: 'dinero',
-            payment_method: 'TRANSFERENCIA',
-            simulation_status: 'PENDING',
+            payment_method: 'BRE_B',
+            simulation_status: 'APPROVED',
             created_at: new Date().toISOString(),
         };
 
@@ -823,7 +823,7 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
         const profile = AppState.get('profile') || AppState.get('currentUser');
         userId = profile?.id;
     }
-    if (!userId) return { success: false, reason: 'not_authenticated' };
+    if (!userId) return { success: false, reason: 'No se encontró una sesión de usuario activa' };
 
     // 1. Validación de Saldo Disponible en DB
     const { data: profile, error: profileErr } = await client
@@ -832,12 +832,16 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
         .eq('id', userId)
         .single();
 
-    if (profileErr || !profile) return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
+    if (profileErr || !profile) {
+        console.error('Error consultando perfil:', profileErr);
+        return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
+    }
+
     const currentBalance = Number(profile.wallet_balance) || 0;
     if (currentBalance < numAmount) return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };
 
     const effectiveBank = bankName || profile.bank_name || 'Bancario';
-    const effectiveAccountType = accountType || profile.bank_account_type || 'Ahorros';
+    const effectiveAccountType = accountType || profile.bank_account_type || 'Cuenta de Ahorros';
     const effectiveBreveKey = breveKey || profile.bank_breve_key || '';
     const bankDetailsStr = [effectiveBank, effectiveAccountType, effectiveBreveKey ? `Llave Bre-B: ${effectiveBreveKey}` : ''].filter(Boolean).join(' - ');
     const userName = profile.full_name || 'Usuario';
@@ -845,7 +849,37 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
     const txDescription = `Retención por solicitud de retiro bancario (${effectiveBank}) [Ref: ${refCode}]`;
     const newBalance = Math.max(0, currentBalance - numAmount);
 
-    // 2. Registro Contable de Retención en wallet_transactions (-numAmount)
+    // 2. Insertar en wallet_requests para que quede registrada la solicitud de retiro
+    let requestId = `req-ret-${Date.now()}`;
+    const { data: reqData, error: reqError } = await client
+        .from('wallet_requests')
+        .insert({
+            user_id: userId,
+            user_name: userName,
+            request_type: 'withdrawal',
+            payment_method: 'BRE_B',
+            amount: numAmount,
+            bank_name: bankDetailsStr,
+            reference: refCode,
+            wallet_type: 'dinero',
+            status: 'pending',
+            notes: finalNotes,
+            created_at: new Date().toISOString(),
+        })
+        .select('id, reference, status')
+        .single();
+
+    if (reqError) {
+        console.error('Error registrando en wallet_requests:', reqError);
+        return { success: false, reason: 'Error al registrar solicitud: ' + reqError.message };
+    }
+
+    if (reqData?.id) {
+        requestId = reqData.id;
+    }
+
+    // 3. Registro Contable de Retención en wallet_transactions (-numAmount)
+    // Con simulation_status: 'APPROVED', el trigger handle_canonical_wallet_ledger debita automáticamente profiles.wallet_balance
     const { data: txData, error: txError } = await client
         .from('wallet_transactions')
         .insert({
@@ -855,46 +889,17 @@ export async function requestBankWithdrawal({ amount, bankName = '', accountType
             description: txDescription,
             wallet_type: 'dinero',
             payment_method: 'TRANSFERENCIA',
-            simulation_status: 'PENDING',
+            simulation_status: 'APPROVED',
             created_at: new Date().toISOString(),
         })
         .select('id')
         .single();
 
     if (txError) {
-        console.error('Error insertando débito de retención en wallet_transactions:', txError);
-        return { success: false, reason: 'Error contable al registrar la retención: ' + txError.message };
+        console.warn('Advertencia insertando transacción contable:', txError);
     }
 
-    // 3. Retención / Débito Inmediato en profiles.wallet_balance
-    await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', userId);
-
-    // 4. Creación de la Solicitud en wallet_requests
-    let requestId = txData?.id || null;
-    try {
-        const { data: reqData } = await client
-            .from('wallet_requests')
-            .insert({
-                user_id: userId,
-                user_name: userName,
-                request_type: 'withdrawal',
-                amount: numAmount,
-                bank_name: bankDetailsStr,
-                reference: refCode,
-                wallet_type: 'dinero',
-                status: 'pending',
-                notes: finalNotes,
-                created_at: new Date().toISOString(),
-            })
-            .select('id, reference, status')
-            .single();
-
-        if (reqData?.id) requestId = reqData.id;
-    } catch (e) {
-        console.warn('Excepción al crear registro en wallet_requests:', e);
-    }
-
-    // 5. Actualizar AppState en tiempo real
+    // 4. Actualizar AppState en tiempo real
     const currentAppStateProfile = AppState.get('profile') || {};
     AppState.set({
         profile: {
@@ -948,7 +953,7 @@ export async function createWalletRequest(requestType, amount, bankName = null) 
 /** Build and open a WhatsApp message to notify admin about a wallet request. */
 export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId, userBreveKey = null) {
     const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';
-    const shortId = requestId ? requestId.slice(-8).toUpperCase() : 'N/A';
+    const shortId = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
     let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
         `👤 *Usuario:* ${userName}\n` +
         `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n` +
