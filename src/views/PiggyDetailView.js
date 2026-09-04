@@ -5,7 +5,7 @@
 
 import { renderIcon } from '../icons.js';
 import { AppState } from '../state.js';
-import { getPiggyById, calculateBaseROI, formatCOP, formatPercentage, getDaysRemaining } from '../services/piggiesService.js';
+import { getPiggyById, calculateBaseROI, formatCOP, formatPercentage, getDaysRemaining, getDashboardStats } from '../services/piggiesService.js';
 import { getUserPiggies } from '../services/piggiesService.js';
 import { getRouteParam, navigateTo } from '../router.js';
 import { openWalletDrawer } from './granja/WalletBlock.js';
@@ -52,7 +52,8 @@ async function loadPiggyDetail(piggyId) {
       return;
     }
 
-    const baseROI = calculateBaseROI(allPiggies.length);
+    const stats = getDashboardStats(allPiggies);
+    const baseROI = stats.baseROI;
     const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
     const projectedReturn = piggy.investment_amount * (1 + totalROI);
     const gain = projectedReturn - piggy.investment_amount;
