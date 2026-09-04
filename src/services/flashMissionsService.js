@@ -384,14 +384,19 @@ export async function detectAndCreateCycleMissions(piggies) {
     const { data: configs, error: configError } = await client
         .from('exclusive_piggy_config')
         .select('*')
-        .eq('is_enabled', true)
+        .or('is_enabled.is.null,is_enabled.eq.true')
         .order('min_piggies', { ascending: false });
 
     if (configError || !configs || configs.length === 0) return; // M10 disabled or config missing
 
-    const userPiggyCount = piggies.length;
-    // Find highest tier matching user's piggy count (e.g. >= 3 -> Tier 3, >= 2 -> Tier 2, >= 1 -> Tier 1)
-    const config = configs.find(c => userPiggyCount >= (c.min_piggies || 1));
+    // Contamos ÚNICAMENTE los piggies ACTIVOS que le quedan al usuario en la granja
+    const activePiggies = piggies.filter(p => !p.isComplete && p.status === 'engorde');
+    const activeCount = activePiggies.length;
+    // Si al usuario no le queda ningún cerdo activo (completó su único cerdo), se evalúa con base 1
+    const effectivePiggyCount = Math.max(1, activeCount);
+
+    // Encuentra el nivel más alto que cumpla la condición min_piggies configurada en la BD
+    const config = configs.find(c => effectivePiggyCount >= (Number(c.min_piggies) || 1)) || configs[configs.length - 1];
     if (!config) return;
 
     const expiresAt = new Date(Date.now() + ((config.duration_hours || 48) * 3600000)).toISOString();
