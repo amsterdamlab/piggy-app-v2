@@ -11,7 +11,7 @@ import { formatCOP } from '../services/mockData.js';
 import { navigateTo } from '../router.js';
 import { getWalletBalance, getReferralBonusBalance, getWalletTransactions } from '../services/walletService.js';
 import { getRandomTip } from '../services/tipsService.js';
-import { getActiveMissions } from '../services/missionsService.js';
+import { getActiveMissions, getMissions } from '../services/missionsService.js';
 import {
     getActiveUserFlashMissions,
     getActiveCycleMissions,
@@ -163,8 +163,10 @@ async function loadGranjaData(firstName) {
       console.warn('⚠️ detectAndCreateCycleMissions err:', err);
     });
 
-    // Misiones activas basadas en los cerditos cargados
-    const activeMissions = await getActiveMissions(activePiggiesList).catch(() => []);
+    // Misiones y estado de progreso
+    const allMissions = await getMissions(activePiggiesList).catch(() => []);
+    const activeMissions = (allMissions || []).filter(m => !m.is_completed && !m.is_locked);
+    const isAllCompleted = (allMissions || []).length > 0 && allMissions.every(m => m.is_completed);
 
     // Exponer misiones globalmente para los modales
     window._activeFlashMissions = flashMissions || [];
@@ -185,7 +187,7 @@ async function loadGranjaData(firstName) {
     const currentHash = (window.location.hash.slice(2).split('?')[0].split('/')[0] || 'granja').toLowerCase();
     if (currentHash !== 'granja' && currentHash !== 'referidos' && currentHash !== '') return;
 
-    app.innerHTML = buildGranjaFull(firstName, activePiggiesList, stats, tipData, activeMissions || [], flashMissions || [], cycleMissions || []);
+    app.innerHTML = buildGranjaFull(firstName, activePiggiesList, stats, tipData, activeMissions || [], flashMissions || [], cycleMissions || [], isAllCompleted);
 
     // Muestra el popup de noticias si hay imágenes activas y el usuario no lo ha cerrado aún en esta sesión
     if (newsSlides && newsSlides.length > 0) {
@@ -209,7 +211,7 @@ async function loadGranjaData(firstName) {
     stats.saldoDisponibleFormatted = '$0';
     stats.referralBonus = 0;
     stats.referralBonusFormatted = '$0';
-    app.innerHTML = buildGranjaFull(firstName, fallbackPiggies, stats, null, [], [], []);
+    app.innerHTML = buildGranjaFull(firstName, fallbackPiggies, stats, null, [], [], [], false);
     attachGranjaListeners(fallbackPiggies.length > 0, stats, fallbackPiggies.length, fallbackPiggies);
   }
 }
@@ -217,7 +219,7 @@ async function loadGranjaData(firstName) {
 /**
  * Build the full dashboard with data.
  */
-function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions) {
+function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, flashMissions, cycleMissions, isAllCompleted = false) {
   const activePiggies    = piggies.filter(p => !p.isComplete);
   const completedPiggies = piggies.filter(p => p.isComplete);
   const piggyCount       = piggies.length;
@@ -225,7 +227,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
       flashMissions  || [],
       cycleMissions  || [],
       activeMissions || [],
-      piggyCount
+      piggyCount,
+      isAllCompleted
   );
   const notification = renderRandomNotification(tipData);
 
@@ -307,6 +310,8 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
     </div>
   `;
 }
+
+// ... renderGreeting remains the same ...
 
 function renderGreeting(firstName) {
   const profile = AppState.get('profile') || {};
@@ -431,6 +436,8 @@ function renderEmptyPiggies() {
     </div>
   `;
 }
+
+// ... renderPiggiesList and renderPiggyCard remain the same ...
 
 export function renderPiggiesList(piggies, baseROI) {
   return `

@@ -11,7 +11,7 @@ import { getMarketplaceItems } from '../../services/marketplaceService.js';
 import { showCheckoutModal } from '../MercadoView.js';
 import { showFlashMissionModal } from './FlashMissionModal.js';
 import { showCycleMissionModal } from './CycleMissionModal.js';
-import { getActiveMissions } from '../../services/missionsService.js';
+import { getActiveMissions, getMissions } from '../../services/missionsService.js';
 import { getActiveUserFlashMissions, getActiveCycleMissions } from '../../services/flashMissionsService.js';
 import { AppState } from '../../state.js';
 import { triggerPWAInstall } from '../../services/pwaService.js';
@@ -34,16 +34,19 @@ export async function refreshMissionBanner() {
 
     try {
         const piggies = AppState.get('piggies') || [];
-        const [activeMissions, flashMissions, cycleMissions] = await Promise.all([
-            getActiveMissions(piggies),
+        const [allMissions, flashMissions, cycleMissions] = await Promise.all([
+            getMissions(piggies),
             getActiveUserFlashMissions(),
             getActiveCycleMissions()
         ]);
 
+        const activeMissions = (allMissions || []).filter(m => !m.is_completed && !m.is_locked);
+        const isAllCompleted = (allMissions || []).length > 0 && allMissions.every(m => m.is_completed);
+
         window._activeFlashMissions = flashMissions;
         window._activeCycleMissions = cycleMissions;
 
-        const newBannerHTML = renderPriorityMissionBanner(flashMissions || [], cycleMissions || [], activeMissions || [], piggies.length);
+        const newBannerHTML = renderPriorityMissionBanner(flashMissions || [], cycleMissions || [], activeMissions || [], piggies.length, isAllCompleted);
         container.innerHTML = newBannerHTML;
         attachMissionListeners();
     } catch (e) {
@@ -58,8 +61,9 @@ export async function refreshMissionBanner() {
  * @param {Array} cycleMissions  - Active M10 records
  * @param {Array} regularMissions - Active M1–M7 records
  * @param {number} piggyCount
+ * @param {boolean} [isAllCompleted=false]
  */
-export function renderPriorityMissionBanner(flashMissions, cycleMissions, regularMissions, piggyCount) {
+export function renderPriorityMissionBanner(flashMissions, cycleMissions, regularMissions, piggyCount, isAllCompleted = false) {
     window._refreshMissionBanner = refreshMissionBanner;
     if (flashMissions && flashMissions.length > 0) {
         return renderFlashMissionBanner(flashMissions[0]);
@@ -67,7 +71,7 @@ export function renderPriorityMissionBanner(flashMissions, cycleMissions, regula
     if (cycleMissions && cycleMissions.length > 0) {
         return renderCycleMissionBanner(cycleMissions[0]);
     }
-    return renderMissionBanner(regularMissions || [], piggyCount || 0);
+    return renderMissionBanner(regularMissions || [], piggyCount || 0, isAllCompleted);
 }
 
 /**
@@ -86,8 +90,9 @@ function formatRemainingTime(silverExpiry) {
  * Each mission has a distinct premium banner design.
  * @param {Array} activeMissions - List of non-completed, non-locked missions
  * @param {number} piggyCount - Number of piggies the user has
+ * @param {boolean} [isAllCompleted=false] - True if user genuinely finished all missions
  */
-export function renderMissionBanner(activeMissions, piggyCount) {
+export function renderMissionBanner(activeMissions, piggyCount, isAllCompleted = false) {
     // Clean up any previous countdown
     if (_bannerCountdownInterval) {
         clearInterval(_bannerCountdownInterval);
@@ -95,7 +100,8 @@ export function renderMissionBanner(activeMissions, piggyCount) {
     }
 
     if (!activeMissions || activeMissions.length === 0) {
-        if (localStorage.getItem('piggy_hide_completed_missions_banner') === 'true') {
+        // Only show completed banner if user genuinely finished all missions and hasn't dismissed it
+        if (!isAllCompleted || localStorage.getItem('piggy_hide_completed_missions_banner') === 'true') {
             return '';
         }
 
@@ -495,6 +501,8 @@ function renderFlashMissionBanner(mission) {
         defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>+1% en Margen Comercial</strong>`;
     }
 
+    const benefitText = mission.benefit_description || mission.description || defaultBenefitText;
+
     const hasExpiry = mission.remainingMs !== null && mission.remainingMs !== undefined && mission.remainingMs > 0;
     const remaining = hasExpiry ? mission.remainingMs : 0;
     const hours     = String(Math.floor(remaining / 3600000)).padStart(2, '0');
@@ -784,10 +792,15 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Standard navigation route
+        // ── Standard router link navigation (e.g. #/gourmet, #/mercado)
         if (ctaUrl && ctaUrl.startsWith('#/')) {
-            navigateTo(ctaUrl.replace('#/', ''));
+            const [route, queryStr] = ctaUrl.slice(2).split('?');
+            navigateTo(route);
             return;
+        }
+
+        if (ctaUrl && !ctaUrl.startsWith('#')) {
+            navigateTo(ctaUrl);
         }
     });
 }

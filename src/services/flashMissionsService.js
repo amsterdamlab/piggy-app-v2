@@ -13,9 +13,10 @@ import { AppState } from '../state.js';
  * Check whether a flash mission is scheduled for the future or expired.
  * @param {string|null} expiresAt - ISO timestamp when the mission expires
  * @param {string|null} scheduledAt - ISO timestamp when the mission is scheduled to start
+ * @param {string|null} [createdAt] - ISO timestamp when the record was created
  * @returns {{ isScheduled: boolean, expired: boolean, expiresAt: string|null, remainingMs: number|null }}
  */
-function computeExpiry(expiresAt, scheduledAt = null) {
+function computeExpiry(expiresAt, scheduledAt = null, createdAt = null) {
     const now = Date.now();
 
     // Check if scheduled in the future
@@ -31,8 +32,18 @@ function computeExpiry(expiresAt, scheduledAt = null) {
         }
     }
 
-    // If no expiration deadline is set, offer is active without expiry
-    if (!expiresAt) {
+    // If no expiration deadline is set, calculate fallback window (72h from scheduled_at or created_at)
+    let effectiveExpiresAt = expiresAt;
+    if (!effectiveExpiresAt) {
+        const baseDate = scheduledAt || createdAt;
+        if (baseDate) {
+            const baseMs = new Date(baseDate).getTime();
+            const fallbackMaxAgeMs = 72 * 60 * 60 * 1000; // 72 hours max window for flash offers
+            effectiveExpiresAt = new Date(baseMs + fallbackMaxAgeMs).toISOString();
+        }
+    }
+
+    if (!effectiveExpiresAt) {
         return {
             isScheduled: false,
             expired: false,
@@ -41,7 +52,7 @@ function computeExpiry(expiresAt, scheduledAt = null) {
         };
     }
 
-    const expiresAtMs = new Date(expiresAt).getTime();
+    const expiresAtMs = new Date(effectiveExpiresAt).getTime();
     const remainingMs = expiresAtMs - now;
     return {
         isScheduled: false,
@@ -110,7 +121,7 @@ export async function getActiveUserFlashMissions() {
 
     // Evaluate scheduled_at (start) and expires_at (expiration deadline)
     for (const m of (data || [])) {
-        const expiry = computeExpiry(m.expires_at, m.scheduled_at);
+        const expiry = computeExpiry(m.expires_at, m.scheduled_at, m.created_at);
 
         // 1. If scheduled for a future date/time, do not display yet
         if (expiry.isScheduled) {
@@ -196,7 +207,7 @@ export async function buyFlashMission(missionId, piggyName) {
     if (mission.is_purchased) return { success: false, error: 'Ya fue comprada' };
 
     // Verify scheduled_at (not future) and expires_at (not expired)
-    const expiry = computeExpiry(mission.expires_at, mission.scheduled_at);
+    const expiry = computeExpiry(mission.expires_at, mission.scheduled_at, mission.created_at);
     if (expiry.isScheduled) {
         return { success: false, error: 'Esta oferta aún no está disponible' };
     }
