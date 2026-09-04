@@ -5,6 +5,7 @@
 
 import { getClient, isUsingMockData } from './supabase.js';
 import { AppState } from '../state.js';
+import { deductWalletBalance } from './walletService.js';
 import {
     MOCK_PIGGIES,
     calculateBaseROI,
