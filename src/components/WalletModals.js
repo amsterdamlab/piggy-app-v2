@@ -18,7 +18,7 @@ export function showWithdrawModal(availableAmount) {
   modal.innerHTML = `
     <div class="modal animate-scale-in">
         <div class="modal__handle"></div>
-        <button class="bonus-close" id="withdraw-close-btn" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+        <button id="withdraw-close-btn" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
         <h3 class="modal-title mb-md">Retiro de Fondos</h3>
         <div class="form-group">
             <label class="form-label">Monto a retirar</label>
@@ -88,7 +88,7 @@ export function showWithdrawSuccess(amount, bank) {
   const tid = Date.now().toString().slice(-6);
   modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
-             <button class="bonus-close" id="success-close-x" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+             <button id="success-close-x" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
             <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
                 ${renderIcon('check', '', '32')}
             </div>
@@ -119,7 +119,7 @@ export function showMeatModal() {
   modal.style.zIndex = '9999';
   modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
-            <button class="bonus-close" id="meat-close-btn" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+            <button id="meat-close-btn" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
             <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
             <p class="text-muted mb-lg" style="margin-bottom:24px;">Contáctanos para coordinar tu pedido de carne fresca de Granja Villa Morales.</p>
             <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
@@ -149,7 +149,7 @@ export function showBonusModal(hasPiggies) {
   modal.innerHTML = `
     <div class="modal bonus-modal animate-scale-in">
         <div class="modal__handle"></div>
-        <button class="bonus-close" id="bonus-close-btn">${renderIcon('close', '', '24')}</button>
+        <button id="bonus-close-btn" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
         <div class="bonus-header"><h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3><p class="text-center text-primary font-bold text-lg">$50.000 EN CARNE</p></div>
         <div class="bonus-content mt-md" style="flex: 2;">
             <div class="bonus-text-scroll"><p>PIGGY otorga un Bono de Consumo de $50.000 a nuevos usuarios que realicen su primera adopción. Requiere compra mínima de $150.000. Envío gratis en Cali.</p></div>

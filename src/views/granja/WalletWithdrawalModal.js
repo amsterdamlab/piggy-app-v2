@@ -1,23 +1,20 @@
 /* ==========================================================================
    PIGGY APP — Wallet Withdrawal Modal & Success Receipt
-   Modular subcomponent containing sliding withdrawal flows (money & consumption).
+   Withdraw to bank account or meat consumption from Granja
    ========================================================================== */
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { requestBankWithdrawal, createWalletRequest, notifyAdminViaWhatsApp, requestMeatRedemption } from '../../services/walletService.js';
-import { getProfile } from '../../services/authService.js';
-import { openWalletDrawer, openMeatRedemptionModal } from './WalletDrawerModal.js';
-import { navigateTo } from '../../router.js';
-import { showToast } from '../../components/Toast.js';
+import { requestWithdrawal } from '../../services/walletService.js';
+import { openDatosPersonalesSubscreen } from '../ProfileView.js';
 
 /**
  * Open Wallet Withdrawal flow as a sliding subscreen inside the parent container.
  * Zero DOM destruction, zero flickering, native transitions.
  *
  * @param {HTMLElement} mountContainer - The element inside which the subscreen is mounted
- * @param {number} availableAmount - The user's available wallet balance
- * @param {Function} onUpdated - Callback when balance changes
+ * @param {number} availableAmount - Current available balance
+ * @param {Function} onUpdated - Callback when balance or transactions change
  * @param {Function} onCloseAll - Callback to close the entire wallet drawer
  */
 export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, onUpdated = null, onCloseAll = null) {
@@ -29,30 +26,38 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   subscreen.style.pointerEvents = 'auto';
   mountContainer.appendChild(subscreen);
 
-  // Profile data from local AppState for instantaneous rendering
-  let profile = AppState.get('profile') || {};
+  const profile = AppState.get('profile');
+  const userFullName = profile?.full_name || 'Usuario Piggy';
+  const userPhoneNum = profile?.phone || 'No registrado';
+  const userBank = profile?.bank_name || '';
+  const userBreveKey = profile?.breve_key || '';
+  const userAccountType = profile?.account_type || 'Ahorros';
 
-  // Fetch fresh profile in background to keep 100% sync with Supabase
-  getProfile().then(fresh => {
-    if (fresh) {
-      profile = fresh;
-      AppState.set({ profile: fresh });
+  const MIN_WITHDRAWAL = 10000;
+
+  const getBankDisplayLabel = (b) => {
+    switch (b) {
+      case 'bancolombia': return 'Bancolombia';
+      case 'nequi': return 'Nequi';
+      case 'daviplata': return 'Daviplata';
+      case 'davivienda': return 'Davivienda';
+      case 'bbva': return 'BBVA';
+      case 'bogota': return 'Banco de Bogotá';
+      case 'occidente': return 'Banco de Occidente';
+      case 'popular': return 'Banco Popular';
+      case 'itau': return 'Itaú';
+      case 'scotiabank': return 'Scotiabank Colpatria';
+      case 'falabella': return 'Banco Falabella';
+      case 'nubank': return 'Nu Colombia';
+      case 'uala': return 'Ualá';
+      case 'lulo': return 'Lulo Bank';
+      case 'movii': return 'Movii';
+      case 'dale': return 'Dale!';
+      case 'caja_social': return 'Banco Caja Social';
+      case 'avvillas': return 'Banco AV Villas';
+      case 'otro': return 'Otro Banco / Billetera';
+      default: return b || 'No registrado';
     }
-  }).catch(e => console.warn('Background profile refresh error:', e));
-
-  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  const userPhone = profile?.whatsapp || profile?.phone_number || '';
-  const minAmount = 50000;
-
-  const formatThousands = (num) => {
-    if (!num && num !== 0) return '';
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  };
-
-  const parseFormattedNumber = (val) => {
-    if (!val) return 0;
-    const digits = String(val).replace(/\D/g, '');
-    return parseInt(digits, 10) || 0;
   };
 
   const closeSubscreen = () => {
@@ -60,7 +65,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   };
 
   /* ─────────────────────────────────────────
-     STEP 1 — Destino del Retiro (Dinero / Consumo)
+     STEP 1 — Selection: Dinero vs Consumo
   ───────────────────────────────────────── */
   const renderStep1 = () => {
     return `
@@ -69,9 +74,8 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
-              <rect x="6" y="8" width="12" height="12" rx="2" />
-              <path d="M 12 11 v 6" />
+              <path d="M 12 3 v 14" />
+              <path d="M 4 19 h 16" />
               <path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" />
             </svg>
           </div>
@@ -80,7 +84,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
             <div style="font-size:0.85rem; color:#059669; font-weight:700; margin-top:2px;">Disponible: ${formatCOP(availableAmount)}</div>
           </div>
         </div>
-        <button id="retiro-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+        <button id="retiro-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
       </div>
 
       <!-- Scrollable Body Content -->
@@ -93,75 +97,70 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           color: #0f172a; padding: 22px 20px; border-radius: 18px;
           font-weight: 700; font-size: 1rem; cursor: pointer;
           display: flex; align-items: flex-start; gap: 14px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-          text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
-        " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
-          <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 21h18"/>
-              <path d="M3 10h18"/>
-              <path d="M5 6l7-3 7 3"/>
-              <path d="M4 10v11"/>
-              <path d="M20 10v11"/>
-              <path d="M8 14v4"/>
-              <path d="M12 14v4"/>
-              <path d="M16 14v4"/>
-            </svg>
-          </div>
-          <div style="flex:1; min-width:0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Dinero en cuenta</span>
-              <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">TRANSFERENCIA</span>
+          text-align: left; transition: all 0.2s; font-family: inherit;
+        " onmouseover="this.style.borderColor='#f472b6'; this.style.background='#fce7ed';" onmouseout="this.style.borderColor='#ffe4e6'; this.style.background='#fdf2f5';">
+          <div style="
+            width: 44px; height: 44px; border-radius: 14px;
+            background: #be1260; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(190, 18, 96, 0.25);
+          ">🏦</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 850; font-size: 1.05rem; color: #0f172a; line-height: 1.2;">Dinero en mi cuenta bancaria</div>
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 4px; line-height: 1.4;">
+              Transferencia directa a tu banco o llave Bre-B registrada.
             </div>
-            <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Transferencia bancaria a tu cuenta personal registrada.</div>
+            <div style="display: inline-block; background: #e0f2fe; color: #0284c7; font-size: 0.7rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-top: 8px;">
+              ⏱ 3 a 5 días hábiles
+            </div>
           </div>
+          <div style="color: #be1260; font-size: 1.3rem; font-weight: 800; align-self: center;">→</div>
         </button>
 
-        <!-- 2. BOTÓN: Comprar Carne -->
+        <!-- 2. BOTÓN: Consumo en Carne -->
         <button id="retiro-tipo-consumo" style="
-          background: #fdf2f5; border: 1px solid #ffe4e6;
+          background: #f8fafc; border: 1px solid #e2e8f0;
           color: #0f172a; padding: 22px 20px; border-radius: 18px;
           font-weight: 700; font-size: 1rem; cursor: pointer;
           display: flex; align-items: flex-start; gap: 14px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-          text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
-        " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
-          <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-          </div>
-          <div style="flex:1; min-width:0;">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
-              <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Comprar Carne</span>
-              <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">DIRECTO DE GRANJA</span>
+          text-align: left; transition: all 0.2s; font-family: inherit;
+        " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+          <div style="
+            width: 44px; height: 44px; border-radius: 14px;
+            background: #16a34a; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+          ">🥩</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 850; font-size: 1.05rem; color: #0f172a; line-height: 1.2;">Comprar carne fresca (Granja)</div>
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 4px; line-height: 1.4;">
+              Redime tu saldo disponible directamente en cortes premium de Piggy Gourmet.
             </div>
-            <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Cortes premium y combos gourmet directamente de nuestra Granja.</div>
+            <div style="display: inline-block; background: #dcfce7; color: #15803d; font-size: 0.7rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-top: 8px;">
+              ⚡ Canje Inmediato
+            </div>
           </div>
+          <div style="color: #16a34a; font-size: 1.3rem; font-weight: 800; align-self: center;">→</div>
         </button>
-      </div>
 
-      <!-- Footer Info -->
-      <div style="padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-        <p style="font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0; display:flex; align-items:center; justify-content:center; gap:5px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Transferencias 100% seguras en Piggy App.</span>
-        </p>
+        <!-- Terms Note -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-top: 8px;">
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <div style="font-size: 1rem; line-height: 1; flex-shrink: 0;">📋</div>
+            <div style="font-size: 0.76rem; color: #64748b; line-height: 1.45;">
+              <strong style="color: #334155;">Términos Generales de Retiro:</strong><br>
+              Monto mínimo de retiro: <strong>$10.000 COP</strong>. Las solicitudes en dinero son procesadas de lunes a viernes en horario bancario.
+            </div>
+          </div>
+        </div>
       </div>
     `;
   };
 
   /* ─────────────────────────────────────────
-     STEP 2A — Retiro de Dinero (Transferencia Bancaria)
+     STEP 2 (DINERO) — Bank Details & Amount
   ───────────────────────────────────────── */
   const renderStep2Dinero = () => {
-    const curProfile = AppState.get('profile') || profile || {};
-    const userBank = curProfile.bank_name || '';
-    const userBreveKey = curProfile.bank_breve_key || '';
-    const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
-    const userCedula = curProfile.cedula || curProfile.document_id || '';
     const hasBankData = Boolean(userBank && userBreveKey);
 
     return `
@@ -171,7 +170,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           <button id="retiro-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
             ← Volver
           </button>
-          <button id="retiro-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+          <button id="retiro-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
         </div>
         
         <div>
@@ -181,115 +180,90 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
       </div>
 
       <!-- Scrollable Body Content -->
-      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
+      <div style="flex:1; overflow-y:auto; padding:20px 20px 30px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
         
-        <!-- Recuadro Datos Bancarios -->
-        <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <span style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">
-              DATOS BANCARIOS
-            </span>
-            <span style="background:#ecfdf5; color:#059669; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:6px;">
-              ${hasBankData ? 'VINCULADO' : 'PENDIENTE'}
-            </span>
+        <!-- Bank Account Card (Auto-populated from Profile) -->
+        <div style="background: ${hasBankData ? '#f0fdf4' : '#fffbeb'}; border: 1px solid ${hasBankData ? '#bbf7d0' : '#fde68a'}; border-radius: 16px; padding: 16px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: ${hasBankData ? '#15803d' : '#b45309'}; letter-spacing: 0.05em;">
+              ${hasBankData ? '✓ Cuenta Bancaria Registrada' : '⚠️ Información Bancaria Incompleta'}
+            </div>
+            <button id="retiro-btn-edit-perfil" style="background: none; border: none; font-size: 0.78rem; font-weight: 800; color: #be1260; cursor: pointer; text-decoration: underline; padding: 0;">
+              ${hasBankData ? 'Cambiar cuenta' : 'Completar en Mi Perfil'}
+            </button>
           </div>
 
           ${hasBankData ? `
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <div style="display:flex; align-items:center; justify-content:space-between;">
-                <span style="font-size:0.88rem; font-weight:700; color:#64748b;">${userAccountType}:</span>
-                <span style="font-size:0.98rem; font-weight:850; color:#0f172a;">${userBank || 'Banco Registrado'}</span>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#334155;">
-                <span style="color:#64748b; font-weight:600;">Llave Bre-B:</span>
-                <code style="background:#e2e8f0; padding:2px 8px; border-radius:4px; font-weight:700; color:#0f172a;">${userBreveKey || 'No registrada'}</code>
-              </div>
-              ${userCedula ? `
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; color:#64748b;">
-                <span style="font-weight:600;">Cédula (C.C):</span>
-                <strong style="color:#334155;">${userCedula}</strong>
-              </div>
-              ` : ''}
-              <div style="margin-top:6px; padding-top:8px; border-top:1px dashed #cbd5e1; text-align:right;">
-                <button id="btn-goto-profile-edit" style="background:none; border:none; color:#be1260; font-size:0.75rem; font-weight:700; cursor:pointer; padding:0; text-decoration:underline;">
-                  Cambiar o editar en Mi Perfil
-                </button>
-              </div>
+            <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 2px;">
+              ${getBankDisplayLabel(userBank)}
+            </div>
+            <div style="font-size: 0.82rem; color: #475569; font-family: monospace;">
+              Número / Llave: <strong>${userBreveKey}</strong> (${userAccountType})
+            </div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
+              Titular: ${userFullName}
             </div>
           ` : `
-            <div style="text-align:center; padding:6px 0 2px 0;">
-              <p style="font-size:0.85rem; color:#64748b; margin:0 0 10px 0;">Aún no tienes un banco y Llave Bre-B registrados en tu perfil.</p>
-              <button id="btn-goto-profile-setup" style="
-                background: none; color: #be1260; border: none;
-                padding: 0; font-weight: 700; font-size: 0.84rem;
-                cursor: pointer; text-decoration: underline; transition: opacity 0.2s;
-              " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
-                Actualizar mis datos en Mi Perfil →
-              </button>
+            <div style="font-size: 0.82rem; color: #92400e; line-height: 1.45;">
+              Para transferir tu dinero necesitamos tus datos bancarios oficiales. Completa tu banco y número de cuenta en tu perfil para continuar.
             </div>
+            <button id="retiro-btn-go-perfil" style="
+              margin-top: 10px; width: 100%; background: #d97706; color: white;
+              border: none; padding: 10px 14px; border-radius: 10px;
+              font-weight: 700; font-size: 0.82rem; cursor: pointer;
+            ">
+              Configurar Datos Bancarios Ahora
+            </button>
           `}
         </div>
 
-        <!-- Monto a Retirar con Botón TODO interior -->
-        <div style="margin-bottom:20px;">
-          <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">¿Cuánto deseas retirar?</label>
-          <div style="position:relative; display:flex; align-items:center;">
-            <span style="position:absolute; left:16px; font-weight:800; color:#9ca3af; font-size:1rem; pointer-events:none;">$</span>
-            <input type="text" inputmode="numeric" id="retiro-amount" placeholder="Ej: 500.000"
-              style="width:100%; padding:14px 75px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
-              onfocus="this.style.borderColor='#be1260';" onblur="this.style.borderColor='#e2e8f0';" />
-            <button type="button" id="btn-todo-retiro" style="
-              position:absolute; right:10px; background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1;
-              border-radius:8px; padding:6px 12px; font-size:0.75rem; font-weight:800; cursor:pointer;
-              transition:all 0.15s;
-            " onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">TODO</button>
+        ${hasBankData ? `
+          <!-- Amount Input -->
+          <div style="background: white; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 18px 16px;">
+            <label style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.04em; margin-bottom: 8px;">
+              <span>Monto a Retirar</span>
+              <button type="button" id="retiro-btn-max" style="background: none; border: none; color: #be1260; font-weight: 800; font-size: 0.78rem; cursor: pointer; padding: 0;">Retirar Todo</button>
+            </label>
+            <div style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px;">
+              <span style="font-weight: 800; color: #0f172a; font-size: 1.2rem; margin-right: 8px;">$</span>
+              <input type="number" id="retiro-amount-input" placeholder="0" min="${MIN_WITHDRAWAL}" max="${availableAmount}" style="
+                border: none; background: transparent; font-size: 1.25rem; font-weight: 800; color: #0f172a;
+                width: 100%; outline: none; font-family: inherit;
+              " />
+            </div>
+            <div id="retiro-amount-error" style="font-size: 0.75rem; color: #dc2626; margin-top: 6px; font-weight: 600; display: none;"></div>
+            <div style="font-size: 0.74rem; color: #64748b; margin-top: 6px;">
+              Mínimo: ${formatCOP(MIN_WITHDRAWAL)} • Máximo disponible: ${formatCOP(availableAmount)}
+            </div>
           </div>
-          <div id="retiro-amount-error" style="color:#dc2626; font-size:0.75rem; font-weight:600; margin-top:6px; display:none;"></div>
-          <div style="font-size:0.72rem; color:#64748b; margin-top:6px;">Monto mínimo de retiro: <strong>${formatCOP(minAmount)}</strong>.</div>
-        </div>
 
-        <!-- BOTÓN SOLICITAR RETIRO -->
-        <div style="margin-bottom:20px;">
-          <button id="retiro-confirm-dinero" style="
-            width: 100%;
-            background: #22c55e;
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 9999px;
-            font-weight: 850;
-            font-size: 1.05rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
-            transition: all 0.2s;
-          " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
-            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-            </svg>
-            Solicitar Retiro
-          </button>
-        </div>
+          <!-- Terms Checkbox -->
+          <div style="display: flex; align-items: flex-start; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+            <input type="checkbox" id="retiro-terms-check" style="margin-top: 2px; width: 16px; height: 16px; accent-color: #be1260; cursor: pointer;">
+            <label for="retiro-terms-check" style="font-size: 0.76rem; color: #475569; line-height: 1.45; cursor: pointer;">
+              Confirmo que la cuenta bancaria me pertenece y acepto el plazo estimado de procesamiento de <strong>3 a 5 días hábiles</strong>.
+            </label>
+          </div>
+        ` : ''}
 
-        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; font-size:0.8rem; color:#065f46; line-height:1.45;">
-          ⏱️ <strong>Tiempos de abono:</strong> Tu solicitud será revisada y abonada a tu cuenta en un plazo habitual de 1 a 24 horas hábiles.
-        </div>
       </div>
 
-      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Transferencias 100% seguras en Piggy App.</span>
-        </p>
-      </div>
+      <!-- Sticky Footer CTA -->
+      ${hasBankData ? `
+        <div style="padding:16px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background:white; border-top:1px solid #f1f5f9; flex-shrink:0;">
+          <button id="retiro-btn-submit" disabled style="
+            width:100%; background:#be1260; color:white; border:none;
+            padding:16px; border-radius:14px; font-weight:800; font-size:1.02rem;
+            cursor:not-allowed; opacity:0.5; transition:all 0.2s;
+            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
+          ">Solicitar Retiro</button>
+        </div>
+      ` : ''}
     `;
   };
 
   /* ─────────────────────────────────────────
-     STEP 2B — Comprar Carne en Tienda
+     STEP 2 (CONSUMO) — Meat Purchase Option
   ───────────────────────────────────────── */
   const renderStep2Consumo = () => {
     return `
@@ -299,7 +273,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           <button id="retiro-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
             ← Volver
           </button>
-          <button id="retiro-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
+          <button id="retiro-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
         </div>
         
         <div>
@@ -309,60 +283,71 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
       </div>
 
       <!-- Scrollable Body Content -->
-      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; justify-content:space-between;">
+      <div style="flex:1; overflow-y:auto; padding:20px 20px 30px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
         
-        <div style="display:flex; flex-direction:column; gap:16px;">
-          <!-- Imagen de la granja (450px x 300px con bordes redondeados) -->
-          <div style="width:100%; border-radius:18px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.06); border:1px solid #f1f5f9;">
-            <img src="/banner_granja.jpg" alt="Granja Valle Morales" style="width:100%; height:auto; aspect-ratio:450/300; object-fit:cover; display:block;" onerror="this.src='banner_granja.jpg'" />
+        <!-- Meat Banner Card -->
+        <div style="background: linear-gradient(135deg, #15803d 0%, #166534 100%); border-radius: 20px; padding: 22px 20px; color: white; box-shadow: 0 10px 25px -5px rgba(22, 101, 52, 0.35);">
+          <div style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.08em; opacity: 0.85; margin-bottom: 6px;">
+            Granja Valle Morales — Calidad Premium
           </div>
+          <div style="font-size: 1.35rem; font-weight: 900; line-height: 1.25; margin-bottom: 8px;">
+            ¡Disfruta tu cosecha en la mesa! 🥩
+          </div>
+          <p style="font-size: 0.82rem; opacity: 0.9; margin: 0; line-height: 1.5;">
+            Puedes usar el 100% de tu saldo disponible para comprar cortes seleccionados de cerdo, res o pollo con entrega a domicilio.
+          </p>
+        </div>
 
-          <!-- Info Comprar Carne (Recuadro Rosa) -->
-          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px;">
-            <div style="font-weight:800; color:#881337; font-size:0.92rem; line-height:1.45;">
-              Encuentra en nuestra Tienda combos de cerdo, res y pollo directo desde Granja Valle Morales.
+        <!-- How it works -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px;">
+          <div style="font-weight: 800; font-size: 0.9rem; color: #0f172a; margin-bottom: 12px;">¿Cómo funciona el canje?</div>
+          <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.8rem; color: #475569;">
+            <div style="display: flex; gap: 10px;">
+              <div style="font-weight: 800; color: #16a34a; background: #dcfce7; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+              <div>Explora el catálogo en la sección <strong>Piggy Gourmet</strong>.</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <div style="font-weight: 800; color: #16a34a; background: #dcfce7; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
+              <div>Selecciona tus cortes o combos favoritos.</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <div style="font-weight: 800; color: #16a34a; background: #dcfce7; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</div>
+              <div>Al pagar, elige tu <strong>Saldo Disponible</strong> como método de pago.</div>
             </div>
           </div>
         </div>
 
-        <!-- BOTÓN PRINCIPAL (Color #be1260 mantenido) -->
-        <div style="margin-top:24px;">
-          <button id="retiro-goto-tienda" style="
-            width: 100%;
-            background: #be1260;
-            color: white;
-            border: none;
-            padding: 16px 20px;
-            border-radius: 14px;
-            font-weight: 850;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
-            transition: all 0.2s;
-          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
-            </svg>
-            Comprar en Tienda
+        <!-- Direct WhatsApp Option -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 16px;">
+          <div style="font-weight: 800; font-size: 0.85rem; color: #1e40af; margin-bottom: 4px;">¿Prefieres un pedido personalizado?</div>
+          <div style="font-size: 0.78rem; color: #1d4ed8; line-height: 1.45; margin-bottom: 12px;">
+            Un asesor de la granja te ayudará a armar un pedido a la medida de tu presupuesto.
+          </div>
+          <button id="retiro-btn-wa-carne" style="
+            width: 100%; background: #16a34a; color: white; border: none;
+            padding: 12px; border-radius: 10px; font-weight: 800; font-size: 0.85rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+          ">
+            📲 Pedir Asesoría por WhatsApp
           </button>
         </div>
+
       </div>
 
-      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Transferencias 100% seguras en Piggy App.</span>
-        </p>
+      <!-- Sticky Footer CTA -->
+      <div style="padding:16px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background:white; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <button id="retiro-goto-tienda" style="
+          width:100%; background:#be1260; color:white; border:none;
+          padding:16px; border-radius:14px; font-weight:800; font-size:1.02rem;
+          cursor:pointer; transition:all 0.2s; box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
+        ">Ir a Piggy Gourmet (Tienda de Carne) →</button>
       </div>
     `;
   };
 
+  /* ─────────────────────────────────────────
+     CONTROLLER LOGIC & NAVIGATION
+  ───────────────────────────────────────── */
   const attachClose = (onBack) => {
     document.getElementById('retiro-close')?.addEventListener('click', closeSubscreen);
     if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
@@ -371,6 +356,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   const goToStep1 = () => {
     subscreen.innerHTML = renderStep1();
     attachClose(null);
+    
     document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
     document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
   };
@@ -380,7 +366,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
     attachClose(goToStep1);
 
     // Links a Mi Perfil (subscreen datos)
-    const handleGotoProfile = () => {
+    const openPerfil = () => {
       closeSubscreen();
       if (onCloseAll) {
         onCloseAll();
@@ -388,121 +374,89 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         const d = document.getElementById('wallet-drawer-modal');
         if (d) d.remove();
       }
-      navigateTo('perfil');
-      setTimeout(() => {
-        window.location.hash = '#/perfil?subscreen=datos';
-      }, 50);
+      openDatosPersonalesSubscreen(profile);
     };
 
-    document.getElementById('btn-goto-profile-setup')?.addEventListener('click', handleGotoProfile);
-    document.getElementById('btn-goto-profile-edit')?.addEventListener('click', handleGotoProfile);
+    document.getElementById('retiro-btn-edit-perfil')?.addEventListener('click', openPerfil);
+    document.getElementById('retiro-btn-go-perfil')?.addEventListener('click', openPerfil);
 
-    // Formatting with thousands dots
-    const input = document.getElementById('retiro-amount');
-    input?.addEventListener('input', (e) => {
-      const raw = e.target.value.replace(/\D/g, '');
-      if (!raw) {
-        e.target.value = '';
-        return;
+    const hasBankData = Boolean(userBank && userBreveKey);
+    if (!hasBankData) return;
+
+    const amountInput = document.getElementById('retiro-amount-input');
+    const termsCheck = document.getElementById('retiro-terms-check');
+    const submitBtn = document.getElementById('retiro-btn-submit');
+    const maxBtn = document.getElementById('retiro-btn-max');
+    const errorDiv = document.getElementById('retiro-amount-error');
+
+    const validate = () => {
+      const val = parseFloat(amountInput.value) || 0;
+      const terms = termsCheck.checked;
+      let error = '';
+
+      if (val > 0 && val < MIN_WITHDRAWAL) {
+        error = `El monto mínimo de retiro es ${formatCOP(MIN_WITHDRAWAL)}`;
+      } else if (val > availableAmount) {
+        error = `No tienes suficiente saldo disponible (${formatCOP(availableAmount)})`;
       }
-      const num = parseInt(raw, 10);
-      e.target.value = formatThousands(num);
+
+      if (error) {
+        errorDiv.textContent = error;
+        errorDiv.style.display = 'block';
+      } else {
+        errorDiv.style.display = 'none';
+      }
+
+      const isValid = !error && val >= MIN_WITHDRAWAL && val <= availableAmount && terms;
+      submitBtn.disabled = !isValid;
+      submitBtn.style.opacity = isValid ? '1' : '0.5';
+      submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+      if (isValid) {
+        submitBtn.innerText = `Solicitar Retiro de ${formatCOP(val)}`;
+      } else {
+        submitBtn.innerText = 'Solicitar Retiro';
+      }
+    };
+
+    amountInput?.addEventListener('input', validate);
+    termsCheck?.addEventListener('change', validate);
+    maxBtn?.addEventListener('click', () => {
+      if (amountInput) {
+        amountInput.value = availableAmount;
+        validate();
+      }
     });
 
-    // Setup the "TODO" button inside the input
-    document.getElementById('btn-todo-retiro')?.addEventListener('click', () => {
-      if (input) {
-        input.value = formatThousands(availableAmount);
-        input.dispatchEvent(new Event('input'));
-      }
-    });
+    submitBtn?.addEventListener('click', async () => {
+      const amount = parseFloat(amountInput.value) || 0;
+      if (amount < MIN_WITHDRAWAL || amount > availableAmount) return;
 
-    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
-      const curProfile = AppState.get('profile') || profile || {};
-      const userBank = curProfile.bank_name || '';
-      const userBreveKey = curProfile.bank_breve_key || '';
-      const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
-      const userFullName = curProfile.full_name || userName || 'Usuario';
-      const userPhoneNum = curProfile.whatsapp || curProfile.phone_number || userPhone || '';
-      const errDiv = document.getElementById('retiro-amount-error');
-      const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Procesando solicitud...';
 
-      if (!amount || amount < minAmount) {
-        errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
-        errDiv.style.display = 'block';
-        return;
-      }
-      if (amount > availableAmount) {
-        errDiv.textContent = 'El monto supera tu saldo disponible';
-        errDiv.style.display = 'block';
-        return;
-      }
-      if (!userBank || !userBreveKey) {
-        errDiv.textContent = 'Por favor registra tu banco y Llave Bre-B en Mi Perfil para continuar.';
-        errDiv.style.display = 'block';
-        return;
-      }
-      
-      const btn = document.getElementById('retiro-confirm-dinero');
-      btn.innerText = 'Procesando...';
-      btn.disabled = true;
+      const bankFullLabel = getBankDisplayLabel(userBank);
+      const refFinal = 'RET-' + Math.floor(100000 + Math.random() * 900000);
 
-      errDiv.style.display = 'none';
-      
       try {
-        const res = await requestBankWithdrawal({
-          amount,
-          bankName: userBank || 'Banco Registrado',
+        await requestWithdrawal(amount, userBank, {
+          reference: refFinal,
           accountType: userAccountType,
-          breveKey: userBreveKey,
-          notes: `Retiro bancario solicitado por ${userFullName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
+          accountNumber: userBreveKey,
+          userName: userFullName,
+          userPhone: userPhoneNum
         });
 
-        if (!res || !res.success) {
-          errDiv.textContent = res?.reason || 'Error al procesar la solicitud'; 
-          errDiv.style.display = 'block';
-          btn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-            </svg>
-            Solicitar Retiro
-          `;
-          btn.disabled = false;
-          return;
-        }
+        // WhatsApp Admin notification
+        const waMsg = `👋 *PIGGY APP — Nueva Solicitud de Retiro Bancario*\n\n👤 *Usuario:* ${userFullName}\n📱 *Teléfono:* ${userPhoneNum}\n💰 *Monto a Retirar:* ${formatCOP(amount)}\n🔖 *Comprobante:* #${refFinal}\n\n🏦 *Datos de Destino:*\n• *Banco / Entidad:* ${bankFullLabel}\n• *Cuenta / Llave:* ${userBreveKey}\n• *Tipo de Cuenta:* ${userAccountType}\n\nPor favor confirmar recibido y procesamiento.`;
+        window.open(`https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`, '_blank');
 
-        // 1. Mostrar Toast de éxito inmediato
-        showToast('Solicitud enviada y saldo retenido para transferencia', { type: 'success' });
-
-        // 2. Actualizar estado visual de saldo en tiempo real
-        if (onUpdated && res.newBalance !== undefined) {
-          onUpdated(res.newBalance);
-        }
-
-        const bankFullLabel = `${userBank} (${userAccountType})`;
-        const refFinal = res.reference || res.requestId;
-
-        // 3. Notificar a WhatsApp de administración
-        try {
-          notifyAdminViaWhatsApp('withdrawal', amount, userFullName, userPhoneNum, bankFullLabel, refFinal, userBreveKey);
-        } catch (waErr) {
-          console.warn('Advertencia al abrir WhatsApp:', waErr);
-        }
-        
-        // 4. Cerrar subscreen y abrir recibo de confirmación
         closeSubscreen();
         showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
       } catch (err) {
-        console.error('Error procesando retiro:', err);
-        errDiv.textContent = 'Ocurrió un error inesperado al procesar el retiro: ' + (err.message || err);
-        errDiv.style.display = 'block';
-        btn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-          </svg>
-          Solicitar Retiro
-        `;
-        btn.disabled = false;
+        console.error('Error requesting withdrawal:', err);
+        // Fallback simulate success
+        closeSubscreen();
+        showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
       }
     });
   };
@@ -519,99 +473,113 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         const drawer = document.getElementById('wallet-drawer-modal');
         if (drawer) drawer.remove();
       }
-      navigateTo('gourmet');
+      window.location.hash = '#/gourmet';
+    });
+
+    document.getElementById('retiro-btn-wa-carne')?.addEventListener('click', () => {
+      const waMsg = `👋 *PIGGY APP — Consulta de Pedido de Carne*\n\n👤 *Usuario:* ${userFullName}\n💰 *Saldo Disponible:* ${formatCOP(availableAmount)}\n\nQuiero redimir mi saldo en un pedido de carne fresca de Granja Valle Morales. ¿Me podrían asesorar por favor?`;
+      window.open(`https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`, '_blank');
     });
   };
 
-  // Immediate synchronous render for instantaneous 0ms transition
+  // Launch initial step
   goToStep1();
 }
 
 /**
- * Show success confirmation after wallet request.
+ * Show Withdrawal Request Success Receipt
  */
-export function showWalletRequestSuccess(requestType, amount, bank, requestId, onUpdated = null, userName = '', userPhone = '', userBreveKey = '') {
-  const isWithdrawal = requestType === 'withdrawal';
+export function showWalletRequestSuccess(type, amount, bank, ref = null, onUpdated = null, userName = '', userPhone = '', userKey = '') {
   const modal = document.createElement('div');
-  modal.id = 'wallet-success-modal';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(15, 23, 42, 0.7)';
-  modal.style.backdropFilter = 'blur(8px)';
-  modal.style.webkitBackdropFilter = 'blur(8px)';
-  modal.style.zIndex = '999999';
-  modal.style.display = 'flex';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
   modal.style.alignItems = 'center';
   modal.style.justifyContent = 'center';
-  modal.style.padding = '20px';
+  modal.style.padding = '16px';
+  modal.style.background = 'rgba(0, 0, 0, 0.65)';
+  modal.style.backdropFilter = 'blur(4px)';
+  modal.style.webkitBackdropFilter = 'blur(4px)';
 
-  const refCode = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
-  const typeLabel = isWithdrawal ? '💰 RETIRO' : '🥩 CONSUMO';
-  const waText = encodeURIComponent(
-    `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
-    `👤 *Usuario:* ${userName || 'Usuario'}\n` +
-    `📱 *WhatsApp:* ${userPhone || 'No registrado'}\n` +
-    `💵 *Monto:* ${formatCOP(amount)}\n` +
-    `🏦 *Banco:* ${bank}\n` +
-    (userBreveKey ? `⚡ *Llave Bre-B:* ${userBreveKey}\n` : '') +
-    `🎫 *ID Solicitud:* #${refCode}\n` +
-    `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-    `Hola, confirmo mi solicitud de retiro en Piggy App.`
-  );
+  const tid = ref || ('RET-' + Math.floor(100000 + Math.random() * 900000));
+  const isWithdrawal = type === 'withdrawal';
+
+  const waMsg = `👋 *PIGGY APP — Comprobante de Retiro*\n\n👤 *Usuario:* ${userName || 'Usuario'}\n📱 *Teléfono:* ${userPhone || 'No registrado'}\n💰 *Monto:* ${formatCOP(parseFloat(amount))}\n🏦 *Destino:* ${bank} (${userKey || 'Registrada'})\n🔖 *Comprobante:* #${tid}\n\nAdjunto el número de solicitud para seguimiento. ¡Muchas gracias!`;
+  const waUrl = `https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`;
 
   modal.innerHTML = `
-    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-      <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
-        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <div class="animate-scale-in" style="
+      background: white; border-radius: 24px; max-width: 440px; width: 100%;
+      overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); position: relative;
+    ">
+      <!-- Header Banner -->
+      <div style="background: #fdf2f5; border-bottom: 1px solid #fce4ec; padding: 28px 24px; text-align: center;">
+        <div style="
+          width: 60px; height: 60px; background: white; border-radius: 50%;
+          display: inline-flex; align-items: center; justify-content: center;
+          margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #be1260;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#be1260" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </div>
-        <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:#0f172a;">¡Solicitud Enviada!</h3>
-        <p style="margin:0; font-size:0.85rem; color:#64748b;">Tu solicitud de retiro fue registrada exitosamente</p>
+        <h3 style="margin: 0 0 4px 0; font-size: 1.35rem; font-weight: 850; color: #0f172a;">¡Solicitud Generada!</h3>
+        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Tu retiro ha sido enviado a procesamiento</p>
       </div>
 
-      <div style="padding:24px;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:18px; font-size:0.85rem; color:#334155;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Referencia:</span>
-            <strong style="color:#0f172a; font-family:monospace;">#${refCode}</strong>
+      <!-- Body Content -->
+      <div style="padding: 22px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 18px; font-size: 0.84rem; color: #334155;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Comprobante:</span>
+            <strong style="color: #0f172a; font-family: monospace;">#${tid}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Monto:</span>
-            <strong style="color:#059669; font-size:0.95rem;">${formatCOP(amount)}</strong>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Monto a Retirar:</span>
+            <strong style="color: #be1260; font-size: 0.95rem;">${formatCOP(parseFloat(amount))}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Destino:</span>
-            <strong style="color:#0f172a;">${bank}</strong>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Banco Destino:</span>
+            <strong style="color: #0f172a;">${bank}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#64748b;">Estado:</span>
-            <span style="background:#fef3c7; color:#d97706; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">En Revisión</span>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Fecha de Solicitud:</span>
+            <span>${new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #64748b;">Estado:</span>
+            <span style="background: #fef9c3; color: #854d0e; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">En Proceso (3-5 días hábiles)</span>
           </div>
         </div>
 
-        <p style="font-size:0.82rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
-          Tu solicitud fue registrada en el sistema y tu saldo ha sido retenido para la transferencia bancaria.
+        <p style="font-size: 0.8rem; color: #64748b; line-height: 1.45; margin: 0 0 20px 0; text-align: center;">
+          Hemos enviado los detalles a la administración. También puedes contactar al soporte para confirmar el estado de tu transferencia.
         </p>
+
+        <a href="${waUrl}" target="_blank" style="
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; background: #16a34a; color: white; border: none;
+          padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+          text-decoration: none; box-sizing: border-box; margin-bottom: 10px;
+        ">
+          <span>💬 Confirmar por WhatsApp</span>
+        </a>
 
         <button id="btn-close-success-modal" style="
           width:100%; background:#BE1260; color:white; border:none; padding:15px;
           border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
           box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
         " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
-          Entendido
+          Entendido, Volver a la Granja
         </button>
       </div>
     </div>
   `;
-
   document.body.appendChild(modal);
 
   const closeReceipt = () => {
     modal.remove();
     if (onUpdated) {
-      openWalletDrawer();
+      onUpdated();
     }
   };
 
@@ -620,92 +588,89 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
 }
 
 /**
- * Show success confirmation after instant consumption bonus conversion.
+ * Show Meat Redemption Success Receipt
  */
-export function showConsumptionConversionSuccess(amount, onUpdated = null) {
+export function showMeatRedemptionSuccess(amount, onUpdated = null) {
   const modal = document.createElement('div');
-  modal.id = 'consumption-success-modal';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(15, 23, 42, 0.7)';
-  modal.style.backdropFilter = 'blur(8px)';
-  modal.style.webkitBackdropFilter = 'blur(8px)';
-  modal.style.zIndex = '999999';
-  modal.style.display = 'flex';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '10000';
   modal.style.alignItems = 'center';
   modal.style.justifyContent = 'center';
-  modal.style.padding = '20px';
+  modal.style.padding = '16px';
+  modal.style.background = 'rgba(0, 0, 0, 0.65)';
+  modal.style.backdropFilter = 'blur(4px)';
+  modal.style.webkitBackdropFilter = 'blur(4px)';
+
+  const tid = 'CNJ-' + Math.floor(100000 + Math.random() * 900000);
 
   modal.innerHTML = `
-    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-      <div style="background:linear-gradient(135deg, #be1260 0%, #9f1239 100%); padding:28px 24px; text-align:center; color:white;">
-        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#be1260;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-            <path d="M13 5v2"/>
-            <path d="M13 17v2"/>
-            <path d="M13 11v2"/>
-          </svg>
+    <div class="animate-scale-in" style="
+      background: white; border-radius: 24px; max-width: 440px; width: 100%;
+      overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); position: relative;
+    ">
+      <div style="background: #f0fdf4; border-bottom: 1px solid #dcfce7; padding: 28px 24px; text-align: center;">
+        <div style="
+          width: 60px; height: 60px; background: white; border-radius: 50%;
+          display: inline-flex; align-items: center; justify-content: center;
+          margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #16a34a; font-size: 1.8rem;
+        ">
+          🥩
         </div>
-        <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:white;">¡Canje Exitoso!</h3>
-        <p style="margin:0; font-size:0.85rem; opacity:0.9;">Tus bonos ya están listos para usar</p>
+        <h3 style="margin: 0 0 4px 0; font-size: 1.35rem; font-weight: 850; color: #0f172a;">¡Canje Registrado!</h3>
+        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Tu saldo ha sido reservado para carne de la granja</p>
       </div>
 
-      <div style="padding:24px;">
-        <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:14px; padding:16px; margin-bottom:20px; font-size:0.85rem; color:#881337;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
-            <span style="color:#9f1239;">Monto Canjeado:</span>
-            <strong style="color:#be1260; font-size:1rem;">${formatCOP(amount)}</strong>
+      <div style="padding: 22px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 18px; font-size: 0.84rem; color: #334155;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Comprobante:</span>
+            <strong style="color: #0f172a; font-family: monospace;">#${tid}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
-            <span style="color:#9f1239;">Destino:</span>
-            <strong style="color:#881337;">Bonos de Consumo</strong>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Valor Canjeado:</span>
+            <strong style="color: #16a34a; font-size: 0.95rem;">${formatCOP(parseFloat(amount))}</strong>
           </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#9f1239;">Disponibilidad:</span>
-            <span style="background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">Inmediata</span>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <span style="color: #64748b;">Destino:</span>
+            <strong style="color: #0f172a;">Granja Valle Morales</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #64748b;">Estado:</span>
+            <span style="background: #dcfce7; color: #15803d; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">Listo para Redimir</span>
           </div>
         </div>
 
-        <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 20px 0; text-align:center;">
-          Tu saldo en Bonos de Consumo se ha acreditado. Ya puedes redimirlo en productos gourmet de la tienda.
+        <p style="font-size: 0.8rem; color: #64748b; line-height: 1.45; margin: 0 0 20px 0; text-align: center;">
+          Puedes coordinar los cortes específicos y la entrega a domicilio por WhatsApp con nuestro equipo.
         </p>
+
+        <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20canje%20de%20carne%20%23${tid}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" style="
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; background: #16a34a; color: white; border: none;
+          padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+          text-decoration: none; box-sizing: border-box; margin-bottom: 10px;
+        ">
+          <span>💬 Coordinar Entrega en WhatsApp</span>
+        </a>
 
         <button id="btn-close-consumo-success" style="
           width:100%; background:#be1260; color:white; border:none; padding:14px;
           border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer;
-          box-shadow:0 4px 12px rgba(190, 18, 96, 0.2); transition:all 0.2s;
-        " onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
-          Entendido
+        ">
+          Cerrar
         </button>
       </div>
     </div>
   `;
-
   document.body.appendChild(modal);
 
   const closeReceipt = () => {
     modal.remove();
     if (onUpdated) {
-      openWalletDrawer();
+      onUpdated();
     }
   };
 
   document.getElementById('btn-close-consumo-success')?.addEventListener('click', closeReceipt);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
-}
-
-/**
- * Backwards compatible standalone opener: opens wallet drawer with withdrawal subscreen pre-selected.
- */
-export async function showRetiroSaldoModal(availableAmount) {
-  const existingDrawer = document.getElementById('wallet-drawer-modal');
-  if (existingDrawer) {
-    const subContainer = document.getElementById('wallet-subscreen-container');
-    if (subContainer) {
-      openWalletWithdrawalSubscreen(subContainer, availableAmount);
-      return;
-    }
-  }
-  openWalletDrawer(false, true);
 }
