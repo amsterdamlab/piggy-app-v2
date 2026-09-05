@@ -258,7 +258,7 @@ function attachProfileViewListeners(profile) {
 /**
  * Render and open "Datos Personales" subscreen with bank accounts details.
  */
-function openDatosPersonalesSubscreen(profile) {
+export function openDatosPersonalesSubscreen(profile) {
     currentActiveSubscreen = 'datos';
     const container = document.getElementById('profile-subscreen-container');
     if (!container) return;

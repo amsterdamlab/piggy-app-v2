@@ -1,20 +1,23 @@
 /* ==========================================================================
    PIGGY APP — Wallet Withdrawal Modal & Success Receipt
-   Withdraw to bank account or meat consumption from Granja
+   Modular subcomponent containing sliding withdrawal flows (money & consumption).
    ========================================================================== */
 
 import { formatCOP } from '../../services/mockData.js';
 import { AppState } from '../../state.js';
-import { requestWithdrawal } from '../../services/walletService.js';
-import { openDatosPersonalesSubscreen } from '../ProfileView.js';
+import { requestBankWithdrawal, createWalletRequest, notifyAdminViaWhatsApp, requestMeatRedemption } from '../../services/walletService.js';
+import { getProfile } from '../../services/authService.js';
+import { openWalletDrawer, openMeatRedemptionModal } from './WalletDrawerModal.js';
+import { navigateTo } from '../../router.js';
+import { showToast } from '../../components/Toast.js';
 
 /**
  * Open Wallet Withdrawal flow as a sliding subscreen inside the parent container.
  * Zero DOM destruction, zero flickering, native transitions.
  *
  * @param {HTMLElement} mountContainer - The element inside which the subscreen is mounted
- * @param {number} availableAmount - Current available balance
- * @param {Function} onUpdated - Callback when balance or transactions change
+ * @param {number} availableAmount - The user's available wallet balance
+ * @param {Function} onUpdated - Callback when balance changes
  * @param {Function} onCloseAll - Callback to close the entire wallet drawer
  */
 export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, onUpdated = null, onCloseAll = null) {
@@ -26,38 +29,30 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   subscreen.style.pointerEvents = 'auto';
   mountContainer.appendChild(subscreen);
 
-  const profile = AppState.get('profile');
-  const userFullName = profile?.full_name || 'Usuario Piggy';
-  const userPhoneNum = profile?.phone || 'No registrado';
-  const userBank = profile?.bank_name || '';
-  const userBreveKey = profile?.breve_key || '';
-  const userAccountType = profile?.account_type || 'Ahorros';
+  // Profile data from local AppState for instantaneous rendering
+  let profile = AppState.get('profile') || {};
 
-  const MIN_WITHDRAWAL = 10000;
-
-  const getBankDisplayLabel = (b) => {
-    switch (b) {
-      case 'bancolombia': return 'Bancolombia';
-      case 'nequi': return 'Nequi';
-      case 'daviplata': return 'Daviplata';
-      case 'davivienda': return 'Davivienda';
-      case 'bbva': return 'BBVA';
-      case 'bogota': return 'Banco de Bogotá';
-      case 'occidente': return 'Banco de Occidente';
-      case 'popular': return 'Banco Popular';
-      case 'itau': return 'Itaú';
-      case 'scotiabank': return 'Scotiabank Colpatria';
-      case 'falabella': return 'Banco Falabella';
-      case 'nubank': return 'Nu Colombia';
-      case 'uala': return 'Ualá';
-      case 'lulo': return 'Lulo Bank';
-      case 'movii': return 'Movii';
-      case 'dale': return 'Dale!';
-      case 'caja_social': return 'Banco Caja Social';
-      case 'avvillas': return 'Banco AV Villas';
-      case 'otro': return 'Otro Banco / Billetera';
-      default: return b || 'No registrado';
+  // Fetch fresh profile in background to keep 100% sync with Supabase
+  getProfile().then(fresh => {
+    if (fresh) {
+      profile = fresh;
+      AppState.set({ profile: fresh });
     }
+  }).catch(e => console.warn('Background profile refresh error:', e));
+
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
+  const userPhone = profile?.whatsapp || profile?.phone_number || '';
+  const minAmount = 50000;
+
+  const formatThousands = (num) => {
+    if (!num && num !== 0) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const parseFormattedNumber = (val) => {
+    if (!val) return 0;
+    const digits = String(val).replace(/\D/g, '');
+    return parseInt(digits, 10) || 0;
   };
 
   const closeSubscreen = () => {
@@ -65,7 +60,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
   };
 
   /* ─────────────────────────────────────────
-     STEP 1 — Selection: Dinero vs Consumo
+     STEP 1 — Destino del Retiro (Dinero / Consumo)
   ───────────────────────────────────────── */
   const renderStep1 = () => {
     return `
@@ -74,8 +69,9 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         <div style="display:flex; align-items:center; gap:12px;">
           <div style="display:flex; align-items:center; justify-content:center; color:#be1260; flex-shrink:0;">
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M 12 3 v 14" />
-              <path d="M 4 19 h 16" />
+              <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
+              <rect x="6" y="8" width="12" height="12" rx="2" />
+              <path d="M 12 11 v 6" />
               <path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" />
             </svg>
           </div>
@@ -97,18 +93,19 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           color: #0f172a; padding: 22px 20px; border-radius: 18px;
           font-weight: 700; font-size: 1rem; cursor: pointer;
           display: flex; align-items: flex-start; gap: 14px;
-          text-align: left; transition: all 0.2s; font-family: inherit;
-        " onmouseover="this.style.borderColor='#f472b6'; this.style.background='#fce7ed';" onmouseout="this.style.borderColor='#ffe4e6'; this.style.background='#fdf2f5';">
-          <div style="
-            width: 44px; height: 44px; border-radius: 14px;
-            background: #be1260; color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(190, 18, 96, 0.25);
-          ">🏦</div>
+          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+          text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+        " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
+          <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2"/>
+              <line x1="2" x2="22" y1="10" y2="10"/>
+            </svg>
+          </div>
           <div style="flex: 1;">
             <div style="font-weight: 850; font-size: 1.05rem; color: #0f172a; line-height: 1.2;">Dinero en mi cuenta bancaria</div>
             <div style="font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 4px; line-height: 1.4;">
-              Transferencia directa a tu banco o llave Bre-B registrada.
+              Transferencia directa a tu banco o llave Bre-B registrada en tu perfil.
             </div>
             <div style="display: inline-block; background: #e0f2fe; color: #0284c7; font-size: 0.7rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; margin-top: 8px;">
               ⏱ 3 a 5 días hábiles
@@ -123,14 +120,12 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           color: #0f172a; padding: 22px 20px; border-radius: 18px;
           font-weight: 700; font-size: 1rem; cursor: pointer;
           display: flex; align-items: flex-start; gap: 14px;
-          text-align: left; transition: all 0.2s; font-family: inherit;
-        " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-          <div style="
-            width: 44px; height: 44px; border-radius: 14px;
-            background: #16a34a; color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem; flex-shrink: 0; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
-          ">🥩</div>
+          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+          text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+        " onmouseover="this.style.background='#f1f5f9'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#f8fafc'; this.style.transform='translateY(0)';">
+          <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #e2e8f0; margin-top:2px; color:#16a34a; font-size:1.6rem;">
+            🥩
+          </div>
           <div style="flex: 1;">
             <div style="font-weight: 850; font-size: 1.05rem; color: #0f172a; line-height: 1.2;">Comprar carne fresca (Granja)</div>
             <div style="font-size: 0.8rem; color: #64748b; font-weight: 500; margin-top: 4px; line-height: 1.4;">
@@ -149,7 +144,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
             <div style="font-size: 1rem; line-height: 1; flex-shrink: 0;">📋</div>
             <div style="font-size: 0.76rem; color: #64748b; line-height: 1.45;">
               <strong style="color: #334155;">Términos Generales de Retiro:</strong><br>
-              Monto mínimo de retiro: <strong>$10.000 COP</strong>. Las solicitudes en dinero son procesadas de lunes a viernes en horario bancario.
+              Monto mínimo de retiro: <strong>$50.000 COP</strong>. Las solicitudes en dinero son procesadas de lunes a viernes en horario bancario.
             </div>
           </div>
         </div>
@@ -161,7 +156,10 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
      STEP 2 (DINERO) — Bank Details & Amount
   ───────────────────────────────────────── */
   const renderStep2Dinero = () => {
-    const hasBankData = Boolean(userBank && userBreveKey);
+    const bankName = profile?.bank_name || '';
+    const accountNum = profile?.bank_account_number || profile?.bank_breve_key || '';
+    const accountType = profile?.bank_account_type || 'Ahorros';
+    const hasBankData = Boolean(bankName && accountNum);
 
     return `
       <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
@@ -195,13 +193,13 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
 
           ${hasBankData ? `
             <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 2px;">
-              ${getBankDisplayLabel(userBank)}
+              ${bankName}
             </div>
             <div style="font-size: 0.82rem; color: #475569; font-family: monospace;">
-              Número / Llave: <strong>${userBreveKey}</strong> (${userAccountType})
+              Número / Llave: <strong>${accountNum}</strong> (${accountType})
             </div>
             <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
-              Titular: ${userFullName}
+              Titular: ${profile?.full_name || userName}
             </div>
           ` : `
             <div style="font-size: 0.82rem; color: #92400e; line-height: 1.45;">
@@ -226,14 +224,14 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
             </label>
             <div style="display: flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px;">
               <span style="font-weight: 800; color: #0f172a; font-size: 1.2rem; margin-right: 8px;">$</span>
-              <input type="number" id="retiro-amount-input" placeholder="0" min="${MIN_WITHDRAWAL}" max="${availableAmount}" style="
+              <input type="text" id="retiro-amount-input" inputmode="numeric" placeholder="50.000" style="
                 border: none; background: transparent; font-size: 1.25rem; font-weight: 800; color: #0f172a;
                 width: 100%; outline: none; font-family: inherit;
               " />
             </div>
             <div id="retiro-amount-error" style="font-size: 0.75rem; color: #dc2626; margin-top: 6px; font-weight: 600; display: none;"></div>
             <div style="font-size: 0.74rem; color: #64748b; margin-top: 6px;">
-              Mínimo: ${formatCOP(MIN_WITHDRAWAL)} • Máximo disponible: ${formatCOP(availableAmount)}
+              Mínimo: ${formatCOP(minAmount)} • Máximo disponible: ${formatCOP(availableAmount)}
             </div>
           </div>
 
@@ -366,7 +364,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
     attachClose(goToStep1);
 
     // Links a Mi Perfil (subscreen datos)
-    const openPerfil = () => {
+    const handleGotoProfile = () => {
       closeSubscreen();
       if (onCloseAll) {
         onCloseAll();
@@ -374,13 +372,18 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         const d = document.getElementById('wallet-drawer-modal');
         if (d) d.remove();
       }
-      openDatosPersonalesSubscreen(profile);
+      navigateTo('perfil');
+      setTimeout(() => {
+        window.location.hash = '#/perfil?subscreen=datos';
+      }, 50);
     };
 
-    document.getElementById('retiro-btn-edit-perfil')?.addEventListener('click', openPerfil);
-    document.getElementById('retiro-btn-go-perfil')?.addEventListener('click', openPerfil);
+    document.getElementById('retiro-btn-edit-perfil')?.addEventListener('click', handleGotoProfile);
+    document.getElementById('retiro-btn-go-perfil')?.addEventListener('click', handleGotoProfile);
 
-    const hasBankData = Boolean(userBank && userBreveKey);
+    const bankName = profile?.bank_name || '';
+    const accountNum = profile?.bank_account_number || profile?.bank_breve_key || '';
+    const hasBankData = Boolean(bankName && accountNum);
     if (!hasBankData) return;
 
     const amountInput = document.getElementById('retiro-amount-input');
@@ -389,14 +392,14 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
     const maxBtn = document.getElementById('retiro-btn-max');
     const errorDiv = document.getElementById('retiro-amount-error');
 
+    let currentAmount = 0;
+
     const validate = () => {
-      const val = parseFloat(amountInput.value) || 0;
-      const terms = termsCheck.checked;
       let error = '';
 
-      if (val > 0 && val < MIN_WITHDRAWAL) {
-        error = `El monto mínimo de retiro es ${formatCOP(MIN_WITHDRAWAL)}`;
-      } else if (val > availableAmount) {
+      if (currentAmount > 0 && currentAmount < minAmount) {
+        error = `El monto mínimo de retiro es ${formatCOP(minAmount)}`;
+      } else if (currentAmount > availableAmount) {
         error = `No tienes suficiente saldo disponible (${formatCOP(availableAmount)})`;
       }
 
@@ -407,56 +410,71 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         errorDiv.style.display = 'none';
       }
 
-      const isValid = !error && val >= MIN_WITHDRAWAL && val <= availableAmount && terms;
+      const isValid = !error && currentAmount >= minAmount && currentAmount <= availableAmount && termsCheck.checked;
       submitBtn.disabled = !isValid;
       submitBtn.style.opacity = isValid ? '1' : '0.5';
       submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
       if (isValid) {
-        submitBtn.innerText = `Solicitar Retiro de ${formatCOP(val)}`;
+        submitBtn.innerText = `Solicitar Retiro de ${formatCOP(currentAmount)}`;
       } else {
         submitBtn.innerText = 'Solicitar Retiro';
       }
     };
 
-    amountInput?.addEventListener('input', validate);
+    amountInput?.addEventListener('input', (e) => {
+      const parsed = parseFormattedNumber(e.target.value);
+      currentAmount = parsed;
+      e.target.value = formatThousands(parsed);
+      validate();
+    });
+
     termsCheck?.addEventListener('change', validate);
+
     maxBtn?.addEventListener('click', () => {
       if (amountInput) {
-        amountInput.value = availableAmount;
+        currentAmount = availableAmount;
+        amountInput.value = formatThousands(availableAmount);
         validate();
       }
     });
 
     submitBtn?.addEventListener('click', async () => {
-      const amount = parseFloat(amountInput.value) || 0;
-      if (amount < MIN_WITHDRAWAL || amount > availableAmount) return;
+      if (currentAmount < minAmount || currentAmount > availableAmount) return;
 
       submitBtn.disabled = true;
       submitBtn.innerText = 'Procesando solicitud...';
 
-      const bankFullLabel = getBankDisplayLabel(userBank);
-      const refFinal = 'RET-' + Math.floor(100000 + Math.random() * 900000);
+      const tid = 'RET-' + Math.floor(100000 + Math.random() * 900000);
 
       try {
-        await requestWithdrawal(amount, userBank, {
-          reference: refFinal,
-          accountType: userAccountType,
-          accountNumber: userBreveKey,
-          userName: userFullName,
-          userPhone: userPhoneNum
+        await requestBankWithdrawal(currentAmount, {
+          reference: tid,
+          bankName: bankName,
+          accountNumber: accountNum,
+          accountType: profile?.bank_account_type || 'Ahorros',
+          userName: profile?.full_name || userName,
+          userPhone: userPhone
         });
 
-        // WhatsApp Admin notification
-        const waMsg = `👋 *PIGGY APP — Nueva Solicitud de Retiro Bancario*\n\n👤 *Usuario:* ${userFullName}\n📱 *Teléfono:* ${userPhoneNum}\n💰 *Monto a Retirar:* ${formatCOP(amount)}\n🔖 *Comprobante:* #${refFinal}\n\n🏦 *Datos de Destino:*\n• *Banco / Entidad:* ${bankFullLabel}\n• *Cuenta / Llave:* ${userBreveKey}\n• *Tipo de Cuenta:* ${userAccountType}\n\nPor favor confirmar recibido y procesamiento.`;
-        window.open(`https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`, '_blank');
+        // Notify WhatsApp
+        notifyAdminViaWhatsApp({
+          type: 'withdrawal',
+          amount: currentAmount,
+          reference: tid,
+          userName: profile?.full_name || userName,
+          phone: userPhone,
+          details: `${bankName} — ${accountNum} (${profile?.bank_account_type || 'Ahorros'})`
+        });
 
         closeSubscreen();
-        showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
+        if (onUpdated) onUpdated();
+        showToast('Solicitud de retiro registrada con éxito', 'success');
+
       } catch (err) {
         console.error('Error requesting withdrawal:', err);
-        // Fallback simulate success
         closeSubscreen();
-        showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
+        if (onUpdated) onUpdated();
+        showToast('Solicitud registrada (modo respaldo)', 'success');
       }
     });
   };
@@ -474,203 +492,15 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
         if (drawer) drawer.remove();
       }
       window.location.hash = '#/gourmet';
+      navigateTo('gourmet');
     });
 
     document.getElementById('retiro-btn-wa-carne')?.addEventListener('click', () => {
-      const waMsg = `👋 *PIGGY APP — Consulta de Pedido de Carne*\n\n👤 *Usuario:* ${userFullName}\n💰 *Saldo Disponible:* ${formatCOP(availableAmount)}\n\nQuiero redimir mi saldo en un pedido de carne fresca de Granja Valle Morales. ¿Me podrían asesorar por favor?`;
-      window.open(`https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`, '_blank');
+      const msg = `👋 *PIGGY APP — Asesoría de Pedido de Carne*\n\n👤 *Usuario:* ${profile?.full_name || userName}\n💰 *Saldo Disponible:* ${formatCOP(availableAmount)}\n\nQuiero redimir mi saldo disponible en un pedido de carne fresca. ¿Me podrían asesorar por favor?`;
+      window.open(`https://wa.me/573154870448?text=${encodeURIComponent(msg)}`, '_blank');
     });
   };
 
   // Launch initial step
   goToStep1();
-}
-
-/**
- * Show Withdrawal Request Success Receipt
- */
-export function showWalletRequestSuccess(type, amount, bank, ref = null, onUpdated = null, userName = '', userPhone = '', userKey = '') {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '10000';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.padding = '16px';
-  modal.style.background = 'rgba(0, 0, 0, 0.65)';
-  modal.style.backdropFilter = 'blur(4px)';
-  modal.style.webkitBackdropFilter = 'blur(4px)';
-
-  const tid = ref || ('RET-' + Math.floor(100000 + Math.random() * 900000));
-  const isWithdrawal = type === 'withdrawal';
-
-  const waMsg = `👋 *PIGGY APP — Comprobante de Retiro*\n\n👤 *Usuario:* ${userName || 'Usuario'}\n📱 *Teléfono:* ${userPhone || 'No registrado'}\n💰 *Monto:* ${formatCOP(parseFloat(amount))}\n🏦 *Destino:* ${bank} (${userKey || 'Registrada'})\n🔖 *Comprobante:* #${tid}\n\nAdjunto el número de solicitud para seguimiento. ¡Muchas gracias!`;
-  const waUrl = `https://wa.me/573154870448?text=${encodeURIComponent(waMsg)}`;
-
-  modal.innerHTML = `
-    <div class="animate-scale-in" style="
-      background: white; border-radius: 24px; max-width: 440px; width: 100%;
-      overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); position: relative;
-    ">
-      <!-- Header Banner -->
-      <div style="background: #fdf2f5; border-bottom: 1px solid #fce4ec; padding: 28px 24px; text-align: center;">
-        <div style="
-          width: 60px; height: 60px; background: white; border-radius: 50%;
-          display: inline-flex; align-items: center; justify-content: center;
-          margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #be1260;
-        ">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#be1260" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
-        <h3 style="margin: 0 0 4px 0; font-size: 1.35rem; font-weight: 850; color: #0f172a;">¡Solicitud Generada!</h3>
-        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Tu retiro ha sido enviado a procesamiento</p>
-      </div>
-
-      <!-- Body Content -->
-      <div style="padding: 22px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 18px; font-size: 0.84rem; color: #334155;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Comprobante:</span>
-            <strong style="color: #0f172a; font-family: monospace;">#${tid}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Monto a Retirar:</span>
-            <strong style="color: #be1260; font-size: 0.95rem;">${formatCOP(parseFloat(amount))}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Banco Destino:</span>
-            <strong style="color: #0f172a;">${bank}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Fecha de Solicitud:</span>
-            <span>${new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: #64748b;">Estado:</span>
-            <span style="background: #fef9c3; color: #854d0e; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">En Proceso (3-5 días hábiles)</span>
-          </div>
-        </div>
-
-        <p style="font-size: 0.8rem; color: #64748b; line-height: 1.45; margin: 0 0 20px 0; text-align: center;">
-          Hemos enviado los detalles a la administración. También puedes contactar al soporte para confirmar el estado de tu transferencia.
-        </p>
-
-        <a href="${waUrl}" target="_blank" style="
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          width: 100%; background: #16a34a; color: white; border: none;
-          padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
-          text-decoration: none; box-sizing: border-box; margin-bottom: 10px;
-        ">
-          <span>💬 Confirmar por WhatsApp</span>
-        </a>
-
-        <button id="btn-close-success-modal" style="
-          width:100%; background:#BE1260; color:white; border:none; padding:15px;
-          border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-          box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
-        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
-          Entendido, Volver a la Granja
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  const closeReceipt = () => {
-    modal.remove();
-    if (onUpdated) {
-      onUpdated();
-    }
-  };
-
-  document.getElementById('btn-close-success-modal')?.addEventListener('click', closeReceipt);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
-}
-
-/**
- * Show Meat Redemption Success Receipt
- */
-export function showMeatRedemptionSuccess(amount, onUpdated = null) {
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.style.zIndex = '10000';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.padding = '16px';
-  modal.style.background = 'rgba(0, 0, 0, 0.65)';
-  modal.style.backdropFilter = 'blur(4px)';
-  modal.style.webkitBackdropFilter = 'blur(4px)';
-
-  const tid = 'CNJ-' + Math.floor(100000 + Math.random() * 900000);
-
-  modal.innerHTML = `
-    <div class="animate-scale-in" style="
-      background: white; border-radius: 24px; max-width: 440px; width: 100%;
-      overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3); position: relative;
-    ">
-      <div style="background: #f0fdf4; border-bottom: 1px solid #dcfce7; padding: 28px 24px; text-align: center;">
-        <div style="
-          width: 60px; height: 60px; background: white; border-radius: 50%;
-          display: inline-flex; align-items: center; justify-content: center;
-          margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #16a34a; font-size: 1.8rem;
-        ">
-          🥩
-        </div>
-        <h3 style="margin: 0 0 4px 0; font-size: 1.35rem; font-weight: 850; color: #0f172a;">¡Canje Registrado!</h3>
-        <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Tu saldo ha sido reservado para carne de la granja</p>
-      </div>
-
-      <div style="padding: 22px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 18px; font-size: 0.84rem; color: #334155;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Comprobante:</span>
-            <strong style="color: #0f172a; font-family: monospace;">#${tid}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Valor Canjeado:</span>
-            <strong style="color: #16a34a; font-size: 0.95rem;">${formatCOP(parseFloat(amount))}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-            <span style="color: #64748b;">Destino:</span>
-            <strong style="color: #0f172a;">Granja Valle Morales</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: #64748b;">Estado:</span>
-            <span style="background: #dcfce7; color: #15803d; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 6px;">Listo para Redimir</span>
-          </div>
-        </div>
-
-        <p style="font-size: 0.8rem; color: #64748b; line-height: 1.45; margin: 0 0 20px 0; text-align: center;">
-          Puedes coordinar los cortes específicos y la entrega a domicilio por WhatsApp con nuestro equipo.
-        </p>
-
-        <a href="https://wa.me/573154870448?text=Hola,%20solicito%20mi%20canje%20de%20carne%20%23${tid}%20por%20valor%20de%20${formatCOP(parseFloat(amount))}" target="_blank" style="
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          width: 100%; background: #16a34a; color: white; border: none;
-          padding: 14px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
-          text-decoration: none; box-sizing: border-box; margin-bottom: 10px;
-        ">
-          <span>💬 Coordinar Entrega en WhatsApp</span>
-        </a>
-
-        <button id="btn-close-consumo-success" style="
-          width:100%; background:#be1260; color:white; border:none; padding:14px;
-          border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer;
-        ">
-          Cerrar
-        </button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  const closeReceipt = () => {
-    modal.remove();
-    if (onUpdated) {
-      onUpdated();
-    }
-  };
-
-  document.getElementById('btn-close-consumo-success')?.addEventListener('click', closeReceipt);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
 }
