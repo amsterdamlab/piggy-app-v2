@@ -157,12 +157,12 @@ async function loadPiggyDetail(piggyId) {
                 <span class="font-semibold">${new Date(piggy.end_date).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '-')}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="text-sm text-muted">Beneficio</span>
+                <span class="text-sm text-muted">Margen Comercial Granja</span>
                 <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
-                  <span class="text-sm text-muted">Beneficio Canal de Venta</span>
+                  <span class="text-sm text-muted">Margen x Canal de Venta</span>
                   <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px; color: #E91E63;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
                 </div>
               ` : ''}

@@ -228,7 +228,7 @@ export function showCycleMissionModal(mission) {
                 <img src="/piggy-favicon.svg" alt="Piggy" style="width: 56px; height: 56px; margin: 0 auto 8px auto; display: block; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));" />
                 <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${mission.piggy_label}</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.92; line-height:1.4;">
-                    Aprovecha esta oportunidad por tiempo limitado. Compra tu Piggy con <strong>${roiPct} adicional de beneficio por canal de venta</strong>.
+                    Aprovecha esta oportunidad por tiempo limitado. Compra tu Piggy con <strong>${roiPct} adicional de margen por canal de venta</strong>.
                 </p>
 
                 <!-- Countdown -->
