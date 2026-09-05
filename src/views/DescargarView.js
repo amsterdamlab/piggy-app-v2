@@ -18,4 +18,141 @@ export function renderDescargarView() {
 
     app.innerHTML = `
         <style>
-            @keyframes pwaBtnPulse7s {\n                0% {\n                    transform: scale(1);\n                    box-shadow: 0 8px 25px -4px rgba(236, 72, 153, 0.5);\n                }\n                5% {\n                    transform: scale(1.03);\n                    box-shadow: 0 14px 35px -2px rgba(219, 39, 119, 0.75);\n                }\n                10%, 100% {\n                    transform: scale(1);\n                    box-shadow: 0 8px 25px -4px rgba(236, 72, 153, 0.5);\n                }\n            }\n\n            @keyframes pwaBtnShine7s {\n                0% { left: -100%; }\n                10%, 100% { left: 200%; }\n            }\n\n            .pwa-download-page {\n                background: #f8fafc;\n                min-height: 100dvh;\n                max-height: 100dvh;\n                height: 100dvh;\n                box-sizing: border-box;\n                display: flex;\n                flex-direction: column;\n                align-items: center;\n                justify-content: space-evenly;\n                padding: 16px 20px !important;\n                overflow: hidden !important;\n            }\n\n            .pwa-install-btn {\n                position: relative;\n                overflow: hidden;\n                background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);\n                color: white;\n                font-size: 1.05rem;\n                font-weight: 800;\n                padding: 13px 20px;\n                border-radius: 30px;\n                border: none;\n                cursor: pointer;\n                display: flex;\n                align-items: center;\n                justify-content: center;\n                width: 100%;\n                animation: pwaBtnPulse7s 7s infinite ease-in-out;\n                transition: transform 0.2s ease;\n            }\n\n            .pwa-install-btn:active {\n                transform: scale(0.97) !important;\n            }\n\n            .pwa-install-btn__shine {\n                position: absolute;\n                top: 0;\n                left: -100%;\n                width: 50%;\n                height: 100%;\n                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);\n                transform: skewX(-20deg);\n                animation: pwaBtnShine7s 7s infinite ease-in-out;\n                pointer-events: none;\n            }\n        </style>\n\n        <div class=\"page animate-fade-in pwa-download-page\">\n            <!-- 1. Centered Larger Logo Principal -->\n            <div style=\"text-align: center; width: 100%;\">\n                <img src=\"/piggyapp_logo1.png\" alt=\"Piggy App Logo\" style=\"max-width: 190px; height: auto; display: block; margin: 0 auto;\" onerror=\"this.onerror=null; this.src='/pig2.jpg';\" />\n            </div>\n\n            <!-- 2. Main Hero Card -->\n            <div class=\"profile-data-card\" style=\"width: 100%; max-width: 380px; margin: 0; text-align: center; padding: 22px 18px 18px; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.06); border-radius: 22px; border: 1px solid #e2e8f0; background: white; box-sizing: border-box;\">\n                <div style=\"background: rgba(236, 72, 153, 0.1); color: #db2777; display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;\">\n                    📱 APLICACIÓN OFICIAL PWA\n                </div>\n\n                <p style=\"font-size: 0.86rem; color: #64748b; line-height: 1.45; margin: 0 0 18px 0;\">\n                    Accede a tu granja en 1 segundo directamente desde la pantalla de inicio de tu celular.\n                </p>\n\n                <!-- Pink Button \"Descargar\" with 7s Synchronized Animation -->\n                <button id=\"btn-install-landing-action\" class=\"pwa-install-btn\">\n                    <span class=\"pwa-install-btn__shine\"></span>\n                    <span>Descargar</span>\n                </button>\n\n                <!-- Bold light-gray text directly under button -->\n                <div style=\"font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-top: 12px;\">\n                    Rápida, liviana y 100% segura.\n                </div>\n            </div>\n\n            <!-- 3. Secondary Link -->\n            <div style=\"text-align: center; width: 100%;\">\n                <button id=\"btn-go-to-app-secondary\" style=\"\n                    background: transparent;\n                    border: none;\n                    color: #64748b;\n                    font-size: 0.82rem;\n                    font-weight: 700;\n                    text-decoration: underline;\n                    cursor: pointer;\n                \">\n                    ¿Ya la tienes instalada o prefieres usar la web? Ir a la App →\n                </button>\n            </div>\n\n            <!-- 4. Footer Identidad Granja Villa Morales del Valle SAS -->\n            <div style=\"text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;\">\n                <div style=\"white-space: nowrap; font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;\">\n                    RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS\n                </div>\n\n                <img src=\"/vallemorales_logo.png\" alt=\"Granja Villa Morales del Valle SAS\" style=\"max-height: 28px; width: auto; object-fit: contain; display: block; margin: 0 auto;\" onerror=\"this.style.display='none'\" />\n\n                <!-- Derechos Reservados con 2 espacios adicionales hacia abajo -->\n                <div style=\"font-size: 0.7rem; color: #94a3b8; font-weight: 500; text-align: center; white-space: nowrap; margin-top: 14px;\">\n                    © Todos los derechos reservados Piggy App. 2026\n                </div>\n            </div>\n        </div>\n    `;\n\n    // Attach click listeners\n    document.getElementById('btn-install-landing-action')?.addEventListener('click', () => {\n        triggerPWAInstall();\n    });\n\n    document.getElementById('btn-go-to-app-secondary')?.addEventListener('click', () => {\n        navigateTo(targetRoute);\n    });\n}\n
+            @keyframes pwaBtnPulse7s {
+                0% {
+                    transform: scale(1);
+                    box-shadow: 0 8px 25px -4px rgba(236, 72, 153, 0.5);
+                }
+                5% {
+                    transform: scale(1.03);
+                    box-shadow: 0 14px 35px -2px rgba(219, 39, 119, 0.75);
+                }
+                10%, 100% {
+                    transform: scale(1);
+                    box-shadow: 0 8px 25px -4px rgba(236, 72, 153, 0.5);
+                }
+            }
+
+            @keyframes pwaBtnShine7s {
+                0% { left: -100%; }
+                10%, 100% { left: 200%; }
+            }
+
+            .pwa-download-page {
+                background: #f8fafc;
+                min-height: 100dvh;
+                max-height: 100dvh;
+                height: 100dvh;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: space-evenly;
+                padding: 16px 20px !important;
+                overflow: hidden !important;
+            }
+
+            .pwa-install-btn {
+                position: relative;
+                overflow: hidden;
+                background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+                color: white;
+                font-size: 1.05rem;
+                font-weight: 800;
+                padding: 13px 20px;
+                border-radius: 30px;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                animation: pwaBtnPulse7s 7s infinite ease-in-out;
+                transition: transform 0.2s ease;
+            }
+
+            .pwa-install-btn:active {
+                transform: scale(0.97) !important;
+            }
+
+            .pwa-install-btn__shine {
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 50%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+                transform: skewX(-20deg);
+                animation: pwaBtnShine7s 7s infinite ease-in-out;
+                pointer-events: none;
+            }
+        </style>
+
+        <div class="page animate-fade-in pwa-download-page">
+            <!-- 1. Centered Larger Logo Principal -->
+            <div style="text-align: center; width: 100%;">
+                <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="max-width: 190px; height: auto; display: block; margin: 0 auto;" onerror="this.onerror=null; this.src='/pig2.jpg';" />
+            </div>
+
+            <!-- 2. Main Hero Card -->
+            <div class="profile-data-card" style="width: 100%; max-width: 380px; margin: 0; text-align: center; padding: 22px 18px 18px; box-shadow: 0 12px 32px -8px rgba(0,0,0,0.06); border-radius: 22px; border: 1px solid #e2e8f0; background: white; box-sizing: border-box;">
+                <div style="background: rgba(236, 72, 153, 0.1); color: #db2777; display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px;">
+                    📱 APLICACIÓN OFICIAL PWA
+                </div>
+
+                <p style="font-size: 0.86rem; color: #64748b; line-height: 1.45; margin: 0 0 18px 0;">
+                    Accede a tu granja en 1 segundo directamente desde la pantalla de inicio de tu celular.
+                </p>
+
+                <!-- Pink Button "Descargar" with 7s Synchronized Animation -->
+                <button id="btn-install-landing-action" class="pwa-install-btn">
+                    <span class="pwa-install-btn__shine"></span>
+                    <span>Descargar</span>
+                </button>
+
+                <!-- Bold light-gray text directly under button -->
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-top: 12px;">
+                    Rápida, liviana y 100% segura.
+                </div>
+            </div>
+
+            <!-- 3. Secondary Link -->
+            <div style="text-align: center; width: 100%;">
+                <button id="btn-go-to-app-secondary" style="
+                    background: transparent;
+                    border: none;
+                    color: #64748b;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    text-decoration: underline;
+                    cursor: pointer;
+                ">
+                    ¿Ya la tienes instalada o prefieres usar la web? Ir a la App →
+                </button>
+            </div>
+
+            <!-- 4. Footer Identidad Granja Villa Morales del Valle SAS -->
+            <div style="text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div style="white-space: nowrap; font-size: 0.68rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">
+                    RESPALDADO POR GRANJA VILLA MORALES DEL VALLE SAS
+                </div>
+
+                <img src="/vallemorales_logo.png" alt="Granja Villa Morales del Valle SAS" style="max-height: 28px; width: auto; object-fit: contain; display: block; margin: 0 auto;" onerror="this.style.display='none'" />
+
+                <!-- Derechos Reservados con 2 espacios adicionales hacia abajo -->
+                <div style="font-size: 0.7rem; color: #94a3b8; font-weight: 500; text-align: center; white-space: nowrap; margin-top: 14px;">
+                    © Todos los derechos reservados Piggy App. 2026
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Attach click listeners
+    document.getElementById('btn-install-landing-action')?.addEventListener('click', () => {
+        triggerPWAInstall();
+    });
+
+    document.getElementById('btn-go-to-app-secondary')?.addEventListener('click', () => {
+        navigateTo(targetRoute);
+    });
+}

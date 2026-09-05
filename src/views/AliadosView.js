@@ -46,4 +46,211 @@ export function renderAliadosView() {
  */
 async function loadAliadosData() {
   try {
-    const [allies, categories] = await Promise.all([\n      getAllies(activeCategory),\n      getAllyCategories(),\n    ]);\n\n    renderFilters(categories);\n    renderAlliesList(allies);\n  } catch (error) {\n    console.error('Error loading allies:', error);\n    const container = document.getElementById('aliados-content');\n    if (container) {\n      container.innerHTML = `\n        <div class=\"auth-form__error auth-form__error--visible\">\n          Error al cargar aliados. Intenta de nuevo.\n        </div>\n      `;\n    }\n  }\n}\n\n/**\n * Render category filter pills.\n */\nfunction renderFilters(categories) {\n  const container = document.getElementById('aliados-filters');\n  if (!container) return;\n\n  container.innerHTML = `\n    <button class=\"aliados-filter ${!activeCategory ? 'aliados-filter--active' : ''}\" data-category=\"\">\n      Todos\n    </button>\n    ${categories.map((cat) => `\n      <button class=\"aliados-filter ${activeCategory === cat ? 'aliados-filter--active' : ''}\" data-category=\"${cat}\">\n        ${getCategoryIcon(cat)} ${cat}\n      </button>\n    `).join('')}\n  `;\n\n  container.querySelectorAll('.aliados-filter').forEach((btn) => {\n    btn.addEventListener('click', () => {\n      activeCategory = btn.dataset.category || null;\n      loadAliadosData();\n    });\n  });\n}\n\n/**\n * Render allies list.\n */\nfunction renderAlliesList(allies) {\n  const container = document.getElementById('aliados-content');\n  if (!container) return;\n\n  if (allies.length === 0) {\n    container.innerHTML = `\n      <div class=\"empty-state\">\n        <div class=\"empty-state__icon\">\n          ${renderIcon('people', '', '32')}\n        </div>\n        <div class=\"empty-state__title\">Sin aliados en esta categoría</div>\n        <div class=\"empty-state__description\">Próximamente más aliados se unirán a nuestra red.</div>\n      </div>\n    `;\n    return;\n  }\n\n  container.innerHTML = `\n    <div class=\"aliados-list\">\n      ${allies.map(renderAllyCard).join('')}\n    </div>\n  `;\n}\n\n/**\n * Render a single ally card.\n */\nfunction renderAllyCard(ally) {\n  const imageUrl = ally.image_url || getFallbackImage(ally.category);\n  const specialty = ally.specialty || ally.category || '';\n  const description = ally.description || '';\n  const benefitText = ally.benefit || '';\n  const phone = ally.phone || '300 123 4567';\n  const address = ally.address || ally.location || 'Calle Principal # 123';\n\n  const rawPhone = ally.phone || '3001234567';\n  let cleanPhone = rawPhone.replace(/\\D/g, '');\n  if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {\n    cleanPhone = '57' + cleanPhone;\n  }\n  const waLink = `https://wa.me/${cleanPhone}`;\n\n  const imageHtml = imageUrl\n    ? `<img src=\"${imageUrl}\" alt=\"${ally.name}\" class=\"ally-card__image\" loading=\"lazy\" referrerpolicy=\"no-referrer\" onerror=\"this.outerHTML='<div class=\\\\'ally-card__image-placeholder\\\\'>${ally.name.charAt(0).toUpperCase()}</div>'\">`\n    : `<div class=\"ally-card__image-placeholder\">${ally.name.charAt(0).toUpperCase()}</div>`;\n\n  return `\n    <div class=\"ally-card animate-fade-in-up\">\n      <div class=\"ally-card__image-container\">\n        ${imageHtml}\n        <div class=\"ally-card__category-tag\">\n           ${renderIcon('tag', 'ally-card__tag-icon', '14')}\n           ${ally.category}\n        </div>\n      </div>\n      \n      <div class=\"ally-card__content\">\n        <h3 class=\"ally-card__name\">${ally.name}</h3>\n        <span class=\"ally-card__specialty\">${specialty}</span>\n\n        <div style=\"display: flex; align-items: center; gap: 8px; margin-bottom: 2px;\">\n          <p class=\"ally-card__contact-line\" style=\"margin: 0;\">📞 ${phone}</p>\n          <a href=\"${waLink}\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ally-card__wa-btn\" style=\"\n            display: inline-flex;\n            align-items: center;\n            gap: 6px;\n            background: #25D366;\n            color: white;\n            padding: 4px 10px;\n            border-radius: var(--radius-sm, 8px);\n            font-size: 0.7rem;\n            font-weight: 700;\n            text-decoration: none;\n            box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);\n            transition: background var(--transition-fast), transform var(--transition-fast);\n          \" onmouseover=\"this.style.background='#20ba5a'; this.style.transform='translateY(-1px)'\" onmouseout=\"this.style.background='#25D366'; this.style.transform='translateY(0)'\">\n            <svg width=\"11\" height=\"11\" viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"display: block;\">\n              <path d=\"M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.993L2 22l5.13-1.35c1.472.8 3.128 1.22 4.878 1.22h.004c5.505 0 9.989-4.478 9.99-9.984A9.97 9.97 0 0 0 12.012 2zm4.72 13.916c-.26.732-1.272 1.332-1.748 1.378-.456.046-.9.23-2.9-.575-2.4-1-3.924-3.44-4.044-3.602-.12-.162-1.02-1.357-1.02-2.588s.642-1.848.87-2.083c.228-.236.498-.295.666-.295.168 0 .336.002.48.01.149.007.348-.056.545.422.203.49.696 1.706.756 1.83.06.123.1.266.018.432-.08.167-.123.272-.246.417-.122.145-.257.324-.366.435-.12.122-.246.255-.106.495.14.24.62 1.025 1.333 1.66.917.818 1.693 1.07 1.933 1.19.24.12.38.1.522-.065.14-.167.62-.725.786-.973.167-.247.33-.207.558-.122.228.085 1.446.683 1.692.807.247.123.412.185.472.29.06.103.06.6-.2 1.332z\"/>\n            </svg>\n            Contactar\n          </a>\n        </div>\n        <p class=\"ally-card__contact-line\">📍 ${address}</p>\n\n        <p class=\"ally-card__description\">${description}</p>\n        \n        <div class=\"ally-card__benefit\">\n            <div class=\"ally-card__benefit-icon\">\n                %\n            </div>\n            <div class=\"ally-card__benefit-info\">\n                <span class=\"ally-card__benefit-text\">${benefitText}</span>\n            </div>\n        </div>\n      </div>\n    </div>\n  `;\n}\n\n/**\n * Provide a fallback Unsplash image based on ally category.\n */\nfunction getFallbackImage(category) {\n  const images = {\n    'Carnicería': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',\n    'Carniceria': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',\n    'Restaurante': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',\n    'Distribuidor': 'https://images.unsplash.com/photo-1558030006-d35974213323?auto=format&fit=crop&w=800&q=80',\n    'Petshop': 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',\n    'Barbería': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',\n    'Barberia': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',\n    'Wash Clean': 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?auto=format&fit=crop&w=800&q=80',\n    'Ecologico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',\n    'Ecológico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',\n    'Agencia': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',\n  };\n  return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';\n}\n\n/**\n * Get icon for category.\n */\nfunction getCategoryIcon(category) {\n  const icons = {\n    'Carnicería': '🥩',\n    'Carniceria': '🥩',\n    'Restaurante': '🍽️',\n    'Distribuidor': '🚛',\n    'Petshop': '🐾',\n    'Barbería': '💈',\n    'Barberia': '💈',\n    'Wash Clean': '🏍️',\n    'WashClean': '🏍️',\n    'Wash clean': '🏍️',\n    'Lavado': '🏍️',\n    'Ecologico': '🌱',\n    'Ecológico': '🌱',\n    'Agencia': '💼',\n  };\n\n  if (icons[category]) return icons[category];\n\n  const norm = (category || '')\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .trim();\n\n  if (norm.includes('wash') || norm.includes('clean') || norm.includes('moto') || norm.includes('lavad')) return '🏍️';\n  if (norm.includes('ecolog') || norm.includes('eco') || norm.includes('verde')) return '🌱';\n  if (norm.includes('agencia') || norm.includes('agency')) return '💼';\n  if (norm.includes('carn')) return '🥩';\n  if (norm.includes('restaur')) return '🍽️';\n  if (norm.includes('distrib')) return '🚛';\n  if (norm.includes('pet') || norm.includes('mascot')) return '🐾';\n  if (norm.includes('barb') || norm.includes('peluqu')) return '💈';\n\n  return '🏢';\n}\n
+    const [allies, categories] = await Promise.all([
+      getAllies(activeCategory),
+      getAllyCategories(),
+    ]);
+
+    renderFilters(categories);
+    renderAlliesList(allies);
+  } catch (error) {
+    console.error('Error loading allies:', error);
+    const container = document.getElementById('aliados-content');
+    if (container) {
+      container.innerHTML = `
+        <div class="auth-form__error auth-form__error--visible">
+          Error al cargar aliados. Intenta de nuevo.
+        </div>
+      `;
+    }
+  }
+}
+
+/**
+ * Render category filter pills.
+ */
+function renderFilters(categories) {
+  const container = document.getElementById('aliados-filters');
+  if (!container) return;
+
+  container.innerHTML = `
+    <button class="aliados-filter ${!activeCategory ? 'aliados-filter--active' : ''}" data-category="">
+      Todos
+    </button>
+    ${categories.map((cat) => `
+      <button class="aliados-filter ${activeCategory === cat ? 'aliados-filter--active' : ''}" data-category="${cat}">
+        ${getCategoryIcon(cat)} ${cat}
+      </button>
+    `).join('')}
+  `;
+
+  container.querySelectorAll('.aliados-filter').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.category || null;
+      loadAliadosData();
+    });
+  });
+}
+
+/**
+ * Render allies list.
+ */
+function renderAlliesList(allies) {
+  const container = document.getElementById('aliados-content');
+  if (!container) return;
+
+  if (allies.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">
+          ${renderIcon('people', '', '32')}
+        </div>
+        <div class="empty-state__title">Sin aliados en esta categoría</div>
+        <div class="empty-state__description">Próximamente más aliados se unirán a nuestra red.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="aliados-list">
+      ${allies.map(renderAllyCard).join('')}
+    </div>
+  `;
+}
+
+/**
+ * Render a single ally card.
+ */
+function renderAllyCard(ally) {
+  const imageUrl = ally.image_url || getFallbackImage(ally.category);
+  const specialty = ally.specialty || ally.category || '';
+  const description = ally.description || '';
+  const benefitText = ally.benefit || '';
+  const phone = ally.phone || '300 123 4567';
+  const address = ally.address || ally.location || 'Calle Principal # 123';
+
+  const rawPhone = ally.phone || '3001234567';
+  let cleanPhone = rawPhone.replace(/\D/g, '');
+  if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+    cleanPhone = '57' + cleanPhone;
+  }
+  const waLink = `https://wa.me/${cleanPhone}`;
+
+  const imageHtml = imageUrl
+    ? `<img src="${imageUrl}" alt="${ally.name}" class="ally-card__image" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<div class=\\'ally-card__image-placeholder\\'>${ally.name.charAt(0).toUpperCase()}</div>'">`
+    : `<div class="ally-card__image-placeholder">${ally.name.charAt(0).toUpperCase()}</div>`;
+
+  return `
+    <div class="ally-card animate-fade-in-up">
+      <div class="ally-card__image-container">
+        ${imageHtml}
+        <div class="ally-card__category-tag">
+           ${renderIcon('tag', 'ally-card__tag-icon', '14')}
+           ${ally.category}
+        </div>
+      </div>
+      
+      <div class="ally-card__content">
+        <h3 class="ally-card__name">${ally.name}</h3>
+        <span class="ally-card__specialty">${specialty}</span>
+
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
+          <p class="ally-card__contact-line" style="margin: 0;">📞 ${phone}</p>
+          <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="ally-card__wa-btn" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #25D366;
+            color: white;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm, 8px);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+            transition: background var(--transition-fast), transform var(--transition-fast);
+          " onmouseover="this.style.background='#20ba5a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#25D366'; this.style.transform='translateY(0)'">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="display: block;">
+              <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.993L2 22l5.13-1.35c1.472.8 3.128 1.22 4.878 1.22h.004c5.505 0 9.989-4.478 9.99-9.984A9.97 9.97 0 0 0 12.012 2zm4.72 13.916c-.26.732-1.272 1.332-1.748 1.378-.456.046-.9.23-2.9-.575-2.4-1-3.924-3.44-4.044-3.602-.12-.162-1.02-1.357-1.02-2.588s.642-1.848.87-2.083c.228-.236.498-.295.666-.295.168 0 .336.002.48.01.149.007.348-.056.545.422.203.49.696 1.706.756 1.83.06.123.1.266.018.432-.08.167-.123.272-.246.417-.122.145-.257.324-.366.435-.12.122-.246.255-.106.495.14.24.62 1.025 1.333 1.66.917.818 1.693 1.07 1.933 1.19.24.12.38.1.522-.065.14-.167.62-.725.786-.973.167-.247.33-.207.558-.122.228.085 1.446.683 1.692.807.247.123.412.185.472.29.06.103.06.6-.2 1.332z"/>
+            </svg>
+            Contactar
+          </a>
+        </div>
+        <p class="ally-card__contact-line">📍 ${address}</p>
+
+        <p class="ally-card__description">${description}</p>
+        
+        <div class="ally-card__benefit">
+            <div class="ally-card__benefit-icon">
+                %
+            </div>
+            <div class="ally-card__benefit-info">
+                <span class="ally-card__benefit-text">${benefitText}</span>
+            </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Provide a fallback Unsplash image based on ally category.
+ */
+function getFallbackImage(category) {
+  const images = {
+    'Carnicería': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'Carniceria': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'Restaurante': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+    'Distribuidor': 'https://images.unsplash.com/photo-1558030006-d35974213323?auto=format&fit=crop&w=800&q=80',
+    'Petshop': 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
+    'Barbería': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+    'Barberia': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+    'Wash Clean': 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?auto=format&fit=crop&w=800&q=80',
+    'Ecologico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+    'Ecológico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+    'Agencia': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+  };
+  return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
+}
+
+/**
+ * Get icon for category.
+ */
+function getCategoryIcon(category) {
+  const icons = {
+    'Carnicería': '🥩',
+    'Carniceria': '🥩',
+    'Restaurante': '🍽️',
+    'Distribuidor': '🚛',
+    'Petshop': '🐾',
+    'Barbería': '💈',
+    'Barberia': '💈',
+    'Wash Clean': '🏍️',
+    'WashClean': '🏍️',
+    'Wash clean': '🏍️',
+    'Lavado': '🏍️',
+    'Ecologico': '🌱',
+    'Ecológico': '🌱',
+    'Agencia': '💼',
+  };
+
+  if (icons[category]) return icons[category];
+
+  const norm = (category || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  if (norm.includes('wash') || norm.includes('clean') || norm.includes('moto') || norm.includes('lavad')) return '🏍️';
+  if (norm.includes('ecolog') || norm.includes('eco') || norm.includes('verde')) return '🌱';
+  if (norm.includes('agencia') || norm.includes('agency')) return '💼';
+  if (norm.includes('carn')) return '🥩';
+  if (norm.includes('restaur')) return '🍽️';
+  if (norm.includes('distrib')) return '🚛';
+  if (norm.includes('pet') || norm.includes('mascot')) return '🐾';
+  if (norm.includes('barb') || norm.includes('peluqu')) return '💈';
+
+  return '🏢';
+}
