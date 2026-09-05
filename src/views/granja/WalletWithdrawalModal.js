@@ -127,7 +127,7 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
         " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
           <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px; color:#be1260;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
               <line x1="3" y1="6" x2="21" y2="6"/>
               <path d="M16 10a4 4 0 0 1-8 0"/>
@@ -318,12 +318,9 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           </div>
 
           <!-- Info Comprar Carne (Recuadro Rosa) -->
-          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px; display:flex; flex-direction:column; gap:12px;">
+          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px;">
             <div style="font-weight:800; color:#881337; font-size:0.92rem; line-height:1.45;">
               Encuentra en nuestra Tienda combos de cerdo, res y pollo directo desde Granja Valle Morales.
-            </div>
-            <div style="color:#4c0519; font-size:0.82rem; line-height:1.45; background:rgba(255, 255, 255, 0.75); padding:12px 14px; border-radius:12px; border:1px dashed #fecdd3; font-weight:500;">
-              Enviamos con domicilio <strong>GRATIS</strong> solo en Cali y municipios cerca con costo de envío según ubicación y peso del pedido.
             </div>
           </div>
         </div>
