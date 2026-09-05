@@ -269,439 +269,411 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)';">
             <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-          </svg>
-          Solicitar Retiro
-        </button>
-      </div>
-
-      <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; font-size:0.8rem; color:#065f46; line-height:1.45;">
-        ⏱️ <strong>Tiempos de abono:</strong> Tu solicitud será revisada y abonada a tu cuenta en un plazo habitual de 1 a 24 horas hábiles.
-      </div>
-    </div>
-
-    <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-      <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Transferencias 100% seguras en Piggy App.</span>
-      </p>
-    </div>
-  `;
-};
-
-/* ─────────────────────────────────────────
-   STEP 2B — Comprar Carne en Tienda
-───────────────────────────────────────── */
-const renderStep2Consumo = () => {
-  return `
-    <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
-    <div style="padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-        <button id="retiro-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
-          ← Volver
-        </button>
-        <button id="retiro-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
-      </div>
-      
-      <div>
-        <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Comprar Carne</h2>
-        <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
-      </div>
-    </div>
-
-    <!-- Scrollable Body Content -->
-    <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; justify-content:space-between;">
-      
-      <div style="display:flex; flex-direction:column; gap:16px;">
-        <!-- Imagen de la granja (450px x 300px con bordes redondeados) -->
-        <div style="width:100%; border-radius:18px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.06); border:1px solid #f1f5f9;">
-          <img src="/banner_granja.jpg" alt="Granja Valle Morales" style="width:100%; height:auto; aspect-ratio:450/300; object-fit:cover; display:block;" onerror="this.src='banner_granja.jpg'" />
+            </svg>
+            Solicitar Retiro
+          </button>
         </div>
 
-        <!-- Info Comprar Carne (Recuadro Rosa) -->
-        <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px;">
-          <div style="font-weight:800; color:#881337; font-size:0.92rem; line-height:1.45;">
-            Encuentra en nuestra Tienda combos de cerdo, res y pollo directo desde Granja Valle Morales.
-          </div>
+        <div style="background:#f0fdf4; border:1px solid #a7f3d0; border-radius:14px; padding:14px 16px; font-size:0.8rem; color:#065f46; line-height:1.45;">
+          ⏱️ <strong>Tiempos de abono:</strong> Tu solicitud será revisada y abonada a tu cuenta en un plazo habitual de 1 a 24 horas hábiles.
         </div>
       </div>
 
-      <!-- BOTÓN PRINCIPAL (Color #be1260 mantenido) -->
-      <div style="margin-top:24px;">
-        <button id="retiro-goto-tienda" style="
-          width: 100%;
-          background: #be1260;
-          color: white;
-          border: none;
-          padding: 16px 20px;
-          border-radius: 14px;
-          font-weight: 850;
-          font-size: 1rem;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
-          transition: all 0.2s;
-        " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-          Comprar en Tienda
-        </button>
+      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Transferencias 100% seguras en Piggy App.</span>
+        </p>
       </div>
-    </div>
-
-    <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
-      <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Transferencias 100% seguras en Piggy App.</span>
-      </p>
-    </div>
-  `;
-};
-
-const attachClose = (onBack) => {
-  document.getElementById('retiro-close')?.addEventListener('click', closeSubscreen);
-  if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
-};
-
-const goToStep1 = () => {
-  subscreen.innerHTML = renderStep1();
-  attachClose(null);
-  document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
-  document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
-};
-
-const goToStep2Dinero = () => {
-  subscreen.innerHTML = renderStep2Dinero();
-  attachClose(goToStep1);
-
-  // Links a Mi Perfil (subscreen datos)
-  const handleGotoProfile = () => {
-    closeSubscreen();
-    if (onCloseAll) {
-      onCloseAll();
-    } else {
-      const d = document.getElementById('wallet-drawer-modal');
-      if (d) d.remove();
-    }
-    navigateTo('perfil');
-    setTimeout(() => {
-      window.location.hash = '#/perfil?subscreen=datos';
-    }, 50);
+    `;
   };
 
-  document.getElementById('btn-goto-profile-setup')?.addEventListener('click', handleGotoProfile);
-  document.getElementById('btn-goto-profile-edit')?.addEventListener('click', handleGotoProfile);
+  /* ─────────────────────────────────────────
+     STEP 2B — Comprar Carne en Tienda
+  ───────────────────────────────────────── */
+  const renderStep2Consumo = () => {
+    return `
+      <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
+      <div style="padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <button id="retiro-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
+            ← Volver
+          </button>
+          <button id="retiro-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+        </div>
+        
+        <div>
+          <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Comprar Carne</h2>
+          <div style="font-size:0.85rem; color:#059669; font-weight:700;">Saldo disponible: ${formatCOP(availableAmount)}</div>
+        </div>
+      </div>
 
-  // Formatting with thousands dots
-  const input = document.getElementById('retiro-amount');
-  input?.addEventListener('input', (e) => {
-    const raw = e.target.value.replace(/\D/g, '');
-    if (!raw) {
-      e.target.value = '';
-      return;
-    }
-    const num = parseInt(raw, 10);
-    e.target.value = formatThousands(num);
-  });
+      <!-- Scrollable Body Content -->
+      <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; justify-content:space-between;">
+        
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <!-- Imagen de la granja (450px x 310px con bordes redondeados) -->
+          <div style="width:100%; border-radius:18px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.06); border:1px solid #f1f5f9;">
+            <img src="/banner_granja.jpg" alt="Granja Valle Morales" style="width:100%; height:auto; aspect-ratio:450/310; object-fit:cover; display:block;" onerror="this.src='banner_granja.jpg'" />
+          </div>
 
-  // Setup the "TODO" button inside the input
-  document.getElementById('btn-todo-retiro')?.addEventListener('click', () => {
-    if (input) {
-      input.value = formatThousands(availableAmount);
-      input.dispatchEvent(new Event('input'));
-    }
-  });
+          <!-- Info Comprar Carne (Recuadro Rosa) -->
+          <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px;">
+            <div style="font-weight:850; color:#881337; font-size:1.02rem; line-height:1.3; margin-bottom:6px;">
+              ¡Encuentra en nuestra Tienda!
+            </div>
+            <div style="font-weight:600; color:#9f1239; font-size:0.86rem; line-height:1.45;">
+              Combos de cerdo, res y pollo, directo desde Granja Valle Morales.
+            </div>
+          </div>
+        </div>
 
-  document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
-    const curProfile = AppState.get('profile') || profile || {};
-    const userBank = curProfile.bank_name || '';
-    const userBreveKey = curProfile.bank_breve_key || '';
-    const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
-    const userFullName = curProfile.full_name || userName || 'Usuario';
-    const userPhoneNum = curProfile.whatsapp || curProfile.phone_number || userPhone || '';
-    const errDiv = document.getElementById('retiro-amount-error');
-    const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
+        <!-- BOTÓN PRINCIPAL (Color #be1260 mantenido) -->
+        <div style="margin-top:24px;">
+          <button id="retiro-goto-tienda" style="
+            width: 100%;
+            background: #be1260;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-weight: 850;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
+            transition: all 0.2s;
+          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+            Comprar en Tienda
+          </button>
+        </div>
+      </div>
 
-    if (!amount || amount < minAmount) {
-      errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
-      errDiv.style.display = 'block';
-      return;
-    }
-    if (amount > availableAmount) {
-      errDiv.textContent = 'El monto supera tu saldo disponible';
-      errDiv.style.display = 'block';
-      return;
-    }
-    if (!userBank || !userBreveKey) {
-      errDiv.textContent = 'Por favor registra tu banco y Llave Bre-B en Mi Perfil para continuar.';
-      errDiv.style.display = 'block';
-      return;
-    }
-    
-    const btn = document.getElementById('retiro-confirm-dinero');
-    btn.innerText = 'Procesando...';
-    btn.disabled = true;
+      <div style="padding:14px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;">
+        <p style="font-size:0.72rem; color:#94a3b8; margin:0; display:flex; align-items:center; justify-content:center; gap:5px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Transferencias 100% seguras en Piggy App.</span>
+        </p>
+      </div>
+    `;
+  };
 
-    errDiv.style.display = 'none';
-    
-    try {
-      const res = await requestBankWithdrawal({
-        amount,
-        bankName: userBank || 'Banco Registrado',
-        accountType: userAccountType,
-        breveKey: userBreveKey,
-        notes: `Retiro bancario solicitado por ${userFullName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
-      });
+  const attachClose = (onBack) => {
+    document.getElementById('retiro-close')?.addEventListener('click', closeSubscreen);
+    if (onBack) document.getElementById('retiro-back')?.addEventListener('click', onBack);
+  };
 
-      if (!res || !res.success) {
-        errDiv.textContent = res?.reason || 'Error al procesar la solicitud'; 
-        errDiv.style.display = 'block';
-        btn.innerHTML = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-        `;
-        btn.disabled = false;
+  const goToStep1 = () => {
+    subscreen.innerHTML = renderStep1();
+    attachClose(null);
+    document.getElementById('retiro-tipo-dinero')?.addEventListener('click', goToStep2Dinero);
+    document.getElementById('retiro-tipo-consumo')?.addEventListener('click', goToStep2Consumo);
+  };
+
+  const goToStep2Dinero = () => {
+    subscreen.innerHTML = renderStep2Dinero();
+    attachClose(goToStep1);
+
+    // Links a Mi Perfil (subscreen datos)
+    const handleGotoProfile = () => {
+      closeSubscreen();
+      if (onCloseAll) {
+        onCloseAll();
+      } else {
+        const d = document.getElementById('wallet-drawer-modal');
+        if (d) d.remove();
+      }
+      navigateTo('perfil');
+      setTimeout(() => {
+        window.location.hash = '#/perfil?subscreen=datos';
+      }, 50);
+    };
+
+    document.getElementById('btn-goto-profile-setup')?.addEventListener('click', handleGotoProfile);
+    document.getElementById('btn-goto-profile-edit')?.addEventListener('click', handleGotoProfile);
+
+    // Formatting with thousands dots
+    const input = document.getElementById('retiro-amount');
+    input?.addEventListener('input', (e) => {
+      const raw = e.target.value.replace(/\D/g, '');
+      if (!raw) {
+        e.target.value = '';
         return;
       }
+      const num = parseInt(raw, 10);
+      e.target.value = formatThousands(num);
+    });
 
-      // 1. Mostrar Toast de éxito inmediato
-      showToast('Solicitud enviada y saldo retenido para transferencia', { type: 'success' });
-
-      // 2. Actualizar estado visual de saldo en tiempo real
-      if (onUpdated && res.newBalance !== undefined) {
-        onUpdated(res.newBalance);
+    // Setup the "TODO" button inside the input
+    document.getElementById('btn-todo-retiro')?.addEventListener('click', () => {
+      if (input) {
+        input.value = formatThousands(availableAmount);
+        input.dispatchEvent(new Event('input'));
       }
+    });
 
-      const bankFullLabel = `${userBank} (${userAccountType})`;
-      const refFinal = res.reference || res.requestId;
+    document.getElementById('retiro-confirm-dinero')?.addEventListener('click', async () => {
+      const curProfile = AppState.get('profile') || profile || {};
+      const userBank = curProfile.bank_name || '';
+      const userBreveKey = curProfile.bank_breve_key || '';
+      const userAccountType = curProfile.bank_account_type || 'Cuenta de Ahorros';
+      const userFullName = curProfile.full_name || userName || 'Usuario';
+      const userPhoneNum = curProfile.whatsapp || curProfile.phone_number || userPhone || '';
+      const errDiv = document.getElementById('retiro-amount-error');
+      const amount = parseFormattedNumber(document.getElementById('retiro-amount')?.value);
 
-      // 3. Notificar a WhatsApp de administración
-      try {
-        notifyAdminViaWhatsApp('withdrawal', amount, userFullName, userPhoneNum, bankFullLabel, refFinal, userBreveKey);
-      } catch (waErr) {
-        console.warn('Advertencia al abrir WhatsApp:', waErr);
+      if (!amount || amount < minAmount) {
+        errDiv.textContent = 'El monto mínimo es ' + formatCOP(minAmount);
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (amount > availableAmount) {
+        errDiv.textContent = 'El monto supera tu saldo disponible';
+        errDiv.style.display = 'block';
+        return;
+      }
+      if (!userBank || !userBreveKey) {
+        errDiv.textContent = 'Por favor registra tu banco y Llave Bre-B en Mi Perfil para continuar.';
+        errDiv.style.display = 'block';
+        return;
       }
       
-      // 4. Cerrar subscreen y abrir recibo de confirmación
+      const btn = document.getElementById('retiro-confirm-dinero');
+      btn.innerText = 'Procesando...';
+      btn.disabled = true;
+
+      errDiv.style.display = 'none';
+      
+      try {
+        const res = await requestBankWithdrawal({
+          amount,
+          bankName: userBank || 'Banco Registrado',
+          accountType: userAccountType,
+          breveKey: userBreveKey,
+          notes: `Retiro bancario solicitado por ${userFullName} (${userAccountType}: ${userBank} - Bre-B: ${userBreveKey})`
+        });
+
+        if (!res || !res.success) {
+          errDiv.textContent = res?.reason || 'Error al procesar la solicitud'; 
+          errDiv.style.display = 'block';
+          btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
+          </svg>
+          Solicitar Retiro
+        `;
+        btn.disabled = false;
+      }
+    });
+  };
+
+  const goToStep2Consumo = () => {
+    subscreen.innerHTML = renderStep2Consumo();
+    attachClose(goToStep1);
+
+    document.getElementById('retiro-goto-tienda')?.addEventListener('click', () => {
       closeSubscreen();
-      showWalletRequestSuccess('withdrawal', amount, bankFullLabel, refFinal, onUpdated, userFullName, userPhoneNum, userBreveKey);
-    } catch (err) {
-      console.error('Error procesando retiro:', err);
-      errDiv.textContent = 'Ocurrió un error inesperado al procesar el retiro: ' + (err.message || err);
-      errDiv.style.display = 'block';
-      btn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-      `;
-      btn.disabled = false;
-    }
-  });
-};
+      if (onCloseAll) {
+        onCloseAll();
+      } else {
+        const drawer = document.getElementById('wallet-drawer-modal');
+        if (drawer) drawer.remove();
+      }
+      navigateTo('gourmet');
+    });
+  };
 
-const goToStep2Consumo = () => {
-  subscreen.innerHTML = renderStep2Consumo();
-  attachClose(goToStep1);
-
-  document.getElementById('retiro-goto-tienda')?.addEventListener('click', () => {
-    closeSubscreen();
-    if (onCloseAll) {
-      onCloseAll();
-    } else {
-      const drawer = document.getElementById('wallet-drawer-modal');
-      if (drawer) drawer.remove();
-    }
-    navigateTo('gourmet');
-  });
-};
-
-// Immediate synchronous render for instantaneous 0ms transition
-goToStep1();
+  // Immediate synchronous render for instantaneous 0ms transition
+  goToStep1();
 }
 
 /**
-* Show success confirmation after wallet request.
-*/
+ * Show success confirmation after wallet request.
+ */
 export function showWalletRequestSuccess(requestType, amount, bank, requestId, onUpdated = null, userName = '', userPhone = '', userBreveKey = '') {
-const isWithdrawal = requestType === 'withdrawal';
-const modal = document.createElement('div');
-modal.id = 'wallet-success-modal';
-modal.style.position = 'fixed';
-modal.style.inset = '0';
-modal.style.background = 'rgba(15, 23, 42, 0.7)';
-modal.style.backdropFilter = 'blur(8px)';
-modal.style.webkitBackdropFilter = 'blur(8px)';
-modal.style.zIndex = '999999';
-modal.style.display = 'flex';
-modal.style.alignItems = 'center';
-modal.style.justifyContent = 'center';
-modal.style.padding = '20px';
+  const isWithdrawal = requestType === 'withdrawal';
+  const modal = document.createElement('div');
+  modal.id = 'wallet-success-modal';
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.background = 'rgba(15, 23, 42, 0.7)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
+  modal.style.zIndex = '999999';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '20px';
 
-const refCode = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
-const typeLabel = isWithdrawal ? '💰 RETIRO' : '🥩 CONSUMO';
-const waText = encodeURIComponent(
-  `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
-  `👤 *Usuario:* ${userName || 'Usuario'}\n` +
-  `📱 *WhatsApp:* ${userPhone || 'No registrado'}\n` +
-  `💵 *Monto:* ${formatCOP(amount)}\n` +
-  `🏦 *Banco:* ${bank}\n` +
-  (userBreveKey ? `⚡ *Llave Bre-B:* ${userBreveKey}\n` : '') +
-  `🎫 *ID Solicitud:* #${refCode}\n` +
-  `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-  `Hola, confirmo mi solicitud de retiro en Piggy App.`
-);
+  const refCode = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
+  const typeLabel = isWithdrawal ? '💰 RETIRO' : '🥩 CONSUMO';
+  const waText = encodeURIComponent(
+    `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
+    `👤 *Usuario:* ${userName || 'Usuario'}\n` +
+    `📱 *WhatsApp:* ${userPhone || 'No registrado'}\n` +
+    `💵 *Monto:* ${formatCOP(amount)}\n` +
+    `🏦 *Banco:* ${bank}\n` +
+    (userBreveKey ? `⚡ *Llave Bre-B:* ${userBreveKey}\n` : '') +
+    `🎫 *ID Solicitud:* #${refCode}\n` +
+    `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+    `Hola, confirmo mi solicitud de retiro en Piggy App.`
+  );
 
-modal.innerHTML = `
-  <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-    <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
-      <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      </div>
-      <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:#0f172a;">¡Solicitud Enviada!</h3>
-      <p style="margin:0; font-size:0.85rem; color:#64748b;">Tu solicitud de retiro fue registrada exitosamente</p>
-    </div>
-
-    <div style="padding:24px;">
-      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:18px; font-size:0.85rem; color:#334155;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-          <span style="color:#64748b;">Referencia:</span>
-          <strong style="color:#0f172a; font-family:monospace;">#${refCode}</strong>
+  modal.innerHTML = `
+    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
+      <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
+        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-          <span style="color:#64748b;">Monto:</span>
-          <strong style="color:#059669; font-size:0.95rem;">${formatCOP(amount)}</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-          <span style="color:#64748b;">Destino:</span>
-          <strong style="color:#0f172a;">${bank}</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-          <span style="color:#64748b;">Estado:</span>
-          <span style="background:#fef3c7; color:#d97706; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">En Revisión</span>
-        </div>
+        <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:#0f172a;">¡Solicitud Enviada!</h3>
+        <p style="margin:0; font-size:0.85rem; color:#64748b;">Tu solicitud de retiro fue registrada exitosamente</p>
       </div>
 
-      <p style="font-size:0.82rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
-        Tu solicitud fue registrada en el sistema y tu saldo ha sido retenido para la transferencia bancaria.
-      </p>
+      <div style="padding:24px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:18px; font-size:0.85rem; color:#334155;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+            <span style="color:#64748b;">Referencia:</span>
+            <strong style="color:#0f172a; font-family:monospace;">#${refCode}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+            <span style="color:#64748b;">Monto:</span>
+            <strong style="color:#059669; font-size:0.95rem;">${formatCOP(amount)}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+            <span style="color:#64748b;">Destino:</span>
+            <strong style="color:#0f172a;">${bank}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#64748b;">Estado:</span>
+            <span style="background:#fef3c7; color:#d97706; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">En Revisión</span>
+          </div>
+        </div>
 
-      <button id="btn-close-success-modal" style="
-        width:100%; background:#BE1260; color:white; border:none; padding:15px;
-        border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-        box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
-      " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
-        Entendido
-      </button>
+        <p style="font-size:0.82rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
+          Tu solicitud fue registrada en el sistema y tu saldo ha sido retenido para la transferencia bancaria.
+        </p>
+
+        <button id="btn-close-success-modal" style="
+          width:100%; background:#BE1260; color:white; border:none; padding:15px;
+          border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+          box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
+        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
+          Entendido
+        </button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
-document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-const closeReceipt = () => {
-  modal.remove();
-  if (onUpdated) {
-    openWalletDrawer();
-  }
-};
+  const closeReceipt = () => {
+    modal.remove();
+    if (onUpdated) {
+      openWalletDrawer();
+    }
+  };
 
-document.getElementById('btn-close-success-modal')?.addEventListener('click', closeReceipt);
-modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
+  document.getElementById('btn-close-success-modal')?.addEventListener('click', closeReceipt);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
 }
 
 /**
-* Show success confirmation after instant consumption bonus conversion.
-*/
+ * Show success confirmation after instant consumption bonus conversion.
+ */
 export function showConsumptionConversionSuccess(amount, onUpdated = null) {
-const modal = document.createElement('div');
-modal.id = 'consumption-success-modal';
-modal.style.position = 'fixed';
-modal.style.inset = '0';
-modal.style.background = 'rgba(15, 23, 42, 0.7)';
-modal.style.backdropFilter = 'blur(8px)';
-modal.style.webkitBackdropFilter = 'blur(8px)';
-modal.style.zIndex = '999999';
-modal.style.display = 'flex';
-modal.style.alignItems = 'center';
-modal.style.justifyContent = 'center';
-modal.style.padding = '20px';
+  const modal = document.createElement('div');
+  modal.id = 'consumption-success-modal';
+  modal.style.position = 'fixed';
+  modal.style.inset = '0';
+  modal.style.background = 'rgba(15, 23, 42, 0.7)';
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.webkitBackdropFilter = 'blur(8px)';
+  modal.style.zIndex = '999999';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.padding = '20px';
 
-modal.innerHTML = `
-  <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-    <div style="background:linear-gradient(135deg, #be1260 0%, #9f1239 100%); padding:28px 24px; text-align:center; color:white;">
-      <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#be1260;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-          <path d="M13 5v2"/>
-          <path d="M13 17v2"/>
-          <path d="M13 11v2"/>
-        </svg>
-      </div>
-      <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:white;">¡Canje Exitoso!</h3>
-      <p style="margin:0; font-size:0.85rem; opacity:0.9;">Tus bonos ya están listos para usar</p>
-    </div>
-
-    <div style="padding:24px;">
-      <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:14px; padding:16px; margin-bottom:20px; font-size:0.85rem; color:#881337;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
-          <span style="color:#9f1239;">Monto Canjeado:</span>
-          <strong style="color:#be1260; font-size:1rem;">${formatCOP(amount)}</strong>
+  modal.innerHTML = `
+    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
+      <div style="background:linear-gradient(135deg, #be1260 0%, #9f1239 100%); padding:28px 24px; text-align:center; color:white;">
+        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); color:#be1260;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+            <path d="M13 5v2"/>
+            <path d="M13 17v2"/>
+            <path d="M13 11v2"/>
+          </svg>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
-          <span style="color:#9f1239;">Destino:</span>
-          <strong style="color:#881337;">Bonos de Consumo</strong>
-        </div>
-        <div style="display:flex; justify-content:space-between;">
-          <span style="color:#9f1239;">Disponibilidad:</span>
-          <span style="background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">Inmediata</span>
-        </div>
+        <h3 style="margin:0 0 4px 0; font-size:1.4rem; font-weight:800; color:white;">¡Canje Exitoso!</h3>
+        <p style="margin:0; font-size:0.85rem; opacity:0.9;">Tus bonos ya están listos para usar</p>
       </div>
 
-      <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 20px 0; text-align:center;">
-        Tu saldo en Bonos de Consumo se ha acreditado. Ya puedes redimirlo en productos gourmet de la tienda.
-      </p>
+      <div style="padding:24px;">
+        <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:14px; padding:16px; margin-bottom:20px; font-size:0.85rem; color:#881337;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
+            <span style="color:#9f1239;">Monto Canjeado:</span>
+            <strong style="color:#be1260; font-size:1rem;">${formatCOP(amount)}</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #fecdd3; padding-bottom:8px;">
+            <span style="color:#9f1239;">Destino:</span>
+            <strong style="color:#881337;">Bonos de Consumo</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#9f1239;">Disponibilidad:</span>
+            <span style="background:#dcfce7; color:#15803d; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">Inmediata</span>
+          </div>
+        </div>
 
-      <button id="btn-close-consumo-success" style="
-        width:100%; background:#be1260; color:white; border:none; padding:14px;
-        border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer;
-        box-shadow:0 4px 12px rgba(190, 18, 96, 0.2); transition:all 0.2s;
-      " onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
-        Entendido
-      </button>
+        <p style="font-size:0.8rem; color:#64748b; line-height:1.4; margin:0 0 20px 0; text-align:center;">
+          Tu saldo en Bonos de Consumo se ha acreditado. Ya puedes redimirlo en productos gourmet de la tienda.
+        </p>
+
+        <button id="btn-close-consumo-success" style="
+          width:100%; background:#be1260; color:white; border:none; padding:14px;
+          border-radius:12px; font-weight:700; font-size:0.95rem; cursor:pointer;
+          box-shadow:0 4px 12px rgba(190, 18, 96, 0.2); transition:all 0.2s;
+        " onmouseover="this.style.opacity='0.95'" onmouseout="this.style.opacity='1'">
+          Entendido
+        </button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
-document.body.appendChild(modal);
+  document.body.appendChild(modal);
 
-const closeReceipt = () => {
-  modal.remove();
-  if (onUpdated) {
-    openWalletDrawer();
-  }
-};
+  const closeReceipt = () => {
+    modal.remove();
+    if (onUpdated) {
+      openWalletDrawer();
+    }
+  };
 
-document.getElementById('btn-close-consumo-success')?.addEventListener('click', closeReceipt);
-modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
+  document.getElementById('btn-close-consumo-success')?.addEventListener('click', closeReceipt);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
 }
 
 /**
-* Backwards compatible standalone opener: opens wallet drawer with withdrawal subscreen pre-selected.
-*/
+ * Backwards compatible standalone opener: opens wallet drawer with withdrawal subscreen pre-selected.
+ */
 export async function showRetiroSaldoModal(availableAmount) {
-const existingDrawer = document.getElementById('wallet-drawer-modal');
-if (existingDrawer) {
-  const subContainer = document.getElementById('wallet-subscreen-container');
-  if (subContainer) {
-    openWalletWithdrawalSubscreen(subContainer, availableAmount);
-    return;
+  const existingDrawer = document.getElementById('wallet-drawer-modal');
+  if (existingDrawer) {
+    const subContainer = document.getElementById('wallet-subscreen-container');
+    if (subContainer) {
+      openWalletWithdrawalSubscreen(subContainer, availableAmount);
+      return;
+    }
   }
-}
-openWalletDrawer(false, true);
+  openWalletDrawer(false, true);
 }
