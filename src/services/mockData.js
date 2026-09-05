@@ -256,7 +256,7 @@ export const MOCK_MISSIONS = [
         id: 'm2',
         title: 'Compra tu primer Piggy',
         reward: 'Desbloquea Piggy de 3 meses',
-        is_completed: true,
+        is_completed: true, // Simulado completado para ver progreso
         icon: '🐷',
         cta: '#/mercado'
     },
@@ -295,7 +295,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm7',
         title: 'Activa tu 3er Piggy',
-        reward: 'Mantén 10% Margen Comercial',
+        reward: 'Mant&eacute;n 10% Margen Comercial',
         is_completed: false,
         icon: '&#128048;',
         cta: '#/mercado'
@@ -311,7 +311,7 @@ export const MOCK_MISSIONS = [
     {
         id: 'm9',
         title: 'Refiere y logra una compra',
-        reward: 'Obtén $20.000 en tu Wallet',
+        reward: 'Obt&eacute;n $20.000 en tu Wallet',
         is_completed: false,
         icon: '&#129309;',
         cta: null
@@ -381,16 +381,6 @@ export function formatPercentage(value) {
     const num = Number(value);
     if (value === undefined || value === null || isNaN(num)) return '12%';
     return `${(num * 100).toFixed(0)}%`;
-}
-
-/** Format percent alias */
-export function formatPercent(value) {
-    return formatPercentage(value);
-}
-
-/** Format rate alias */
-export function formatRate(value) {
-    return formatPercentage(value);
 }
 
 /**
