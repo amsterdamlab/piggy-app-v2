@@ -146,11 +146,11 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
             <!-- Preventa / Diferencial Grid -->
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:14px; text-align:center;">
-                  <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Valor de Compra Piggys</div>
+                  <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Total Valor Piggys</div>
                   <div style="font-size:0.98rem; font-weight:800; color:#0f172a;">${safeStats.adquisicionBonosFormatted}</div>
                </div>
                <div style="background:#f8fafc; border: 1px solid #e2e8f0; padding:14px; border-radius:14px; text-align:center;">
-                  <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Valor Referencia en Mercado</div>
+                  <div style="font-size:0.7rem; color:#64748b; margin-bottom:4px; font-weight:600;">Total Beneficio</div>
                   <div style="font-size:0.98rem; font-weight:800; color:#059669;">+${safeStats.diferencialPreventaFormatted}</div>
                </div>
             </div>

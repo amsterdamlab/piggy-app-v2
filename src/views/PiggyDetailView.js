@@ -168,11 +168,11 @@ async function loadPiggyDetail(piggyId) {
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Valor Referencia en Mercado</span>
+                <span class="font-semibold">Total Beneficio</span>
                 <span class="font-bold" style="font-size:var(--text-lg);">${formatCOP(gain)}</span>
               </div>
               <div class="piggy-detail__finance-row">
-                <span class="font-semibold">Total Beneficio</span>
+                <span class="font-semibold">Total a Liquidar</span>
                 <span class="font-bold text-primary" style="font-size:var(--text-lg); color: #E91E63;">${formatCOP(projectedReturn)}</span>
               </div>
             </div>

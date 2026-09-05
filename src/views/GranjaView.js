@@ -268,18 +268,18 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
             " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
                 <div style="
                     background: white; 
-                    color: #ec4899;
+                    color: #ec4899; 
                     width: 20px; 
                     height: 20px; 
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center;
-                    font-size: 16px;
-                    font-weight: 800;
-                    padding-bottom: 2px;
-                    position: relative;
-                    z-index: 1;
+                    justify-content: center; 
+                    font-size: 16px; 
+                    font-weight: 800; 
+                    padding-bottom: 2px; 
+                    position: relative; 
+                    z-index: 1; 
                     flex-shrink: 0;
                 ">+</div>
                 <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
@@ -417,18 +417,18 @@ function renderEmptyPiggies() {
       " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" onclick="location.hash='#/mercado'">
           <div style="
               background: white; 
-              color: #ec4899;
+              color: #ec4899; 
               width: 19px; 
               height: 19px; 
               border-radius: 50%; 
               display: flex; 
               align-items: center; 
-              justify-content: center;
-              font-size: 15px;
-              font-weight: 800;
-              padding-bottom: 2px;
-              position: relative;
-              z-index: 1;
+              justify-content: center; 
+              font-size: 15px; 
+              font-weight: 800; 
+              padding-bottom: 2px; 
+              position: relative; 
+              z-index: 1; 
               flex-shrink: 0;
           ">+</div>
           <span style="position: relative; z-index: 1; white-space: nowrap;">Compra un Nuevo Piggy</span>
@@ -501,7 +501,7 @@ export function renderPiggyCard(piggy, baseROI) {
         </div>
         <div style="text-align: right;">
           <div class="font-semibold text-primary" style="font-size: 0.95rem; font-weight: 800; color: #E91E63;">
-            <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TB:</span> ${formatCOP(projectedReturn)}
+            <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TL:</span> ${formatCOP(projectedReturn)}
           </div>
           ${extraRoi > 0 ? `<div class="text-xs" style="font-size: 10px; color: #b45309; margin-top: 2px; font-weight: 700;">Beneficio x Venta: +${(extraRoi * 100).toFixed(0)}%</div>` : ''}
         </div>
