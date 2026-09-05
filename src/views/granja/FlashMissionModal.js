@@ -342,7 +342,7 @@ export function showFlashMissionModal(mission) {
                 </div>
 
                 <!-- Icon + Name -->
-                <div style="font-size:56px; margin-bottom:8px;">${theme.icon}</div>
+                <img src="/piggy-icon.png" alt="Piggy" style="width: 58px; height: 58px; margin: 0 auto 10px auto; display: block; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));" onerror="this.onerror=null; this.src='/piggy-loading-logo.png';" />
                 <h2 style="margin:0 0 6px; font-size:1.5rem; font-weight:900;">${piggyLabel}</h2>
                 <p style="margin:0; font-size:0.85rem; opacity:0.92; line-height:1.4;">
                     ${descriptionText}
@@ -375,9 +375,15 @@ export function showFlashMissionModal(mission) {
                     background: linear-gradient(135deg, #fffbeb, #fef3c7);
                     border: 1px solid #fde68a; border-radius: 12px;
                     padding: 10px 16px; margin-bottom: 20px;
-                    display: flex; align-items: center; gap: 10px;
+                    display: flex; align-items: center; gap: 12px;
                 ">
-                    <span style="font-size:22px;">${theme.bonusIcon}</span>
+                    <span style="display: inline-flex; align-items: center; justify-content: center; color: #b45309; flex-shrink: 0;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/>
+                            <path d="M2 9v1c0 1.1.9 2 2 2h1"/>
+                            <path d="M16 11h.01"/>
+                        </svg>
+                    </span>
                     <div>
                         <div style="font-weight:700; color:#92400e; font-size:0.85rem;">${benefitTitle}</div>
                         <div style="font-size:0.75rem; color:#b45309;">${benefitSub}</div>
@@ -482,7 +488,8 @@ export function showFlashMissionModal(mission) {
                         opacity: 0.5; pointer-events: none;
                         display: flex; align-items: center; justify-content: center; gap: 8px;
                     ">
-                        ${theme.icon} Comprar ${piggyLabel}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+                        <span>Comprar ${piggyLabel}</span>
                     </button>
                 </div>
 
@@ -630,7 +637,7 @@ export function showFlashMissionModal(mission) {
             alert('Error en la transacción: ' + error.message);
             isBuying = false;
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = `${theme.icon} Comprar ${piggyLabel}`;
+            confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg><span>Comprar ${piggyLabel}</span>`;
             confirmBtn.style.pointerEvents = 'auto';
         }
     });

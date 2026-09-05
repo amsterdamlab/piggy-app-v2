@@ -551,7 +551,7 @@ function renderFlashMissionBanner(mission) {
 
                 <div style="margin-top:14px;">
                     <span style="background:white; color:${t.btnColor}; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                        Ver Oferta ${t.icon}
+                        Ver Oferta
                     </span>
                 </div>
 
@@ -792,15 +792,10 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Standard router link navigation (e.g. #/gourmet, #/mercado)
+        // ── Standard navigation route
         if (ctaUrl && ctaUrl.startsWith('#/')) {
-            const [route, queryStr] = ctaUrl.slice(2).split('?');
-            navigateTo(route);
+            navigateTo(ctaUrl.replace('#/', ''));
             return;
-        }
-
-        if (ctaUrl && !ctaUrl.startsWith('#')) {
-            navigateTo(ctaUrl);
         }
     });
 }
