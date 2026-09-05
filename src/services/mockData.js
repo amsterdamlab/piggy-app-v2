@@ -383,6 +383,19 @@ export function formatPercentage(value) {
     return `${(num * 100).toFixed(0)}%`;
 }
 
+/** Format percent alias (e.g. 15 -> '15%' or 0.15 -> '15%') */
+export function formatPercent(value) {
+    const num = Number(value);
+    if (value === undefined || value === null || isNaN(num)) return '0%';
+    if (num > 0 && num <= 1) return `${(num * 100).toFixed(0)}%`;
+    return `${num}%`;
+}
+
+/** Format rate alias */
+export function formatRate(value) {
+    return formatPercent(value);
+}
+
 /**
  * Returns a target final weight within the defined category range:
  * - Estándar / Avanzados: 80.0 kg - 90.0 kg
