@@ -562,4 +562,13 @@ function renderSuccessScreen({ piggyName, contractUrl, hash, userName, userCedul
             const tempLink = document.createElement('a');
             tempLink.href = blobUrl;
             tempLink.download = `Contrato_Piggy_${piggyName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-            document.body.appendChild(tempLink);\n            tempLink.click();\n            document.body.removeChild(tempLink);\n            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);\n        } catch (err) {\n            console.warn('Error downloading contract blob directly:', err);\n            window.open(contractUrl, '_blank');\n        }\n    });\n}\n
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        } catch (err) {
+            console.warn('Error downloading contract blob directly:', err);
+            window.open(contractUrl, '_blank');
+        }
+    });
+}
