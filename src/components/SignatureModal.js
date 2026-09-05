@@ -1,1 +1,271 @@
-/* ============================================\n   PIGGY APP — Signature Modal Component\n   Responsive HTML5 Canvas for touch & mouse signatures\n   ============================================ */\n\nimport { renderIcon } from '../icons.js';\n\n/**\n * Open the Signature Pad Modal.\n * @param {Object} options\n * @param {string} options.userName - Name to display\n * @param {string} options.userCedula - ID to display\n * @param {Function} options.onConfirm - Callback with signature PNG data URL\n * @param {Function} [options.onCancel] - Callback when user cancels\n */\nexport function openSignatureModal({ userName, userCedula, onConfirm, onCancel }) {\n    const existing = document.getElementById('signature-modal');\n    if (existing) existing.remove();\n\n    const modal = document.createElement('div');\n    modal.id = 'signature-modal';\n    modal.className = 'modal-overlay animate-fade-in';\n    modal.style.zIndex = '10000';\n\n    modal.innerHTML = `\n        <div class=\"modal signature-modal-card animate-scale-in\" style=\"\n            max-width: 480px;\n            width: 92%;\n            background: #ffffff;\n            border-radius: 20px;\n            overflow: hidden;\n            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);\n            display: flex;\n            flex-direction: column;\n            position: relative;\n            padding: 24px 20px 20px 20px;\n            box-sizing: border-box;\n        \">\n            <!-- Close Button (No background circle, top-right) -->\n            <button id=\"btn-close-signature\" style=\"\n                position: absolute;\n                top: 14px;\n                right: 14px;\n                background: none;\n                border: none;\n                cursor: pointer;\n                color: #64748b;\n                padding: 6px;\n                display: flex;\n                align-items: center;\n                justify-content: center;\n                transition: color 0.2s;\n                z-index: 10;\n            \" onmouseover=\"this.style.color='#0f172a';\" onmouseout=\"this.style.color='#64748b';\">\n                ${renderIcon('close', '', '20')}\n            </button>\n\n            <!-- Buyer Info with Icons (Dark Gray) - with extra top margin for clean spacing -->\n            <div style=\"\n                margin-top: 22px;\n                margin-bottom: 14px;\n                background: #f8fafc;\n                border: 1px solid #e2e8f0;\n                border-radius: 12px;\n                padding: 12px 16px;\n                display: flex;\n                flex-direction: column;\n                gap: 8px;\n                width: 100%;\n                box-sizing: border-box;\n            \">\n                <div style=\"display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;\">\n                    <span style=\"color: #475569; display: flex; align-items: center; flex-shrink: 0;\">${renderIcon('user', '', '18')}</span>\n                    <span style=\"word-break: break-word;\">${userName}</span>\n                </div>\n                <div style=\"display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;\">\n                    <span style=\"color: #475569; display: flex; align-items: center; flex-shrink: 0;\">${renderIcon('documentText', '', '18')}</span>\n                    <span style=\"word-break: break-word;\">${userCedula}</span>\n                </div>\n            </div>\n\n            <!-- Canvas Box with Clear Button inside (bottom-right) -->\n            <div style=\"\n                position: relative;\n                border: 2px dashed #cbd5e1;\n                border-radius: 14px;\n                background: #ffffff;\n                touch-action: none;\n                user-select: none;\n                margin-bottom: 18px;\n                width: 100%;\n                box-sizing: border-box;\n            \">\n                <canvas id=\"signature-canvas\" style=\"\n                    width: 100%;\n                    height: 180px;\n                    display: block;\n                    cursor: crosshair;\n                    border-radius: 12px;\n                \"></canvas>\n                \n                <div id=\"canvas-placeholder\" style=\"\n                    position: absolute;\n                    top: 50%;\n                    left: 50%;\n                    transform: translate(-50%, -50%);\n                    color: #94a3b8;\n                    font-size: 0.85rem;\n                    pointer-events: none;\n                    font-weight: 500;\n                    display: flex;\n                    align-items: center;\n                    gap: 6px;\n                \">\n                    <span>🖊️</span> Dibuja aquí con tu dedo o mouse\n                </div>\n\n                <!-- Clear Button (Trash icon only, inside bottom-right) -->\n                <button type=\"button\" id=\"btn-clear-canvas\" title=\"Limpiar firma\" style=\"\n                    position: absolute;\n                    bottom: 10px;\n                    right: 10px;\n                    background: #f1f5f9;\n                    color: #64748b;\n                    border: 1px solid #e2e8f0;\n                    width: 34px;\n                    height: 34px;\n                    border-radius: 8px;\n                    cursor: pointer;\n                    display: flex;\n                    align-items: center;\n                    justify-content: center;\n                    transition: all 0.2s;\n                    box-shadow: 0 1px 3px rgba(0,0,0,0.06);\n                    z-index: 5;\n                \" onmouseover=\"this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';\" onmouseout=\"this.style.background='#f1f5f9'; this.style.color='#64748b'; this.style.borderColor='#e2e8f0';\">\n                    <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"></polyline><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"></path><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"></line><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"></line></svg>\n                </button>\n            </div>\n\n            <!-- Confirm Button -->\n            <button type=\"button\" id=\"btn-accept-signature\" style=\"\n                width: 100%;\n                background: linear-gradient(135deg, #10B981, #059669);\n                color: white;\n                border: none;\n                padding: 14px 20px;\n                border-radius: 12px;\n                font-weight: 800;\n                font-size: 0.95rem;\n                cursor: pointer;\n                display: flex;\n                align-items: center;\n                justify-content: center;\n                gap: 8px;\n                box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);\n                transition: all 0.2s;\n            \">\n                <span>✓ Aplicar Firma</span>\n            </button>\n        </div>\n    `;\n\n    document.body.appendChild(modal);\n\n    const canvas = document.getElementById('signature-canvas');\n    const placeholder = document.getElementById('canvas-placeholder');\n    const clearBtn = document.getElementById('btn-clear-canvas');\n    const closeBtn = document.getElementById('btn-close-signature');\n    const acceptBtn = document.getElementById('btn-accept-signature');\n\n    const ctx = canvas.getContext('2d');\n    let isDrawing = false;\n    let hasDrawn = false;\n\n    // Resize canvas to its real display size\n    function resizeCanvas() {\n        const rect = canvas.getBoundingClientRect();\n        const dpr = window.devicePixelRatio || 1;\n        canvas.width = rect.width * dpr;\n        canvas.height = rect.height * dpr;\n        ctx.scale(dpr, dpr);\n        ctx.lineCap = 'round';\n        ctx.lineJoin = 'round';\n        ctx.lineWidth = 2.5;\n        ctx.strokeStyle = '#111827';\n    }\n\n    // Initialize resolution\n    setTimeout(resizeCanvas, 50);\n\n    function getCoords(e) {\n        const rect = canvas.getBoundingClientRect();\n        const clientX = e.touches ? e.touches[0].clientX : e.clientX;\n        const clientY = e.touches ? e.touches[0].clientY : e.clientY;\n        return {\n            x: clientX - rect.left,\n            y: clientY - rect.top\n        };\n    }\n\n    function startDrawing(e) {\n        e.preventDefault();\n        isDrawing = true;\n        hasDrawn = true;\n        if (placeholder) placeholder.style.display = 'none';\n        const coords = getCoords(e);\n        ctx.beginPath();\n        ctx.moveTo(coords.x, coords.y);\n    }\n\n    function draw(e) {\n        if (!isDrawing) return;\n        e.preventDefault();\n        const coords = getCoords(e);\n        ctx.lineTo(coords.x, coords.y);\n        ctx.stroke();\n    }\n\n    function stopDrawing(e) {\n        if (isDrawing) {\n            e?.preventDefault();\n            isDrawing = false;\n            ctx.closePath();\n        }\n    }\n\n    // Touch events for mobile\n    canvas.addEventListener('touchstart', startDrawing, { passive: false });\n    canvas.addEventListener('touchmove', draw, { passive: false });\n    canvas.addEventListener('touchend', stopDrawing, { passive: false });\n\n    // Mouse events for desktop\n    canvas.addEventListener('mousedown', startDrawing);\n    canvas.addEventListener('mousemove', draw);\n    canvas.addEventListener('mouseup', stopDrawing);\n    canvas.addEventListener('mouseleave', stopDrawing);\n\n    // Clear\n    clearBtn.addEventListener('click', (e) => {\n        e.stopPropagation();\n        const rect = canvas.getBoundingClientRect();\n        ctx.clearRect(0, 0, rect.width, rect.height);\n        hasDrawn = false;\n        if (placeholder) placeholder.style.display = 'flex';\n    });\n\n    // Close\n    const close = () => {\n        modal.remove();\n        if (onCancel) onCancel();\n    };\n\n    closeBtn.addEventListener('click', close);\n    modal.addEventListener('click', (e) => {\n        if (e.target === modal) close();\n    });\n\n    // Accept\n    acceptBtn.addEventListener('click', () => {\n        if (!hasDrawn) {\n            alert('Por favor dibuja tu firma en el recuadro antes de continuar.');\n            return;\n        }\n\n        // Export as PNG\n        const signatureDataUrl = canvas.toDataURL('image/png');\n        modal.remove();\n        if (onConfirm) onConfirm(signatureDataUrl);\n    });\n}\n
+/* ============================================
+   PIGGY APP — Signature Modal Component
+   Responsive HTML5 Canvas for touch & mouse signatures
+   ============================================ */
+
+import { renderIcon } from '../icons.js';
+
+/**
+ * Open the Signature Pad Modal.
+ * @param {Object} options
+ * @param {string} options.userName - Name to display
+ * @param {string} options.userCedula - ID to display
+ * @param {Function} options.onConfirm - Callback with signature PNG data URL
+ * @param {Function} [options.onCancel] - Callback when user cancels
+ */
+export function openSignatureModal({ userName, userCedula, onConfirm, onCancel }) {
+    const existing = document.getElementById('signature-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'signature-modal';
+    modal.className = 'modal-overlay animate-fade-in';
+    modal.style.zIndex = '10000';
+
+    modal.innerHTML = `
+        <div class="modal signature-modal-card animate-scale-in" style="
+            max-width: 480px;
+            width: 92%;
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding: 24px 20px 20px 20px;
+            box-sizing: border-box;
+        ">
+            <!-- Close Button (No background circle, top-right) -->
+            <button id="btn-close-signature" style="
+                position: absolute;
+                top: 14px;
+                right: 14px;
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #64748b;
+                padding: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.2s;
+                z-index: 10;
+            " onmouseover="this.style.color='#0f172a';" onmouseout="this.style.color='#64748b';">
+                ${renderIcon('close', '', '20')}
+            </button>
+
+            <!-- Buyer Info with Icons (Dark Gray) - with extra top margin for clean spacing -->
+            <div style="
+                margin-top: 22px;
+                margin-bottom: 14px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 12px 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                box-sizing: border-box;
+            ">
+                <div style="display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;">
+                    <span style="color: #475569; display: flex; align-items: center; flex-shrink: 0;">${renderIcon('user', '', '18')}</span>
+                    <span style="word-break: break-word;">${userName}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; color: #334155; font-size: 0.9rem; font-weight: 600;">
+                    <span style="color: #475569; display: flex; align-items: center; flex-shrink: 0;">${renderIcon('documentText', '', '18')}</span>
+                    <span style="word-break: break-word;">${userCedula}</span>
+                </div>
+            </div>
+
+            <!-- Canvas Box with Clear Button inside (bottom-right) -->
+            <div style="
+                position: relative;
+                border: 2px dashed #cbd5e1;
+                border-radius: 14px;
+                background: #ffffff;
+                touch-action: none;
+                user-select: none;
+                margin-bottom: 18px;
+                width: 100%;
+                box-sizing: border-box;
+            ">
+                <canvas id="signature-canvas" style="
+                    width: 100%;
+                    height: 180px;
+                    display: block;
+                    cursor: crosshair;
+                    border-radius: 12px;
+                "></canvas>
+                
+                <div id="canvas-placeholder" style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: #94a3b8;
+                    font-size: 0.85rem;
+                    pointer-events: none;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                ">
+                    <span>🖊️</span> Dibuja aquí con tu dedo o mouse
+                </div>
+
+                <!-- Clear Button (Trash icon only, inside bottom-right) -->
+                <button type="button" id="btn-clear-canvas" title="Limpiar firma" style="
+                    position: absolute;
+                    bottom: 10px;
+                    right: 10px;
+                    background: #f1f5f9;
+                    color: #64748b;
+                    border: 1px solid #e2e8f0;
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+                    z-index: 5;
+                " onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'; this.style.borderColor='#fca5a5';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b'; this.style.borderColor='#e2e8f0';">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+            </div>
+
+            <!-- Confirm Button -->
+            <button type="button" id="btn-accept-signature" style="
+                width: 100%;
+                background: linear-gradient(135deg, #10B981, #059669);
+                color: white;
+                border: none;
+                padding: 14px 20px;
+                border-radius: 12px;
+                font-weight: 800;
+                font-size: 0.95rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+                transition: all 0.2s;
+            ">
+                <span>✓ Aplicar Firma</span>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const canvas = document.getElementById('signature-canvas');
+    const placeholder = document.getElementById('canvas-placeholder');
+    const clearBtn = document.getElementById('btn-clear-canvas');
+    const closeBtn = document.getElementById('btn-close-signature');
+    const acceptBtn = document.getElementById('btn-accept-signature');
+
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let hasDrawn = false;
+
+    // Resize canvas to its real display size
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#111827';
+    }
+
+    // Initialize resolution
+    setTimeout(resizeCanvas, 50);
+
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function startDrawing(e) {
+        e.preventDefault();
+        isDrawing = true;
+        hasDrawn = true;
+        if (placeholder) placeholder.style.display = 'none';
+        const coords = getCoords(e);
+        ctx.beginPath();
+        ctx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const coords = getCoords(e);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+    }
+
+    function stopDrawing(e) {
+        if (isDrawing) {
+            e?.preventDefault();
+            isDrawing = false;
+            ctx.closePath();
+        }
+    }
+
+    // Touch events for mobile
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing, { passive: false });
+
+    // Mouse events for desktop
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    // Clear
+    clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rect = canvas.getBoundingClientRect();
+        ctx.clearRect(0, 0, rect.width, rect.height);
+        hasDrawn = false;
+        if (placeholder) placeholder.style.display = 'flex';
+    });
+
+    // Close
+    const close = () => {
+        modal.remove();
+        if (onCancel) onCancel();
+    };
+
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) close();
+    });
+
+    // Accept
+    acceptBtn.addEventListener('click', () => {
+        if (!hasDrawn) {
+            alert('Por favor dibuja tu firma en el recuadro antes de continuar.');
+            return;
+        }
+
+        // Export as PNG
+        const signatureDataUrl = canvas.toDataURL('image/png');
+        modal.remove();
+        if (onConfirm) onConfirm(signatureDataUrl);
+    });
+}
