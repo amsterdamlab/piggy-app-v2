@@ -1,77 +1,170 @@
 /* ============================================
-   PIGGY APP — Main Application Entry Point
+   PIGGY APP — Main Entry Point
+   Initializes the SPA and wires up all modules
    ============================================ */
 
-import { initRouter, navigateTo } from './router.js';
+// Styles
+import './styles/tokens.css';
+import './styles/global.css';
+import './styles/components.css';
+import './styles/auth.css';
+import './styles/granja.css';
+import './styles/mercado.css';
+import './styles/aliados.css';
+import './styles/piggy-detail.css';
+import './styles/adopcion.css';
+import './styles/header.css';
+import './styles/perfil.css';
+import './styles/contrato.css';
+
+// Core
 import { AppState } from './state.js';
-import { setupAuthListener } from './services/authService.js';
-import { initFlashMissionsTicker } from './services/flashMissionsService.js';
-import { showCategoryInfo } from './components/CategoryInfoModal.js';
-import { showTermsModal } from './components/TermsModal.js';
+import { registerRoute, initRouter, navigateTo } from './router.js';
+import { initSupabase } from './services/supabase.js';
+import { checkSession } from './services/authService.js';
 
-// Expose showCategoryInfo globally so inline onclick handlers in cards can use it
-window.showCategoryInfo = showCategoryInfo;
-window.showTermsModal = showTermsModal;
+// Views
+import { renderAuthView } from './views/AuthView.js';
+import { renderGranjaView } from './views/GranjaView.js';
+import { renderMercadoView } from './views/MercadoView.js';
+import { renderAliadosView } from './views/AliadosView.js';
+import { renderPiggyDetailView } from './views/PiggyDetailView.js';
+import { renderAdopcionView } from './views/AdopcionView.js';
+import { renderContratoView } from './views/ContratoView.js';
+import { renderPiggyGourmetView } from './views/PiggyGourmetView.js';
+import { renderReferidosView } from './views/ReferidosView.js';
+import { renderProfileView } from './views/ProfileView.js';
+import { renderDescargarView } from './views/DescargarView.js';
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🐷 Piggy App initializing...');
+// Services
+import { initPWAListener } from './services/pwaService.js';
 
-    // 1. Initialize Auth state listener
-    setupAuthListener();
+// Components
+import { renderTopNav, removeTopNav } from './components/TopNav.js';
+import { renderLegalModal, removeLegalModal } from './components/LegalModal.js';
+import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppModal.js';
 
-    // 2. Initialize Routing system
-    initRouter();
+/**
+ * Boot the application.
+ */
+async function boot() {
+  console.log('🐷 Piggy App — Booting...');
 
-    // 3. Setup Global UI Event Listeners
-    setupGlobalListeners();
+  // Initialize PWA install prompt listener
+  initPWAListener();
 
-    // 4. Start Flash Missions Engine (dynamic interval ticker)
-    initFlashMissionsTicker();
+  // Show loading screen
+  showLoadingScreen();
 
-    console.log('🐷 Piggy App initialized successfully!');
+  // Initialize Supabase
+  await initSupabase();
+
+  // Register routes
+  registerRoute('auth', renderAuthView);
+  registerRoute('granja', renderGranjaView);
+  registerRoute('mercado', renderMercadoView);
+  registerRoute('aliados', renderAliadosView);
+  registerRoute('piggy', renderPiggyDetailView);
+  registerRoute('adopcion', renderAdopcionView);
+  registerRoute('contrato', renderContratoView);
+  registerRoute('gourmet', renderPiggyGourmetView);
+  registerRoute('referidos', renderReferidosView);
+  registerRoute('perfil', renderProfileView);
+  registerRoute('descargar', renderDescargarView);
+
+  // Subscribe to state changes
+  AppState.subscribe((state, previous) => {
+    // TopNav visibility
+    if (state.isAuthenticated && !previous.isAuthenticated) {
+      renderTopNav();
+    } else if (!state.isAuthenticated && previous.isAuthenticated) {
+      removeTopNav();
+    }
+
+    // Legal modal
+    if (state.showLegalModal && !previous.showLegalModal) {
+      renderLegalModal();
+    }
+    if (!state.showLegalModal && previous.showLegalModal) {
+      removeLegalModal();
+    }
+
+    // WhatsApp onboarding modal (post Google login)
+    if (state.showWhatsAppModal && !previous.showWhatsAppModal) {
+      renderWhatsAppModal();
+    }
+    if (!state.showWhatsAppModal && previous.showWhatsAppModal) {
+      removeWhatsAppModal();
+    }
+  });
+
+  // Check existing session
+  await checkSession();
+
+  // Start router
+  initRouter();
+
+  console.log('🐷 Piggy App — Ready!');
+}
+
+/**
+ * Show a loading screen while the app boots.
+ */
+function showLoadingScreen() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      gap: 16px;
+      color: var(--color-primary);
+    ">
+      <img src="/piggy-loading-logo.png" style="
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        animation: pulse-logo 2s infinite ease-in-out;
+        margin-bottom: 8px;
+      " alt="Piggy App" onerror="this.onerror=null; this.src='pig2.jpg';" />
+      <div style="
+        font-size: var(--text-sm);
+        color: var(--color-text-muted);
+        font-weight: var(--font-medium);
+      ">
+        Cargando Piggy App...
+      </div>
+    </div>
+  `;
+}
+
+// Start the app
+boot().catch((error) => {
+  console.error('🐷 Critical boot error:', error);
+  const app = document.getElementById('app');
+  if (app) {
+    app.innerHTML = `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        gap: 16px;
+        padding: 24px;
+        text-align: center;
+      ">
+        <div style="font-size: 48px;">😢</div>
+        <h2>Error al cargar la aplicación</h2>
+        <p style="color: var(--color-text-muted); font-size: var(--text-sm);">
+          Por favor recarga la página. Si el problema persiste, contacta soporte.
+        </p>
+        <button class="btn btn--primary" onclick="location.reload()">
+          Recargar
+        </button>
+      </div>
+    `;
+  }
 });
-
-/**
- * Setup global event delegation and UI controls
- */
-function setupGlobalListeners() {
-    // Global delegation for data-navigate attributes
-    document.addEventListener('click', (e) => {
-        const navEl = e.target.closest('[data-navigate]');
-        if (navEl) {
-            e.preventDefault();
-            const route = navEl.getAttribute('data-navigate');
-            if (route) {
-                navigateTo(route);
-            }
-        }
-    });
-
-    // Handle back button clicks
-    document.addEventListener('click', (e) => {
-        const backBtn = e.target.closest('[data-action="back"]');
-        if (backBtn) {
-            e.preventDefault();
-            window.history.back();
-        }
-    });
-
-    // Close modals on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeAllModals();
-        }
-    });
-}
-
-/**
- * Close any active modal in the DOM
- */
-function closeAllModals() {
-    const modals = document.querySelectorAll('.modal-backdrop, .modal, .wallet-drawer');
-    modals.forEach(m => {
-        m.classList.remove('modal--active', 'drawer--open');
-        setTimeout(() => m.remove(), 250);
-    });
-}
