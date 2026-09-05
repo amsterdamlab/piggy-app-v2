@@ -33,6 +33,34 @@ export function initPWAListener() {
 }
 
 /**
+ * Limpia el CacheStorage del navegador y fuerza la actualizacion del Service Worker.
+ * Se ejecuta en segundo plano de forma no-bloqueante sin tocar credenciales ni sesiones.
+ */
+export async function clearAppCache() {
+    try {
+        if ('caches' in window) {
+            const cacheKeys = await caches.keys();
+            await Promise.all(
+                cacheKeys.map(key => {
+                    console.log('🐷 Limpiando cache obsoleta:', key);
+                    return caches.delete(key);
+                })
+            );
+        }
+
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const reg of registrations) {
+                await reg.update().catch(err => console.warn('SW update err:', err));
+            }
+        }
+        console.log('🐷 Cache y Service Worker sincronizados con éxito.');
+    } catch (e) {
+        console.warn('🐷 Limpieza de cache omitida silenciosamente:', e);
+    }
+}
+
+/**
  * Prompt PWA installation or show guided modal for iOS.
  */
 export async function triggerPWAInstall() {

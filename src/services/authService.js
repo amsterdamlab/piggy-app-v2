@@ -8,6 +8,7 @@ import { MOCK_USER, MOCK_PROFILE } from './mockData.js';
 import { AppState } from '../state.js';
 import { generateMockReferralCode } from './referralService.js';
 import { expireWelcomeBonusIfDue, syncAndExpireMarketingBonuses } from './walletService.js';
+import { clearAppCache } from './pwaService.js';
 
 // Mock session control
 let mockLoggedIn = false;
@@ -174,6 +175,8 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
         const finalProfile = createdProfile || profile;
 
         onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
+        // Background maintenance tasks & cache sync — do not block user
+        clearAppCache().catch(e => console.warn('clearAppCache err:', e));
         // Update AppState immediately with fresh profile including referral_code from DB trigger
         AppState.set({
             currentUser: data.user,
@@ -210,7 +213,8 @@ export async function signIn({ email, password }, onProgress = () => {}) {
     // Fetch profile and update state
     if (data.user) {
         onProgress('⏳ Credenciales correctas. Consultando datos de tu perfil en la base de datos...');
-        // Background maintenance tasks — do not block user login
+        // Background maintenance tasks & cache sync — do not block user login
+        clearAppCache().catch(e => console.warn('clearAppCache err:', e));
         expireWelcomeBonusIfDue(data.user.id).catch(e => console.warn('expireWelcomeBonus err:', e));
         syncAndExpireMarketingBonuses(data.user.id).catch(e => console.warn('syncBonuses err:', e));
         const profile = await getProfile();
@@ -311,7 +315,8 @@ export async function checkSession() {
     const { data: { session } } = await client.auth.getSession();
 
     if (session?.user) {
-        // Background maintenance tasks — do not block session restoration
+        // Background maintenance tasks & cache sync — do not block session restoration
+        clearAppCache().catch(e => console.warn('clearAppCache err:', e));
         expireWelcomeBonusIfDue(session.user.id).catch(e => console.warn('expireWelcomeBonus err:', e));
         syncAndExpireMarketingBonuses(session.user.id).catch(e => console.warn('syncBonuses err:', e));
         const profile = await getProfile();
@@ -339,6 +344,7 @@ export async function checkSession() {
 
         // Detectar cuando el usuario regresa del redirect de Google OAuth
         if (event === 'SIGNED_IN' && session?.user) {
+            clearAppCache().catch(e => console.warn('clearAppCache err:', e));
             const isGoogleUser = session.user.app_metadata?.provider === 'google';
             if (isGoogleUser) {
                 const profile = await getProfile();
