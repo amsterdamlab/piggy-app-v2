@@ -1,17 +1,15 @@
 /* ============================================
    PIGGY APP — Welcome Bonus Modal (Granja Section)
-   Terms & Conditions for $20.000 Consumption Bonus
+   Bonus $20.000 terms modal
    ============================================ */
-
-import { renderIcon } from '../icons.js';
-import { navigateTo } from '../router.js';
+import { navigateTo } from '../../router.js';
 
 /**
- * Show Welcome Bonus Terms Modal
+ * Show Bonus Modal
  */
-export function showWelcomeBonusModal() {
-  const existing = document.getElementById('bonus-modal');
-  if (existing) existing.remove();
+export function showBonusModal(hasPiggies) {
+  // Remove existing
+  removeBonusModal();
 
   const modal = document.createElement('div');
   modal.id = 'bonus-modal';
@@ -38,32 +36,31 @@ export function showWelcomeBonusModal() {
 
                 <p><strong>2. Condiciones de Redención:</strong><br/>
                 Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Granja Villa Morales del Valle SAS, bajo las siguientes condiciones:</p>
-                <ul class="mb-sm">
+                <ul>
                     <li><strong>Compra Mínima:</strong> El valor del pedido debe ser igual o superior a CIENTO CINCUENTA MIL PESOS M/CTE ($150.000 COP), sin incluir costos de envío.</li>
-                    <li><strong>Descuento Aplicable:</strong> Se descontarán automáticamente los $20.000 COP del valor total de la compra al momento de la facturación.</li>
-                    <li><strong>Límite de Uso:</strong> Este beneficio es válido por una única vez por usuario registrado y no es acumulable con otras promociones o cupones de descuento.</li>
+                    <li><strong>Aplicación del Bono:</strong> Una vez cumplido el monto mínimo, el bono de $20.000 se restará del valor total a pagar por los productos.</li>
+                    <li><strong>Alcance de Productos:</strong> El beneficio es válido exclusivamente para la compra de proteína animal: Cerdo, Pollo y Res. No aplica para otros servicios o productos dentro de la plataforma.</li>
                 </ul>
 
-                <p><strong>3. Cobertura y Envíos:</strong><br/>
-                La entrega de los productos cárnicos se rige por las siguientes políticas de cobertura:</p>
-                <ul class="mb-sm">
-                    <li><strong>Cali Urbano:</strong> Envío totalmente gratuito para pedidos que cumplan con el monto mínimo de compra.</li>
+                <p><strong>3. Política de Envíos y Logística:</strong></p>
+                <ul>
+                    <li><strong>Cali:</strong> El servicio de domicilio será completamente gratuito únicamente para entregas dentro del perímetro urbano de la ciudad de Cali.</li>
                     <li><strong>Otras Ubicaciones:</strong> Para entregas en municipios aledaños (Jamundí, Palmira, Yumbo, etc.) o en el resto del territorio nacional, el USUARIO deberá asumir el 100% del costo del envío, el cual se cotizará según la ubicación y el peso del pedido.</li>
                 </ul>
 
-                <p><strong>4. No Canjeable en Efectivo:</strong><br/>
-                El bono no es transferible a terceros, no es reembolsable ni redimible en dinero en efectivo, saldo en billetera digital ni mediante transferencias bancarias. Su uso es exclusivo para la adquisición de productos cárnicos de Granja Villa Morales.</p>
-
-                <p><strong>5. Vigencia:</strong><br/>
-                El bono tendrá una vigencia de noventa (90) días calendario contados a partir de la fecha de registro exitoso en la plataforma. Vencido este plazo sin haberse redimido, el beneficio expirará automáticamente sin lugar a reclamación.</p>
-
-                <p><strong>6. Modificaciones:</strong><br/>
-                PIGGY se reserva el derecho de modificar o suspender los términos de esta promoción en cualquier momento, garantizando el respeto de los derechos adquiridos por los usuarios registrados con anterioridad a dicha modificación.</p>
+                <p><strong>4. Vigencia y Restricciones:</strong></p>
+                <ul>
+                    <li>El bono es personal, intransferible y no es canjeable por dinero en efectivo.</li>
+                    <li>Solo se permite la redención de un (1) bono de bienvenida por usuario único registrado.</li>
+                    <li>El bono tendrá una vigencia de 30 días calendario contados a partir de la fecha de registro en la plataforma. Cumplido este periodo, el sistema lo marcará como expirado.</li>
+                </ul>
             </div>
         </div>
 
         <div class="bonus-footer mt-lg">
-            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">¡Redime tu bono $20.000 en carne!</button>
+            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">
+                ¡Redime tu bono $20.000 en Tienda!
+            </button>
         </div>
     </div>
   `;
@@ -77,10 +74,15 @@ export function showWelcomeBonusModal() {
     if (e.target === modal) close();
   });
 
-  // Action Button
+  // Action logic
   document.getElementById('btn-redeem-bonus').addEventListener('click', () => {
     close();
     // Always navigate to Piggy Gourmet for bonus redemption
     navigateTo('gourmet');
   });
+}
+
+export function removeBonusModal() {
+  const existing = document.getElementById('bonus-modal');
+  if (existing) existing.remove();
 }
