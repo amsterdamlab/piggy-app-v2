@@ -2,4 +2,263 @@
    PIGGY APP — Auth View Styles
    ============================================ */
 
-.auth-page {\n    background: #FFFFFF !important;\n    min-height: 100dvh;\n}\n\n.auth-page__content {\n    padding: var(--space-xl) var(--space-lg) var(--space-2xl);\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    background: #FFFFFF !important;\n}\n\n/* Logo */\n.auth-logo {\n    display: flex;\n    align-items: center;\n    gap: var(--space-xs);\n    margin-bottom: var(--space-lg);\n}\n\n.auth-logo__text {\n    font-size: var(--text-xl);\n    font-weight: var(--font-extrabold);\n    color: var(--color-primary);\n}\n\n/* Mascot */\n.auth-mascot {\n    margin-bottom: var(--space-lg);\n    width: 100%;\n    display: flex;\n    justify-content: center;\n}\n\n.auth-mascot__circle {\n    width: 220px;\n    height: 220px;\n    border-radius: var(--radius-full);\n    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-bg) 100%);\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    overflow: hidden;\n    box-shadow: 0 8px 32px rgba(233, 30, 99, 0.1);\n}\n\n.auth-mascot__img {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n}\n\n.auth-mascot__fallback {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n/* Headline */\n.auth-headline {\n    font-size: var(--text-3xl);\n    font-weight: var(--font-extrabold);\n    text-align: center;\n    line-height: var(--leading-tight);\n    color: var(--color-text-primary);\n    margin-bottom: var(--space-lg);\n}\n\n/* Tabs — Capsule / Pill Design with #f9f5f6 */\n.auth-tabs {\n    width: 100%;\n    margin-bottom: var(--space-xl);\n    background: #f9f5f6;\n    border-radius: var(--radius-full);\n    padding: 5px;\n    display: flex;\n    gap: 4px;\n    box-sizing: border-box;\n}\n\n.auth-tabs .tabs__tab {\n    flex: 1;\n    padding: 10px 16px;\n    border-radius: var(--radius-full);\n    font-size: var(--text-sm);\n    font-weight: var(--font-bold);\n    color: #64748b;\n    text-align: center;\n    background: transparent;\n    border: none;\n    cursor: pointer;\n    transition: all var(--transition-base);\n}\n\n.auth-tabs .tabs__tab--active {\n    background: #ffffff !important;\n    color: #fb2c74 !important;\n    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;\n    font-weight: var(--font-extrabold);\n}\n\n.auth-tabs .tabs__tab:not(.tabs__tab--active):hover {\n    color: var(--color-text-primary);\n}\n\n/* Form */\n.auth-form {\n    width: 100%;\n    margin-bottom: var(--space-lg);\n}\n\n.auth-form .input-group {\n    margin-bottom: var(--space-md);\n}\n\n.auth-form .input-group__label {\n    display: block;\n    font-size: var(--text-sm);\n    font-weight: var(--font-bold);\n    color: var(--color-text-primary);\n    margin-bottom: 6px;\n    text-align: left;\n}\n\n/* Text Inputs — Rounded Rectangles in #f9f5f6 & No Border */\n.auth-form .input-wrapper {\n    background: #f9f5f6 !important;\n    border: none !important;\n    border-radius: 14px !important;\n    padding: 14px 18px !important;\n    box-shadow: none !important;\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    transition: background var(--transition-fast), box-shadow var(--transition-fast);\n}\n\n.auth-form .input-wrapper:focus-within {\n    background: #f3edf0 !important;\n    box-shadow: 0 0 0 2.5px rgba(251, 44, 116, 0.2) !important;\n}\n\n.auth-form .input-wrapper__icon {\n    color: #64748b;\n    flex-shrink: 0;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.auth-form .input-wrapper__field {\n    flex: 1;\n    background: transparent;\n    color: #0f172a;\n    font-size: var(--text-base);\n    font-weight: var(--font-semibold);\n    border: none;\n    outline: none;\n    padding: 0;\n}\n\n.auth-form .input-wrapper__field::placeholder {\n    color: #94a3b8;\n    font-weight: var(--font-normal);\n}\n\n.auth-checkboxes {\n    margin-top: 18px;\n    margin-bottom: 12px;\n    display: flex;\n    flex-direction: column;\n    gap: 8px;\n    text-align: left;\n}\n\n.auth-form__error {\n    font-size: var(--text-sm);\n    color: var(--color-danger);\n    text-align: center;\n    padding: var(--space-sm);\n    background: var(--color-danger-light);\n    border-radius: var(--radius-md);\n    margin-bottom: var(--space-md);\n    display: none;\n}\n\n.auth-form__error--visible {\n    display: block;\n    animation: fadeIn var(--transition-fast) ease-out;\n}\n\n.auth-submit {\n    margin-top: 16px;\n    font-size: var(--text-lg) !important;\n    padding: var(--space-md) var(--space-xl) !important;\n}\n\n/* Legal */\n.auth-legal {\n    text-align: center;\n    margin-bottom: var(--space-xl);\n}\n\n.auth-legal__link {\n    font-size: var(--text-xs);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n    display: inline-block;\n    margin-bottom: var(--space-xs);\n}\n\n.auth-legal__text {\n    max-width: 280px;\n    margin: 0 auto;\n    line-height: var(--leading-relaxed);\n}\n\n/* Trust Badges — Centered & Mobile Responsive */\n.auth-trust {\n    text-align: center;\n    padding: var(--space-lg) var(--space-md) var(--space-xl);\n    background: transparent;\n    border-radius: var(--radius-xl);\n    width: 100%;\n    box-sizing: border-box;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n}\n\n.auth-trust__label {\n    font-size: 0.72rem;\n    font-weight: 800;\n    color: #7b93ab;\n    letter-spacing: 1.2px;\n    text-transform: uppercase;\n    line-height: 1.45;\n    margin: 8px auto 14px auto;\n    text-align: center;\n    max-width: 320px;\n    width: 100%;\n    box-sizing: border-box;\n    word-break: normal;\n    white-space: normal;\n}\n\n.auth-trust__icons {\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    gap: 24px;\n    width: 100%;\n}\n\n.auth-trust__icon {\n    color: #7b93ab;\n    opacity: 0.9;\n}\n
+.auth-page {
+    background: #FFFFFF !important;
+    min-height: 100dvh;
+}
+
+.auth-page__content {
+    padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #FFFFFF !important;
+}
+
+/* Logo */
+.auth-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+}
+
+.auth-logo__text {
+    font-size: var(--text-xl);
+    font-weight: var(--font-extrabold);
+    color: var(--color-primary);
+}
+
+/* Mascot */
+.auth-mascot {
+    margin-bottom: var(--space-lg);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.auth-mascot__circle {
+    width: 220px;
+    height: 220px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-bg) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(233, 30, 99, 0.1);
+}
+
+.auth-mascot__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.auth-mascot__fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Headline */
+.auth-headline {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-extrabold);
+    text-align: center;
+    line-height: var(--leading-tight);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+/* Tabs — Capsule / Pill Design with #f9f5f6 */
+.auth-tabs {
+    width: 100%;
+    margin-bottom: var(--space-xl);
+    background: #f9f5f6;
+    border-radius: var(--radius-full);
+    padding: 5px;
+    display: flex;
+    gap: 4px;
+    box-sizing: border-box;
+}
+
+.auth-tabs .tabs__tab {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    color: #64748b;
+    text-align: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.auth-tabs .tabs__tab--active {
+    background: #ffffff !important;
+    color: #fb2c74 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08) !important;
+    font-weight: var(--font-extrabold);
+}
+
+.auth-tabs .tabs__tab:not(.tabs__tab--active):hover {
+    color: var(--color-text-primary);
+}
+
+/* Form */
+.auth-form {
+    width: 100%;
+    margin-bottom: var(--space-lg);
+}
+
+.auth-form .input-group {
+    margin-bottom: var(--space-md);
+}
+
+.auth-form .input-group__label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    color: var(--color-text-primary);
+    margin-bottom: 6px;
+    text-align: left;
+}
+
+/* Text Inputs — Rounded Rectangles in #f9f5f6 & No Border */
+.auth-form .input-wrapper {
+    background: #f9f5f6 !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 14px 18px !important;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.auth-form .input-wrapper:focus-within {
+    background: #f3edf0 !important;
+    box-shadow: 0 0 0 2.5px rgba(251, 44, 116, 0.2) !important;
+}
+
+.auth-form .input-wrapper__icon {
+    color: #64748b;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-form .input-wrapper__field {
+    flex: 1;
+    background: transparent;
+    color: #0f172a;
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    border: none;
+    outline: none;
+    padding: 0;
+}
+
+.auth-form .input-wrapper__field::placeholder {
+    color: #94a3b8;
+    font-weight: var(--font-normal);
+}
+
+.auth-checkboxes {
+    margin-top: 18px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.auth-form__error {
+    font-size: var(--text-sm);
+    color: var(--color-danger);
+    text-align: center;
+    padding: var(--space-sm);
+    background: var(--color-danger-light);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    display: none;
+}
+
+.auth-form__error--visible {
+    display: block;
+    animation: fadeIn var(--transition-fast) ease-out;
+}
+
+.auth-submit {
+    margin-top: 16px;
+    font-size: var(--text-lg) !important;
+    padding: var(--space-md) var(--space-xl) !important;
+}
+
+/* Legal */
+.auth-legal {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+}
+
+.auth-legal__link {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-bottom: var(--space-xs);
+}
+
+.auth-legal__text {
+    max-width: 280px;
+    margin: 0 auto;
+    line-height: var(--leading-relaxed);
+}
+
+/* Trust Badges — Centered & Mobile Responsive */
+.auth-trust {
+    text-align: center;
+    padding: var(--space-lg) var(--space-md) var(--space-xl);
+    background: transparent;
+    border-radius: var(--radius-xl);
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-trust__label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #7b93ab;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    line-height: 1.45;
+    margin: 8px auto 14px auto;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+    box-sizing: border-box;
+    word-break: normal;
+    white-space: normal;
+}
+
+.auth-trust__icons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+}
+
+.auth-trust__icon {
+    color: #7b93ab;
+    opacity: 0.9;
+}
