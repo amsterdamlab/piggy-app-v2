@@ -18,7 +18,7 @@ export function showWithdrawModal(availableAmount) {
   modal.innerHTML = `
     <div class="modal animate-scale-in">
         <div class="modal__handle"></div>
-        <button class="bonus-close" id="withdraw-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+        <button class="bonus-close" id="withdraw-close-btn" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
         <h3 class="modal-title mb-md">Retiro de Fondos</h3>
         <div class="form-group">
             <label class="form-label">Monto a retirar</label>
@@ -88,7 +88,7 @@ export function showWithdrawSuccess(amount, bank) {
   const tid = Date.now().toString().slice(-6);
   modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
-             <button class="bonus-close" id="success-close-x" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+             <button class="bonus-close" id="success-close-x" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
             <div style="width:60px; height:60px; background:var(--color-success-light); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
                 ${renderIcon('check', '', '32')}
             </div>
@@ -119,7 +119,7 @@ export function showMeatModal() {
   modal.style.zIndex = '9999';
   modal.innerHTML = `
         <div class="modal animate-scale-in text-center">
-            <button class="bonus-close" id="meat-close-btn" style="background:none; border:none; position:absolute; right:16px; top:16px; font-size:24px; cursor:pointer;">&times;</button>
+            <button class="bonus-close" id="meat-close-btn" style="background:#f1f5f9; border:none; position:absolute; right:16px; top:16px; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
             <h3 class="modal-title mb-md">Disfruta tu cosecha 🥩</h3>
             <p class="text-muted mb-lg" style="margin-bottom:24px;">Contáctanos para coordinar tu pedido de carne fresca de Granja Villa Morales.</p>
             <div class="grid-2 gap-sm" style="display:grid; gap:12px;">
