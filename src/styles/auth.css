@@ -180,13 +180,16 @@
 
 .auth-form__error {
     font-size: var(--text-sm);
-    color: var(--color-danger);
-    text-align: center;
-    padding: var(--space-sm);
-    background: var(--color-danger-light);
-    border-radius: var(--radius-md);
+    color: #991b1b;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 14px;
     margin-bottom: var(--space-md);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.06);
     display: none;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .auth-form__error--visible {
