@@ -400,8 +400,7 @@ export async function getActiveMissions(piggiesOverride = null) {
 
 /**
  * Get mission progress stats.
- * @returns {Promise<{ total: number, completed: number, percent: number }>}
- */
+ * @returns {Promise<{ total: number, completed: number, percent: number }>}\n */
 export async function getMissionsProgress() {
     const missions = await getMissions();
     const total     = missions.length;

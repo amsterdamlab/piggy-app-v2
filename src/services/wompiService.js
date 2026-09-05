@@ -39,7 +39,7 @@ export function loadWompiScript() {
       return resolve(true);
     }
 
-    const existingScript = document.querySelector(`script[src="${WOMPI_SCRIPT_URL}"]`);
+    const existingScript = document.querySelector(`script[src=\"${WOMPI_SCRIPT_URL}\"]`);
     if (existingScript) {
       existingScript.addEventListener('load', () => resolve(true));
       existingScript.addEventListener('error', () => reject(new Error('Error al cargar el script de Wompi.')));

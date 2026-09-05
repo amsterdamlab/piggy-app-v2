@@ -1,106 +1,263 @@
 /* ============================================
-   PIGGY APP — Adopcion View (Cerdo Completo)
+   PIGGY APP — Adopcion (Purchase) View
+   Custom view for adopting a new piggy
    ============================================ */
 
 import { renderIcon } from '../icons.js';
+import { navigateTo } from '../router.js';
 import { renderBottomNav } from './GranjaView.js';
+import { getWalletBalance } from '../services/walletService.js';
+import { formatCOP } from '../services/mockData.js';
+import { AppState } from '../state.js';
+import { openWalletDrawer } from './granja/WalletBlock.js';
 
+/**
+ * Render the Adopcion view.
+ */
 export function renderAdopcionView() {
   const app = document.getElementById('app');
 
-  const ADOPCION_PRICE = 900000;
-  const WHATSAPP_NUMBER = '573154870448';
-
-  const defaultMessage = encodeURIComponent(
-    '🐷 ¡Hola Granja Valle Morales! Estoy interesado en Adopción de Cerdo Completo ($900.000 COP). Quiero conocer más información para iniciar el proceso.'
-  );
-
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${defaultMessage}`;
-
   app.innerHTML = `
     <div class="page page--with-nav adopcion-page">
-      <div class="page__content">
+      
+      <!-- Header / Back -->
+      <div class="adopcion-header">
+        <button class="btn btn--ghost btn--sm" id="btn-back-adopcion">
+          ${renderIcon('arrowRight', '', '16')} Cancelar compra
+        </button>
+      </div>
 
-        <!-- Hero Header -->
-        <div class="adopcion-hero animate-fade-in-up">
-          <div class="adopcion-hero__badge">
-            ${renderIcon('sparkle', '', '14')}
-            Modelo Premium
+      <div class="page__content adopcion-content">
+        
+        <!-- Piggy Image Circle -->
+        <div class="adopcion-image-wrapper animate-scale-in">
+          <div class="adopcion-image adopcion-image--clean">
+            <img src="pig2.jpg" alt="Piggy Bank" class="adopcion-image__img" />
           </div>
-          <h2 class="adopcion-hero__title">Adopción de Cerdo Completo</h2>
-          <p class="adopcion-hero__subtitle">
-            Ten tu propio cerdo en Granja Valle Morales con trazabilidad fotográfica mensual, visitas programadas y carne 100% fresca al finalizar.
-          </p>
         </div>
 
-        <!-- Main Info Card -->
-        <div class="card adopcion-card animate-fade-in-up">
-          <div class="adopcion-card__image-wrap">
-            <img src="/assets/piggies/stage2/et2-1.jpg" alt="Adopción Cerdo" class="adopcion-card__image" onerror="this.onerror=null;this.src='pig2.jpg'" />
-            <div class="adopcion-card__price-tag">
-              <span class="adopcion-card__price-label">Inversión</span>
-              <span class="adopcion-card__price-value">$ 900.000</span>
-            </div>
-          </div>
+        <!-- Adoption Card -->
+        <div class="adopcion-card card animate-fade-in-up">
+          <h2 class="adopcion-title">¡Compra tu Piggy!</h2>
+          <p class="adopcion-subtitle">Inicia con $ 1.000.000</p>
 
-          <div class="adopcion-card__content">
-            <h3 class="adopcion-card__name">Cerdo en Crianza Personalizada</h3>
-            <p class="adopcion-card__desc">
-              Financia la crianza completa de un cerdo desde el destete hasta su peso final (80-90 kg) durante 144 días.
-            </p>
-
-            <!-- Benefits List -->
-            <div class="adopcion-benefits">
-              <div class="adopcion-benefit-item">
-                <span class="adopcion-benefit-icon">📸</span>
-                <div>
-                  <strong>Fotos y Trazabilidad Mensual</strong>
-                  <p>Recibe reportes y fotos periódicas del avance y salud de tu cerdo.</p>
-                </div>
-              </div>
-
-              <div class="adopcion-benefit-item">
-                <span class="adopcion-benefit-icon">🏡</span>
-                <div>
-                  <strong>Visita a la Granja</strong>
-                  <p>Programa visitas a Granja Valle Morales en Cali para conocer las instalaciones.</p>
-                </div>
-              </div>
-
-              <div class="adopcion-benefit-item">
-                <span class="adopcion-benefit-icon">🥩</span>
-                <div>
-                  <strong>Carne en Canal o Cortes</strong>
-                  <p>Al final del ciclo recibes la canal completa limpia o empacada en cortes para tu familia.</p>
-                </div>
-              </div>
-
-              <div class="adopcion-benefit-item">
-                <span class="adopcion-benefit-icon">📜</span>
-                <div>
-                  <strong>Certificado de Propiedad</strong>
-                  <p>Documento digital firmado que respalda la crianza y custodia de tu animal.</p>
-                </div>
-              </div>
+          <!-- Inputs -->
+          <div class="adopcion-form">
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                class="input-wrapper__field text-center" 
+                id="piggy-name-input" 
+                placeholder="Ponle un nombre a tu Piggy"
+                autocomplete="off"
+              />
             </div>
 
-            <!-- CTA Button -->
-            <div class="adopcion-cta">
-              <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--primary btn--full btn--lg adopcion-btn">
-                <span>💬</span>
-                Contactar por WhatsApp para Adoptar
-              </a>
-              <p class="adopcion-cta-help text-xs text-muted text-center mt-xs">
-                Te asesoramos directamente sobre disponibilidad y fechas de inicio de lote.
-              </p>
+            <!-- Name Chips -->
+            <div class="adopcion-chips">
+              <button class="chip" data-name="Bacon">Bacon</button>
+              <button class="chip" data-name="Piggy">Piggy</button>
+              <button class="chip" data-name="Oink">Oink</button>
+              <button class="chip" data-name="Rosita">Rosita</button>
             </div>
+
+            <!-- Action Button -->
+            <button class="btn btn--primary btn--block btn--lg" id="btn-adopt-init">
+              ${renderIcon('shop', '', '20')}
+              Compra por $ 1.000.000
+            </button>
           </div>
         </div>
 
       </div>
-      ${renderBottomNav('adopcion')}
+
+      ${renderBottomNav('granja')}
     </div>
   `;
 
+  attachAdopcionListeners();
+
   return () => { };
+}
+
+function attachAdopcionListeners() {
+  // Back button
+  document.getElementById('btn-back-adopcion')?.addEventListener('click', () => {
+    navigateTo('granja');
+  });
+
+  // Name chips
+  const input = document.getElementById('piggy-name-input');
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if (input) {
+        input.value = chip.dataset.name;
+      }
+    });
+  });
+
+  // Init Purchase Flow (Open Checkout Modal)
+  document.getElementById('btn-adopt-init')?.addEventListener('click', () => {
+    const name = input?.value?.trim();
+    if (!name) {
+      alert('¡Por favor ponle un nombre a tu cerdito!');
+      return;
+    }
+    showCheckoutModal(name);
+  });
+}
+
+/**
+ * Show Checkout Modal — Wallet-based purchase flow
+ */
+function showCheckoutModal(piggyName) {
+  const existing = document.getElementById('checkout-modal');
+  if (existing) existing.remove();
+
+  const ITEM_PRICE = 1000000;
+
+  const modal = document.createElement('div');
+  modal.id = 'checkout-modal';
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+
+  modal.innerHTML = `
+    <div class="modal checkout-modal animate-fade-in-up" style="position:relative;">
+      <div class="modal__header-row">
+        <h3 class="modal-title text-white">Confirmar Compra</h3>
+        <button id="checkout-close-btn" style="background:none; border:none; font-size:24px; color:rgba(255,255,255,0.85); cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='rgba(255,255,255,0.85)'">&times;</button>
+      </div>
+      
+      <div class="checkout-body" style="padding: 24px 20px;">
+        
+        <!-- Piggy Summary -->
+        <div style="text-align:center; margin-bottom:20px;">
+          <div style="font-size:0.95rem; color:#4b5563; margin-bottom:4px;">Comprando</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#1f2937;">Piggy &quot;${piggyName}&quot;</div>
+          <div style="font-size:1.5rem; font-weight:900; color:var(--color-primary); margin-top:4px;">${formatCOP(ITEM_PRICE)}</div>
+        </div>
+
+        <!-- Wallet Balance -->
+        <div style="
+          background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+          border-radius: 14px;
+          padding: 18px 20px;
+          margin-bottom: 14px;
+          color: white;
+          position: relative;
+          overflow: hidden;
+        ">
+          <div style="font-size:0.78rem; opacity:0.85; margin-bottom:4px;">Saldo disponible en tu Cuenta Agro</div>
+          <div id="adopcion-balance-display" style="font-size:1.8rem; font-weight:800; letter-spacing:-0.5px;">
+            <span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;"></span>
+          </div>
+          <div style="position:absolute; bottom:-10px; right:-10px; opacity:0.12; color:white;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+        </div>
+
+        <!-- Recharge Button -->
+        <button id="adopcion-btn-recargar" style="
+          width: 100%;
+          background: linear-gradient(135deg, #7c3aed, #5b21b6);
+          color: white;
+          border: none;
+          padding: 13px 20px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+          transition: all 0.2s;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Recargar mi Cuenta
+        </button>
+
+        <!-- Insufficient Notice -->
+        <div id="adopcion-insufficient" style="
+          background:#fef2f2; border:1px solid #fecaca; border-radius:10px;
+          padding:10px 14px; font-size:0.82rem; color:#dc2626; text-align:center;
+          margin-bottom:12px; display:none;
+        ">Saldo insuficiente. Recarga tu Cuenta para continuar.</div>
+
+        <!-- Confirm Button -->
+        <button id="adopcion-btn-confirm" style="
+          width:100%; background:linear-gradient(135deg,#ec4899,#db2777); color:white;
+          border:none; padding:13px 20px; border-radius:12px; font-weight:700; font-size:0.9rem;
+          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+          box-shadow:0 6px 20px -4px rgba(236,72,153,0.4); transition:all 0.2s;
+          opacity:0.5; pointer-events:none;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg>
+          Confirmar Compra
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const balanceDisplay = document.getElementById('adopcion-balance-display');
+  const insufficientNotice = document.getElementById('adopcion-insufficient');
+  const confirmBtn = document.getElementById('adopcion-btn-confirm');
+  let currentBalance = 0;
+
+  // Load balance
+  getWalletBalance().then(balance => {
+    currentBalance = balance;
+    balanceDisplay.textContent = formatCOP(balance);
+    const hasFunds = balance >= ITEM_PRICE;
+    insufficientNotice.style.display = hasFunds ? 'none' : 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = hasFunds ? 'none' : 'flex';
+    }
+    if (hasFunds) {
+      confirmBtn.style.opacity = '1';
+      confirmBtn.style.pointerEvents = 'auto';
+    }
+  }).catch(() => {
+    balanceDisplay.textContent = '$0';
+    insufficientNotice.style.display = 'block';
+    const recargarBtn = document.getElementById('adopcion-btn-recargar');
+    if (recargarBtn) {
+      recargarBtn.style.display = 'flex';
+    }
+  });
+
+  // Close
+  const close = () => modal.remove();
+  document.getElementById('checkout-close-btn').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+  // Recargar
+  const recargarBtn = document.getElementById('adopcion-btn-recargar');
+  recargarBtn.addEventListener('click', async () => {
+    const originalText = recargarBtn.innerHTML;
+    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
+    recargarBtn.style.pointerEvents = 'none';
+    try {
+      await openWalletDrawer(true);
+      close();
+    } catch (e) {
+      console.error('Error opening wallet from adoption view:', e);
+      recargarBtn.innerHTML = originalText;
+      recargarBtn.style.pointerEvents = 'auto';
+    }
+  });
+
+  // Confirm -> Navigate to contract signing without deducting wallet balance
+  confirmBtn.addEventListener('click', () => {
+    if (currentBalance < ITEM_PRICE) return;
+    sessionStorage.setItem('pending_piggy_name', piggyName);
+    sessionStorage.removeItem('pending_marketplace_item');
+    close();
+    navigateTo(`contrato?name=${encodeURIComponent(piggyName)}&price=${ITEM_PRICE}`);
+  });
 }
