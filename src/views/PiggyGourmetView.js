@@ -243,6 +243,7 @@ function renderOfferCard(offer, index) {
           "></div>
 
           <!-- Badges -->
+          ${(offer.tag || offer.tags) ? `
           <div style="
             position: absolute;
             top: 12px;
@@ -258,8 +259,12 @@ function renderOfferCard(offer, index) {
               border-radius: 9999px;
               letter-spacing: 0.2px;
               box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-            ">${offer.tag ? offer.tag.replace(/^[^\\w\\s]+/, '').trim() : 'Granja Valle Morales'}</span>
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+            ">${(offer.tag || (Array.isArray(offer.tags) ? offer.tags.join(', ') : offer.tags)).trim()}</span>
           </div>
+          ` : ''}
 
           <!-- Title Overlay -->
           <div style="
@@ -381,10 +386,10 @@ function renderCustomOrderSection() {
       " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
         <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-      </svg>
-      Contactar Asesor
-    </button>
-  </div>
+        </svg>
+        Contactar Asesor
+      </button>
+    </div>
   `;
 
   document.getElementById('btn-custom-order-wa')?.addEventListener('click', () => {
@@ -458,7 +463,7 @@ function openGourmetCheckoutModal(offer, userStats) {
               <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Granja Valle Morales</div>
             </div>
           </div>
-          <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
+          <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:line-height:1;">✕</button>
         </div>
 
         <!-- Scrollable Body -->
@@ -542,7 +547,7 @@ function openGourmetCheckoutModal(offer, userStats) {
             border: none;
             padding: 16px 20px;
             border-radius: 9999px;
-            font-weight: 800;
+            font-weight: 850;
             font-size: 1.05rem;
             cursor: pointer;
             display: flex;
@@ -554,13 +559,13 @@ function openGourmetCheckoutModal(offer, userStats) {
           " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-          </svg>
-          Confirmar Pedido
-        </button>
+            </svg>
+            Confirmar Pedido
+          </button>
+        </div>
       </div>
-    </div>
-  `;
-};
+    `;
+  };
 
   const updateModalDOM = () => {
     modal.innerHTML = renderContent();
