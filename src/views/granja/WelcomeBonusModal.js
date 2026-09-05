@@ -2,6 +2,8 @@
    PIGGY APP — Welcome Bonus Modal (Granja Section)
    Bonus $20.000 terms modal
    ============================================ */
+
+import { renderIcon } from '../../icons.js';
 import { navigateTo } from '../../router.js';
 
 /**
@@ -19,7 +21,7 @@ export function showBonusModal(hasPiggies) {
   modal.innerHTML = `
     <div class="modal bonus-modal animate-scale-in">
         <div class="modal__handle"></div>
-        <button id="bonus-close-btn" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+        <button class="bonus-close" id="bonus-close-btn">${renderIcon('close', '', '24')}</button>
         
         <div class="bonus-header">
             <!-- Image removed for cleaner look -->
