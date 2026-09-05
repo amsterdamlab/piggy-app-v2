@@ -224,4 +224,755 @@ export async function syncAndExpireMarketingBonuses(userId = null) {
         const { data: dueBonuses } = await client
             .from('user_marketing_bonuses')
             .select('id, amount, campaign_name')
-            .eq('user_id', targetUserId)\n            .eq('status', 'active')\n            .lte('expires_at', nowIso);\n\n        if (dueBonuses && dueBonuses.length > 0) {\n            for (const b of dueBonuses) {\n                const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();\n                const curBal = Number(prof?.consumption_balance) || 0;\n                const deduct = Math.min(curBal, Number(b.amount) || 0);\n\n                if (deduct > 0) {\n                    await client.from('wallet_transactions').insert({\n                        user_id: targetUserId,\n                        amount: -deduct,\n                        type: 'debit',\n                        description: `Vencimiento de Campaña: ${b.campaign_name}`,\n                        wallet_type: 'consumo'\n                    });\n                    await client.from('profiles').update({ consumption_balance: Math.max(0, curBal - deduct) }).eq('id', targetUserId);\n                }\n                await client.from('user_marketing_bonuses').update({ status: 'expired', is_active: false }).eq('id', b.id);\n            }\n        }\n\n        // 2. Check for active Global campaigns (where user_id IS NULL) and credit them if not received yet\n        const { data: globalBonuses } = await client\n            .from('user_marketing_bonuses')\n            .select('*')\n            .is('user_id', null)\n            .eq('is_active', true)\n            .eq('status', 'active')\n            .lte('starts_at', nowIso)\n            .gt('expires_at', nowIso);\n\n        if (globalBonuses && globalBonuses.length > 0) {\n            const { data: userExisting } = await client\n                .from('user_marketing_bonuses')\n                .select('campaign_name')\n                .eq('user_id', targetUserId);\n\n            const receivedNames = new Set((userExisting || []).map(x => x.campaign_name));\n            const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();\n            const curBal = Number(prof?.consumption_balance) || 0;\n\n            for (const gb of globalBonuses) {\n                if (receivedNames.has(gb.campaign_name)) continue;\n\n                const bonusAmount = Number(gb.amount) || 0;\n                const { error: insErr } = await client.from('user_marketing_bonuses').insert({\n                    user_id: targetUserId,\n                    campaign_name: gb.campaign_name,\n                    amount: bonusAmount,\n                    min_order_amount: gb.min_order_amount || 150000,\n                    starts_at: gb.starts_at,\n                    expires_at: gb.expires_at,\n                    status: 'active',\n                    is_active: true,\n                });\n\n                if (!insErr && bonusAmount > 0) {\n                    await client.from('wallet_transactions').insert({\n                        user_id: targetUserId,\n                        amount: bonusAmount,\n                        type: 'credit',\n                        description: `Bono de Campaña: ${gb.campaign_name}`,\n                        wallet_type: 'consumo'\n                    });\n                    await client.from('profiles').update({ consumption_balance: curBal + bonusAmount }).eq('id', targetUserId);\n                }\n            }\n        }\n    } catch (e) {\n        console.warn('Error in syncAndExpireMarketingBonuses:', e);\n    }\n}\n\n/**\n * Calculates active bonus status (Welcome Bonus or Active Marketing Bonus) with unified countdown info.\n * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string, campaignName: string }>}\n */\nexport async function getWelcomeBonusExpiryInfo() {\n    const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);\n    let createdAt = profile?.created_at;\n    let status = profile?.welcome_bonus_status || 'active';\n    let targetUserId = profile?.id;\n\n    if (!isUsingMockData()) {\n        try {\n            const client = getClient();\n            const { data: { user } } = await client.auth.getUser();\n            if (user) {\n                targetUserId = user.id;\n                const { data } = await client.from('profiles').select('created_at, welcome_bonus_status, consumption_balance').eq('id', user.id).single();\n                if (data) {\n                    createdAt = data.created_at || user.created_at;\n                    status = data.welcome_bonus_status || 'active';\n                }\n            }\n        } catch (e) {\n            console.warn('Could not read user profile for bonus expiry:', e);\n        }\n    }\n\n    const regDate = createdAt ? new Date(createdAt) : new Date();\n    const EXPIRY_DAYS = 30;\n    const expiryTime = regDate.getTime() + (EXPIRY_DAYS * 24 * 60 * 60 * 1000);\n    const now = Date.now();\n    const msRemaining = expiryTime - now;\n    const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));\n    let isExpired = status !== 'active' || msRemaining <= 0;\n\n    // Automatic trigger if 30 days passed and still marked active\n    if (status === 'active' && msRemaining <= 0) {\n        await expireWelcomeBonusIfDue(targetUserId);\n        status = 'expired';\n        isExpired = true;\n    }\n\n    // Check active marketing campaign bonus from user_marketing_bonuses\n    let campaignName = 'Bono Bienvenida $20.000';\n    let marketingDaysRemaining = 0;\n    let hasActiveMarketingBonus = false;\n\n    if (!isUsingMockData() && targetUserId) {\n        try {\n            await syncAndExpireMarketingBonuses(targetUserId);\n            const client = getClient();\n            const { data: activeMkt } = await client\n                .from('user_marketing_bonuses')\n                .select('expires_at, amount, campaign_name')\n                .eq('user_id', targetUserId)\n                .eq('status', 'active')\n                .eq('is_active', true)\n                .gt('expires_at', new Date().toISOString())\n                .order('expires_at', { ascending: true })\n                .limit(1)\n                .maybeSingle();\n\n            if (activeMkt) {\n                hasActiveMarketingBonus = true;\n                const mktExpiry = new Date(activeMkt.expires_at).getTime();\n                marketingDaysRemaining = Math.max(0, Math.ceil((mktExpiry - now) / (1000 * 60 * 60 * 24)));\n                campaignName = activeMkt.campaign_name || 'Bono Express';\n            }\n        } catch (e) {\n            console.warn('Error checking marketing bonus info:', e);\n        }\n    }\n\n    const currentBonus = await getReferralBonusBalance();\n    const isOverallActive = (!isExpired && daysRemaining > 0) || hasActiveMarketingBonus;\n    const effectiveDaysRemaining = hasActiveMarketingBonus ? marketingDaysRemaining : daysRemaining;\n\n    return {\n        status: isOverallActive ? 'active' : status,\n        isExpired: !isOverallActive,\n        daysRemaining: effectiveDaysRemaining,\n        expiryDate: new Date(expiryTime),\n        hasWelcomeBonus: currentBonus > 0,\n        campaignName: isOverallActive ? campaignName : 'Bono Bienvenida $20.000',\n    };\n}\n\n/* ─── Deduct Wallet Balance (Post-Purchase) ─── */\n\n/**\n * Deduct an amount from the user's wallet balance after a successful purchase.\n * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should\n * handle this atomically. Until then, we call this immediately after a confirmed purchase.\n *\n * @param {number} amount - Amount in COP to deduct\n * @returns {{ success: boolean, newBalance?: number, reason?: string }}\n */\nexport async function deductWalletBalance(amount, description = 'Débito: compra de Piggy') {\n    if (isUsingMockData()) {\n        initMockState();\n        mockBalance = Math.max(0, (mockBalance || 0) - amount);\n        localStorage.setItem('mock_wallet_balance', mockBalance.toString());\n        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description, wallet_type: 'dinero', created_at: new Date().toISOString() };\n        if (!mockTransactions) mockTransactions = [];\n        mockTransactions.unshift(debitTx);\n        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));\n        const curProf = AppState.get('profile') || {};\n        AppState.set({ profile: { ...curProf, wallet_balance: mockBalance } });\n        return { success: true, newBalance: mockBalance };\n    }\n\n    const client = getClient();\n    if (!client) return { success: false, reason: 'no_client' };\n\n    const { data: { user } } = await client.auth.getUser();\n    if (!user) return { success: false, reason: 'not_authenticated' };\n\n    // 1. Try secure RPC deduct_wallet_balance\n    try {\n        const { data: rpcRes, error: rpcErr } = await client.rpc('deduct_wallet_balance', {\n            p_amount: amount,\n            p_description: description\n        });\n\n        if (!rpcErr && rpcRes && rpcRes.success) {\n            const curProf = AppState.get('profile') || {};\n            AppState.set({ profile: { ...curProf, wallet_balance: rpcRes.new_balance } });\n            return { success: true, newBalance: rpcRes.new_balance };\n        }\n    } catch (rpcEx) {\n        console.warn('deduct_wallet_balance RPC call failed, using fallback:', rpcEx);\n    }\n\n    // 2. Fallback: Read balance & insert debit transaction\n    const { data: profile, error: readError } = await client\n        .from('profiles')\n        .select('wallet_balance')\n        .eq('id', user.id)\n        .single();\n\n    if (readError || !profile) return { success: false, reason: 'could_not_read_balance' };\n\n    const currentBalance = Number(profile.wallet_balance) || 0;\n    if (currentBalance < amount) return { success: false, reason: 'insufficient_balance' };\n\n    const newBalance = currentBalance - amount;\n\n    const { error: txError } = await client\n        .from('wallet_transactions')\n        .insert({\n            user_id: user.id,\n            amount: -amount,\n            type: 'debit',\n            description,\n            wallet_type: 'dinero',\n            payment_method: 'SALDO_AGRO',\n            simulation_status: 'APPROVED'\n        });\n\n    if (txError) {\n        console.error('Error inserting debit transaction:', txError);\n        return { success: false, reason: txError.message };\n    }\n\n    // Explicitly update profiles.wallet_balance in case trigger didn't catch it\n    try {\n        await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);\n    } catch (e) {\n        console.warn('profiles.wallet_balance update handled by trigger or protected:', e);\n    }\n\n    const curProf = AppState.get('profile') || {};\n    AppState.set({ profile: { ...curProf, wallet_balance: newBalance } });\n\n    return { success: true, newBalance };\n}\n\n/**\n * Add / Refund balance to the user's wallet.\n * Inserts a credit transaction so the DB trigger updates profiles.wallet_balance.\n * @param {number} amount\n * @param {string} description\n */\nexport async function addWalletBalance(amount, description = 'Reembolso a Wallet') {\n    if (isUsingMockData()) {\n        initMockState();\n        mockBalance += amount;\n        localStorage.setItem('mock_wallet_balance', mockBalance.toString());\n\n        const creditTx = {\n            id: `sim-ref-${Date.now()}`,\n            amount: amount,\n            type: 'recharge',\n            description,\n            wallet_type: 'dinero',\n            created_at: new Date().toISOString()\n        };\n        mockTransactions.unshift(creditTx);\n        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));\n        return { success: true, newBalance: mockBalance };\n    }\n\n    const client = getClient();\n    const { data: { user } } = await client.auth.getUser();\n    if (!user) return { success: false, reason: 'not_authenticated' };\n\n    const { error: txError } = await client\n        .from('wallet_transactions')\n        .insert({\n            user_id: user.id,\n            amount: amount, // positive = credit\n            type: 'recharge',\n            description: description,\n        });\n\n    if (txError) {\n        console.error('Error inserting credit transaction:', txError);\n        return { success: false, reason: txError.message };\n    }\n\n    return { success: true };\n}\n\n/* ─── Convert Wallet Balance to Consumption Bonus ─── */\n\n/**\n * Canje de saldo por Bonos de Consumo:\n * Debits available wallet balance (dinero) and credits consumption bonus balance (consumo)\n * via wallet_transactions for full traceability without retaining funds or notifying WhatsApp.\n * @param {number} amount - Amount in COP to convert\n * @returns {Promise<{success: boolean, reason?: string}>}\n */\nexport async function convertBalanceToConsumptionBonus(amount) {\n    if (isUsingMockData()) {\n        initMockState();\n        if (mockBalance < amount) return { success: false, reason: 'insufficient_balance' };\n        mockBalance -= amount;\n        localStorage.setItem('mock_wallet_balance', mockBalance.toString());\n        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description: 'Canje a Bonos de Consumo (Débito saldo)', wallet_type: 'dinero', created_at: new Date().toISOString() };\n        const creditTx = { id: `sim-cred-${Date.now() + 1}`, amount: amount, type: 'credit', description: 'Bono de Consumo acreditado por canje de saldo', wallet_type: 'consumo', created_at: new Date().toISOString() };\n        mockTransactions.unshift(creditTx, debitTx);\n        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));\n        const profile = AppState.get('profile') || { ...MOCK_PROFILE };\n        profile.consumption_balance = (profile.consumption_balance || 0) + amount;\n        profile.wallet_balance = mockBalance;\n        AppState.set({ profile: { ...profile } });\n        return { success: true };\n    }\n    const client = getClient();\n    const { data: { user } } = await client.auth.getUser();\n    if (!user) return { success: false, reason: 'not_authenticated' };\n    const { data, error } = await client.rpc('convert_balance_to_consumption_bonus', { p_amount: amount });\n    if (error || !data?.success) return { success: false, reason: error?.message || data?.reason || 'No se pudo realizar el canje en base de datos.' };\n    const { data: updatedProfile } = await client.from('profiles').select('*').eq('id', user.id).single();\n    if (updatedProfile) {\n        const cur = AppState.get('profile') || {};\n        AppState.set({ profile: { ...cur, ...updatedProfile } });\n    }\n    return { success: true };\n}\n\n/* ─── Recharge Wallet (Wompi Simulation) ─── */\nexport async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null, reference = null) {\n    const isApproved = simulationStatus === 'simulated_approved';\n    const refStr = reference ? ` [Ref: ${reference}]` : '';\n    if (isUsingMockData()) {\n        initMockState();\n        const newTransaction = {\n            id: `sim-${Date.now()}`,\n            amount: isApproved ? amount : 0,\n            type: 'simulation_recharge',\n            description: isApproved ? `Recarga Wompi${refStr || ` (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`}` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`,\n            wallet_type: 'dinero',\n            payment_method: paymentMethod,\n            simulation_status: simulationStatus,\n            created_at: new Date().toISOString(),\n        };\n        mockTransactions.unshift(newTransaction);\n        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));\n        if (isApproved) {\n            mockBalance += amount;\n            localStorage.setItem('mock_wallet_balance', mockBalance.toString());\n        }\n        if (mockState) { mockState.balance = mockBalance; mockState.transactions = mockTransactions; }\n        return { success: isApproved, newBalance: mockBalance, transactionId: newTransaction.id, reason: isApproved ? null : 'simulated_rejected' };\n    }\n    const client = getClient();\n    const { data: { user } } = await client.auth.getUser();\n    if (!user) return { success: false, reason: 'not_authenticated' };\n    const description = isApproved ? (reference ? `Recarga Wompi [Ref: ${reference}]` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`) : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;\n\n    // Idempotencia: Verificar si el Webhook ya insertó esta transacción por referencia\n    if (reference && isApproved) {\n        const { data: existingTx } = await client\n            .from('wallet_transactions')\n            .select('id')\n            .eq('description', description)\n            .single();\n\n        if (existingTx) {\n            const { data: profile } = await client\n                .from('profiles')\n                .select('wallet_balance')\n                .eq('id', user.id)\n                .single();\n\n            return {\n                success: true,\n                newBalance: profile?.wallet_balance || 0,\n                transactionId: existingTx.id,\n            };\n        }\n    }\n\n    // Insert transaction — the DB trigger only credits wallet if NOT rejected\n    const { data, error } = await client\n        .from('wallet_transactions')\n        .insert({\n            user_id: user.id,\n            amount: isApproved ? amount : 0,\n            type: 'simulation_recharge',\n            description,\n            wallet_type: 'dinero',\n            payment_method: paymentMethod,\n            simulation_status: simulationStatus,\n        })\n        .select('id')\n        .single();\n\n    if (error) {\n        console.error('Error inserting recharge transaction:', error);\n        return { success: false, reason: error.message };\n    }\n\n    if (!isApproved) {\n        return { success: false, reason: 'simulated_rejected', transactionId: data?.id };\n    }\n\n    // Read updated balance to return it\n    const { data: profile } = await client\n        .from('profiles')\n        .select('wallet_balance')\n        .eq('id', user.id)\n        .single();\n\n    return {\n        success: true,\n        newBalance: profile?.wallet_balance || 0,\n        transactionId: data?.id,\n    };\n}\n\n/**\n * Helper to register a wallet request in Supabase with optional RPC fallback.\n */\nasync function recordWalletRequestInDB({ userId, userName, requestType, paymentMethod, reference, amount, walletType, bankName, notes, rpcName = null, rpcArgs = null }) {\n    const client = getClient();\n    if (rpcName && rpcArgs) {\n        try {\n            const { data, error } = await client.rpc(rpcName, rpcArgs);\n            if (!error && data?.success) {\n                return { success: true, requestId: data.request_id, reference: data.reference || reference, status: 'pending' };\n            }\n        } catch (e) {\n            console.warn(`RPC ${rpcName} exception:`, e);\n        }\n    }\n\n    const { data, error } = await client\n        .from('wallet_requests')\n        .insert({\n            user_id: userId,\n            user_name: userName,\n            request_type: requestType,\n            payment_method: paymentMethod,\n            reference,\n            amount: amount || 0,\n            status: 'pending',\n            wallet_type: walletType || 'dinero',\n            bank_name: bankName,\n            notes,\n        })\n        .select('id, reference, status')\n        .single();\n\n    if (error) {\n        console.error('Error registrando solicitud en wallet_requests:', error);\n        return { success: false, reason: error.message };\n    }\n\n    return {\n        success: true,\n        requestId: data?.id,\n        reference: data?.reference || reference,\n        status: data?.status || 'pending',\n    };\n}\n\n/** Registrar una solicitud de recarga por Bre-B (Semi-automática). */\nexport async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {\n    if (isUsingMockData()) {\n        initMockState();\n        return { success: true, requestId: `req-breb-${Date.now()}`, reference, status: 'pending' };\n    }\n    const client = getClient();\n    if (!client) return { success: false, reason: 'no_supabase_client' };\n    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));\n    const profile = AppState.get('profile') || AppState.get('currentUser');\n    const userId = authData?.user?.id || profile?.id;\n    if (!userId) return { success: false, reason: 'not_authenticated' };\n\n    return recordWalletRequestInDB({\n        userId,\n        userName: profile?.full_name || 'Usuario',\n        requestType: 'recharge',\n        paymentMethod: 'BRE_B',\n        reference,\n        amount,\n        walletType: 'dinero',\n        bankName: 'Bancolombia',\n        notes: `Llave Bre-B: ${breBKey}`,\n        rpcName: 'create_recharge_request',\n        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'BRE_B', p_reference: reference, p_notes: `Llave Bre-B: ${breBKey}` }\n    });\n}\n\n/** Registrar una solicitud de recarga por Código QR. */\nexport async function requestQRRecharge({ amount, reference, mockState = null }) {\n    if (isUsingMockData()) {\n        initMockState();\n        return { success: true, requestId: `req-qr-${Date.now()}`, reference, status: 'pending' };\n    }\n    const client = getClient();\n    if (!client) return { success: false, reason: 'no_supabase_client' };\n    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));\n    const profile = AppState.get('profile') || AppState.get('currentUser');\n    const userId = authData?.user?.id || profile?.id;\n    if (!userId) return { success: false, reason: 'not_authenticated' };\n\n    return recordWalletRequestInDB({\n        userId,\n        userName: profile?.full_name || 'Usuario',\n        requestType: 'recharge',\n        paymentMethod: 'QR_CODE',\n        reference,\n        amount,\n        walletType: 'dinero',\n        bankName: 'Bancolombia',\n        notes: 'Código QR Bancolombia',\n        rpcName: 'create_recharge_request',\n        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'QR_CODE', p_reference: reference, p_notes: 'Código QR Bancolombia' }\n    });\n}\n\n/** Registrar una solicitud de canje por carne (Bonos de Consumo). */\nexport async function requestMeatRedemption({ amount, reference }) {\n    if (isUsingMockData()) return { success: true, requestId: `req-crn-${Date.now()}`, reference, status: 'pending' };\n    const client = getClient();\n    if (!client) return { success: false, reason: 'no_supabase_client' };\n    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));\n    const profile = AppState.get('profile') || AppState.get('currentUser');\n    const userId = authData?.user?.id || profile?.id;\n    if (!userId) return { success: false, reason: 'not_authenticated' };\n\n    return recordWalletRequestInDB({\n        userId,\n        userName: profile?.full_name || 'Usuario',\n        requestType: 'consumption',\n        paymentMethod: 'BONO',\n        reference,\n        amount,\n        walletType: 'bono_consumo',\n        notes: 'Canje de bonos por productos de carne',\n    });\n}\n\n/* ─── Bank Withdrawal with Immediate Retention (Fintech Standard) ─── */\n\n/** Request a bank withdrawal with immediate balance retention. */\nexport async function requestBankWithdrawal({ amount, bankName = '', accountType = '', breveKey = '', notes = '' }) {\n    const numAmount = Number(amount) || 0;\n    if (numAmount <= 0) return { success: false, reason: 'El monto a retirar debe ser mayor a cero' };\n    const refCode = `RET-${Math.floor(100000 + Math.random() * 900000)}`;\n\n    if (isUsingMockData()) {\n        initMockState();\n        if (mockBalance < numAmount) return { success: false, reason: 'Saldo insuficiente en tu Cuenta Agro' };\n\n        mockBalance -= numAmount;\n        localStorage.setItem('mock_wallet_balance', mockBalance.toString());\n\n        const debitTx = {\n            id: `tx-ret-${Date.now()}`,\n            user_id: 'mock-user-id',\n            amount: -numAmount,\n            type: 'debit',\n            description: `Retención por solicitud de retiro bancario (${bankName || 'Bancario'}) [Ref: ${refCode}]`,\n            wallet_type: 'dinero',\n            payment_method: 'BRE_B',\n            simulation_status: 'APPROVED',\n            created_at: new Date().toISOString(),\n        };\n\n        if (!mockTransactions) mockTransactions = [];\n        mockTransactions.unshift(debitTx);\n        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));\n\n        const curProfile = AppState.get('profile') || { ...MOCK_PROFILE };\n        curProfile.wallet_balance = mockBalance;\n        AppState.set({ profile: { ...curProfile } });\n        return { success: true, requestId: `req-ret-${Date.now()}`, reference: refCode, newBalance: mockBalance };\n    }\n\n    const client = getClient();\n    if (!client) return { success: false, reason: 'no_supabase_client' };\n\n    let userId = null;\n    try {\n        const { data: authData } = await client.auth.getUser();\n        userId = authData?.user?.id;\n    } catch (e) {\n        console.warn('No se pudo obtener usuario de auth.getUser:', e);\n    }\n    if (!userId) {\n        const profile = AppState.get('profile') || AppState.get('currentUser');\n        userId = profile?.id;\n    }\n    if (!userId) return { success: false, reason: 'No se encontró una sesión de usuario activa' };\n\n    // 1. Validación de Saldo Disponible en DB\n    const { data: profile, error: profileErr } = await client\n        .from('profiles')\n        .select('id, wallet_balance, full_name, bank_name, bank_account_type, bank_breve_key')\n        .eq('id', userId)\n        .single();\n\n    if (profileErr || !profile) {\n        console.error('Error consultando perfil:', profileErr);\n        return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };\n    }\n\n    const currentBalance = Number(profile.wallet_balance) || 0;\n    if (currentBalance < numAmount) return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };\n\n    const effectiveBank = bankName || profile.bank_name || 'Bancario';\n    const effectiveAccountType = accountType || profile.bank_account_type || 'Cuenta de Ahorros';\n    const effectiveBreveKey = breveKey || profile.bank_breve_key || '';\n    const bankDetailsStr = [effectiveBank, effectiveAccountType, effectiveBreveKey ? `Llave Bre-B: ${effectiveBreveKey}` : ''].filter(Boolean).join(' - ');\n    const userName = profile.full_name || 'Usuario';\n    const finalNotes = notes || `Retiro bancario a cuenta ${bankDetailsStr}`;\n    const txDescription = `Retención por solicitud de retiro bancario (${effectiveBank}) [Ref: ${refCode}]`;\n    const newBalance = Math.max(0, currentBalance - numAmount);\n\n    // 2. Insertar en wallet_requests para que quede registrada la solicitud de retiro\n    let requestId = `req-ret-${Date.now()}`;\n    const { data: reqData, error: reqError } = await client\n        .from('wallet_requests')\n        .insert({\n            user_id: userId,\n            user_name: userName,\n            request_type: 'withdrawal',\n            payment_method: 'BRE_B',\n            amount: numAmount,\n            bank_name: bankDetailsStr,\n            reference: refCode,\n            wallet_type: 'dinero',\n            status: 'pending',\n            notes: finalNotes,\n            created_at: new Date().toISOString(),\n        })\n        .select('id, reference, status')\n        .single();\n\n    if (reqError) {\n        console.error('Error registrando en wallet_requests:', reqError);\n        return { success: false, reason: 'Error al registrar solicitud: ' + reqError.message };\n    }\n\n    if (reqData?.id) {\n        requestId = reqData.id;\n    }\n\n    // 3. Registro Contable de Retención en wallet_transactions (-numAmount)\n    // Con simulation_status: 'APPROVED', el trigger handle_canonical_wallet_ledger debita automáticamente profiles.wallet_balance\n    const { data: txData, error: txError } = await client\n        .from('wallet_transactions')\n        .insert({\n            user_id: userId,\n            amount: -numAmount,\n            type: 'debit',\n            description: txDescription,\n            wallet_type: 'dinero',\n            payment_method: 'TRANSFERENCIA',\n            simulation_status: 'APPROVED',\n            created_at: new Date().toISOString(),\n        })\n        .select('id')\n        .single();\n\n    if (txError) {\n        console.warn('Advertencia insertando transacción contable:', txError);\n    }\n\n    // 4. Actualizar AppState en tiempo real\n    const currentAppStateProfile = AppState.get('profile') || {};\n    AppState.set({\n        profile: {\n            ...currentAppStateProfile,\n            ...profile,\n            wallet_balance: newBalance,\n        }\n    });\n\n    return { success: true, requestId, reference: refCode, newBalance };\n}\n\n/* ─── Create Wallet Request (Backwards-Compatible Wrapper) ─── */\n\n/** Submit a withdrawal or consumption request. */\nexport async function createWalletRequest(requestType, amount, bankName = null) {\n    if (requestType === 'withdrawal') return requestBankWithdrawal({ amount, bankName });\n    if (isUsingMockData()) return { success: true, requestId: 'mock-req-id' };\n\n    const client = getClient();\n    const { data: { user } } = await client.auth.getUser();\n    if (!user) return { success: false, reason: 'not_authenticated' };\n\n    const profile = AppState.get('profile') || AppState.get('currentUser');\n    const userName = profile?.full_name || 'Usuario';\n\n    try {\n        const { data: insData, error: insError } = await client\n            .from('wallet_requests')\n            .insert({\n                user_id: user.id,\n                user_name: userName,\n                request_type: requestType,\n                amount: amount,\n                bank_name: bankName,\n                status: 'pending',\n                wallet_type: 'bono_consumo'\n            })\n            .select('id')\n            .single();\n\n        if (insError) return { success: false, reason: insError.message };\n        return { success: true, requestId: insData?.id || null };\n    } catch (e) {\n        return { success: false, reason: e.message };\n    }\n}\n\n/* ─── WhatsApp Notification ─── */\n\n/** Build and open a WhatsApp message to notify admin about a wallet request. */\nexport function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId, userBreveKey = null) {\n    const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';\n    const shortId = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';\n    let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +\n        `👤 *Usuario:* ${userName}\n` +\n        `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n` +\n        `💵 *Monto:* ${formatCOP(amount)}\n`;\n\n    if (requestType === 'withdrawal' && bankName) {\n        message += `🏦 *Banco:* ${bankName}\n`;\n        if (userBreveKey) message += `⚡ *Llave Bre-B:* ${userBreveKey}\n`;\n    }\n    message += `🎫 *ID Solicitud:* #${shortId}\n` +\n        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +\n        (requestType === 'withdrawal' ? '⚡ Acción requerida: Transferir fondos vía Bre-B al usuario y debitar saldo en la BD.' : '⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.');\n\n    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');\n}\n\nimport { getWalletTransactions, getCachedWalletTransactions } from './walletTransactionsService.js';\nexport { getWalletTransactions, getCachedWalletTransactions, formatCOP };\n
+            .eq('user_id', targetUserId)
+            .eq('status', 'active')
+            .lte('expires_at', nowIso);
+
+        if (dueBonuses && dueBonuses.length > 0) {
+            for (const b of dueBonuses) {
+                const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
+                const curBal = Number(prof?.consumption_balance) || 0;
+                const deduct = Math.min(curBal, Number(b.amount) || 0);
+
+                if (deduct > 0) {
+                    await client.from('wallet_transactions').insert({
+                        user_id: targetUserId,
+                        amount: -deduct,
+                        type: 'debit',
+                        description: `Vencimiento de Campaña: ${b.campaign_name}`,
+                        wallet_type: 'consumo'
+                    });
+                    await client.from('profiles').update({ consumption_balance: Math.max(0, curBal - deduct) }).eq('id', targetUserId);
+                }
+                await client.from('user_marketing_bonuses').update({ status: 'expired', is_active: false }).eq('id', b.id);
+            }
+        }
+
+        // 2. Check for active Global campaigns (where user_id IS NULL) and credit them if not received yet
+        const { data: globalBonuses } = await client
+            .from('user_marketing_bonuses')
+            .select('*')
+            .is('user_id', null)
+            .eq('is_active', true)
+            .eq('status', 'active')
+            .lte('starts_at', nowIso)
+            .gt('expires_at', nowIso);
+
+        if (globalBonuses && globalBonuses.length > 0) {
+            const { data: userExisting } = await client
+                .from('user_marketing_bonuses')
+                .select('campaign_name')
+                .eq('user_id', targetUserId);
+
+            const receivedNames = new Set((userExisting || []).map(x => x.campaign_name));
+            const { data: prof } = await client.from('profiles').select('consumption_balance').eq('id', targetUserId).single();
+            const curBal = Number(prof?.consumption_balance) || 0;
+
+            for (const gb of globalBonuses) {
+                if (receivedNames.has(gb.campaign_name)) continue;
+
+                const bonusAmount = Number(gb.amount) || 0;
+                const { error: insErr } = await client.from('user_marketing_bonuses').insert({
+                    user_id: targetUserId,
+                    campaign_name: gb.campaign_name,
+                    amount: bonusAmount,
+                    min_order_amount: gb.min_order_amount || 150000,
+                    starts_at: gb.starts_at,
+                    expires_at: gb.expires_at,
+                    status: 'active',
+                    is_active: true,
+                });
+
+                if (!insErr && bonusAmount > 0) {
+                    await client.from('wallet_transactions').insert({
+                        user_id: targetUserId,
+                        amount: bonusAmount,
+                        type: 'credit',
+                        description: `Bono de Campaña: ${gb.campaign_name}`,
+                        wallet_type: 'consumo'
+                    });
+                    await client.from('profiles').update({ consumption_balance: curBal + bonusAmount }).eq('id', targetUserId);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Error in syncAndExpireMarketingBonuses:', e);
+    }
+}
+
+/**
+ * Calculates active bonus status (Welcome Bonus or Active Marketing Bonus) with unified countdown info.
+ * @returns {Promise<{ isExpired: boolean, daysRemaining: number, expiryDate: Date, hasWelcomeBonus: boolean, status: string, campaignName: string }>}
+ */
+export async function getWelcomeBonusExpiryInfo() {
+    const profile = AppState.get('profile') || (isUsingMockData() ? MOCK_PROFILE : null);
+    let createdAt = profile?.created_at;
+    let status = profile?.welcome_bonus_status || 'active';
+    let targetUserId = profile?.id;
+
+    if (!isUsingMockData()) {
+        try {
+            const client = getClient();
+            const { data: { user } } = await client.auth.getUser();
+            if (user) {
+                targetUserId = user.id;
+                const { data } = await client.from('profiles').select('created_at, welcome_bonus_status, consumption_balance').eq('id', user.id).single();
+                if (data) {
+                    createdAt = data.created_at || user.created_at;
+                    status = data.welcome_bonus_status || 'active';
+                }
+            }
+        } catch (e) {
+            console.warn('Could not read user profile for bonus expiry:', e);
+        }
+    }
+
+    const regDate = createdAt ? new Date(createdAt) : new Date();
+    const EXPIRY_DAYS = 30;
+    const expiryTime = regDate.getTime() + (EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const now = Date.now();
+    const msRemaining = expiryTime - now;
+    const daysRemaining = Math.max(0, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+    let isExpired = status !== 'active' || msRemaining <= 0;
+
+    // Automatic trigger if 30 days passed and still marked active
+    if (status === 'active' && msRemaining <= 0) {
+        await expireWelcomeBonusIfDue(targetUserId);
+        status = 'expired';
+        isExpired = true;
+    }
+
+    // Check active marketing campaign bonus from user_marketing_bonuses
+    let campaignName = 'Bono Bienvenida $20.000';
+    let marketingDaysRemaining = 0;
+    let hasActiveMarketingBonus = false;
+
+    if (!isUsingMockData() && targetUserId) {
+        try {
+            await syncAndExpireMarketingBonuses(targetUserId);
+            const client = getClient();
+            const { data: activeMkt } = await client
+                .from('user_marketing_bonuses')
+                .select('expires_at, amount, campaign_name')
+                .eq('user_id', targetUserId)
+                .eq('status', 'active')
+                .eq('is_active', true)
+                .gt('expires_at', new Date().toISOString())
+                .order('expires_at', { ascending: true })
+                .limit(1)
+                .maybeSingle();
+
+            if (activeMkt) {
+                hasActiveMarketingBonus = true;
+                const mktExpiry = new Date(activeMkt.expires_at).getTime();
+                marketingDaysRemaining = Math.max(0, Math.ceil((mktExpiry - now) / (1000 * 60 * 60 * 24)));
+                campaignName = activeMkt.campaign_name || 'Bono Express';
+            }
+        } catch (e) {
+            console.warn('Error checking marketing bonus info:', e);
+        }
+    }
+
+    const currentBonus = await getReferralBonusBalance();
+    const isOverallActive = (!isExpired && daysRemaining > 0) || hasActiveMarketingBonus;
+    const effectiveDaysRemaining = hasActiveMarketingBonus ? marketingDaysRemaining : daysRemaining;
+
+    return {
+        status: isOverallActive ? 'active' : status,
+        isExpired: !isOverallActive,
+        daysRemaining: effectiveDaysRemaining,
+        expiryDate: new Date(expiryTime),
+        hasWelcomeBonus: currentBonus > 0,
+        campaignName: isOverallActive ? campaignName : 'Bono Bienvenida $20.000',
+    };
+}
+
+/* ─── Deduct Wallet Balance (Post-Purchase) ─── */
+
+/**
+ * Deduct an amount from the user's wallet balance after a successful purchase.
+ * This is the frontend safeguard — ideally the Supabase RPC buy_piggy should
+ * handle this atomically. Until then, we call this immediately after a confirmed purchase.
+ *
+ * @param {number} amount - Amount in COP to deduct
+ * @returns {{ success: boolean, newBalance?: number, reason?: string }}
+ */
+export async function deductWalletBalance(amount, description = 'Débito: compra de Piggy') {
+    if (isUsingMockData()) {
+        initMockState();
+        mockBalance = Math.max(0, (mockBalance || 0) - amount);
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description, wallet_type: 'dinero', created_at: new Date().toISOString() };
+        if (!mockTransactions) mockTransactions = [];
+        mockTransactions.unshift(debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        const curProf = AppState.get('profile') || {};
+        AppState.set({ profile: { ...curProf, wallet_balance: mockBalance } });
+        return { success: true, newBalance: mockBalance };
+    }
+
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_client' };
+
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    // 1. Try secure RPC deduct_wallet_balance
+    try {
+        const { data: rpcRes, error: rpcErr } = await client.rpc('deduct_wallet_balance', {
+            p_amount: amount,
+            p_description: description
+        });
+
+        if (!rpcErr && rpcRes && rpcRes.success) {
+            const curProf = AppState.get('profile') || {};
+            AppState.set({ profile: { ...curProf, wallet_balance: rpcRes.new_balance } });
+            return { success: true, newBalance: rpcRes.new_balance };
+        }
+    } catch (rpcEx) {
+        console.warn('deduct_wallet_balance RPC call failed, using fallback:', rpcEx);
+    }
+
+    // 2. Fallback: Read balance & insert debit transaction
+    const { data: profile, error: readError } = await client
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', user.id)
+        .single();
+
+    if (readError || !profile) return { success: false, reason: 'could_not_read_balance' };
+
+    const currentBalance = Number(profile.wallet_balance) || 0;
+    if (currentBalance < amount) return { success: false, reason: 'insufficient_balance' };
+
+    const newBalance = currentBalance - amount;
+
+    const { error: txError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: -amount,
+            type: 'debit',
+            description,
+            wallet_type: 'dinero',
+            payment_method: 'SALDO_AGRO',
+            simulation_status: 'APPROVED'
+        });
+
+    if (txError) {
+        console.error('Error inserting debit transaction:', txError);
+        return { success: false, reason: txError.message };
+    }
+
+    // Explicitly update profiles.wallet_balance in case trigger didn't catch it
+    try {
+        await client.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+    } catch (e) {
+        console.warn('profiles.wallet_balance update handled by trigger or protected:', e);
+    }
+
+    const curProf = AppState.get('profile') || {};
+    AppState.set({ profile: { ...curProf, wallet_balance: newBalance } });
+
+    return { success: true, newBalance };
+}
+
+/**
+ * Add / Refund balance to the user's wallet.
+ * Inserts a credit transaction so the DB trigger updates profiles.wallet_balance.
+ * @param {number} amount
+ * @param {string} description
+ */
+export async function addWalletBalance(amount, description = 'Reembolso a Wallet') {
+    if (isUsingMockData()) {
+        initMockState();
+        mockBalance += amount;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+
+        const creditTx = {
+            id: `sim-ref-${Date.now()}`,
+            amount: amount,
+            type: 'recharge',
+            description,
+            wallet_type: 'dinero',
+            created_at: new Date().toISOString()
+        };
+        mockTransactions.unshift(creditTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        return { success: true, newBalance: mockBalance };
+    }
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    const { error: txError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: amount, // positive = credit
+            type: 'recharge',
+            description: description,
+        });
+
+    if (txError) {
+        console.error('Error inserting credit transaction:', txError);
+        return { success: false, reason: txError.message };
+    }
+
+    return { success: true };
+}
+
+/* ─── Convert Wallet Balance to Consumption Bonus ─── */
+
+/**
+ * Canje de saldo por Bonos de Consumo:
+ * Debits available wallet balance (dinero) and credits consumption bonus balance (consumo)
+ * via wallet_transactions for full traceability without retaining funds or notifying WhatsApp.
+ * @param {number} amount - Amount in COP to convert
+ * @returns {Promise<{success: boolean, reason?: string}>}
+ */
+export async function convertBalanceToConsumptionBonus(amount) {
+    if (isUsingMockData()) {
+        initMockState();
+        if (mockBalance < amount) return { success: false, reason: 'insufficient_balance' };
+        mockBalance -= amount;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+        const debitTx = { id: `sim-deb-${Date.now()}`, amount: -amount, type: 'debit', description: 'Canje a Bonos de Consumo (Débito saldo)', wallet_type: 'dinero', created_at: new Date().toISOString() };
+        const creditTx = { id: `sim-cred-${Date.now() + 1}`, amount: amount, type: 'credit', description: 'Bono de Consumo acreditado por canje de saldo', wallet_type: 'consumo', created_at: new Date().toISOString() };
+        mockTransactions.unshift(creditTx, debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        const profile = AppState.get('profile') || { ...MOCK_PROFILE };
+        profile.consumption_balance = (profile.consumption_balance || 0) + amount;
+        profile.wallet_balance = mockBalance;
+        AppState.set({ profile: { ...profile } });
+        return { success: true };
+    }
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+    const { data, error } = await client.rpc('convert_balance_to_consumption_bonus', { p_amount: amount });
+    if (error || !data?.success) return { success: false, reason: error?.message || data?.reason || 'No se pudo realizar el canje en base de datos.' };
+    const { data: updatedProfile } = await client.from('profiles').select('*').eq('id', user.id).single();
+    if (updatedProfile) {
+        const cur = AppState.get('profile') || {};
+        AppState.set({ profile: { ...cur, ...updatedProfile } });
+    }
+    return { success: true };
+}
+
+/* ─── Recharge Wallet (Wompi Simulation) ─── */
+export async function rechargeWallet(amount, paymentMethod, simulationStatus, mockState = null, reference = null) {
+    const isApproved = simulationStatus === 'simulated_approved';
+    const refStr = reference ? ` [Ref: ${reference}]` : '';
+    if (isUsingMockData()) {
+        initMockState();
+        const newTransaction = {
+            id: `sim-${Date.now()}`,
+            amount: isApproved ? amount : 0,
+            type: 'simulation_recharge',
+            description: isApproved ? `Recarga Wompi${refStr || ` (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`}` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`,
+            wallet_type: 'dinero',
+            payment_method: paymentMethod,
+            simulation_status: simulationStatus,
+            created_at: new Date().toISOString(),
+        };
+        mockTransactions.unshift(newTransaction);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+        if (isApproved) {
+            mockBalance += amount;
+            localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+        }
+        if (mockState) { mockState.balance = mockBalance; mockState.transactions = mockTransactions; }
+        return { success: isApproved, newBalance: mockBalance, transactionId: newTransaction.id, reason: isApproved ? null : 'simulated_rejected' };
+    }
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+    const description = isApproved ? (reference ? `Recarga Wompi [Ref: ${reference}]` : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Aprobada`) : `Recarga Wompi (${paymentMethod === 'tarjeta' ? 'Tarjeta de Crédito' : 'PSE'}) — Rechazada`;
+
+    // Idempotencia: Verificar si el Webhook ya insertó esta transacción por referencia
+    if (reference && isApproved) {
+        const { data: existingTx } = await client
+            .from('wallet_transactions')
+            .select('id')
+            .eq('description', description)
+            .single();
+
+        if (existingTx) {
+            const { data: profile } = await client
+                .from('profiles')
+                .select('wallet_balance')
+                .eq('id', user.id)
+                .single();
+
+            return {
+                success: true,
+                newBalance: profile?.wallet_balance || 0,
+                transactionId: existingTx.id,
+            };
+        }
+    }
+
+    // Insert transaction — the DB trigger only credits wallet if NOT rejected
+    const { data, error } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: user.id,
+            amount: isApproved ? amount : 0,
+            type: 'simulation_recharge',
+            description,
+            wallet_type: 'dinero',
+            payment_method: paymentMethod,
+            simulation_status: simulationStatus,
+        })
+        .select('id')
+        .single();
+
+    if (error) {
+        console.error('Error inserting recharge transaction:', error);
+        return { success: false, reason: error.message };
+    }
+
+    if (!isApproved) {
+        return { success: false, reason: 'simulated_rejected', transactionId: data?.id };
+    }
+
+    // Read updated balance to return it
+    const { data: profile } = await client
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', user.id)
+        .single();
+
+    return {
+        success: true,
+        newBalance: profile?.wallet_balance || 0,
+        transactionId: data?.id,
+    };
+}
+
+/**
+ * Helper to register a wallet request in Supabase with optional RPC fallback.
+ */
+async function recordWalletRequestInDB({ userId, userName, requestType, paymentMethod, reference, amount, walletType, bankName, notes, rpcName = null, rpcArgs = null }) {
+    const client = getClient();
+    if (rpcName && rpcArgs) {
+        try {
+            const { data, error } = await client.rpc(rpcName, rpcArgs);
+            if (!error && data?.success) {
+                return { success: true, requestId: data.request_id, reference: data.reference || reference, status: 'pending' };
+            }
+        } catch (e) {
+            console.warn(`RPC ${rpcName} exception:`, e);
+        }
+    }
+
+    const { data, error } = await client
+        .from('wallet_requests')
+        .insert({
+            user_id: userId,
+            user_name: userName,
+            request_type: requestType,
+            payment_method: paymentMethod,
+            reference,
+            amount: amount || 0,
+            status: 'pending',
+            wallet_type: walletType || 'dinero',
+            bank_name: bankName,
+            notes,
+        })
+        .select('id, reference, status')
+        .single();
+
+    if (error) {
+        console.error('Error registrando solicitud en wallet_requests:', error);
+        return { success: false, reason: error.message };
+    }
+
+    return {
+        success: true,
+        requestId: data?.id,
+        reference: data?.reference || reference,
+        status: data?.status || 'pending',
+    };
+}
+
+/** Registrar una solicitud de recarga por Bre-B (Semi-automática). */
+export async function requestBreBRecharge({ amount, reference, breBKey = '@piggygranjamoral', mockState = null }) {
+    if (isUsingMockData()) {
+        initMockState();
+        return { success: true, requestId: `req-breb-${Date.now()}`, reference, status: 'pending' };
+    }
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_supabase_client' };
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
+
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'recharge',
+        paymentMethod: 'BRE_B',
+        reference,
+        amount,
+        walletType: 'dinero',
+        bankName: 'Bancolombia',
+        notes: `Llave Bre-B: ${breBKey}`,
+        rpcName: 'create_recharge_request',
+        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'BRE_B', p_reference: reference, p_notes: `Llave Bre-B: ${breBKey}` }
+    });
+}
+
+/** Registrar una solicitud de recarga por Código QR. */
+export async function requestQRRecharge({ amount, reference, mockState = null }) {
+    if (isUsingMockData()) {
+        initMockState();
+        return { success: true, requestId: `req-qr-${Date.now()}`, reference, status: 'pending' };
+    }
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_supabase_client' };
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
+
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'recharge',
+        paymentMethod: 'QR_CODE',
+        reference,
+        amount,
+        walletType: 'dinero',
+        bankName: 'Bancolombia',
+        notes: 'Código QR Bancolombia',
+        rpcName: 'create_recharge_request',
+        rpcArgs: { p_user_id: userId, p_amount: amount, p_payment_method: 'QR_CODE', p_reference: reference, p_notes: 'Código QR Bancolombia' }
+    });
+}
+
+/** Registrar una solicitud de canje por carne (Bonos de Consumo). */
+export async function requestMeatRedemption({ amount, reference }) {
+    if (isUsingMockData()) return { success: true, requestId: `req-crn-${Date.now()}`, reference, status: 'pending' };
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_supabase_client' };
+    const { data: authData } = await client.auth.getUser().catch(() => ({ data: {} }));
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userId = authData?.user?.id || profile?.id;
+    if (!userId) return { success: false, reason: 'not_authenticated' };
+
+    return recordWalletRequestInDB({
+        userId,
+        userName: profile?.full_name || 'Usuario',
+        requestType: 'consumption',
+        paymentMethod: 'BONO',
+        reference,
+        amount,
+        walletType: 'bono_consumo',
+        notes: 'Canje de bonos por productos de carne',
+    });
+}
+
+/* ─── Bank Withdrawal with Immediate Retention (Fintech Standard) ─── */
+
+/** Request a bank withdrawal with immediate balance retention. */
+export async function requestBankWithdrawal({ amount, bankName = '', accountType = '', breveKey = '', notes = '' }) {
+    const numAmount = Number(amount) || 0;
+    if (numAmount <= 0) return { success: false, reason: 'El monto a retirar debe ser mayor a cero' };
+    const refCode = `RET-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    if (isUsingMockData()) {
+        initMockState();
+        if (mockBalance < numAmount) return { success: false, reason: 'Saldo insuficiente en tu Cuenta Agro' };
+
+        mockBalance -= numAmount;
+        localStorage.setItem('mock_wallet_balance', mockBalance.toString());
+
+        const debitTx = {
+            id: `tx-ret-${Date.now()}`,
+            user_id: 'mock-user-id',
+            amount: -numAmount,
+            type: 'debit',
+            description: `Retención por solicitud de retiro bancario (${bankName || 'Bancario'}) [Ref: ${refCode}]`,
+            wallet_type: 'dinero',
+            payment_method: 'BRE_B',
+            simulation_status: 'APPROVED',
+            created_at: new Date().toISOString(),
+        };
+
+        if (!mockTransactions) mockTransactions = [];
+        mockTransactions.unshift(debitTx);
+        localStorage.setItem('mock_wallet_transactions', JSON.stringify(mockTransactions));
+
+        const curProfile = AppState.get('profile') || { ...MOCK_PROFILE };
+        curProfile.wallet_balance = mockBalance;
+        AppState.set({ profile: { ...curProfile } });
+        return { success: true, requestId: `req-ret-${Date.now()}`, reference: refCode, newBalance: mockBalance };
+    }
+
+    const client = getClient();
+    if (!client) return { success: false, reason: 'no_supabase_client' };
+
+    let userId = null;
+    try {
+        const { data: authData } = await client.auth.getUser();
+        userId = authData?.user?.id;
+    } catch (e) {
+        console.warn('No se pudo obtener usuario de auth.getUser:', e);
+    }
+    if (!userId) {
+        const profile = AppState.get('profile') || AppState.get('currentUser');
+        userId = profile?.id;
+    }
+    if (!userId) return { success: false, reason: 'No se encontró una sesión de usuario activa' };
+
+    // 1. Validación de Saldo Disponible en DB
+    const { data: profile, error: profileErr } = await client
+        .from('profiles')
+        .select('id, wallet_balance, full_name, bank_name, bank_account_type, bank_breve_key')
+        .eq('id', userId)
+        .single();
+
+    if (profileErr || !profile) {
+        console.error('Error consultando perfil:', profileErr);
+        return { success: false, reason: 'No se pudo verificar el saldo disponible en tu cuenta' };
+    }
+
+    const currentBalance = Number(profile.wallet_balance) || 0;
+    if (currentBalance < numAmount) return { success: false, reason: 'Saldo insuficiente para realizar este retiro' };
+
+    const effectiveBank = bankName || profile.bank_name || 'Bancario';
+    const effectiveAccountType = accountType || profile.bank_account_type || 'Cuenta de Ahorros';
+    const effectiveBreveKey = breveKey || profile.bank_breve_key || '';
+    const bankDetailsStr = [effectiveBank, effectiveAccountType, effectiveBreveKey ? `Llave Bre-B: ${effectiveBreveKey}` : ''].filter(Boolean).join(' - ');
+    const userName = profile.full_name || 'Usuario';
+    const finalNotes = notes || `Retiro bancario a cuenta ${bankDetailsStr}`;
+    const txDescription = `Retención por solicitud de retiro bancario (${effectiveBank}) [Ref: ${refCode}]`;
+    const newBalance = Math.max(0, currentBalance - numAmount);
+
+    // 2. Insertar en wallet_requests para que quede registrada la solicitud de retiro
+    let requestId = `req-ret-${Date.now()}`;
+    const { data: reqData, error: reqError } = await client
+        .from('wallet_requests')
+        .insert({
+            user_id: userId,
+            user_name: userName,
+            request_type: 'withdrawal',
+            payment_method: 'BRE_B',
+            amount: numAmount,
+            bank_name: bankDetailsStr,
+            reference: refCode,
+            wallet_type: 'dinero',
+            status: 'pending',
+            notes: finalNotes,
+            created_at: new Date().toISOString(),
+        })
+        .select('id, reference, status')
+        .single();
+
+    if (reqError) {
+        console.error('Error registrando en wallet_requests:', reqError);
+        return { success: false, reason: 'Error al registrar solicitud: ' + reqError.message };
+    }
+
+    if (reqData?.id) {
+        requestId = reqData.id;
+    }
+
+    // 3. Registro Contable de Retención en wallet_transactions (-numAmount)
+    // Con simulation_status: 'APPROVED', el trigger handle_canonical_wallet_ledger debita automáticamente profiles.wallet_balance
+    const { data: txData, error: txError } = await client
+        .from('wallet_transactions')
+        .insert({
+            user_id: userId,
+            amount: -numAmount,
+            type: 'debit',
+            description: txDescription,
+            wallet_type: 'dinero',
+            payment_method: 'TRANSFERENCIA',
+            simulation_status: 'APPROVED',
+            created_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+    if (txError) {
+        console.warn('Advertencia insertando transacción contable:', txError);
+    }
+
+    // 4. Actualizar AppState en tiempo real
+    const currentAppStateProfile = AppState.get('profile') || {};
+    AppState.set({
+        profile: {
+            ...currentAppStateProfile,
+            ...profile,
+            wallet_balance: newBalance,
+        }
+    });
+
+    return { success: true, requestId, reference: refCode, newBalance };
+}
+
+/* ─── Create Wallet Request (Backwards-Compatible Wrapper) ─── */
+
+/** Submit a withdrawal or consumption request. */
+export async function createWalletRequest(requestType, amount, bankName = null) {
+    if (requestType === 'withdrawal') return requestBankWithdrawal({ amount, bankName });
+    if (isUsingMockData()) return { success: true, requestId: 'mock-req-id' };
+
+    const client = getClient();
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) return { success: false, reason: 'not_authenticated' };
+
+    const profile = AppState.get('profile') || AppState.get('currentUser');
+    const userName = profile?.full_name || 'Usuario';
+
+    try {
+        const { data: insData, error: insError } = await client
+            .from('wallet_requests')
+            .insert({
+                user_id: user.id,
+                user_name: userName,
+                request_type: requestType,
+                amount: amount,
+                bank_name: bankName,
+                status: 'pending',
+                wallet_type: 'bono_consumo'
+            })
+            .select('id')
+            .single();
+
+        if (insError) return { success: false, reason: insError.message };
+        return { success: true, requestId: insData?.id || null };
+    } catch (e) {
+        return { success: false, reason: e.message };
+    }
+}
+
+/* ─── WhatsApp Notification ─── */
+
+/** Build and open a WhatsApp message to notify admin about a wallet request. */
+export function notifyAdminViaWhatsApp(requestType, amount, userName, userWhatsApp, bankName, requestId, userBreveKey = null) {
+    const typeLabel = requestType === 'withdrawal' ? '💰 RETIRO' : '🥩 CONSUMO';
+    const shortId = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
+    let message = `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
+        `👤 *Usuario:* ${userName}\n` +
+        `📱 *WhatsApp:* ${userWhatsApp || 'No registrado'}\n` +
+        `💵 *Monto:* ${formatCOP(amount)}\n`;
+
+    if (requestType === 'withdrawal' && bankName) {
+        message += `🏦 *Banco:* ${bankName}\n`;
+        if (userBreveKey) message += `⚡ *Llave Bre-B:* ${userBreveKey}\n`;
+    }
+    message += `🎫 *ID Solicitud:* #${shortId}\n` +
+        `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
+        (requestType === 'withdrawal' ? '⚡ Acción requerida: Transferir fondos vía Bre-B al usuario y debitar saldo en la BD.' : '⚡ Acción requerida: Coordinar entrega de productos y debitar saldo en la BD.');
+
+    window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+import { getWalletTransactions, getCachedWalletTransactions } from './walletTransactionsService.js';
+export { getWalletTransactions, getCachedWalletTransactions, formatCOP };
