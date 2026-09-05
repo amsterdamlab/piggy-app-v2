@@ -35,7 +35,7 @@ export function showBonusModal(hasPiggies) {
             <div class="bonus-text-scroll">
                 <p><strong>1. Definición del Beneficio:</strong><br/>
                 PIGGY otorga un Bono de Consumo por valor de VEINTE MIL PESOS M/CTE ($20.000 COP) a todo usuario nuevo que complete satisfactoriamente el registro en la plataforma, sin necesidad de adquirir previamente un activo productivo.</p>
-
+Read more...
                 <p><strong>2. Condiciones de Redención:</strong><br/>
                 Para hacer efectivo el bono, el usuario deberá realizar un pedido de productos cárnicos a través de Granja Villa Morales del Valle SAS, bajo las siguientes condiciones:</p>
                 <ul>
