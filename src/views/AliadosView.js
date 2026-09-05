@@ -200,10 +200,16 @@ function renderAllyCard(ally) {
 function getFallbackImage(category) {
   const images = {
     'Carnicería': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
+    'Carniceria': 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80',
     'Restaurante': 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
     'Distribuidor': 'https://images.unsplash.com/photo-1558030006-d35974213323?auto=format&fit=crop&w=800&q=80',
     'Petshop': 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80',
     'Barbería': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+    'Barberia': 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=800&q=80',
+    'Wash Clean': 'https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?auto=format&fit=crop&w=800&q=80',
+    'Ecologico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+    'Ecológico': 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+    'Agencia': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
   };
   return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
 }
@@ -214,10 +220,37 @@ function getFallbackImage(category) {
 function getCategoryIcon(category) {
   const icons = {
     'Carnicería': '🥩',
+    'Carniceria': '🥩',
     'Restaurante': '🍽️',
     'Distribuidor': '🚛',
     'Petshop': '🐾',
     'Barbería': '💈',
+    'Barberia': '💈',
+    'Wash Clean': '🧼',
+    'WashClean': '🧼',
+    'Wash clean': '🧼',
+    'Lavado': '🧼',
+    'Ecologico': '🌱',
+    'Ecológico': '🌱',
+    'Agencia': '💼',
   };
-  return icons[category] || '🏢';
+
+  if (icons[category]) return icons[category];
+
+  const norm = (category || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  if (norm.includes('wash') || norm.includes('clean') || norm.includes('lavad')) return '🧼';
+  if (norm.includes('ecolog') || norm.includes('eco') || norm.includes('verde')) return '🌱';
+  if (norm.includes('agencia') || norm.includes('agency')) return '💼';
+  if (norm.includes('carn')) return '🥩';
+  if (norm.includes('restaur')) return '🍽️';
+  if (norm.includes('distrib')) return '🚛';
+  if (norm.includes('pet') || norm.includes('mascot')) return '🐾';
+  if (norm.includes('barb') || norm.includes('peluqu')) return '💈';
+
+  return '🏢';
 }
