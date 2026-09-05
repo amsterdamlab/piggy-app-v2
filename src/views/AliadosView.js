@@ -226,10 +226,10 @@ function getCategoryIcon(category) {
     'Petshop': '🐾',
     'Barbería': '💈',
     'Barberia': '💈',
-    'Wash Clean': '🧼',
-    'WashClean': '🧼',
-    'Wash clean': '🧼',
-    'Lavado': '🧼',
+    'Wash Clean': '🏍️',
+    'WashClean': '🏍️',
+    'Wash clean': '🏍️',
+    'Lavado': '🏍️',
     'Ecologico': '🌱',
     'Ecológico': '🌱',
     'Agencia': '💼',
@@ -243,7 +243,7 @@ function getCategoryIcon(category) {
     .toLowerCase()
     .trim();
 
-  if (norm.includes('wash') || norm.includes('clean') || norm.includes('lavad')) return '🧼';
+  if (norm.includes('wash') || norm.includes('clean') || norm.includes('moto') || norm.includes('lavad')) return '🏍️';
   if (norm.includes('ecolog') || norm.includes('eco') || norm.includes('verde')) return '🌱';
   if (norm.includes('agencia') || norm.includes('agency')) return '💼';
   if (norm.includes('carn')) return '🥩';
