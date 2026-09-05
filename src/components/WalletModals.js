@@ -46,9 +46,7 @@ export function showWithdrawModal(availableAmount) {
         <button class="btn btn--primary btn--block btn--disabled" id="btn-solicitar-retiro" disabled style="width:100%; margin-top:16px;">Solicitar Retiro</button>
     </div>
   `;
-  document.body.appendChild(modal);
-
-  const amountInput = document.getElementById('withdraw-amount');
+  document.body.appendChild(modal);\n\n  const amountInput = document.getElementById('withdraw-amount');
   const bankInput = document.getElementById('withdraw-bank');
   const termsInput = document.getElementById('withdraw-terms');
   const submitBtn = document.getElementById('btn-solicitar-retiro');
@@ -154,8 +152,7 @@ export function showBonusModal(hasPiggies) {
         <div class="bonus-content mt-md" style="flex: 2;">
             <div class="bonus-text-scroll"><p>PIGGY otorga un Bono de Consumo de $50.000 a nuevos usuarios que realicen su primera adopción. Requiere compra mínima de $150.000. Envío gratis en Cali.</p></div>
         </div>
-        <div class="bonus-footer mt-lg">
-            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $50.000!'}</button>
+        <div class="bonus-footer mt-lg">\n            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $50.000!'}</button>
         </div>
     </div>
   `;

@@ -50,8 +50,7 @@ export function renderWhatsAppModal() {
         display: flex;
         align-items: flex-end;
         justify-content: center;
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(4px);
+        background: rgba(0, 0, 0, 0.55);\n        backdrop-filter: blur(4px);
         animation: fadeIn 0.25s ease;
         padding: 0;
     `;
