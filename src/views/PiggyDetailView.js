@@ -102,7 +102,7 @@ async function loadPiggyDetail(piggyId) {
                   </div>
                 </div>
                 <div class="piggy-detail__metric" style="display: flex; align-items: center; gap: 8px;">
-                  <span style="font-size: 18px;">⚖️</span>
+                  <span style="color: #E91E63; display: flex; align-items: center;">${renderIcon('scale', '', '18')}</span>
                   <div>
                     <div class="text-xs text-muted" style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Peso estimado</div>
                     <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
