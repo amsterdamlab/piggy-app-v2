@@ -3,4 +3,343 @@
    Direct purchase layout
    ============================================ */
 
-.mercado-page {\n    background: var(--color-bg);\n}\n\n/* Header */\n.mercado-header {\n    margin-bottom: var(--space-lg);\n}\n\n.mercado-title {\n    font-size: var(--text-3xl);\n    font-weight: var(--font-extrabold);\n    color: var(--color-text-primary);\n    margin-bottom: var(--space-2xs);\n}\n\n.mercado-subtitle {\n    font-size: var(--text-sm);\n    color: var(--color-text-secondary);\n    line-height: var(--leading-relaxed);\n}\n\n/* ---- Product List ---- */\n.mercado-list {\n    display: flex;\n    flex-direction: column;\n    gap: var(--space-md);\n}\n\n/* ---- Horizontal Product Card (mcard) ---- */\n.mcard {\n    display: flex;\n    align-items: stretch;\n    background: var(--color-white, #ffffff);\n    border: 1px solid #f1f5f9;\n    border-radius: 24px;\n    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);\n    overflow: hidden;\n    position: relative;\n    padding: 16px;\n    gap: 16px;\n    transition: transform var(--transition-fast), box-shadow var(--transition-fast);\n}\n\n.mcard:hover {\n    transform: translateY(-2px);\n    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);\n}\n\n/* ROI Badge — Soft Pastel Pink */\n.mcard__roi-badge {\n    position: absolute;\n    top: 10px;\n    right: 12px;\n    background: #FCE4EC;\n    color: #C2185B;\n    font-size: 11px;\n    font-weight: var(--font-bold);\n    padding: 3px 10px;\n    border-radius: var(--radius-full);\n    z-index: 2;\n    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);\n}\n\n/* ---- Left Column: Image + Buy Button ---- */\n.mcard__left {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: flex-start;\n    padding: 0;\n    gap: 10px;\n    flex-shrink: 0;\n    width: 110px;\n}\n\n.mcard__img-wrap {\n    width: 110px;\n    height: 110px;\n    border-radius: 16px;\n    overflow: hidden;\n    flex-shrink: 0;\n}\n\n.mcard__img {\n    width: 100%;\n    height: 100%;\n    object-fit: cover;\n    border-radius: 16px;\n}\n\n/* Buy Button — Full width of image container */\n.mcard__buy-btn {\n    width: 100%;\n    max-width: 110px;\n    display: inline-flex;\n    align-items: center;\n    justify-content: center;\n    gap: 6px;\n    padding: 10px 0;\n    border-radius: 12px;\n    border: none;\n    background: var(--color-primary, #ec4899);\n    color: #fff;\n    font-size: 13px;\n    font-weight: 700;\n    cursor: pointer;\n    transition: all var(--transition-fast);\n    white-space: nowrap;\n}\n\n.mcard__buy-btn:hover {\n    background: var(--color-primary-dark, #be123c);\n    transform: translateY(-1px);\n    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);\n}\n\n.mcard__buy-btn:active {\n    transform: translateY(0);\n}\n\n.mcard__buy-btn svg {\n    width: 15px;\n    height: 15px;\n}\n\n/* ---- Right Column: Info ---- */\n.mcard__right {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: space-between;\n    padding: 0;\n    min-width: 0;\n}\n\n.mcard__name {\n    font-size: var(--text-lg);\n    /* Larger Name */\n    font-weight: var(--font-extrabold);\n    color: var(--color-text-primary);\n    margin-bottom: 4px;\n    padding-right: 50px;\n}\n\n.mcard__desc {\n    font-size: var(--text-xs);\n    color: var(--color-text-secondary);\n    line-height: var(--leading-relaxed);\n    margin-bottom: var(--space-sm);\n    display: -webkit-box;\n    -webkit-line-clamp: 2;\n    line-clamp: 2;\n    -webkit-box-orient: vertical;\n    overflow: hidden;\n}\n\n/* Time Savings Badge — Green, top-left to complement ROI badge on right  */\n.mcard__time-badge {\n    position: absolute;\n    top: 10px;\n    left: 12px;\n    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);\n    color: #2E7D32;\n    font-size: 10px;\n    font-weight: var(--font-bold);\n    padding: 3px 10px;\n    border-radius: var(--radius-full);\n    z-index: 2;\n    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);\n    letter-spacing: 0.02em;\n}\n\n/* Info Row — Structured Month / Days / Weight */\n.mcard__info-row {\n    display: flex;\n    align-items: center;\n    justify-content: space-around;\n    background: #f8fafc;\n    border-radius: 12px;\n    padding: 8px 12px;\n    margin-bottom: 10px;\n}\n\n.mcard__info-item {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    gap: 2px;\n}\n\n.mcard__info-label {\n    font-size: 9px;\n    font-weight: 700;\n    color: #64748b;\n    text-transform: uppercase;\n    letter-spacing: 0.05em;\n}\n\n.mcard__info-value {\n    font-size: 0.88rem;\n    font-weight: 800;\n    color: #0f172a;\n    white-space: nowrap;\n}\n\n.mcard__info-value--month {\n    color: #7e22ce;\n}\n\n.mcard__info-value--days {\n    color: #059669;\n}\n\n.mcard__info-divider {\n    width: 1px;\n    height: 26px;\n    background: #e2e8f0;\n    flex-shrink: 0;\n}\n\n/* Tags row */\n.mcard__tags {\n    display: flex;\n    gap: var(--space-xs);\n    margin-bottom: var(--space-md);\n}\n\n.mcard__tag {\n    font-size: 11px;\n    font-weight: var(--font-medium);\n    padding: 3px 10px;\n    border-radius: var(--radius-full);\n    background: #F5F5F5;\n    color: var(--color-text-secondary);\n}\n\n.mcard__tag--purple {\n    background: #F3E5F5;\n    color: #7B1FA2;\n}\n\n/* Price row (now just price info) */\n.mcard__price-row {\n    display: flex;\n    flex-direction: column;\n    margin-top: auto;\n}\n\n.mcard__price {\n    font-size: 1.25rem;\n    font-weight: 800;\n    color: #0f172a;\n    line-height: 1.2;\n}\n\n.mcard__stock {\n    font-size: 12px;\n    color: #64748b;\n    font-weight: 500;\n    margin-top: 2px;\n}\n\n/* ---- Checkout Modal Styles (reused mostly, but good to ensure) ---- */\n.checkout-summary {\n    text-align: center;\n    background: transparent;\n    padding: 0;\n    border-radius: 0;\n    margin-bottom: 20px;\n}\n\n/* ---- Empty State ---- */\n.mercado-empty {\n    text-align: center;\n    padding: var(--space-3xl) var(--space-lg);\n    color: var(--color-text-secondary);\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    gap: var(--space-md);\n}\n\n/* Ribbon Styles for Piggies */\n.mcard__ribbon {\n    position: absolute;\n    top: 0;\n    right: 0;\n    width: 95px;\n    height: 95px;\n    overflow: hidden;\n    z-index: 10;\n    pointer-events: none;\n}\n\n.mcard__ribbon span {\n    position: absolute;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: 135px;\n    height: 22px;\n    color: #fff;\n    font-size: 9.5px;\n    font-weight: 800;\n    text-shadow: 0 1px 2px rgba(0,0,0,0.18);\n    text-transform: uppercase;\n    right: -28px;\n    top: 18px;\n    transform: rotate(45deg);\n    box-shadow: 0 2px 6px rgba(0,0,0,0.15);\n    letter-spacing: 0.05em;\n    line-height: 1;\n    padding-left: 10px;\n}\n\n.mcard__ribbon--advanced span,\n.mcard__ribbon--avanzado span,\n.mcard__ribbon--avanzado30 span,\n.mcard__ribbon--avanzado45 span,\n.mcard__ribbon--avanzado60 span,\n.mcard__ribbon--avanzado75 span,\n.mcard__ribbon--avanzado90 span {\n    background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);\n}\n\n.mcard__ribbon--plus span,\n.mcard__ribbon--silver span {\n    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);\n}\n\n.mcard__ribbon--dorado span,\n.mcard__ribbon--gold span {\n    background: #c26a00;\n    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);\n}\n\n.mcard__ribbon--premium span {\n    background: linear-gradient(135deg, #EC4899 0%, #9D174D 100%);\n}\n
+.mercado-page {
+    background: var(--color-bg);
+}
+
+/* Header */
+.mercado-header {
+    margin-bottom: var(--space-lg);
+}
+
+.mercado-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-extrabold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2xs);
+}
+
+.mercado-subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+}
+
+/* ---- Product List ---- */
+.mercado-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* ---- Horizontal Product Card (mcard) ---- */
+.mcard {
+    display: flex;
+    align-items: stretch;
+    background: var(--color-white, #ffffff);
+    border: 1px solid #f1f5f9;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    position: relative;
+    padding: 16px;
+    gap: 16px;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.mcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
+}
+
+/* ROI Badge — Soft Pastel Pink */
+.mcard__roi-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: #FCE4EC;
+    color: #C2185B;
+    font-size: 11px;
+    font-weight: var(--font-bold);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Left Column: Image + Buy Button ---- */
+.mcard__left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    gap: 10px;
+    flex-shrink: 0;
+    width: 110px;
+}
+
+.mcard__img-wrap {
+    width: 110px;
+    height: 110px;
+    border-radius: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mcard__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+/* Buy Button — Full width of image container */
+.mcard__buy-btn {
+    width: 100%;
+    max-width: 110px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+    border-radius: 12px;
+    border: none;
+    background: var(--color-primary, #ec4899);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.mcard__buy-btn:hover {
+    background: var(--color-primary-dark, #be123c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
+}
+
+.mcard__buy-btn:active {
+    transform: translateY(0);
+}
+
+.mcard__buy-btn svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* ---- Right Column: Info ---- */
+.mcard__right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0;
+    min-width: 0;
+}
+
+.mcard__name {
+    font-size: var(--text-lg);
+    /* Larger Name */
+    font-weight: var(--font-extrabold);
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+    padding-right: 50px;
+}
+
+.mcard__desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Time Savings Badge — Green, top-left to complement ROI badge on right  */
+.mcard__time-badge {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    color: #2E7D32;
+    font-size: 10px;
+    font-weight: var(--font-bold);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    z-index: 2;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    letter-spacing: 0.02em;
+}
+
+/* Info Row — Structured Month / Days / Weight */
+.mcard__info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+}
+
+.mcard__info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.mcard__info-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mcard__info-value {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.mcard__info-value--month {
+    color: #7e22ce;
+}
+
+.mcard__info-value--days {
+    color: #059669;
+}
+
+.mcard__info-divider {
+    width: 1px;
+    height: 26px;
+    background: #e2e8f0;
+    flex-shrink: 0;
+}
+
+/* Tags row */
+.mcard__tags {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.mcard__tag {
+    font-size: 11px;
+    font-weight: var(--font-medium);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    background: #F5F5F5;
+    color: var(--color-text-secondary);
+}
+
+.mcard__tag--purple {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+/* Price row (now just price info) */
+.mcard__price-row {
+    display: flex;
+    flex-direction: column;
+    margin-top: auto;
+}
+
+.mcard__price {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.mcard__stock {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* ---- Checkout Modal Styles (reused mostly, but good to ensure) ---- */
+.checkout-summary {
+    text-align: center;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    margin-bottom: 20px;
+}
+
+/* ---- Empty State ---- */
+.mercado-empty {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+/* Ribbon Styles for Piggies */
+.mcard__ribbon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 95px;
+    height: 95px;
+    overflow: hidden;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.mcard__ribbon span {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 135px;
+    height: 22px;
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+    text-transform: uppercase;
+    right: -28px;
+    top: 18px;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    padding-left: 10px;
+}
+
+.mcard__ribbon--advanced span,
+.mcard__ribbon--avanzado span,
+.mcard__ribbon--avanzado30 span,
+.mcard__ribbon--avanzado45 span,
+.mcard__ribbon--avanzado60 span,
+.mcard__ribbon--avanzado75 span,
+.mcard__ribbon--avanzado90 span {
+    background: linear-gradient(135deg, #A855F7 0%, #7E22CE 100%);
+}
+
+.mcard__ribbon--plus span,
+.mcard__ribbon--silver span {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+.mcard__ribbon--dorado span,
+.mcard__ribbon--gold span {
+    background: #c26a00;
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+.mcard__ribbon--premium span {
+    background: linear-gradient(135deg, #EC4899 0%, #9D174D 100%);
+}
