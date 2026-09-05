@@ -13,4 +13,120 @@ import { getWelcomeBonusExpiryInfo } from './walletService.js';
  * Mirrors the data inserted in the dynamic_tips table.
  */
 const FALLBACK_TIPS = [
-  {\n    icon: '🎉',\n    title: 'Compra en locales aliados',\n    reward: 'Desbloquea un Piggy Silver (24h)',\n    color: '#be123c',\n    bgColor: '#fff1f2',\n    borderColor: '#ffe4e6',\n    ctaUrl: '#/aliados',\n  },\n  {\n    icon: '🐘',\n    title: 'Al cerrar un ciclo',\n    reward: 'Desbloquea Piggy Silver (24h)',\n    color: '#be123c',\n    bgColor: '#fff1f2',\n    borderColor: '#ffe4e6',\n    ctaUrl: null,\n  },\n  {\n    icon: '🔥',\n    title: 'Compra la oferta de la semana',\n    reward: 'Desbloquea un Piggy Gold (24h)',\n    color: '#be123c',\n    bgColor: '#fff1f2',\n    borderColor: '#ffe4e6',\n    ctaUrl: '#/gourmet',\n  },\n  {\n    icon: '🤝',\n    title: 'Refiere a un amigo y si compra su 1er Piggy',\n    reward: 'Obtén $20.000 en tu Wallet',\n    color: '#be123c',\n    bgColor: '#fff1f2',\n    borderColor: '#ffe4e6',\n    ctaUrl: null,\n  },\n];\n\n/**\n * Normalize a DB row (snake_case) to the camelCase shape used by the UI.\n * @param {Object} row\n * @returns {Object}\n */\nfunction normalizeTip(row) {\n  return {\n    icon:        row.icon,\n    title:       row.title,\n    reward:      row.reward,\n    color:       row.color,\n    bgColor:     row.bg_color,\n    borderColor: row.border_color,\n    ctaUrl:      row.cta_url ?? null,\n  };\n}\n\n/**\n * Fetch all active tips from the DB, ordered by priority (desc).\n * Falls back to FALLBACK_TIPS in mock mode or on any error.\n * Automatically injects the dynamic Welcome Bonus tip if active and within 30 days.\n * @returns {Promise<Array<Object>>}\n */\nexport async function getActiveTips() {\n  let tips = [];\n  if (isUsingMockData()) {\n    tips = [...FALLBACK_TIPS];\n  } else {\n    try {\n      const client = getClient();\n      const { data, error } = await client\n        .from('dynamic_tips')\n        .select('icon, title, reward, color, bg_color, border_color, cta_url')\n        .eq('is_active', true)\n        .order('priority', { ascending: false });\n\n      if (error || !data?.length) {\n        console.warn('TipsService: falling back to local data', error?.message);\n        tips = [...FALLBACK_TIPS];\n      } else {\n        tips = data.map(normalizeTip);\n      }\n    } catch (err) {\n      console.warn('TipsService: unexpected error, using fallback', err);\n      tips = [...FALLBACK_TIPS];\n    }\n  }\n\n  // Dynamic Welcome Bonus Countdown Tip (active while within 30 days and has balance)\n  try {\n    const expiryInfo = await getWelcomeBonusExpiryInfo();\n    if (expiryInfo.status === 'active' && !expiryInfo.isExpired && expiryInfo.daysRemaining > 0 && expiryInfo.hasWelcomeBonus) {\n      const daysText = expiryInfo.daysRemaining === 1 ? '1 día' : `${expiryInfo.daysRemaining} días`;\n      const welcomeBonusTip = {\n        icon: '🎁',\n        title: expiryInfo.campaignName || 'Bono Bienvenida $20.000',\n        reward: `Redime en productos de la Tienda. <strong>Te quedan solo ${daysText}</strong>`,\n        color: '#be123c',\n        bgColor: '#fff1f2',\n        borderColor: '#ffe4e6',\n        ctaUrl: '#/gourmet',\n      };\n      tips.unshift(welcomeBonusTip);\n    }\n  } catch (err) {\n    console.warn('TipsService: error checking welcome bonus tip expiry', err);\n  }\n\n  return tips;\n}\n\n/**\n * Pick a random tip from the active pool.\n * @returns {Promise<Object>}\n */\nexport async function getRandomTip() {\n  const tips = await getActiveTips();\n  return tips[Math.floor(Math.random() * tips.length)];\n}\n
+  {
+    icon: '🎉',
+    title: 'Compra en locales aliados',
+    reward: 'Desbloquea un Piggy Silver (24h)',
+    color: '#be123c',
+    bgColor: '#fff1f2',
+    borderColor: '#ffe4e6',
+    ctaUrl: '#/aliados',
+  },
+  {
+    icon: '🐘',
+    title: 'Al cerrar un ciclo',
+    reward: 'Desbloquea Piggy Silver (24h)',
+    color: '#be123c',
+    bgColor: '#fff1f2',
+    borderColor: '#ffe4e6',
+    ctaUrl: null,
+  },
+  {
+    icon: '🔥',
+    title: 'Compra la oferta de la semana',
+    reward: 'Desbloquea un Piggy Gold (24h)',
+    color: '#be123c',
+    bgColor: '#fff1f2',
+    borderColor: '#ffe4e6',
+    ctaUrl: '#/gourmet',
+  },
+  {
+    icon: '🤝',
+    title: 'Refiere a un amigo y si compra su 1er Piggy',
+    reward: 'Obtén $20.000 en tu Wallet',
+    color: '#be123c',
+    bgColor: '#fff1f2',
+    borderColor: '#ffe4e6',
+    ctaUrl: null,
+  },
+];
+
+/**
+ * Normalize a DB row (snake_case) to the camelCase shape used by the UI.
+ * @param {Object} row
+ * @returns {Object}
+ */
+function normalizeTip(row) {
+  return {
+    icon:        row.icon,
+    title:       row.title,
+    reward:      row.reward,
+    color:       row.color,
+    bgColor:     row.bg_color,
+    borderColor: row.border_color,
+    ctaUrl:      row.cta_url ?? null,
+  };
+}
+
+/**
+ * Fetch all active tips from the DB, ordered by priority (desc).
+ * Falls back to FALLBACK_TIPS in mock mode or on any error.
+ * Automatically injects the dynamic Welcome Bonus tip if active and within 30 days.
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getActiveTips() {
+  let tips = [];
+  if (isUsingMockData()) {
+    tips = [...FALLBACK_TIPS];
+  } else {
+    try {
+      const client = getClient();
+      const { data, error } = await client
+        .from('dynamic_tips')
+        .select('icon, title, reward, color, bg_color, border_color, cta_url')
+        .eq('is_active', true)
+        .order('priority', { ascending: false });
+
+      if (error || !data?.length) {
+        console.warn('TipsService: falling back to local data', error?.message);
+        tips = [...FALLBACK_TIPS];
+      } else {
+        tips = data.map(normalizeTip);
+      }
+    } catch (err) {
+      console.warn('TipsService: unexpected error, using fallback', err);
+      tips = [...FALLBACK_TIPS];
+    }
+  }
+
+  // Dynamic Welcome Bonus Countdown Tip (active while within 30 days and has balance)
+  try {
+    const expiryInfo = await getWelcomeBonusExpiryInfo();
+    if (expiryInfo.status === 'active' && !expiryInfo.isExpired && expiryInfo.daysRemaining > 0 && expiryInfo.hasWelcomeBonus) {
+      const daysText = expiryInfo.daysRemaining === 1 ? '1 día' : `${expiryInfo.daysRemaining} días`;
+      const welcomeBonusTip = {
+        icon: '🎁',
+        title: expiryInfo.campaignName || 'Bono Bienvenida $20.000',
+        reward: `Redime en productos de la Tienda. <strong>Te quedan solo ${daysText}</strong>`,
+        color: '#be123c',
+        bgColor: '#fff1f2',
+        borderColor: '#ffe4e6',
+        ctaUrl: '#/gourmet',
+      };
+      tips.unshift(welcomeBonusTip);
+    }
+  } catch (err) {
+    console.warn('TipsService: error checking welcome bonus tip expiry', err);
+  }
+
+  return tips;
+}
+
+/**
+ * Pick a random tip from the active pool.
+ * @returns {Promise<Object>}
+ */
+export async function getRandomTip() {
+  const tips = await getActiveTips();
+  return tips[Math.floor(Math.random() * tips.length)];
+}
