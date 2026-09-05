@@ -163,10 +163,28 @@ export async function getActiveUserFlashMissions() {
  * Supports advanced30 (saves 30 days) and advanced60 (saves 60 days).
  * @param {string} missionId - ID of the user_flash_missions row
  * @param {string} piggyName - Custom name given by user
+ * @param {string} [contractUrl] - PDF contract URL if signed
+ * @param {string} [contractCode] - Transaction contract code
  * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}
  */
-export async function buyFlashMission(missionId, piggyName) {
-    if (isUsingMockData()) return { success: false, error: 'Mock mode' };
+export async function buyFlashMission(missionId, piggyName, contractUrl = null, contractCode = null) {
+    if (isUsingMockData()) {
+        const mockPiggy = {
+            id: `mock-flash-${Date.now()}`,
+            user_id: 'mock-user',
+            name: piggyName || 'Piggy Flash',
+            status: 'engorde',
+            purchase_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 144).toISOString(),
+            investment_amount: 1000000,
+            extra_roi_bonus: 0.01,
+            category: 'plus',
+            current_weight: 15.0,
+            contract_url: contractUrl || '/contracts/contrato_base.pdf',
+            contract_code: contractCode || '#MOCK-FLASH'
+        };
+        return { success: true, piggy: mockPiggy, walletDeducted: false };
+    }
 
     const client = getClient();
     const { data: { user } } = await client.auth.getUser();
@@ -176,7 +194,9 @@ export async function buyFlashMission(missionId, piggyName) {
     try {
         const { data: rpcRes, error: rpcErr } = await client.rpc('buy_flash_mission_atomic', {
             p_mission_id: missionId,
-            p_custom_name: piggyName || ''
+            p_custom_name: piggyName || '',
+            p_contract_url: contractUrl,
+            p_contract_code: contractCode
         });
 
         if (!rpcErr && rpcRes && rpcRes.success) {
@@ -312,20 +332,24 @@ export async function buyFlashMission(missionId, piggyName) {
     }
 
     // Create the exclusive piggy
+    const insertPayload = {
+        user_id:           user.id,
+        name:              finalName,
+        full_name:         profile?.full_name || '',
+        investment_amount: mission.price || 1000000,
+        status:            'engorde',
+        extra_roi_bonus:   extraRoiBonus,
+        category:          category,
+        current_weight:    weight,
+        purchase_date:     new Date().toISOString(),
+        end_date:          endDate,
+    };
+    if (contractUrl) insertPayload.contract_url = contractUrl;
+    if (contractCode) insertPayload.contract_code = contractCode;
+
     const { data: newPiggy, error: piggyError } = await client
         .from('piggies')
-        .insert({
-            user_id:           user.id,
-            name:              finalName,
-            full_name:         profile?.full_name || '',
-            investment_amount: mission.price || 1000000,
-            status:            'engorde',
-            extra_roi_bonus:   extraRoiBonus,
-            category:          category,
-            current_weight:    weight,
-            purchase_date:     new Date().toISOString(),
-            end_date:          endDate,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 

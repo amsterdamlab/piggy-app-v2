@@ -8,8 +8,7 @@
 import { navigateTo } from '../../router.js';
 import { getWalletBalance } from '../../services/walletService.js';
 import { formatCOP } from '../../services/mockData.js';
-import { deductWalletBalance } from '../../services/walletService.js';
-import { buyFlashMission, deactivateFlashMission } from '../../services/flashMissionsService.js';
+import { deactivateFlashMission } from '../../services/flashMissionsService.js';
 import { openWalletDrawer } from './WalletBlock.js';
 
 /** Active countdown interval — cleaned up on modal close */
@@ -599,46 +598,46 @@ export function showFlashMissionModal(mission) {
         });
     }
 
-    // Confirm Purchase
-    let isBuying = false;
-    confirmBtn.addEventListener('click', async () => {
-        if (isBuying) return;
+    // Confirm Purchase -> Navigate to Digital Contract Signing
+    confirmBtn.addEventListener('click', () => {
         const customName = nameInput.value.trim();
-        if (customName.length < 3 || currentBalance < price) return;
-
-        isBuying = true;
-        confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Procesando...';
-        confirmBtn.style.pointerEvents = 'none';
-
-        try {
-            // Ejecutar compra atómica de Misión Flash
-            const result = await buyFlashMission(mission.id, customName);
-            if (!result.success) throw new Error(result.error || 'Error al registrar el piggy');
-
-            // Fallback de respaldo solo si la operación no fue descontada atómicamente por la RPC
-            if (!result.walletDeducted) {
-                const deductResult = await deductWalletBalance(price, `Débito: compra Piggy Flash "${customName}"`);
-                if (!deductResult.success) {
-                    console.warn('[FlashMissionModal] Fallback deduct warning:', deductResult.reason);
-                }
-            }
-
-            close();
-            // Navegar al piggy recién comprado: la URL #/piggy/{id} activa PiggyDetailView.
-            // Al volver atrás, el dashboard recarga desde BD sin la misión.
-            if (result.piggy && result.piggy.id) {
-                window.location.hash = `#/piggy/${result.piggy.id}`;
-            } else {
-                navigateTo('granja');
-            }
-        } catch (error) {
-            console.error('Flash mission purchase error:', error);
-            alert('Error en la transacción: ' + error.message);
-            isBuying = false;
-            confirmBtn.disabled = false;
-            confirmBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2h0V5z"/><path d="M2 9v1c0 1.1.9 2 2 2h1"/><path d="M16 11h.01"/></svg><span>Comprar ${piggyLabel}</span>`;
-            confirmBtn.style.pointerEvents = 'auto';
+        if (customName.length < 3) {
+            nameError.style.opacity = '1';
+            nameInput.focus();
+            return;
         }
+
+        if (currentBalance < price) return;
+
+        // Calculate extra ROI bonus for the item structure
+        let extraRoi = 0;
+        const rawType = (mission.piggy_type || '').toLowerCase();
+        if (rawType === 'plus' || rawType === 'silver') {
+            extraRoi = 0.01;
+        } else if (rawType === 'dorado' || rawType === 'gold') {
+            extraRoi = 0.02;
+        } else if (rawType === 'premium') {
+            extraRoi = 0.03;
+        }
+
+        // Structure pending marketplace item for ContratoView
+        const pendingItem = {
+            id: `flash-${mission.id}`,
+            name: customName,
+            item_name: mission.piggy_label || mission.title || piggyLabel,
+            category: mission.piggy_type,
+            price: price,
+            extra_roi: extraRoi,
+            extra_roi_bonus: extraRoi,
+            flash_mission_id: mission.id,
+            is_flash_mission: true,
+        };
+
+        // Save pending purchase details in session
+        sessionStorage.setItem('pending_piggy_name', customName);
+        sessionStorage.setItem('pending_marketplace_item', JSON.stringify(pendingItem));
+
+        close();
+        navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${price}&flashMissionId=${encodeURIComponent(mission.id)}`);
     });
 }

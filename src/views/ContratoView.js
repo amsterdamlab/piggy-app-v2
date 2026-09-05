@@ -8,7 +8,7 @@ import { renderIcon } from '../icons.js';
 import { navigateTo } from '../router.js';
 import { AppState } from '../state.js';
 import { adoptPiggy, buyMarketplaceItem } from '../services/piggiesService.js';
-import { buyCycleCompletionMission } from '../services/flashMissionsService.js';
+import { buyCycleCompletionMission, buyFlashMission } from '../services/flashMissionsService.js';
 import { deductWalletBalance, getWalletBalance } from '../services/walletService.js';
 import { openSignatureModal } from '../components/SignatureModal.js';
 import { stampAndUploadContract, preloadPDFLib } from '../services/contractService.js';
@@ -221,7 +221,9 @@ export function renderContratoView() {
 function attachContratoListeners() {
     // Back button
     document.getElementById('btn-back-contrato')?.addEventListener('click', () => {
-        if (currentMarketplaceItem) {
+        if (currentMarketplaceItem?.is_flash_mission || currentMarketplaceItem?.is_cycle_mission) {
+            navigateTo('granja');
+        } else if (currentMarketplaceItem) {
             navigateTo('mercado');
         } else {
             navigateTo('adopcion');
@@ -348,16 +350,30 @@ function attachContratoListeners() {
 
             // 2. Register Piggy in DB
             let newPiggy;
-            if (currentMarketplaceItem?.is_cycle_mission || currentMarketplaceItem?.cycle_mission_id) {
-                const missionId = currentMarketplaceItem.cycle_mission_id || currentMarketplaceItem.id?.replace('cycle-', '');
+            const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            const flashMissionId = currentMarketplaceItem?.flash_mission_id || (currentMarketplaceItem?.is_flash_mission ? currentMarketplaceItem?.id?.replace('flash-', '') : null) || urlParams.get('flashMissionId');
+            const cycleMissionId = currentMarketplaceItem?.cycle_mission_id || (currentMarketplaceItem?.is_cycle_mission ? currentMarketplaceItem?.id?.replace('cycle-', '') : null) || urlParams.get('cycleMissionId');
+
+            if (cycleMissionId) {
                 const result = await buyCycleCompletionMission(
-                    missionId,
+                    cycleMissionId,
                     currentPiggyName,
                     contractResult?.contractUrl,
                     contractResult?.contractCode
                 );
                 if (!result.success) {
                     throw new Error(result.error || 'Error al registrar el piggy exclusivo de ciclo');
+                }
+                newPiggy = result.piggy;
+            } else if (flashMissionId) {
+                const result = await buyFlashMission(
+                    flashMissionId,
+                    currentPiggyName,
+                    contractResult?.contractUrl,
+                    contractResult?.contractCode
+                );
+                if (!result.success) {
+                    throw new Error(result.error || 'Error al registrar el piggy de misión flash');
                 }
                 newPiggy = result.piggy;
             } else if (currentMarketplaceItem) {
