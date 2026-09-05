@@ -515,17 +515,6 @@ export function showWalletRequestSuccess(requestType, amount, bank, requestId, o
 
   const refCode = requestId ? String(requestId).slice(-8).toUpperCase() : 'N/A';
   const typeLabel = isWithdrawal ? '💰 RETIRO' : '🥩 CONSUMO';
-  const waText = encodeURIComponent(
-    `🐷 *PIGGY APP — Solicitud de ${typeLabel}*\n\n` +
-    `👤 *Usuario:* ${userName || 'Usuario'}\n` +
-    `📱 *WhatsApp:* ${userPhone || 'No registrado'}\n` +
-    `💵 *Monto:* ${formatCOP(amount)}\n` +
-    `🏦 *Banco:* ${bank}\n` +
-    (userBreveKey ? `⚡ *Llave Bre-B:* ${userBreveKey}\n` : '') +
-    `🎫 *ID Solicitud:* #${refCode}\n` +
-    `📅 *Fecha:* ${new Date().toLocaleDateString('es-CO')}\n\n` +
-    `Hola, confirmo mi solicitud de retiro en Piggy App.`
-  );
 
   modal.innerHTML = `
     <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
