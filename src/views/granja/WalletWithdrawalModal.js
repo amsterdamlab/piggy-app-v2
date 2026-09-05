@@ -320,13 +320,10 @@ export function openWalletWithdrawalSubscreen(mountContainer, availableAmount, o
           <!-- Info Comprar Carne (Recuadro Rosa) -->
           <div style="background:#fff1f2; border:1px solid #ffe4e6; border-radius:18px; padding:18px 16px; display:flex; flex-direction:column; gap:12px;">
             <div style="font-weight:800; color:#881337; font-size:0.92rem; line-height:1.45;">
-              Encuentra los mejores cortes premium y combos en cerdo, res y pollo directo desde Granja Valle Morales.
+              Encuentra en nuestra Tienda combos de cerdo, res y pollo directo desde Granja Valle Morales.
             </div>
-            <div style="color:#9f1239; font-size:0.84rem; line-height:1.45; font-weight:500;">
+            <div style="color:#4c0519; font-size:0.82rem; line-height:1.45; background:rgba(255, 255, 255, 0.75); padding:12px 14px; border-radius:12px; border:1px dashed #fecdd3; font-weight:500;">
               Enviamos con domicilio <strong>GRATIS</strong> solo en Cali y municipios cerca con costo de envío según ubicación y peso del pedido.
-            </div>
-            <div style="color:#4c0519; font-size:0.82rem; line-height:1.4; background:rgba(255, 255, 255, 0.7); padding:10px 12px; border-radius:12px; border:1px dashed #fecdd3; font-weight:500;">
-              <strong>Tip:</strong> Puedes pagar con el saldo de tu <strong>Cuenta Agro</strong> que tengas disponible.
             </div>
           </div>
         </div>
