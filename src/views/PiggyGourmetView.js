@@ -463,7 +463,7 @@ function openGourmetCheckoutModal(offer, userStats) {
               <div style="font-size:0.75rem; color:#64748b; font-weight:500;">Granja Valle Morales</div>
             </div>
           </div>
-          <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:line-height:1;">✕</button>
+          <button id="btn-close-gourmet-modal" style="background:transparent; border:none; padding:4px 8px; font-size:22px; font-weight:700; color:#94a3b8; cursor:pointer; line-height:1;">✕</button>
         </div>
 
         <!-- Scrollable Body -->
@@ -481,13 +481,13 @@ function openGourmetCheckoutModal(offer, userStats) {
             </div>
           </div>
 
-          ${isBonusEligible ? `
+          ${(isBonusEligible && userBonus > 0) ? `
           <!-- Bono de Consumo Option -->
           <label style="
-            background: ${userBonus > 0 ? '#fff1f2' : '#f8fafc'};
-            border: 1.5px solid ${userBonus > 0 ? (useBonus ? '#be1260' : '#fecdd3') : '#e2e8f0'};
+            background: #fff1f2;
+            border: 1.5px solid ${useBonus ? '#be1260' : '#fecdd3'};
             border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
-            cursor: ${userBonus > 0 ? 'pointer' : 'default'}; opacity: ${userBonus > 0 ? '1' : '0.75'};
+            cursor: pointer; opacity: 1;
             transition: all 0.2s;
           ">
             <div style="display:flex; align-items:center; gap:12px; min-width:0;">
@@ -503,11 +503,7 @@ function openGourmetCheckoutModal(offer, userStats) {
             </div>
 
             <div style="display:flex; align-items:center; gap:8px;">
-              ${userBonus > 0 ? `
-                <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
-              ` : `
-                <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; background:#f1f5f9; padding:3px 8px; border-radius:6px;">Sin bonos</span>
-              `}
+              <input type="checkbox" id="chk-use-bonus" ${useBonus ? 'checked' : ''} style="width:18px; height:18px; accent-color:#be1260; cursor:pointer;" />
             </div>
           </label>
           ` : ''}
@@ -547,7 +543,7 @@ function openGourmetCheckoutModal(offer, userStats) {
             border: none;
             padding: 16px 20px;
             border-radius: 9999px;
-            font-weight: 850;
+            font-weight: 800;
             font-size: 1.05rem;
             cursor: pointer;
             display: flex;
@@ -559,162 +555,162 @@ function openGourmetCheckoutModal(offer, userStats) {
           " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#22c55e'; this.style.transform='translateY(0)'">
             <svg xmlns="http://www.w3.org/2000/svg" width="33" height="33" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z"/>
-            </svg>
-            Confirmar Pedido
-          </button>
-        </div>
+          </svg>
+          Confirmar Pedido
+        </button>
       </div>
-    `;
-  };
+    </div>
+  `;
+};
 
-  const updateModalDOM = () => {
-    modal.innerHTML = renderContent();
-    attachModalListeners();
-  };
+const updateModalDOM = () => {
+  modal.innerHTML = renderContent();
+  attachModalListeners();
+};
 
-  const closeModal = () => {
-    modal.remove();
-    document.body.style.overflow = '';
-  };
+const closeModal = () => {
+  modal.remove();
+  document.body.style.overflow = '';
+};
 
-  const attachModalListeners = () => {
-    document.getElementById('btn-close-gourmet-modal')?.addEventListener('click', closeModal);
+const attachModalListeners = () => {
+  document.getElementById('btn-close-gourmet-modal')?.addEventListener('click', closeModal);
 
-    const bonusChk = document.getElementById('chk-use-bonus');
-    if (bonusChk) {
-      bonusChk.addEventListener('change', (e) => {
-        useBonus = e.target.checked;
-        updateModalDOM();
-      });
+  const bonusChk = document.getElementById('chk-use-bonus');
+  if (bonusChk) {
+    bonusChk.addEventListener('change', (e) => {
+      useBonus = e.target.checked;
+      updateModalDOM();
+    });
+  }
+
+  document.getElementById('btn-confirm-gourmet-order')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-confirm-gourmet-order');
+    if (btn) {
+      btn.innerText = 'Procesando pedido...';
+      btn.disabled = true;
     }
 
-    document.getElementById('btn-confirm-gourmet-order')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btn-confirm-gourmet-order');
-      if (btn) {
-        btn.innerText = 'Procesando pedido...';
-        btn.disabled = true;
+    const { appliedBonus, appliedWallet, cashDue } = calculateTotals();
+
+    // 1. Process bonus or wallet request in DB if applied
+    if (appliedBonus > 0) {
+      try {
+        await createWalletRequest('consumption', appliedBonus);
+      } catch (err) {
+        console.warn('Error saving consumption request:', err);
       }
+    }
 
-      const { appliedBonus, appliedWallet, cashDue } = calculateTotals();
-
-      // 1. Process bonus or wallet request in DB if applied
-      if (appliedBonus > 0) {
-        try {
-          await createWalletRequest('consumption', appliedBonus);
-        } catch (err) {
-          console.warn('Error saving consumption request:', err);
-        }
+    if (appliedWallet > 0) {
+      try {
+        await createWalletRequest('withdrawal', appliedWallet, `Compra Tienda: ${offer.name}`);
+      } catch (err) {
+        console.warn('Error saving wallet debit request:', err);
       }
+    }
 
-      if (appliedWallet > 0) {
-        try {
-          await createWalletRequest('withdrawal', appliedWallet, `Compra Tienda: ${offer.name}`);
-        } catch (err) {
-          console.warn('Error saving wallet debit request:', err);
-        }
-      }
-
-      // 2. Generate structured WhatsApp message
-      const { url, refId } = buildGourmetCheckoutWhatsAppLink({
-        offer,
-        appliedSaldo: appliedWallet,
-        appliedBonus,
-        cashDue
-      });
-
-      window.open(url, '_blank');
-
-      // 3. Close checkout and show receipt popup
-      closeModal();
-      showGourmetOrderSuccess({ offer, appliedBonus, appliedWallet, cashDue, refId });
+    // 2. Generate structured WhatsApp message
+    const { url, refId } = buildGourmetCheckoutWhatsAppLink({
+      offer,
+      appliedSaldo: appliedWallet,
+      appliedBonus,
+      cashDue
     });
-  };
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
+    window.open(url, '_blank');
+
+    // 3. Close checkout and show receipt popup
+    closeModal();
+    showGourmetOrderSuccess({ offer, appliedBonus, appliedWallet, cashDue, refId });
   });
+};
 
-  document.body.appendChild(modal);
-  updateModalDOM();
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+document.body.appendChild(modal);
+updateModalDOM();
 }
 
 /* ─── Gourmet Order Success Receipt Modal ─── */
 
 function showGourmetOrderSuccess({ offer, appliedBonus = 0, appliedWallet = 0, cashDue = 0, refId = '' }) {
-  const existing = document.getElementById('gourmet-order-success-modal');
-  if (existing) existing.remove();
+const existing = document.getElementById('gourmet-order-success-modal');
+if (existing) existing.remove();
 
-  document.body.style.overflow = 'hidden';
+document.body.style.overflow = 'hidden';
 
-  const modal = document.createElement('div');
-  modal.id = 'gourmet-order-success-modal';
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.background = 'rgba(15, 23, 42, 0.7)';
-  modal.style.backdropFilter = 'blur(8px)';
-  modal.style.webkitBackdropFilter = 'blur(8px)';
-  modal.style.zIndex = '999999';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.padding = '16px';
+const modal = document.createElement('div');
+modal.id = 'gourmet-order-success-modal';
+modal.style.position = 'fixed';
+modal.style.inset = '0';
+modal.style.background = 'rgba(15, 23, 42, 0.7)';
+modal.style.backdropFilter = 'blur(8px)';
+modal.style.webkitBackdropFilter = 'blur(8px)';
+modal.style.zIndex = '999999';
+modal.style.display = 'flex';
+modal.style.alignItems = 'center';
+modal.style.justifyContent = 'center';
+modal.style.padding = '16px';
 
-  modal.innerHTML = `
-    <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
-      <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
-        <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
-        <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:#0f172a;">¡Pedido Registrado!</h3>
-        <p style="margin:0; font-size:0.85rem; color:#64748b;">Estamos listos para coordinar tu entrega</p>
+modal.innerHTML = `
+  <div class="animate-scale-in" style="background:white; border-radius:24px; max-width:440px; width:100%; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.3); position:relative;">
+    <div style="background:#fdf2f5; border-bottom:1px solid #fce4ec; padding:28px 24px; text-align:center;">
+      <div style="width:60px; height:60px; background:white; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06); color:#059669;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
       </div>
-
-      <div style="padding:22px;">
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px; font-size:0.84rem; color:#334155;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Referencia:</span>
-            <strong style="color:#0f172a; font-family:monospace;">#${refId}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Combo:</span>
-            <strong style="color:#0f172a;">${offer.name}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Total Pedido:</span>
-            <strong style="color:#059669; font-size:0.95rem;">${formatGourmetPrice(offer.price)}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#64748b;">Por Pagar en Entrega:</span>
-            <strong style="color:#0f172a; font-weight:850;">${cashDue > 0 ? formatGourmetPrice(cashDue) : '$0'}</strong>
-          </div>
-        </div>
-
-        <p style="font-size:0.8rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
-          Hemos abierto el chat de WhatsApp con Granja Valle Morales para coordinar dirección y horario de entrega.
-        </p>
-
-        <button id="btn-close-gourmet-receipt" style="
-          width:100%; background:#BE1260; color:white; border:none; padding:15px;
-          border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-          box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
-        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
-          Entendido
-        </button>
-      </div>
+      <h3 style="margin:0 0 4px 0; font-size:1.35rem; font-weight:850; color:#0f172a;">¡Pedido Registrado!</h3>
+      <p style="margin:0; font-size:0.85rem; color:#64748b;">Estamos listos para coordinar tu entrega</p>
     </div>
-  `;
 
-  document.body.appendChild(modal);
+    <div style="padding:22px;">
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; margin-bottom:18px; font-size:0.84rem; color:#334155;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Referencia:</span>
+          <strong style="color:#0f172a; font-family:monospace;">#${refId}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Combo:</span>
+          <strong style="color:#0f172a;">${offer.name}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+          <span style="color:#64748b;">Total Pedido:</span>
+          <strong style="color:#059669; font-size:0.95rem;">${formatGourmetPrice(offer.price)}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:#64748b;">Por Pagar en Entrega:</span>
+          <strong style="color:#0f172a; font-weight:850;">${cashDue > 0 ? formatGourmetPrice(cashDue) : '$0'}</strong>
+        </div>
+      </div>
 
-  const closeReceipt = () => {
-    modal.remove();
-    document.body.style.overflow = '';
-    // Refresh the view so balances are updated
-    renderPiggyGourmetView();
-  };
+      <p style="font-size:0.8rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; text-align:center;">
+        Hemos abierto el chat de WhatsApp con Granja Valle Morales para coordinar dirección y horario de entrega.
+      </p>
 
-  document.getElementById('btn-close-gourmet-receipt')?.addEventListener('click', closeReceipt);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
+      <button id="btn-close-gourmet-receipt" style="
+        width:100%; background:#BE1260; color:white; border:none; padding:15px;
+        border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+        box-shadow:0 4px 14px rgba(190, 18, 96, 0.35); transition:all 0.2s;
+      " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
+        Entendido
+      </button>
+    </div>
+  </div>
+`;
+
+document.body.appendChild(modal);
+
+const closeReceipt = () => {
+  modal.remove();
+  document.body.style.overflow = '';
+  // Refresh the view so balances are updated
+  renderPiggyGourmetView();
+};
+
+document.getElementById('btn-close-gourmet-receipt')?.addEventListener('click', closeReceipt);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeReceipt(); });
 }
