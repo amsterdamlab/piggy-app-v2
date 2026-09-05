@@ -68,7 +68,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
           <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; flex-shrink:0;">
             🧪 MODO PRUEBAS (SANDBOX) — Recargas simuladas sin cobro real
           </div>
-        ` : ''}
+        ` : ''};
         <!-- Sticky Header -->
         <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
           <div style="display:flex; align-items:center; gap:12px;">
@@ -79,7 +79,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
               <div style="font-weight:850; font-size:1.35rem; color:#0f172a; line-height:1.2; letter-spacing:-0.02em;">¿Cuánto quieres recargar?</div>
             </div>
           </div>
-          <button id="rch-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+          <button id="rch-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
         </div>
 
         <!-- Scrollable Body Content -->
@@ -101,119 +101,94 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
             `).join('')}
           </div>
 
-          <!-- Custom amount input -->
-          <div style="margin-bottom:20px;">
-            <label style="display:block; font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.04em;">O escribe otro valor</label>
-            <div style="display:flex; align-items:center; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:14px; padding:12px 16px; transition:border-color 0.15s;" id="input-wrap">
-              <span style="font-weight:800; color:#0f172a; font-size:1.15rem; margin-right:8px;">$</span>
-              <input type="text" id="rch-custom-input" inputmode="numeric" placeholder="1.000.000" value="${formatThousands(selectedAmount)}" style="
-                border:none; background:transparent; font-size:1.15rem; font-weight:800; color:#0f172a;
-                width:100%; outline:none; font-family:inherit;
-              " />
-            </div>
-            <div id="rch-min-notice" style="font-size:0.75rem; color:#64748b; margin-top:6px; font-weight:600;">
-              Mínimo: $200.000 COP
+          <!-- Custom amount -->
+          <div style="margin-bottom:24px;">
+            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O digita tu monto (min. $200.000)</label>
+            <div style="position:relative;">
+              <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
+              <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 500.000"
+                value="${formatThousands(selectedAmount)}"
+                style="width:100%; padding:14px 16px 14px 30px; border:2px solid #e2e8f0; border-radius:14px; font-size:1rem; font-weight:700; color:#0f172a; outline:none; box-sizing:border-box; transition:border 0.2s;"
+                onfocus="this.style.borderColor='#ec4899';" onblur="this.style.borderColor='#e2e8f0';" />
             </div>
           </div>
 
-          <!-- Bottom Warning Banner (Consumo exclusivo de la app) -->
-          <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:12px; padding:12px 14px; display:flex; gap:10px; align-items:flex-start; margin-top:10px;">
-            <div style="font-size:1.1rem; line-height:1; flex-shrink:0;">🔒</div>
-            <div style="font-size:0.75rem; color:#991b1b; line-height:1.45; font-weight:500;">
-              <strong>Importante:</strong> El saldo recargado es exclusivo para comprar chanchitos y combos en la tienda. No está habilitado para retiros a cuentas bancarias.
-            </div>
-          </div>
-        </div>
+          <!-- CTA -->
+          <button id="rch-step1-next" style="
+            width:100%; background:#ec4899; color:white; border:none;
+            padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+            box-shadow:0 8px 20px -5px rgba(236, 72, 153, 0.5); transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;
+          " onmouseover="this.style.opacity='0.95'; this.style.transform='translateY(-1px)'" onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">Continuar <span style="font-size:1.1rem;">→</span></button>
 
-        <!-- Sticky Footer CTA -->
-        <div style="padding:16px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background:white; border-top:1px solid #f1f5f9; flex-shrink:0;">
-          <button id="rch-continue-btn" style="
-            width:100%;
-            background:#be1260;
-            color:white;
-            border:none;
-            padding:16px;
-            border-radius:14px;
-            font-weight:800;
-            font-size:1.05rem;
-            cursor:pointer;
-            transition:opacity 0.2s, transform 0.1s;
-            box-shadow: 0 4px 14px rgba(190, 18, 96, 0.35);
-          ">Continuar (${formatCOP(selectedAmount)})</button>
+          <!-- Términos y Condiciones -->
+          <a href="terminos-y-condiciones.html" target="_blank" style="
+            display:block; text-align:center; font-size:0.75rem; color:#64748b; font-weight:500;
+            text-decoration:underline; margin-top:16px; cursor:pointer;
+          ">Ver Términos y Condiciones</a>
         </div>
     `;
 
     document.getElementById('rch-close')?.addEventListener('click', closeSubscreen);
 
     const updatePresetStyles = (amount) => {
-      subscreen.querySelectorAll('.preset-btn').forEach(btn => {
-        const val = parseInt(btn.dataset.amount, 10);
-        const isActive = val === amount;
-        btn.style.border = `1.5px solid ${isActive ? '#ec4899' : '#ffe4e6'}`;
-        btn.style.background = isActive ? '#fce7ed' : '#fdf2f5';
-        btn.style.color = isActive ? '#910957' : '#0f172a';
+      subscreen.querySelectorAll('.preset-btn').forEach(b => {
+        const bAmount = parseInt(b.dataset.amount);
+        if (bAmount === amount) {
+          b.style.borderColor = '#ec4899';
+          b.style.background = '#fce7ed';
+          b.style.color = '#910957';
+        } else {
+          b.style.borderColor = '#ffe4e6';
+          b.style.background = '#fdf2f5';
+          b.style.color = '#0f172a';
+        }
       });
     };
 
-    const updateCTA = (amount) => {
-      const cta = document.getElementById('rch-continue-btn');
-      const notice = document.getElementById('rch-min-notice');
-      if (amount < 200000) {
-        cta.disabled = true;
-        cta.style.opacity = '0.5';
-        cta.innerText = 'Monto mínimo $200.000';
-        if (notice) notice.style.color = '#dc2626';
-      } else {
-        cta.disabled = false;
-        cta.style.opacity = '1';
-        cta.innerText = `Continuar (${formatCOP(amount)})`;
-        if (notice) notice.style.color = '#64748b';
-      }
-    };
-
-    // Listeners for presets
+    // Preset selection
     subscreen.querySelectorAll('.preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const val = parseInt(btn.dataset.amount, 10);
-        selectedAmount = val;
-        const input = document.getElementById('rch-custom-input');
-        if (input) input.value = formatThousands(val);
-        updatePresetStyles(val);
-        updateCTA(val);
+        selectedAmount = parseInt(btn.dataset.amount);
+        const customInput = document.getElementById('rch-custom-amount');
+        if (customInput) customInput.value = formatThousands(selectedAmount);
+        updatePresetStyles(selectedAmount);
       });
     });
 
-    // Listeners for input
-    const input = document.getElementById('rch-custom-input');
-    input?.addEventListener('input', (e) => {
-      const parsed = parseFormattedNumber(e.target.value);
-      selectedAmount = parsed;
-      e.target.value = formatThousands(parsed);
-      updatePresetStyles(parsed);
-      updateCTA(parsed);
-    });
-
-    // Focus style on wrapper
-    const wrap = document.getElementById('input-wrap');
-    input?.addEventListener('focus', () => {
-      if (wrap) wrap.style.borderColor = '#ec4899';
-    });
-    input?.addEventListener('blur', () => {
-      if (wrap) wrap.style.borderColor = '#e2e8f0';
-    });
-
-    // Continue CTA
-    document.getElementById('rch-continue-btn')?.addEventListener('click', () => {
-      if (selectedAmount >= 200000) {
-        renderStep2();
+    // Custom amount input
+    const customInputEl = document.getElementById('rch-custom-amount');
+    customInputEl?.addEventListener('input', (e) => {
+      const rawDigits = e.target.value.replace(/\D/g, '');
+      if (!rawDigits) {
+        e.target.value = '';
+        selectedAmount = 0;
+        updatePresetStyles(0);
+        return;
       }
+      const num = parseInt(rawDigits, 10);
+      selectedAmount = num;
+      e.target.value = formatThousands(num);
+      updatePresetStyles(num);
+    });
+
+    document.getElementById('rch-step1-next')?.addEventListener('click', () => {
+      const customVal = parseFormattedNumber(document.getElementById('rch-custom-amount')?.value);
+      if (customVal > 0) selectedAmount = customVal;
+      if (!selectedAmount || selectedAmount < 200000) {
+        alert('El monto mínimo de recarga en Piggy es de $200.000 COP.');
+        return;
+      }
+      renderStep2();
     });
   };
 
   /* ─────────────────────────────────────────
-     STEP 2 — Payment method selector
+     STEP 2 — Payment method chooser
   ───────────────────────────────────────── */
   const renderStep2 = () => {
+    const wompiFee = Math.round(selectedAmount * 0.03);
+    const wompiTotal = selectedAmount + wompiFee;
+
     subscreen.innerHTML = `
         ${getWompiEnvironment() === 'sandbox' ? `
           <div style="background:#fef9c3; border-bottom:1px solid #fde047; padding:8px 16px; text-align:center; color:#854d0e; font-size:0.75rem; font-weight:700; flex-shrink:0;">
@@ -227,7 +202,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
             <button id="rch-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
               ← Volver
             </button>
-            <button id="rch-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+            <button id="rch-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
           </div>
           
           <div>
@@ -239,120 +214,173 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
         <!-- Scrollable Body Content -->
         <div style="flex:1; overflow-y:auto; padding:20px 20px 40px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
           
-          <!-- 1. Pasarela Automática (Wompi) -->
-          <button id="opt-wompi" style="
-            background:#fdf2f5; border:1px solid #ffe4e6;
-            color:#0f172a; padding:18px 16px; border-radius:18px;
-            font-weight:700; font-size:0.95rem; cursor:pointer;
-            display:flex; align-items:center; justify-content:space-between; gap:12px;
-            text-align:left; transition:all 0.15s; font-family:inherit;
-          " onmouseover="this.style.borderColor='#f472b6'; this.style.background='#fce7ed';" onmouseout="this.style.borderColor='#ffe4e6'; this.style.background='#fdf2f5';">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#6C14D0,#9B1DBA); color:white; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.1rem; flex-shrink:0;">
-                W
-              </div>
-              <div>
-                <div style="font-weight:800; font-size:1rem; color:#0f172a; line-height:1.2;">Pasarela Automática</div>
-                <div style="font-size:0.75rem; color:#64748b; font-weight:500; margin-top:2px;">PSE, Nequi, Tarjetas, Bancolombia</div>
-                <div style="display:inline-block; background:#dcfce7; color:#15803d; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:6px; margin-top:4px;">Acreditación Inmediata</div>
-              </div>
+          <!-- 1. BOTÓN: Transferencia Bre-B -->
+          <button id="rch-breb-btn" style="
+            background: #fdf2f5; border: 1px solid #ffe4e6;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: flex-start; gap: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+          " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px;">
+              <img src="/logo_breb.png" alt="Bre-B" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggy-favicon.svg';" />
             </div>
-            <div style="color:#94a3b8; font-size:1.2rem; flex-shrink:0;">→</div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Transferencia Bre-B</span>
+                <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+              </div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Transfiere desde cualquier banco a nuestra llave.</div>
+            </div>
           </button>
 
-          <!-- 2. Transferencia Bre-B -->
-          <button id="opt-breb" style="
-            background:#f8fafc; border:1px solid #e2e8f0;
-            color:#0f172a; padding:18px 16px; border-radius:18px;
-            font-weight:700; font-size:0.95rem; cursor:pointer;
-            display:flex; align-items:center; justify-content:space-between; gap:12px;
-            text-align:left; transition:all 0.15s; font-family:inherit;
-          " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#0284c7,#0369a1); color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-              </div>
-              <div>
-                <div style="font-weight:800; font-size:1rem; color:#0f172a; line-height:1.2;">Transferencia Bre-B</div>
-                <div style="font-size:0.75rem; color:#64748b; font-weight:500; margin-top:2px;">Llave oficial interoperable</div>
-                <div style="display:inline-block; background:#e0f2fe; color:#0369a1; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:6px; margin-top:4px;">Desde cualquier banco</div>
-              </div>
+          <!-- 2. BOTÓN: Paga con QR -->
+          <button id="rch-qr-btn" style="
+            background: #fdf2f5; border: 1px solid #ffe4e6;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: flex-start; gap: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+          " onmouseover="this.style.background='#fce7ed'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#fdf2f5'; this.style.transform='translateY(0)';">
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #ffe4e6; margin-top:2px;">
+              <img src="/logo_qr.png" alt="Código QR" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
             </div>
-            <div style="color:#94a3b8; font-size:1.2rem; flex-shrink:0;">→</div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con QR</span>
+                <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
+              </div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4;">Fácil y al instante desde la app de tu banco.</div>
+            </div>
           </button>
 
-          <!-- 3. Pago QR Bancolombia -->
-          <button id="opt-qr" style="
-            background:#f8fafc; border:1px solid #e2e8f0;
-            color:#0f172a; padding:18px 16px; border-radius:18px;
-            font-weight:700; font-size:0.95rem; cursor:pointer;
-            display:flex; align-items:center; justify-content:space-between; gap:12px;
-            text-align:left; transition:all 0.15s; font-family:inherit;
-          " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#059669,#047857); color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+          <!-- 3. BOTÓN: Wompi -->
+          <button id="rch-wompi-btn" style="
+            background: white; border: 1px solid #e2e8f0;
+            color: #0f172a; padding: 22px 20px; border-radius: 18px;
+            font-weight: 700; font-size: 1rem; cursor: pointer;
+            display: flex; align-items: flex-start; gap: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            text-align: left; transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+          " onmouseover="this.style.background='#f8fafc'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='white'; this.style.transform='translateY(0)';">
+            <div style="width:52px; height:52px; min-width:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:#f8fafc; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #e2e8f0; margin-top:2px;">
+              <img src="/logo_wompi.jpg" alt="Wompi" style="width:44px; height:44px; object-fit:contain; border-radius:10px;" onerror="this.onerror=null; this.src='/piggyapp_logo1.png';" />
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con Wompi</span>
+                <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">+3% COMISIÓN</span>
               </div>
-              <div>
-                <div style="font-weight:800; font-size:1rem; color:#0f172a; line-height:1.2;">Pago QR Bancolombia</div>
-                <div style="font-size:0.75rem; color:#64748b; font-weight:500; margin-top:2px;">Escanea y paga con tu app</div>
-                <div style="display:inline-block; background:#dcfce7; color:#15803d; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:6px; margin-top:4px;">Sin costo extra</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere con comisiones por pasarela de pagos.</div>
+              <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">
+                Total a pagar: ${formatCOP(wompiTotal)} <span style="font-size:0.78rem; font-weight:600; color:#64748b;">(+${formatCOP(wompiFee)} tarifa)</span>
               </div>
             </div>
-            <div style="color:#94a3b8; font-size:1.2rem; flex-shrink:0;">→</div>
           </button>
 
-          <!-- 4. Transferencia Asistida por WhatsApp -->
-          <button id="opt-whatsapp" style="
-            background:#f8fafc; border:1px solid #e2e8f0;
-            color:#0f172a; padding:18px 16px; border-radius:18px;
-            font-weight:700; font-size:0.95rem; cursor:pointer;
-            display:flex; align-items:center; justify-content:space-between; gap:12px;
-            text-align:left; transition:all 0.15s; font-family:inherit;
-          " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div style="width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#16a34a,#15803d); color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </div>
-              <div>
-                <div style="font-weight:800; font-size:1rem; color:#0f172a; line-height:1.2;">Transferencia Asistida</div>
-                <div style="font-size:0.75rem; color:#64748b; font-weight:500; margin-top:2px;">Atención con un asesor oficial</div>
-                <div style="display:inline-block; background:#dcfce7; color:#15803d; font-size:0.65rem; font-weight:800; padding:2px 8px; border-radius:6px; margin-top:4px;">Vía WhatsApp</div>
-              </div>
+          <!-- 4. BOTÓN: Recarga Asistida -->
+          <button id="rch-whatsapp-btn" style="
+            background: white; border: 1px solid #e2e8f0; color: #1e293b;
+            padding: 20px 18px; border-radius: 18px; font-weight: 600; font-size: 0.95rem;
+            cursor: pointer; display: flex; align-items: flex-start; gap: 14px; text-align: left;
+            transition: all 0.2s; width: 100%; box-sizing: border-box; flex-shrink: 0;
+          " onmouseover="this.style.borderColor='#10B981'; this.style.background='#f0fdf4';\" onmouseout=\"this.style.borderColor='#e2e8f0'; this.style.background='white';\">
+            <div style=\"width:52px; height:52px; min-width:52px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#0f172a; margin-top:2px;\">
+              <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"currentColor\">
+                <path d=\"M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z\"/>
+              </svg>
             </div>
-            <div style="color:#94a3b8; font-size:1.2rem; flex-shrink:0;">→</div>
+            <div style=\"flex:1; min-width:0;\">
+              <div style=\"font-size:1.05rem; font-weight:850; color:#0f172a; margin-bottom:6px; line-height:1.25;\">Recarga Asistida</div>
+              <div style=\"font-size:0.86rem; color:#64748b; font-weight:500; line-height:1.4;\">Transferencia manual guiada con un asesor vía WhatsApp.</div>
+            </div>
           </button>
+        </div>
+
+        <div style=\"padding:16px 20px; text-align:center; border-top:1px solid #f1f5f9; flex-shrink:0;\">
+          <p style=\"font-size:0.72rem; color:#94a3b8; margin:0 0 6px 0; display:flex; align-items:center; justify-content:center; gap:5px;\">
+            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\" ry=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 10 0v4\"/></svg>
+            <span>Transacciones seguras respaldadas por Piggy App</span>
+          </p>
+          <a href=\"terminos-y-condiciones.html\" target=\"_blank\" style=\"
+            display:inline-block; font-size:0.72rem; color:#64748b; font-weight:500;
+            text-decoration:underline; cursor:pointer;\">Ver Términos y Condiciones</a>
         </div>
     `;
 
     document.getElementById('rch-close')?.addEventListener('click', closeSubscreen);
     document.getElementById('rch-back')?.addEventListener('click', renderStep1);
 
-    // Option 1: Wompi
-    document.getElementById('opt-wompi')?.addEventListener('click', () => {
-      handleLaunchWompi();
-    });
-
-    // Option 2: Bre-B
-    document.getElementById('opt-breb')?.addEventListener('click', () => {
+    // Botón 1: Bre-B
+    document.getElementById('rch-breb-btn')?.addEventListener('click', () => {
       renderStep3BreB();
     });
 
-    // Option 3: QR
-    document.getElementById('opt-qr')?.addEventListener('click', () => {
+    // Botón 2: QR
+    document.getElementById('rch-qr-btn')?.addEventListener('click', () => {
       renderStep3QR();
     });
 
-    // Option 4: WhatsApp
-    document.getElementById('opt-whatsapp')?.addEventListener('click', () => {
+    // Botón 3: Wompi
+    const handleWompiOnline = async () => {
+      renderStep4Processing(wompiTotal);
+      const uiShell = document.getElementById('ui-shell');
+      const prevUiDisplay = uiShell ? uiShell.style.display : '';
+      const drawerModal = document.getElementById('wallet-drawer-modal');
+      const prevModalDisplay = drawerModal ? drawerModal.style.display : '';
+
+      try {
+        if (uiShell) uiShell.style.display = 'none';
+        if (drawerModal) drawerModal.style.display = 'none';
+        document.body.style.overflow = '';
+
+        const res = await openWompiWidget({
+          amountInCOP: wompiTotal,
+          userId: profile?.id || 'anon',
+          customerData: { fullName: profile?.full_name || userName }
+        });
+
+        if (uiShell) uiShell.style.display = prevUiDisplay;
+        if (drawerModal) drawerModal.style.display = prevModalDisplay;
+        document.body.style.overflow = 'hidden';
+
+        if (res.status === 'CANCELLED') {
+          renderStep2();
+          return;
+        }
+
+        if (res.success) {
+          const rechargeRes = await rechargeWallet(selectedAmount, 'wompi_widget', 'simulated_approved', mockState, res.reference);
+          if (onUpdated && rechargeRes.newBalance !== undefined) {
+            onUpdated(rechargeRes.newBalance);
+          }
+          renderStep5Result({ ...rechargeRes, amountCredited: selectedAmount, totalPaid: wompiTotal });
+        } else {
+          renderStep5Result({ success: false, reason: res.reason || 'El pago no fue aprobado por Wompi.' });
+        }
+      } catch (err) {
+        console.error('Error abriendo Wompi Widget:', err);
+        if (uiShell) uiShell.style.display = prevUiDisplay;
+        if (drawerModal) drawerModal.style.display = prevModalDisplay;
+        document.body.style.overflow = 'hidden';
+        renderStep5Result({ success: false, reason: err.message || 'No se pudo iniciar la pasarela de pagos.' });
+      }
+    };
+
+    document.getElementById('rch-wompi-btn')?.addEventListener('click', handleWompiOnline);
+
+    // Botón 4: WhatsApp
+    document.getElementById('rch-whatsapp-btn')?.addEventListener('click', () => {
       closeSubscreen();
-      const msg = `👋 *PIGGY APP — Solicitud de Recarga Asistida*\n\n👤 *Usuario:* ${userName}\n\n💰 Monto a recargar: *${formatCOP(selectedAmount)}*\n\n📲 Por favor indícame el número de cuenta y el proceso a seguir.`;
+      const msg = `🐷 *PIGGY APP — Solicitud de Recarga Asistida*\n\n👤 *Usuario:* ${userName}\n\n💰 Monto a recargar: *${formatCOP(selectedAmount)}*\n\n📋 Por favor indícame el número de cuenta y el proceso a seguir.`;
       window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
     });
   };
 
   /* ─────────────────────────────────────────
-     STEP 3 (Option A) — Bre-B Transfer Details
+     STEP 3 (Bre-B) — Hazlo Bre-B
   ───────────────────────────────────────── */
   const renderStep3BreB = () => {
     const breBRef = 'PGY-' + Math.floor(100000 + Math.random() * 900000);
@@ -364,7 +392,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
             <button id="rch-breb-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
               ← Volver a Métodos de Pago
             </button>
-            <button id="rch-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+            <button id="rch-close" style="background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#0f172a';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">&times;</button>
           </div>
           
           <div>
@@ -374,485 +402,305 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
         </div>
 
         <!-- Scrollable Body Content -->
-        <div style="flex:1; overflow-y:auto; padding:20px 20px 30px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
+        <div style="flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;">
           
-          <!-- Bre-B Card -->
-          <div style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-radius:20px; padding:20px; color:white; box-shadow:0 10px 25px -5px rgba(2,132,199,0.35);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-              <span style="font-size:0.75rem; text-transform:uppercase; font-weight:800; letter-spacing:0.08em; opacity:0.85;">Transferencia Interoperable</span>
-              <span style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:99px; font-size:0.75rem; font-weight:800;">Bre-B</span>
+          <!-- Resumen de Monto -->
+          <div style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border:1px solid #a7f3d0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <div style="font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Monto Exacto a Transferir</div>
+              <div style="font-size:1.4rem; font-weight:900; color:#065f46;">${formatCOP(selectedAmount)}</div>
+            </div>
+            <div style="width:36px; height:36px; display:flex; align-items:center; justify-content:center;">
+              <img src="/logo_breb.png" alt="Bre-B" style="width:34px; height:34px; object-fit:contain;" onerror="this.style.display='none';" />
+            </div>
+          </div>
+
+          <!-- RECUADRO DE LLAVE BRE-B -->
+          <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:18px; margin-bottom:14px;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; text-align:center;">
+              Llave Bre-B Oficial
             </div>
             
-            <div style="font-size:0.8rem; opacity:0.85; margin-bottom:4px;">Llave Oficial Bre-B</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.2); padding:12px 14px; border-radius:12px; margin-bottom:14px;">
-              <span style="font-family:monospace; font-size:1.05rem; font-weight:800; letter-spacing:0.02em;" id="breb-key-text">${OFFICIAL_BRE_B_KEY}</span>
-              <button id="btn-copy-breb" style="background:white; color:#0369a1; border:none; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Copiar</button>
+            <div id="btn-copy-breb-box" style="
+              display:flex; flex-direction:column; align-items:center; justify-content:center;
+              background:white; border:1.5px solid #cbd5e1; border-radius:12px;
+              padding:14px 16px; cursor:pointer; transition:all 0.15s;
+            " onmouseover="this.style.borderColor='#00A887'; this.style.background='#f0fdf9';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='white';">
+              <span id="breb-key-text" style="font-size:1.3rem; font-weight:900; color:#0f172a; letter-spacing:0.5px; font-family:monospace;">${OFFICIAL_BRE_B_KEY}</span>
+              <span style="font-size:0.72rem; color:#00A887; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; margin-top:6px; display:inline-flex; align-items:center; gap:4px;">
+                📋 COPIAR LLAVE
+              </span>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.8rem;">
-              <div>
-                <div style="opacity:0.75; font-size:0.7rem;">Titular:</div>
-                <div style="font-weight:700;">Granja Valle Morales</div>
-              </div>
-              <div>
-                <div style="opacity:0.75; font-size:0.7rem;">Monto a enviar:</div>
-                <div style="font-weight:800; font-size:0.95rem; color:#fef08a;">${formatCOP(selectedAmount)}</div>
-              </div>
+            <div id="toast-copy-breb" style="display:none; font-size:0.78rem; color:#00A887; font-weight:800; text-align:center; margin-top:6px;">
+              ¡Llave copiada al portapapeles! 📋
+            </div>
+
+            <div style="font-size:0.75rem; color:#64748b; margin-top:10px; line-height:1.4; text-align:center;">
+              <strong>Titular:</strong> Granja Villa Morales del Valle SAS &nbsp;·&nbsp; <strong>Banco:</strong> Bancolombia
             </div>
           </div>
 
-          <!-- Referencia de Pago -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-              <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Referencia asignada</div>
-              <div style="font-family:monospace; font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;" id="breb-ref-text">${breBRef}</div>
-            </div>
-            <button id="btn-copy-breb-ref" style="background:#e2e8f0; color:#334155; border:none; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Copiar</button>
+          <!-- BOTÓN YA TRANSFERÍ -->
+          <div style="margin-bottom:20px;">
+            <button id="btn-breb-ya-transferi" style="
+              width: 100%;
+              background: #22c55e;
+              color: white;
+              border: none;
+              padding: 16px 20px;
+              border-radius: 9999px;
+              font-weight: 800;
+              font-size: 1.05rem;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+              transition: all 0.2s;
+            " onmouseover="this.style.background='#16a34a'; this.style.transform='translateY(-1px)';\" onmouseout=\"this.style.background='#22c55e'; this.style.transform='translateY(0)';\">
+              <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"33\" height=\"33\" viewBox=\"0 0 24 24\" fill=\"currentColor\">
+                <path d=\"M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z\"/>
+              </svg>
+              <span>Ya transferí, notificar por WhatsApp</span>
+            </button>
           </div>
 
-          <!-- Instructions steps -->
-          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:16px;">
-            <div style="font-weight:800; font-size:0.85rem; color:#15803d; margin-bottom:8px;">Instrucciones para completar tu recarga:</div>
-            <ol style="margin:0; padding-left:18px; font-size:0.78rem; color:#166534; line-height:1.55; display:flex; flex-direction:column; gap:6px;">
-              <li>Abre la aplicación de tu banco o billetera digital.</li>
-              <li>Busca la opción <strong>Transferir con Bre-B</strong> (o llave interoperable).</li>
-              <li>Pega la llave <code>${OFFICIAL_BRE_B_KEY}</code> y transfiere exactamente <strong>${formatCOP(selectedAmount)}</strong>.</li>
-              <li>Escribe en el concepto o descripción: <code>${breBRef}</code>.</li>
-              <li>Guarda el comprobante y presiona el botón abajo para confirmar.</li>
+          <!-- Pasos para transferir -->
+          <div style=\"background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px;\">
+            <div style=\"font-size:0.8rem; font-weight:800; color:#0f172a; margin-bottom:10px; display:flex; align-items:center; gap:6px;\">
+              <span>📌</span> Pasos para transferir con Bre-B:
+            </div>
+            <ol style=\"margin:0; padding-left:18px; font-size:0.8rem; color:#475569; line-height:1.6; display:flex; flex-direction:column; gap:6px;\">
+              <li>Ingresa a la app de tu banco favorito.</li>
+              <li>Elige la opción <strong>\"Transferir con Bre-B / Llave\"</strong>.</li>
+              <li>Pega nuestra llave: <code style=\"background:#e2e8f0; padding:2px 6px; border-radius:4px; font-weight:700;\">${OFFICIAL_BRE_B_KEY}</code></li>
+              <li>Digita el monto exacto: <strong>${formatCOP(selectedAmount)}</strong>.</li>
+              <li>Confirma y descarga el comprobante en tu celular.</li>
+              <li>Toca el botón verde arriba para enviarnos el comprobante por WhatsApp.</li>
             </ol>
           </div>
-        </div>
 
-        <!-- Sticky Footer CTA -->
-        <div style="padding:16px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background:white; border-top:1px solid #f1f5f9; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
-          <button id="btn-confirm-breb-recharge" style="
-            width:100%;
-            background:#16a34a;
-            color:white;
-            border:none;
-            padding:16px;
-            border-radius:14px;
-            font-weight:800;
-            font-size:1.02rem;
-            cursor:pointer;
-            transition:opacity 0.2s, transform 0.1s;
-            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-          ">
-            <span>✓ Ya realicé la transferencia</span>
-          </button>
-          <div style="font-size:0.72rem; color:#64748b; text-align:center; font-weight:500;">
-            Acreditación en 5 a 15 minutos hábiles
-          </div>
         </div>
     `;
 
     document.getElementById('rch-close')?.addEventListener('click', closeSubscreen);
     document.getElementById('rch-breb-back')?.addEventListener('click', renderStep2);
 
-    // Copy Bre-B Key
-    document.getElementById('btn-copy-breb')?.addEventListener('click', () => {
+    // Copiar llave
+    const copyBox = document.getElementById('btn-copy-breb-box');
+    const toast = document.getElementById('toast-copy-breb');
+    copyBox?.addEventListener('click', () => {
       navigator.clipboard.writeText(OFFICIAL_BRE_B_KEY).then(() => {
-        const btn = document.getElementById('btn-copy-breb');
-        if (btn) {
-          btn.innerText = '¡Copiado!';
-          setTimeout(() => { btn.innerText = 'Copiar'; }, 2000);
+        if (toast) {
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 3000);
         }
+      }).catch(() => {
+        alert('Llave Bre-B: ' + OFFICIAL_BRE_B_KEY);
       });
     });
 
-    // Copy Bre-B Ref
-    document.getElementById('btn-copy-breb-ref')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(breBRef).then(() => {
-        const btn = document.getElementById('btn-copy-breb-ref');
-        if (btn) {
-          btn.innerText = '¡Copiado!';
-          setTimeout(() => { btn.innerText = 'Copiar'; }, 2000);
-        }
-      });
-    });
-
-    // Confirm Bre-B button
-    document.getElementById('btn-confirm-breb-recharge')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btn-confirm-breb-recharge');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = 'Registrando solicitud...';
-      }
-
-      try {
-        await requestBreBRecharge({
-          amount: selectedAmount,
-          reference: breBRef,
-          userName: userName
-        });
-
-        // Open WhatsApp with prefilled message
-        const waMsg = `👋 *PIGGY APP — Comprobante de Recarga Bre-B*\n\n👤 *Usuario:* ${userName}\n💰 *Monto:* ${formatCOP(selectedAmount)}\n🔖 *Referencia:* ${breBRef}\n🔑 *Llave destino:* ${OFFICIAL_BRE_B_KEY}\n\nAdjunto mi comprobante para agilizar la aprobación. ¡Muchas gracias!`;
-        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(waMsg)}`, '_blank');
-
-        renderPendingReceipt('breb', selectedAmount, breBRef);
-      } catch (err) {
-        console.error('Error in Bre-B recharge:', err);
-        renderPendingReceipt('breb', selectedAmount, breBRef);
-      }
+    // Ya transferí
+    document.getElementById('btn-breb-ya-transferi')?.addEventListener('click', async () => {
+      await requestBreBRecharge(selectedAmount, breBRef, mockState);
+      const msg = `🐷 *PIGGY APP — Comprobante Recarga Bre-B*\\n\\n👤 *Usuario:* ${userName}\\n🔑 *Referencia:* ${breBRef}\\n💰 *Monto transferido:* ${formatCOP(selectedAmount)}\\n🏦 *Llave utilizada:* ${OFFICIAL_BRE_B_KEY}\\n\\nAdjunto mi comprobante para que acrediten el saldo a mi cuenta.`;
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      closeSubscreen();
     });
   };
 
   /* ─────────────────────────────────────────
-     STEP 3 (Option B) — QR Bancolombia Flow
+     STEP 3 (QR) — Paga con Código QR
   ───────────────────────────────────────── */
   const renderStep3QR = () => {
     const qrRef = 'PGY-QR-' + Math.floor(100000 + Math.random() * 900000);
 
     subscreen.innerHTML = `
         <!-- Header Limpio: Paga con QR -->
-        <div style="padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-            <button id="rch-qr-back" style="background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#64748b'">
+        <div style=\"padding:20px 20px 14px 20px; background:white; border-bottom:1px solid #f1f5f9; flex-shrink:0; z-index:10;\">
+          <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;\">
+            <button id=\"rch-qr-back\" style=\"background:none; border:none; padding:0; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; display:flex; align-items:center; gap:6px; font-family:inherit; transition:color 0.2s;\" onmouseover=\"this.style.color='#0f172a'\" onmouseout=\"this.style.color='#64748b'\">
               ← Volver a Métodos de Pago
             </button>
-            <button id="rch-close" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+            <button id=\"rch-close\" style=\"background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; color:#64748b; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:700; line-height:1; transition:all 0.2s;\" onmouseover=\"this.style.background='#e2e8f0'; this.style.color='#0f172a';\" onmouseout=\"this.style.background='#f1f5f9'; this.style.color='#64748b';\">&times;</button>
           </div>
           
           <div>
-            <h2 style="margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;">Paga con QR</h2>
-            <div style="font-size:0.82rem; color:#64748b;">Fácil y al instante desde la app de tu banco.</div>
+            <h2 style=\"margin:0 0 4px 0; font-size:1.45rem; font-weight:800; color:#0f172a; letter-spacing:-0.02em;\">Paga con Código QR</h2>
+            <div style=\"font-size:0.82rem; color:#64748b;\">Escanea desde Bancolombia, Nequi o cualquier app bancaria.</div>
           </div>
         </div>
 
         <!-- Scrollable Body Content -->
-        <div style="flex:1; overflow-y:auto; padding:20px 20px 30px 20px; display:flex; flex-direction:column; gap:16px; -webkit-overflow-scrolling:touch; box-sizing:border-box;">
+        <div style=\"flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch;\">
           
-          <!-- Contenedor QR Central -->
-          <div style="background:white; border:1.5px solid #e2e8f0; border-radius:20px; padding:20px 16px; text-align:center; box-shadow:0 8px 25px -5px rgba(0,0,0,0.06);">
-            
-            <div style="font-size:0.75rem; text-transform:uppercase; font-weight:800; color:#059669; letter-spacing:0.06em; margin-bottom:4px;">
-              QR Bancolombia / Interoperable
-            </div>
-            <div style="font-size:1.35rem; font-weight:900; color:#0f172a; margin-bottom:14px;">
-              ${formatCOP(selectedAmount)}
-            </div>
-
-            <!-- Marco de la imagen QR con Logo Superpuesto -->
-            <div style="width:230px; height:230px; margin:0 auto 14px; position:relative; background:#f8fafc; border-radius:16px; padding:8px; box-sizing:border-box; border:1px solid #e2e8f0; display:flex; align-items:center; justify-content:center;">
-              <img src="/qr_code.jpeg" alt="Código QR Bancolombia" style="width:100%; height:100%; object-fit:contain; border-radius:10px; display:block;" onerror="this.src='/qr_code.jpeg';" />
-              <!-- Badge de Logo Central -->
-              <div style="position:absolute; width:46px; height:46px; background:white; border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:center; padding:3px; box-sizing:border-box;">
-                <img src="/logo_qr.png" alt="Piggy Logo" style="width:100%; height:100%; object-fit:contain;" />
-              </div>
-            </div>
-
-            <div style="font-size:0.8rem; color:#475569; font-weight:700;">
-              Titular: Granja Valle Morales
-            </div>
-            <div style="font-size:0.72rem; color:#64748b; margin-top:2px;">
-              Escanea con Bancolombia, Nequi o tu banco favorito
-            </div>
-          </div>
-
-          <!-- Referencia de Pago -->
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center;">
+          <!-- Resumen de Monto -->
+          <div style=\"background:linear-gradient(135deg,#ecfdf5,#d1fae5); border:1px solid #a7f3d0; border-radius:14px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between;\">
             <div>
-              <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Referencia asignada</div>
-              <div style="font-family:monospace; font-size:0.95rem; font-weight:800; color:#0f172a; margin-top:2px;" id="qr-ref-text">${qrRef}</div>
+              <div style=\"font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;\">Monto Exacto a Pagar</div>
+              <div style=\"font-size:1.4rem; font-weight:900; color:#065f46;\">${formatCOP(selectedAmount)}</div>
             </div>
-            <button id="btn-copy-qr-ref" style="background:#e2e8f0; color:#334155; border:none; padding:6px 12px; border-radius:8px; font-size:0.75rem; font-weight:800; cursor:pointer;">Copiar</button>
+            <div style=\"width:36px; height:36px; display:flex; align-items:center; justify-content:center;\">
+              <img src=\"/logo_qr.png\" alt=\"QR\" style=\"width:34px; height:34px; object-fit:contain;\" onerror=\"this.style.display='none';\" />
+            </div>
           </div>
 
-          <!-- Instructions steps -->
-          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:14px; padding:16px;">
-            <div style="font-weight:800; font-size:0.85rem; color:#1d4ed8; margin-bottom:8px;">¿Cómo pagar con este QR?</div>
-            <ol style="margin:0; padding-left:18px; font-size:0.78rem; color:#1e40af; line-height:1.55; display:flex; flex-direction:column; gap:6px;">
-              <li>Toma una captura de pantalla o escanea este QR desde otro dispositivo.</li>
-              <li>Abre la app de tu banco y selecciona <strong>Escanear código QR</strong>.</li>
-              <li>Ingresa el monto exacto: <strong>${formatCOP(selectedAmount)}</strong>.</li>
-              <li>En la descripción escribe tu referencia: <code>${qrRef}</code>.</li>
-              <li>Al finalizar, presiona el botón verde de abajo para confirmar.</li>
+          <!-- RECUADRO CON IMAGEN DEL QR REAL -->
+          <div style=\"background:#f8fafc; border:2px solid #e2e8f0; border-radius:18px; padding:20px; margin-bottom:16px; text-align:center;\">
+            <div style=\"font-size:0.75rem; color:#64748b; font-weight:700; margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;\">
+              Código QR Bancolombia / Nequi / Redeban
+            </div>
+            
+            <div style=\"
+              display:inline-block; background:white; padding:12px; border-radius:16px;
+              border:1px solid #e2e8f0; box-shadow:0 4px 14px rgba(0,0,0,0.06); margin-bottom:12px;
+            \">
+              <img src=\"/qr_code.jpeg\" alt=\"Código QR de Pago\" style=\"width:200px; height:200px; object-fit:contain; display:block; border-radius:8px;\" onerror=\"this.parentElement.innerHTML='<div style=\\'width:200px;height:200px;display:flex;align-items:center;justify-content:center;color:#ef4444;font-size:0.8rem;\\'>No se pudo cargar la imagen del QR</div>';\" />
+            </div>
+
+            <div style=\"font-size:0.78rem; color:#475569; font-weight:600; line-height:1.4;\">
+              Granja Villa Morales del Valle SAS<br/>
+              <span style=\"font-size:0.72rem; color:#94a3b8; font-weight:500;\">Acepta Bancolombia, Nequi, Daviplata, Dale y más</span>
+            </div>
+          </div>
+
+          <!-- BOTÓN YA TRANSFERÍ CON QR -->
+          <div style=\"margin-bottom:20px;\">
+            <button id=\"btn-qr-ya-transferi\" style=\"
+              width: 100%;
+              background: #22c55e;
+              color: white;
+              border: none;
+              padding: 16px 20px;
+              border-radius: 9999px;
+              font-weight: 800;
+              font-size: 1.05rem;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+              transition: all 0.2s;\">
+              <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"33\" height=\"33\" viewBox=\"0 0 24 24\" fill=\"currentColor\">
+                <path d=\"M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.698.077-1.11-.059-.264-.087-.585-.205-1.002-.387-1.748-.763-2.888-2.535-2.977-2.653-.088-.118-.711-.947-.711-1.808 0-.861.451-1.285.613-1.46.162-.176.353-.22.471-.22.118 0 .235.001.338.006.109.006.255-.041.397.3.147.354.5 1.22.544 1.308.044.088.073.191.015.308-.059.118-.088.191-.176.294-.088.103-.186.23-.265.309-.089.088-.182.184-.078.361.103.176.459.757.985 1.226.678.605 1.25.792 1.427.88.176.089.279.074.382-.044.103-.118.441-.515.559-.691.118-.176.235-.147.397-.088.162.059 1.03.485 1.206.573.176.088.294.133.338.206.044.074.044.426-.1 1.031zM12 2C6.477 2 2 6.477 2 12c0 1.891.524 3.66 1.434 5.176L2 22l4.957-1.399C8.423 21.492 10.153 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.2c-1.637 0-3.153-.497-4.422-1.353l-.317-.213-2.937.828.846-2.859-.232-.345C4.015 14.922 3.5 13.513 3.5 12c0-4.687 3.813-8.5 8.5-8.5s8.5 3.813 8.5 8.5-3.813 8.5-8.5 8.5z\"/>
+              </svg>
+              <span>Ya transferí, notificar por WhatsApp</span>
+            </button>
+          </div>
+
+          <!-- Pasos para pagar con QR -->
+          <div style=\"background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px;\">
+            <div style=\"font-size:0.8rem; font-weight:800; color:#0f172a; margin-bottom:10px; display:flex; align-items:center; gap:6px;\">
+              <span>📌</span> Pasos para pagar con Código QR:
+            </div>
+            <ol style=\"margin:0; padding-left:18px; font-size:0.8rem; color:#475569; line-height:1.6; display:flex; flex-direction:column; gap:6px;\">
+              <li>Abre la app de tu banco y selecciona <strong>\"Escanear QR\"</strong>.</li>
+              <li>Apunta al código QR de arriba (o toma una captura de pantalla si estás desde tu celular).</li>
+              <li>Ingresa el valor exacto: <strong>${formatCOP(selectedAmount)}</strong>.</li>
+              <li>Confirma el pago y guarda el comprobante digital.</li>
+              <li>Toca el botón verde arriba para enviarnos el comprobante por WhatsApp.</li>
             </ol>
           </div>
-        </div>
 
-        <!-- Sticky Footer CTA -->
-        <div style="padding:16px 20px calc(24px + env(safe-area-inset-bottom, 0px)); background:white; border-top:1px solid #f1f5f9; flex-shrink:0; display:flex; flex-direction:column; gap:10px;">
-          <button id="btn-confirm-qr-recharge" style="
-            width:100%;
-            background:#16a34a;
-            color:white;
-            border:none;
-            padding:16px;
-            border-radius:14px;
-            font-weight:800;
-            font-size:1.02rem;
-            cursor:pointer;
-            transition:opacity 0.2s, transform 0.1s;
-            box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-          ">
-            <span>✓ Ya escaneé y pagué</span>
-          </button>
-          <div style="font-size:0.72rem; color:#64748b; text-align:center; font-weight:500;">
-            Acreditación en 5 a 15 minutos hábiles
-          </div>
         </div>
     `;
 
     document.getElementById('rch-close')?.addEventListener('click', closeSubscreen);
     document.getElementById('rch-qr-back')?.addEventListener('click', renderStep2);
 
-    // Copy QR Ref
-    document.getElementById('btn-copy-qr-ref')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(qrRef).then(() => {
-        const btn = document.getElementById('btn-copy-qr-ref');
-        if (btn) {
-          btn.innerText = '¡Copiado!';
-          setTimeout(() => { btn.innerText = 'Copiar'; }, 2000);
-        }
-      });
-    });
-
-    // Confirm QR button
-    document.getElementById('btn-confirm-qr-recharge')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btn-confirm-qr-recharge');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerText = 'Registrando solicitud...';
-      }
-
-      try {
-        await requestQRRecharge({
-          amount: selectedAmount,
-          reference: qrRef,
-          userName: userName
-        });
-
-        // Open WhatsApp with prefilled message
-        const waMsg = `👋 *PIGGY APP — Comprobante de Pago QR Bancolombia*\n\n👤 *Usuario:* ${userName}\n💰 *Monto:* ${formatCOP(selectedAmount)}\n🔖 *Referencia:* ${qrRef}\n\nAdjunto el comprobante de mi pago QR para que sea acreditado a mi cuenta. ¡Muchas gracias!`;
-        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(waMsg)}`, '_blank');
-
-        renderPendingReceipt('qr', selectedAmount, qrRef);
-      } catch (err) {
-        console.error('Error in QR recharge:', err);
-        renderPendingReceipt('qr', selectedAmount, qrRef);
-      }
+    // Ya transferí con QR
+    document.getElementById('btn-qr-ya-transferi')?.addEventListener('click', async () => {
+      await requestQRRecharge(selectedAmount, qrRef, mockState);
+      const msg = `🐷 *PIGGY APP — Comprobante Pago con QR*\\n\\n👤 *Usuario:* ${userName}\\n🔑 *Referencia:* ${qrRef}\\n💰 *Monto pagado:* ${formatCOP(selectedAmount)}\\n\\nAdjunto mi comprobante para que acrediten el saldo a mi cuenta.`;
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      closeSubscreen();
     });
   };
 
   /* ─────────────────────────────────────────
-     WOMPI LAUNCH HANDLER
+     STEP 4 — Processing
   ───────────────────────────────────────── */
-  const handleLaunchWompi = async () => {
-    const userEmail = profile?.email || 'cliente@piggyapp.co';
-    const userPhone = profile?.phone || '3000000000';
-    const userFullName = profile?.full_name || userName;
-
-    // Show loading state while widget is launched
-    const prevBody = subscreen.innerHTML;
+  const renderStep4Processing = (totalPaid) => {
     subscreen.innerHTML = `
-      <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; text-align:center;">
-        <div style="width:50px; height:50px; border:4px solid #fce7ed; border-top-color:#be1260; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:16px;"></div>
-        <div style="font-weight:800; font-size:1.1rem; color:#0f172a;">Conectando con la Pasarela de Pago...</div>
-        <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">Por favor espera un momento</div>
-      </div>
-      <style>@keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }</style>
+        <div style=\"padding:40px 24px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;\">
+          <div class=\"spinner\" style=\"width:44px; height:44px; border:3px solid #fce7ed; border-top-color:#be1260; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:20px;\"></div>
+          <div style=\"font-weight:850; font-size:1.15rem; color:#0f172a; margin-bottom:6px;\">Conectando con Wompi...</div>
+          <div style=\"font-size:0.84rem; color:#64748b;\">Por favor no cierres esta ventana mientras se abre la pasarela de pagos.</div>
+        </div>
     `;
+  };
 
-    try {
-      const result = await openWompiWidget({
-        amountInCents: selectedAmount * 100,
-        currency: 'COP',
-        customerEmail: userEmail,
-        customerFullName: userFullName,
-        customerPhone: userPhone,
-        redirectUrl: window.location.origin + '/#/granja'
-      });
+  /* ─────────────────────────────────────────
+     STEP 5 — Success or Error Result
+  ───────────────────────────────────────── */
+  const renderStep5Result = (result) => {
+    if (result.success) {
+      subscreen.innerHTML = `
+          <div style=\"padding:40px 24px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;\">
+            <div style=\"width:64px; height:64px; border-radius:50%; background:#f0fdf4; color:#10B981; display:flex; align-items:center; justify-content:center; margin-bottom:16px;\">
+              <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg>
+            </div>
+            <div style=\"font-weight:850; font-size:1.3rem; color:#0f172a; margin-bottom:6px;\">¡Recarga Exitosa!</div>
+            <div style=\"font-size:0.86rem; color:#64748b; margin-bottom:24px; line-height:1.5;\">
+              Tu saldo ha sido actualizado con <strong style=\"color:#0f172a;\">${formatCOP(result.amountCredited || selectedAmount)}</strong>.<br/>
+              Ref: <span style=\"font-family:monospace; font-weight:700; color:#475569;\">${result.transaction?.id || result.reference || 'PGY-TX-OK'}</span>
+            </div>
 
-      if (result.success && result.transaction) {
-        const tx = result.transaction;
-        const status = tx.status; // 'APPROVED', 'DECLINED', 'VOIDED', 'ERROR', 'PENDING'
+            <div style=\"background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; width:100%; margin-bottom:24px; box-sizing:border-box;\">
+              <div style=\"font-size:0.75rem; color:#64748b; margin-bottom:4px;\">Nuevo saldo disponible</div>
+              <div style=\"font-size:1.5rem; font-weight:900; color:#10B981;\">${formatCOP(result.newBalance || (mockState.balance + selectedAmount))}</div>
+            </div>
 
-        if (status === 'APPROVED') {
-          // Add funds to state
-          mockState.balance += selectedAmount;
-          mockState.transactions.unshift({
-            id: tx.id || 'wompi-' + Date.now(),
-            type: 'recharge',
-            amount: selectedAmount,
-            description: `Recarga Wompi #${(tx.reference || '').slice(-6)}`,
-            date: new Date().toISOString(),
-            status: 'completed'
-          });
+            <button id=\"rch-finish-btn\" style=\"
+              width:100%; background:#ec4899; color:white; border:none;
+              padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
+              box-shadow:0 8px 20px -5px rgba(236, 72, 153, 0.5); transition:all 0.2s;\">Ir a mi Granja</button>
+          </div>
+      `;
 
-          // Update backend service
-          try {
-            await rechargeWallet(selectedAmount, 'wompi', {
-              transactionId: tx.id,
-              reference: tx.reference,
-              paymentMethod: tx.paymentMethod?.type || 'CARD'
-            });
-          } catch (e) {
-            console.warn('Wompi backend sync warning:', e);
-          }
-
-          if (onUpdated) {
-            onUpdated(mockState);
-          }
-
-          renderWompiResult(true, selectedAmount, tx.reference);
+      document.getElementById('rch-finish-btn')?.addEventListener('click', () => {
+        closeSubscreen();
+        if (onCloseAll) {
+          onCloseAll();
         } else {
-          renderWompiResult(false, selectedAmount, tx.reference, status);
+          document.getElementById('wallet-drawer-modal')?.remove();
         }
-      } else {
-        // User closed or error
-        renderStep2();
-      }
-    } catch (err) {
-      console.error('Wompi launch error:', err);
-      renderStep2();
+      });
+    } else {
+      subscreen.innerHTML = `
+          <div style=\"padding:40px 24px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1;\">
+            <div style=\"width:64px; height:64px; border-radius:50%; background:#fef2f2; color:#ef4444; display:flex; align-items:center; justify-content:center; margin-bottom:16px;\">
+              <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"36\" height=\"36\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg>
+            </div>
+            <div style=\"font-weight:850; font-size:1.3rem; color:#0f172a; margin-bottom:6px;\">No se completó la recarga</div>
+            <div style=\"font-size:0.86rem; color:#64748b; margin-bottom:24px; line-height:1.5;\">
+              ${result.reason || 'Ocurrió un error con el medio de pago seleccionado. No se realizó ningún débito.'}
+            </div>
+
+            <button id=\"rch-retry-btn\" style=\"
+              width:100%; background:#0f172a; color:white; border:none;
+              padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;\">Intentar de nuevo</button>
+          </div>
+      `;
+
+      document.getElementById('rch-retry-btn')?.addEventListener('click', () => {
+        renderStep1();
+      });
     }
   };
 
-  /* ─────────────────────────────────────────
-     PENDING RECEIPT SCREEN (Bre-B & QR)
-  ───────────────────────────────────────── */
-  const renderPendingReceipt = (method, amount, ref) => {
-    const isQR = method === 'qr';
-    const methodTitle = isQR ? 'Pago con QR Bancolombia' : 'Transferencia Bre-B';
-
-    subscreen.innerHTML = `
-      <div style="flex:1; overflow-y:auto; padding:32px 20px; display:flex; flex-direction:column; align-items:center; text-align:center; -webkit-overflow-scrolling:touch;">
-        
-        <div style="width:72px; height:72px; background:#dcfce7; color:#16a34a; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin-bottom:16px; box-shadow:0 8px 20px rgba(22, 163, 74, 0.2);">
-          ✓
-        </div>
-
-        <h2 style="font-size:1.45rem; font-weight:850; color:#0f172a; margin:0 0 6px 0;">¡Solicitud Registrada!</h2>
-        <p style="font-size:0.85rem; color:#64748b; margin:0 0 24px 0; max-width:320px; line-height:1.45;">
-          Hemos recibido tu solicitud de recarga por <strong>${methodTitle}</strong>.
-        </p>
-
-        <!-- Receipt Card -->
-        <div style="width:100%; max-width:360px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; text-align:left; margin-bottom:20px; font-size:0.85rem;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Monto Solicitado:</span>
-            <strong style="color:#0f172a; font-size:1rem;">${formatCOP(amount)}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Referencia:</span>
-            <strong style="color:#0f172a; font-family:monospace;">#${ref}</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Método:</span>
-            <span style="color:#0f172a; font-weight:700;">${methodTitle}</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#64748b;">Estado:</span>
-            <span style="background:#fef9c3; color:#854d0e; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:6px;">En Verificación</span>
-          </div>
-        </div>
-
-        <p style="font-size:0.8rem; color:#64748b; line-height:1.5; margin:0 0 24px 0; max-width:320px;">
-          Tu saldo se actualizará automáticamente tan pronto el equipo verifique la transferencia en el chat de WhatsApp.
-        </p>
-
-        <div style="width:100%; max-width:360px; display:flex; flex-direction:column; gap:10px;">
-          <button id="pending-result-close" style="
-            width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
-            padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-            box-shadow:0 4px 14px rgba(22, 163, 74, 0.35);
-          ">Entendido, Volver a la Granja</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('pending-result-close')?.addEventListener('click', () => {
-      closeSubscreen();
-      if (onCloseAll) {
-        onCloseAll();
-      } else {
-        const d = document.getElementById('wallet-drawer-modal');
-        if (d) d.remove();
-      }
-    });
-  };
-
-  /* ─────────────────────────────────────────
-     WOMPI RESULT SCREEN
-  ───────────────────────────────────────── */
-  const renderWompiResult = (isApproved, amount, ref, status = '') => {
-    subscreen.innerHTML = `
-      <div style="flex:1; overflow-y:auto; padding:32px 20px; display:flex; flex-direction:column; align-items:center; text-align:center; -webkit-overflow-scrolling:touch;">
-        
-        <div style="width:72px; height:72px; background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#16a34a' : '#dc2626'}; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.2rem; margin-bottom:16px; box-shadow:0 8px 20px ${isApproved ? 'rgba(22, 163, 74, 0.2)' : 'rgba(220, 38, 38, 0.2)'};">
-          ${isApproved ? '✓' : '✕'}
-        </div>
-
-        <h2 style="font-size:1.45rem; font-weight:850; color:#0f172a; margin:0 0 6px 0;">
-          ${isApproved ? '¡Recarga Exitosa!' : 'Transacción No Completada'}
-        </h2>
-        
-        <p style="font-size:0.85rem; color:#64748b; margin:0 0 24px 0; max-width:320px; line-height:1.45;">
-          ${isApproved 
-            ? `Tu saldo disponible ha sido acreditado por <strong>${formatCOP(amount)}</strong>.`
-            : `El pago fue rechazado o cancelado (${status || 'No completado'}). No se realizó ningún cobro.`}
-        </p>
-
-        <!-- Receipt Card -->
-        <div style="width:100%; max-width:360px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:18px; text-align:left; margin-bottom:24px; font-size:0.85rem;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Monto:</span>
-            <strong style="color:#0f172a; font-size:1rem;">${formatCOP(amount)}</strong>
-          </div>
-          ${ref ? `
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-              <span style="color:#64748b;">Referencia:</span>
-              <strong style="color:#0f172a; font-family:monospace;">#${ref}</strong>
-            </div>
-          ` : ''}
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
-            <span style="color:#64748b;">Método:</span>
-            <span style="color:#0f172a; font-weight:700;">Pasarela Wompi</span>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span style="color:#64748b;">Estado:</span>
-            <span style="background:${isApproved ? '#dcfce7' : '#fee2e2'}; color:${isApproved ? '#15803d' : '#991b1b'}; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:6px;">
-              ${isApproved ? 'Aprobada' : 'Rechazada'}
-            </span>
-          </div>
-        </div>
-
-        <div style="width:100%; max-width:360px;">
-          <button id="wompi-result-close" style="
-            width:100%; background:${isApproved ? 'linear-gradient(135deg,#16a34a,#15803d)' : 'linear-gradient(135deg,#6C14D0,#9B1DBA)'}; color:white; border:none;
-            padding:16px; border-radius:14px; font-weight:800; font-size:1rem; cursor:pointer;
-            box-shadow:0 4px 14px ${isApproved ? 'rgba(22, 163, 74, 0.35)' : 'rgba(108, 20, 208, 0.35)'};
-          ">${isApproved ? 'Ver mi Billetera Actualizada' : 'Intentar de Nuevo'}</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('wompi-result-close')?.addEventListener('click', () => {
-      if (!isApproved) {
-        renderStep1();
-        return;
-      }
-      closeSubscreen();
-      if (onCloseAll) {
-        onCloseAll();
-      } else {
-        const d = document.getElementById('wallet-drawer-modal');
-        if (d) d.remove();
-        openWalletDrawer(mockState.balance, mockState.balance);
-      }
-    });
-  };
-
-  // Start at Step 1
+  // Launch initial step
   renderStep1();
+}
+
+export function showWalletRechargeModal() {
+  const container = document.getElementById('wallet-drawer-modal');
+  if (container) {
+    openWalletRechargeSubscreen(container);
+  } else {
+    openWalletDrawer({ initialSubscreen: 'recharge' });
+  }
 }

@@ -361,7 +361,22 @@ export function showCheckoutModal(item) {
     <div style="padding: 20px 24px 0 24px; background: var(--color-bg, #FDF2F5); flex-shrink: 0; position: sticky; top: 0; z-index: 10;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
           <h2 style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Pasarela de Pago</h2>
-          <button id="checkout-close-btn" style="background:none; border:none; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+          <button id="checkout-close-btn" style="
+              background: none; 
+              border: none; 
+              cursor: pointer; 
+              color: #64748b; 
+              font-size: 1.3rem; 
+              font-weight: 600; 
+              padding: 4px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              transition: color 0.2s;"
+              onmouseover="this.style.color='#0f172a';"
+              onmouseout="this.style.color='#64748b'">
+              ✕
+          </button>
         </div>
         <div style="height: 1px; background: #e2e8f0; width: 100%;"></div>
     </div>
@@ -390,7 +405,7 @@ export function showCheckoutModal(item) {
           </div>
           
           <h2 style="font-size: 1.4rem; font-weight: 800; color: #0f172a; margin: 0 0 4px 0; letter-spacing: -0.01em;">¡Compra tu Piggy!</h2>
-          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;">
+          <p style="font-size: 0.88rem; color: #64748b; line-height: 1.4; margin: 0;\">
             Un nuevo integrante para que tu granja siga creciendo desde
           </p>
           <div style="font-size: 1.4rem; font-weight: 850; color: var(--color-primary, #ec4899); margin-top: 4px;">${formatCOP(item.price || item.investment_amount || item.amount || item.precio || 1000000)}</div>
@@ -630,164 +645,135 @@ export function showCheckoutModal(item) {
   document.getElementById('checkout-close-btn').addEventListener('click', close);
 
   // Recargar Wallet
-  recargarBtn.addEventListener('click', async () => {
-    const originalText = recargarBtn.innerHTML;
-    recargarBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:inline-block;margin-right:8px;"></span> Cargando Wallet...';
-    recargarBtn.style.pointerEvents = 'none';
-    try {
-      await openWalletDrawer(true);
-      close();
-    } catch (e) {
-      console.error('Error opening wallet from mercado view:', e);
-      recargarBtn.innerHTML = originalText;
-      recargarBtn.style.pointerEvents = 'auto';
-    }
+  recargarBtn.addEventListener('click', () => {
+    close();
+    openWalletDrawer({ initialSubscreen: 'recharge' });
   });
 
-  // Confirm Purchase -> Navigate to Contract Signing
-  confirmBtn.addEventListener('click', () => {
+  // Confirm Purchase Logic (Wallet-based)
+  confirmBtn.addEventListener('click', async () => {
     const customName = input.value.trim();
-     
-    // Check name validation on click
     if (customName.length < 3) {
-      errorMsg.style.opacity = '1';
-      errorMsg.textContent = '* Debes darle un nombre de al menos 3 letras a tu cerdito';
-      input.style.borderColor = '#dc2626';
       input.focus();
       return;
     }
 
-    if (currentBalance < itemPrice) return;
+    // Re-check balance before final deduction
+    if (currentBalance < itemPrice) {
+      alert('Saldo insuficiente para completar la compra.');
+      return;
+    }
 
-    // Save pending purchase details in session
-    sessionStorage.setItem('pending_piggy_name', customName);
-    sessionStorage.setItem('pending_marketplace_item', JSON.stringify({ ...item, price: itemPrice }));
+    // Visual feedback: Loading state
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.7';
+    confirmBtn.innerText = 'Procesando compra...';
 
-    close();
-    navigateTo(`contrato?name=${encodeURIComponent(customName)}&price=${itemPrice}`);
+    try {
+      // 1. Deduct balance from wallet
+      await deductWalletBalance(itemPrice, `Compra de ${customName} (${item.item_name || 'Piggy'})`);
+
+      // 2. Register purchase & create piggy in user's farm
+      const purchaseResult = await buyMarketplaceItem(item.id, customName, itemPrice, item);
+
+      // 3. Close modal & navigate to granja
+      close();
+
+      // Show success modal
+      showPurchaseSuccessModal(customName, item);
+
+    } catch (err) {
+      console.error('Error during checkout:', err);
+      alert(err.message || 'Ocurrió un error al procesar la compra. Intenta de nuevo.');
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = '1';
+      confirmBtn.innerText = 'Confirmar Compra';
+    }
   });
 }
 
 /**
- * Show premium, dorado, plus, avanzado category explanations in a custom popup modal.
+ * Show celebration modal after successful purchase
  */
-window.showCategoryInfo = (category) => {
-  const existing = document.getElementById('category-info-popup');
+function showPurchaseSuccessModal(piggyName, item) {
+  const existing = document.getElementById('purchase-success-modal');
   if (existing) existing.remove();
 
-  const normalized = (category || '').toLowerCase();
-  const infoTexts = {
-    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
-    dorado: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    plus: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    avanzado30: 'Cerdito con 30 días de engorde avanzado (114 días restantes). Ahorra 1 mes de espera.',
-    avanzado45: 'Cerdito con 45 días de engorde avanzado (99 días restantes). Ahorra 1.5 meses de espera.',
-    avanzado60: 'Cerdito con 60 días de engorde avanzado (84 días restantes). Ahorra 2 meses de espera.',
-    avanzado75: 'Cerdito con 75 días de engorde avanzado (69 días restantes). Ahorra 2.5 meses de espera.',
-    avanzado90: 'Cerdito con 90 días de engorde avanzado (54 días restantes). Máximo ahorro de tiempo.',
-    estandar: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
-    standard: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
-  };
-
-  const text = infoTexts[normalized] || 'Cerdito exclusivo disponible en el mercado Piggy.';
-
-  const colors = {
-    premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
-    dorado: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    plus: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
-    silver: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
-    avanzado: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado45: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado60: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado75: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado90: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    estandar: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' },
-    standard: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' }
-  };
-
-  const theme = colors[normalized] || { bg: 'var(--color-primary)', color: '#FFF' };
-
-  const popup = document.createElement('div');
-  popup.id = 'category-info-popup';
-  popup.style.cssText = `
+  const modal = document.createElement('div');
+  modal.id = 'purchase-success-modal';
+  modal.className = 'modal-overlay animate-fade-in';
+  modal.style.cssText = `
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100dvh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 100000;
+    inset: 0;
+    z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
     padding: 20px;
-    box-sizing: border-box;
   `;
 
-  const capitalizedCat = category.charAt(0).toUpperCase() + category.slice(1);
-
-  popup.innerHTML = `
+  modal.innerHTML = `
     <div class="animate-scale-in" style="
       background: white;
-      border-radius: 20px;
+      border-radius: 24px;
+      padding: 32px 24px 28px;
+      max-width: 380px;
       width: 100%;
-      max-width: 340px;
-      overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     ">
+      <div style="font-size: 3.5rem; margin-bottom: 8px;">🎉🐷</div>
+      <h2 style="font-size: 1.5rem; font-weight: 850; color: #0f172a; margin: 0 0 6px 0;">¡Felicitaciones!</h2>
+      <p style="font-size: 0.92rem; color: #64748b; margin: 0 0 20px 0; line-height: 1.45;">
+        <strong style="color: #0f172a;">${piggyName}</strong> ya hace parte de tu granja digital.
+      </p>
+
       <div style="
-        background: ${theme.bg};
-        color: ${theme.color};
-        width: 100%;
-        padding: 20px 24px;
-        text-align: center;
-        font-weight: 800;
-        font-size: 1.15rem;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
+        background: #fdf2f8;
+        border: 1px solid #fce7f3;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 24px;
+        text-align: left;
+        font-size: 0.84rem;
       ">
-        Categoría ${capitalizedCat}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="color: #64748b;">Piggy:</span>
+          <strong style="color: #0f172a;">${piggyName}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span style="color: #64748b;">Tipo:</span>
+          <strong style="color: #db2777;">${item.item_name || 'Piggy Estándar'}</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #64748b;">Inversión:</span>
+          <strong style="color: #059669;">${formatCOP(item.price || item.investment_amount || 1000000)}</strong>
+        </div>
       </div>
 
-      <div style="padding: 24px 20px; text-align: center; font-size: 0.95rem; color: #4b5563; line-height: 1.5; font-weight: 500;">
-        ${text}
-      </div>
-
-      <div style="width: 100%; padding: 0 20px 20px 20px; box-sizing: border-box;">
-        <button id="btn-close-cat-popup" style="
-          width: 100%;
-          background: #BE1260;
-          color: white;
-          border: none;
-          padding: 13px;
-          border-radius: 12px;
-          font-weight: 750;
-          font-size: 0.95rem;
-          cursor: pointer;
-          box-shadow: 0 4px 14px rgba(190, 18, 96, 0.25);
-          transition: all 0.2s;
-        " onmouseover="this.style.background='#a20f52'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#BE1260'; this.style.transform='translateY(0)'">
-          Entendido
-        </button>
-      </div>
+      <button id="btn-go-to-farm" style="
+        width: 100%;
+        background: linear-gradient(135deg, #ec4899, #db2777);
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(236, 72, 153, 0.4);
+      ">
+        Ver mi Granja
+      </button>
     </div>
   `;
 
-  document.body.appendChild(popup);
+  document.body.appendChild(modal);
 
-  const close = () => popup.remove();
-  document.getElementById('btn-close-cat-popup').addEventListener('click', close);
-  popup.addEventListener('click', (e) => {
-    if (e.target === popup) close();
+  document.getElementById('btn-go-to-farm')?.addEventListener('click', () => {
+    modal.remove();
+    navigateTo('/granja');
   });
-};
+}
