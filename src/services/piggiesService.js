@@ -654,7 +654,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
                 .from('piggies')
                 .select('*')
                 .eq('user_id', user.id)
-                .order('created_at', { ascending: false })\n                .limit(1);
+                .order('created_at', { ascending: false })
+                .limit(1);
 
             if (recentPiggies && recentPiggies.length > 0) {
                 const latest = enrichPiggyData(recentPiggies[0]);
