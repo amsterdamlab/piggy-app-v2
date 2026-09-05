@@ -135,57 +135,77 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
 
     onProgress('🔑 Enviando datos al servidor de seguridad Supabase...');
     const client = getClient();
-    const { data, error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
+    try {
+        const { data, error } = await client.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    whatsapp: whatsapp
+                }
+            }
+        });
+
+        if (error) {
+            const errorMsg = error.message || error.error_description || (typeof error === 'string' ? error : 'Error al registrar usuario.');
+            return { user: null, error: errorMsg };
+        }
+
+        // Detectar si el usuario ya existía previamente (Supabase retorna identities vacío para evitar enumeración)
+        if (data.user && !data.session && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+            return { user: null, error: 'User already registered' };
+        }
+
+        // Si se requiere confirmación por email y no hay sesión activa aún
+        const requiresConfirmation = data.user && !data.session;
+
+        // Create profile with terms already accepted
+        if (data.user) {
+            onProgress('📝 Creando tu perfil en la base de datos de usuarios...');
+            const profile = {
+                id: data.user.id,
                 full_name: fullName,
-                whatsapp: whatsapp
+                email,
+                whatsapp,
+                terms_accepted: true,
+                habeas_data_accepted: true,
+                consumption_balance: 20000,
+                welcome_bonus_status: 'active',
+            };
+
+            const { data: createdProfile, error: profileError } = await client
+                .from('profiles')
+                .upsert(profile)
+                .select()
+                .maybeSingle();
+
+            if (profileError) {
+                console.warn('🐷 Profile upsert error:', profileError.message);
+            }
+
+            const finalProfile = createdProfile || profile;
+
+            onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
+            // Background maintenance tasks & cache sync — do not block user
+            clearAppCache().catch(e => console.warn('clearAppCache err:', e));
+            
+            if (!requiresConfirmation) {
+                // Update AppState immediately with fresh profile
+                AppState.set({
+                    currentUser: data.user,
+                    profile: { ...finalProfile },
+                    isAuthenticated: true,
+                });
             }
         }
-    });
 
-    if (error) return { user: null, error: error.message };
-
-    // Create profile with terms already accepted
-    if (data.user) {
-        onProgress('📝 Creando tu perfil en la base de datos de usuarios...');
-        const profile = {
-            id: data.user.id,
-            full_name: fullName,
-            email,
-            whatsapp,
-            terms_accepted: true,
-            habeas_data_accepted: true,
-            consumption_balance: 20000,
-            welcome_bonus_status: 'active',
-        };
-
-        const { data: createdProfile, error: profileError } = await client
-            .from('profiles')
-            .upsert(profile)
-            .select()
-            .maybeSingle();
-
-        if (profileError) {
-            console.warn('🐷 Profile upsert error:', profileError.message);
-        }
-
-        const finalProfile = createdProfile || profile;
-
-        onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
-        // Background maintenance tasks & cache sync — do not block user
-        clearAppCache().catch(e => console.warn('clearAppCache err:', e));
-        // Update AppState immediately with fresh profile including referral_code from DB trigger
-        AppState.set({
-            currentUser: data.user,
-            profile: { ...finalProfile },
-            isAuthenticated: true,
-        });
+        return { user: data.user, requiresConfirmation, error: null };
+    } catch (err) {
+        console.error('🐷 Exception in signUp:', err);
+        const errorMsg = err?.message || (typeof err === 'string' ? err : 'Error de conexión con el servidor.');
+        return { user: null, error: errorMsg };
     }
-
-    return { user: data.user, error: null };
 }
 
 /**
@@ -278,8 +298,8 @@ export async function acceptTerms() {
     const { data: { user } } = await client.auth.getUser();
 
     const { error } = await client.from('profiles')
-        .update({ terms_accepted: true, habeas_data_accepted: true }
-        ).eq('id', user.id);
+        .update({ terms_accepted: true, habeas_data_accepted: true })
+        .eq('id', user.id);
 
     if (!error) {
         const profile = await getProfile();
