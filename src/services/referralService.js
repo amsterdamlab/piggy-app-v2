@@ -11,9 +11,9 @@ import { AppState } from '../state.js';
 /* ─── Commission Tiers ─── */
 
 const COMMISSION_TIERS = [
-    { min: 0, max: 5, amount: 20000, label: '$20.000' },
-    { min: 6, max: 15, amount: 50000, label: '$50.000' },
-    { min: 16, max: Infinity, amount: 70000, label: '$70.000' },
+    { min: 0, max: 5, amount: 20000, label: '$20.000', name: 'Bronce' },
+    { min: 6, max: 10, amount: 30000, label: '$30.000', name: 'Plata' },
+    { min: 11, max: Infinity, amount: 50000, label: '$50.000', name: 'Oro' },
 ];
 
 /**

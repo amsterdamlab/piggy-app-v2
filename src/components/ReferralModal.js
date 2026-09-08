@@ -181,73 +181,73 @@ export async function showReferralModal() {
         transition: color 0.15s;
       " onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
-      <div style="text-align:center; margin-bottom:20px;\">
-        <div style="font-size:48px; margin-bottom:8px;\">💰</div>
-        <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;\">Programa de Referidos</h3>
-        <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;\">
+      <div style="text-align:center; margin-bottom:20px;">
+        <div style="font-size:48px; margin-bottom:8px;">💰</div>
+        <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
+        <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
           Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
         </p>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;\">
-        <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;\">
-          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;\">Tu Código</div>
-          <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;\">${referralCode}</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="background:linear-gradient(135deg,#7c3aed,#5b21b6); color:white; padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:0.68rem; opacity:0.8; margin-bottom:4px;">Tu Código</div>
+          <div style="font-size:1.2rem; font-weight:800; letter-spacing:2px; font-family:monospace;">${referralCode}</div>
         </div>
-        <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;\">
-          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;\">Balance Ganado</div>
-          <div style="font-size:1.2rem; font-weight:800; color:#059669;\">${formatReferralBalance(balance)}</div>
-        </div>
-      </div>
-
-      <div style="display:flex; gap:8px; margin-bottom:20px;\">
-        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;\">
-          <div style="font-size:1.1rem; font-weight:800; color:#111827;\">${completedCount}</div>
-          <div style="font-size:0.65rem; color:#6b7280;\">Completados</div>
-        </div>
-        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;\">
-          <div style="font-size:1.1rem; font-weight:800; color:#111827;\">${pendingCount}</div>
-          <div style="font-size:0.65rem; color:#6b7280;\">Pendientes</div>
+        <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:0.68rem; color:#047857; margin-bottom:4px;">Balance Ganado</div>
+          <div style="font-size:1.2rem; font-weight:800; color:#059669;">${formatReferralBalance(balance)}</div>
         </div>
       </div>
 
-      <div style="margin-bottom:20px;\">
-        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;\">Mis Referidos</h4>
-        <div style="max-height:160px; overflow-y:auto; border:1px solid #f3f4f6; border-radius:12px; padding:4px 14px;\">
+      <div style="display:flex; gap:8px; margin-bottom:20px;">
+        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${completedCount}</div>
+          <div style="font-size:0.65rem; color:#6b7280;">Completados</div>
+        </div>
+        <div style="flex:1; background:#f9fafb; border-radius:10px; padding:10px; text-align:center;">
+          <div style="font-size:1.1rem; font-weight:800; color:#111827;">${pendingCount}</div>
+          <div style="font-size:0.65rem; color:#6b7280;">Pendientes</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <h4 style="margin:0 0 8px 0; font-size:0.85rem; font-weight:700; color:#374151;">Mis Referidos</h4>
+        <div style="max-height:160px; overflow-y:auto; border:1px solid #f3f4f6; border-radius:12px; padding:4px 14px;">
           ${referralsListHTML}
         </div>
       </div>
 
-      <div style="margin-bottom:24px;\">
-        <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:#374151;\">Tabla de Comisiones</h4>
-        <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;\">
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:#f9fafb; padding:8px 14px; font-size:0.7rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;\">
+      <div style="margin-bottom:24px;">
+        <h4 style="margin:0 0 10px 0; font-size:0.85rem; font-weight:700; color:#374151;">Tabla de Comisiones</h4>
+        <div style="border:1px solid #e5e7eb; border-radius:12px; overflow:hidden;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; background:#f9fafb; padding:8px 14px; font-size:0.7rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">
             <span>Rango</span>
-            <span style="text-align:center;\">Referidos</span>
-            <span style="text-align:right;\">Comisión</span>
+            <span style="text-align:center;">Referidos</span>
+            <span style="text-align:right;">Comisión</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}\">
-            <span style="font-weight:600;\">🥉 Bronce</span>
-            <span style="text-align:center; color:#6b7280;\">0 - 5</span>
-            <span style="text-align:right; font-weight:700; color:#059669;\">$30.000</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount <= 5 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥉 Bronce</span>
+            <span style="text-align:center; color:#6b7280;">0 - 5</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$20.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}\">
-            <span style="font-weight:600;\">🥈 Plata</span>
-            <span style="text-align:center; color:#6b7280;\">6 - 15</span>
-            <span style="text-align:right; font-weight:700; color:#059669;\">$50.000</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 10 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥈 Plata</span>
+            <span style="text-align:center; color:#6b7280;">6 - 10</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}\">
-            <span style="font-weight:600;\">🥇 Oro</span>
-            <span style="text-align:center; color:#6b7280;\">16+</span>
-            <span style="text-align:right; font-weight:700; color:#059669;\">$80.000</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 10 ? 'background:#f0fdf4;' : ''}">
+            <span style="font-weight:600;">🥇 Oro</span>
+            <span style="text-align:center; color:#6b7280;">11+</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
           </div>
         </div>
-        <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;\">
-          La comisión se asigna automáticamente una única vez cuando tu referido compra su primer Piggy.
+        <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;">
+          Las comisiones se asignan automáticamente a tus Bonos de Consumo cuando tu referido compra su primer Piggy (sin vencimiento).
         </p>
       </div>
 
-      <button id=\"btn-modal-share-referral\" style=\"
+      <button id="btn-modal-share-referral" style="
         width: 100%;
         background: linear-gradient(135deg, #25d366, #128c7e);
         color: white;
@@ -263,7 +263,7 @@ export async function showReferralModal() {
         gap: 10px;
         box-shadow: 0 6px 16px rgba(37,211,102,0.35);
         transition: transform 0.2s;
-      \" onmouseover=\"this.style.transform='translateY(-2px)'\" onmouseout=\"this.style.transform='translateY(0)'\">
+      " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         📤 Invitar Amigos por WhatsApp
       </button>
     `;

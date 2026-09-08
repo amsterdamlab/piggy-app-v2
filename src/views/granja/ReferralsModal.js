@@ -136,9 +136,10 @@ export async function showReferralModal() {
       `;
     } else {
       referralsListHTML = referrals.map(r => {
-        const statusIcon = r.status === 'completed' ? '🟢' : r.status === 'pending' ? '🟡' : '🔴';
-        const statusLabel = r.status === 'completed' ? 'Completado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
-        const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
+        const isApproved = r.status === 'completed' || r.status === 'approved';
+        const statusIcon = isApproved ? '🟢' : r.status === 'pending' ? '🟡' : '🔴';
+        const statusLabel = isApproved ? 'Aprobado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
+        const commissionText = isApproved ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
         return `
           <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f4f6;">
@@ -151,7 +152,7 @@ export async function showReferralModal() {
                 <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
               </div>
             </div>
-            <div style="font-weight:700; font-size:0.85rem; color:${r.status === 'completed' ? '#059669' : '#9ca3af'};">
+            <div style="font-weight:700; font-size:0.85rem; color:${isApproved ? '#059669' : '#9ca3af'};">
               ${commissionText}
             </div>
           </div>
@@ -195,7 +196,7 @@ export async function showReferralModal() {
         </div>
         <h3 style="margin:0 0 6px 0; font-size:1.2rem; font-weight:800; color:#111827;">Programa de Referidos</h3>
         <p style="margin:0; font-size:0.8rem; color:#6b7280; line-height:1.4;">
-          Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión automática en tu wallet.
+          Comparte tu código con amigos. Cuando compren su <strong>primer Piggy</strong>, recibes una comisión en tus <strong>Bonos de Consumo</strong> (sin fecha de vencimiento).
         </p>
       </div>
 
@@ -227,19 +228,19 @@ export async function showReferralModal() {
             <span style="text-align:center; color:#6b7280;">0 - 5</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$20.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 10 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥈 Plata</span>
-            <span style="text-align:center; color:#6b7280;">6 - 15</span>
-            <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
+            <span style="text-align:center; color:#6b7280;">6 - 10</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 10 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥇 Oro</span>
-            <span style="text-align:center; color:#6b7280;">16+</span>
-            <span style="text-align:right; font-weight:700; color:#059669;">$70.000</span>
+            <span style="text-align:center; color:#6b7280;">11+</span>
+            <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
           </div>
         </div>
         <p style="margin:8px 0 0 0; font-size:0.68rem; color:#9ca3af; text-align:center; line-height:1.3;">
-          La comisión se asigna automáticamente una única vez cuando tu referido compra su primer Piggy.
+          Las comisiones se asignan automáticamente a tus Bonos de Consumo cuando tu referido compra su primer Piggy (sin vencimiento).
         </p>
       </div>
 
