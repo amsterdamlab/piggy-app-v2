@@ -127,22 +127,37 @@
     text-align: left;
 }
 
-/* Text Inputs — Rounded Rectangles in #f9f5f6 & No Border */
+/* Text Inputs — Rounded Rectangles in #f9f5f6 */
 .auth-form .input-wrapper {
     background: #f9f5f6 !important;
-    border: none !important;
+    border: 1.5px solid transparent !important;
     border-radius: 14px !important;
     padding: 14px 18px !important;
     box-shadow: none !important;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: background var(--transition-fast), box-shadow var(--transition-fast);
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .auth-form .input-wrapper:focus-within {
     background: #f3edf0 !important;
+    border-color: #fb2c74 !important;
     box-shadow: 0 0 0 2.5px rgba(251, 44, 116, 0.2) !important;
+}
+
+/* Error State on Input Wrapper */
+.auth-form .input-wrapper.input-wrapper--error,
+.auth-form .input-wrapper--error {
+    background: #fff5f5 !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    animation: shakeError 0.35s ease-in-out;
+}
+
+.auth-form .input-wrapper.input-wrapper--error .input-wrapper__icon,
+.auth-form .input-wrapper--error .input-wrapper__icon {
+    color: #ef4444 !important;
 }
 
 .auth-form .input-wrapper__icon {
@@ -151,6 +166,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: color var(--transition-fast);
 }
 
 .auth-form .input-wrapper__field {
@@ -176,6 +192,22 @@
     flex-direction: column;
     gap: 8px;
     text-align: left;
+    transition: all var(--transition-fast);
+}
+
+.auth-checkboxes.auth-checkboxes--error {
+    background: #fff5f5;
+    border: 1.5px solid #ef4444;
+    padding: 12px;
+    border-radius: 14px;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    animation: shakeError 0.35s ease-in-out;
+}
+
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
 }
 
 .auth-form__error {

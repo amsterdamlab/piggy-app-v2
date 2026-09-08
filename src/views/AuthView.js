@@ -5,6 +5,7 @@
 
 import { renderIcon } from '../icons.js';
 import { signUp, signIn, signInWithGoogle, sendPasswordReset, updatePassword } from '../services/authService.js';
+import { translateSupabaseError } from '../services/authErrors.js';
 import { validateReferralCode, linkReferral } from '../services/referralService.js';
 import { renderLegalModal } from '../components/LegalModal.js';
 import { navigateTo } from '../router.js';
@@ -288,7 +289,7 @@ function attachAuthListeners() {
     if (!tab) return;
 
     activeAuthTab = tab.dataset.tab;
-    formError = null;
+    clearFieldErrors();
     renderAuthView();
   });
 
@@ -311,7 +312,7 @@ function attachAuthListeners() {
   document.getElementById('btn-forgot-password')?.addEventListener('click', (e) => {
     e.preventDefault();
     activeAuthTab = 'forgot';
-    formError = null;
+    clearFieldErrors();
     renderAuthView();
   });
 
@@ -319,7 +320,7 @@ function attachAuthListeners() {
   document.getElementById('btn-back-to-login')?.addEventListener('click', (e) => {
     e.preventDefault();
     activeAuthTab = 'login';
-    formError = null;
+    clearFieldErrors();
     renderAuthView();
   });
 
@@ -391,9 +392,23 @@ function attachAuthListeners() {
     }
   }
 
-  // Auto-clear form error when typing
-  document.getElementById('auth-form')?.addEventListener('input', () => {
-    if (formError) {
+  // Auto-clear field error and general banner when user types or interacts with fields
+  const authForm = document.getElementById('auth-form');
+  authForm?.addEventListener('input', (e) => {
+    const target = e.target;
+    if (target) {
+      const wrapper = target.closest('.input-wrapper');
+      if (wrapper) {
+        wrapper.classList.remove('input-wrapper--error');
+      }
+      if (target.type === 'checkbox') {
+        document.querySelector('.auth-checkboxes--error')?.classList.remove('auth-checkboxes--error');
+      }
+    }
+
+    // If no more fields have red errors, clear the bottom error message
+    const remainingErrors = authForm.querySelectorAll('.input-wrapper--error, .auth-checkboxes--error');
+    if (remainingErrors.length === 0 && formError) {
       formError = null;
       const errorEl = document.getElementById('form-error');
       if (errorEl) {
@@ -416,6 +431,9 @@ function attachAuthListeners() {
       const allChecked = checkTerms.checked && checkHabeas.checked;
       submitBtn.disabled = !allChecked || isSubmitting;
       submitBtn.style.opacity = allChecked ? '1' : '0.5';
+      if (allChecked) {
+        document.querySelector('.auth-checkboxes--error')?.classList.remove('auth-checkboxes--error');
+      }
     } else if (submitBtn) {
       submitBtn.disabled = isSubmitting;
       submitBtn.style.opacity = '1';
@@ -442,12 +460,12 @@ async function handleSubmit(e) {
   if (activeAuthTab === 'forgot') {
     const email = formData.get('email')?.trim();
     if (!email) {
-      showFormError('Por favor ingresa tu correo electrónico.');
+      showFormError('Por favor ingresa tu correo electrónico.', null, ['field-email']);
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      showFormError('Por favor ingresa un correo electrónico válido.');
+      showFormError('Por favor ingresa un correo electrónico válido.', null, ['field-email']);
       return;
     }
     await performForgotPassword(email);
@@ -457,7 +475,7 @@ async function handleSubmit(e) {
   if (activeAuthTab === 'reset') {
     const newPassword = formData.get('newPassword')?.trim();
     if (!newPassword || newPassword.length < 6) {
-      showFormError('Tu contraseña debe tener al menos 6 caracteres.');
+      showFormError('Tu contraseña debe tener al menos 6 caracteres.', null, ['field-new-password']);
       return;
     }
     await performUpdatePassword(newPassword);
@@ -467,40 +485,45 @@ async function handleSubmit(e) {
   const email = formData.get('email')?.trim();
   const password = formData.get('password')?.trim();
 
-  if (!email || !password) {
-    showFormError('Por favor completa todos los campos obligatorios.');
-    return;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    showFormError('Por favor ingresa un correo electrónico válido.');
-    return;
-  }
-
   if (activeAuthTab === 'register') {
     const fullName = formData.get('fullName')?.trim();
     const whatsapp = formData.get('whatsapp')?.trim();
     const referralCode = formData.get('referralCode')?.trim().toUpperCase() || null;
 
     if (!fullName) {
-      showFormError('Por favor ingresa tu nombre completo.');
+      showFormError('Por favor ingresa tu nombre completo.', null, ['field-name']);
+      return;
+    }
+
+    if (!email) {
+      showFormError('Por favor ingresa tu correo electrónico.', null, ['field-email']);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showFormError('Por favor ingresa un correo electrónico válido.', null, ['field-email']);
       return;
     }
 
     if (!whatsapp) {
-      showFormError('Por favor ingresa tu número de celular (WhatsApp).');
+      showFormError('Por favor ingresa tu número de celular (WhatsApp).', null, ['field-whatsapp']);
       return;
     }
 
     const whatsappDigits = whatsapp.replace(/\D/g, '');
     if (whatsappDigits.length < 10) {
-      showFormError('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.');
+      showFormError('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.', null, ['field-whatsapp']);
+      return;
+    }
+
+    if (!password) {
+      showFormError('Por favor ingresa tu contraseña.', null, ['field-password']);
       return;
     }
 
     if (password.length < 6) {
-      showFormError('Tu contraseña debe tener al menos 6 caracteres.');
+      showFormError('Tu contraseña debe tener al menos 6 caracteres.', null, ['field-password']);
       return;
     }
 
@@ -508,13 +531,29 @@ async function handleSubmit(e) {
     const habeasChecked = document.getElementById('check-habeas')?.checked;
 
     if (!termsChecked || !habeasChecked) {
-      showFormError('Debes aceptar los Términos y Condiciones y la autorización de Tratamiento de Datos para continuar.');
+      showFormError('Debes aceptar los Términos y Condiciones y la autorización de Tratamiento de Datos para continuar.', null, ['check-terms', 'check-habeas']);
       return;
     }
 
     await performSignUp({ email, password, fullName, whatsapp, referralCode });
   } else {
-    // Login flow — direct
+    // Login flow
+    if (!email) {
+      showFormError('Por favor ingresa tu correo electrónico.', null, ['field-email']);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showFormError('Por favor ingresa un correo electrónico válido.', null, ['field-email']);
+      return;
+    }
+
+    if (!password) {
+      showFormError('Por favor ingresa tu contraseña.', null, ['field-password']);
+      return;
+    }
+
     await performSignIn({ email, password });
   }
 }
@@ -698,168 +737,7 @@ async function performSignIn({ email, password }) {
   }
 }
 
-/**
- * Translate common Supabase and network error messages to friendly Spanish.
- */
-function translateSupabaseError(rawError) {
-  if (!rawError) {
-    return 'Ocurrió un error inesperado. Por favor intenta de nuevo.';
-  }
 
-  let text = '';
-  if (typeof rawError === 'string') {
-    text = rawError.trim();
-  } else if (typeof rawError === 'object') {
-    text = rawError.message ||
-           rawError.error_description ||
-           rawError.msg ||
-           rawError.description ||
-           rawError.error?.message ||
-           (typeof rawError.error === 'string' ? rawError.error : '') ||
-           rawError.details ||
-           rawError.hint ||
-           '';
-    if (!text && Object.keys(rawError).length > 0) {
-      try {
-        const json = JSON.stringify(rawError);
-        if (json !== '{}' && json !== '[]') {
-          text = json;
-        }
-      } catch {
-        text = '';
-      }
-    }
-  }
-
-  const lower = text ? text.toLowerCase() : '';
-
-  // 1. Rate Limit & Cooldown (Supabase 60 seconds email rate limit)
-  if (
-    lower.includes('60 seconds') ||
-    lower.includes('security purposes') ||
-    lower.includes('once every') ||
-    lower.includes('rate limit') ||
-    lower.includes('over_email_send_rate_limit') ||
-    lower.includes('over_request_rate_limit') ||
-    lower.includes('too many requests') ||
-    lower.includes('too_many_requests') ||
-    lower.includes('rate_limit') ||
-    lower.includes('cooldown') ||
-    (rawError && typeof rawError === 'object' && rawError.status === 429)
-  ) {
-    return 'Por seguridad del servidor, debes esperar 60 segundos antes de volver a solicitar un registro con este correo. O si ya te registraste, pulsa "Iniciar Sesión".';
-  }
-
-  // 2. User already registered / already exists
-  if (
-    lower.includes('already registered') ||
-    lower.includes('user_already_exists') ||
-    lower.includes('already exists') ||
-    lower.includes('duplicate key') ||
-    lower.includes('identity_already_exists') ||
-    lower.includes('email_exists') ||
-    lower.includes('email address already exists') ||
-    lower.includes('user with this email')
-  ) {
-    return 'Este correo ya se encuentra registrado. Ve a "Iniciar Sesión" para ingresar o usa la opción "Olvidé mi contraseña".';
-  }
-
-  // 3. Password requirements
-  if (
-    lower.includes('at least 6') ||
-    lower.includes('weak_password') ||
-    lower.includes('password should be') ||
-    lower.includes('short password') ||
-    lower.includes('6 characters')
-  ) {
-    return 'Tu contraseña debe tener al menos 6 caracteres.';
-  }
-
-  // 4. Invalid credentials (login)
-  if (
-    lower.includes('invalid login') ||
-    lower.includes('invalid_grant') ||
-    lower.includes('invalid credentials') ||
-    lower.includes('wrong password')
-  ) {
-    return 'Correo o contraseña incorrectos. Por favor verifica tus datos.';
-  }
-
-  // 5. Email not confirmed
-  if (lower.includes('email not confirmed') || lower.includes('email_not_confirmed')) {
-    return 'Tu correo aún no ha sido confirmado. Revisa tu bandeja de entrada o carpeta de spam.';
-  }
-
-  // 6. Invalid email format
-  if (
-    lower.includes('invalid email') ||
-    lower.includes('unable to validate email') ||
-    lower.includes('email address is invalid') ||
-    lower.includes('invalid format')
-  ) {
-    return 'El correo electrónico ingresado no tiene un formato válido.';
-  }
-
-  // 7. Database or Server error
-  if (
-    lower.includes('database error') ||
-    lower.includes('saving new user') ||
-    lower.includes('unexpected_failure') ||
-    lower.includes('internal_server_error')
-  ) {
-    return 'No pudimos registrar tu usuario en el servidor en este momento. Por favor intenta nuevamente en unos segundos.';
-  }
-
-  // 8. Signups disabled
-  if (lower.includes('signup is not allowed') || lower.includes('signups not allowed') || lower.includes('signup_disabled')) {
-    return 'El registro de nuevas cuentas no está disponible en este momento. Por favor intenta más tarde.';
-  }
-
-  // 9. Google OAuth provider
-  if (lower.includes('unsupported provider') || lower.includes('provider is not enabled')) {
-    return 'El inicio de sesión con Google aún no se encuentra disponible.';
-  }
-
-  // 10. User not found
-  if (lower.includes('user not found') || lower.includes('no user found')) {
-    return 'No encontramos una cuenta con este correo. Por favor regístrate.';
-  }
-
-  // 11. Network, ServiceWorker, & Connection Errors
-  if (
-    lower.includes('network') ||
-    lower.includes('failed to fetch') ||
-    lower.includes('fetch failed') ||
-    lower.includes('fetchevent') ||
-    lower.includes('respondwith') ||
-    lower.includes('returned response is null') ||
-    lower.includes('returned response is undefined') ||
-    lower.includes('networkerror') ||
-    lower.includes('aborterror') ||
-    lower.includes('load failed') ||
-    lower.includes('connection refused') ||
-    lower.includes('timeout')
-  ) {
-    return 'Error de conexión con el servidor. Por favor verifica tu internet e inténtalo nuevamente.';
-  }
-
-  // Fallback for empty or unrecognized error strings
-  if (!text || text === '{}' || text === '[]' || text === '[object Object]') {
-    return 'No pudimos procesar el registro con estos datos. Si ya te habías registrado con este correo, intenta "Iniciar Sesión" o espera un momento.';
-  }
-
-  // If text contains unhandled technical English, provide a clean friendly fallback
-  if (/[a-zA-Z]/.test(text) && (
-    lower.includes('error') || lower.includes('failed') || lower.includes('exception') ||
-    lower.includes('undefined') || lower.includes('null') || lower.includes('status') ||
-    lower.includes('request') || lower.includes('response') || lower.includes('supabase') ||
-    lower.includes('forbidden') || lower.includes('unauthorized') || lower.includes('bad')
-  )) {
-    return 'No se pudo completar el registro. Si ya habías intentado con este correo, intenta "Iniciar Sesión" o espera un minuto para reintentar.';
-  }
-
-  return text;
-}
 
 /**
  * Show status message during login / signup.
@@ -886,13 +764,53 @@ function hideStatusMessage() {
 }
 
 /**
- * Show form error with a clean, friendly UI (no raw {} or [Ref: ...] artifacts).
+ * Clear all field error highlights and general form error.
  */
-function showFormError(message, rawError = null) {
-  hideStatusMessage();
-  if (rawError) {
-    console.warn('🐷 Auth Error Detail:', rawError);
+function clearFieldErrors() {
+  formError = null;
+  const errorEl = document.getElementById('form-error');
+  if (errorEl) {
+    errorEl.innerHTML = '';
+    errorEl.classList.remove('auth-form__error--visible');
   }
+  document.querySelectorAll('.input-wrapper--error').forEach(el => el.classList.remove('input-wrapper--error'));
+  document.querySelector('.auth-checkboxes--error')?.classList.remove('auth-checkboxes--error');
+}
+
+/**
+ * Highlight invalid field wrappers with a red border and subtle shake animation.
+ */
+function highlightInvalidFields(fieldIds = []) {
+  document.querySelectorAll('.input-wrapper--error').forEach(el => el.classList.remove('input-wrapper--error'));
+  document.querySelector('.auth-checkboxes--error')?.classList.remove('auth-checkboxes--error');
+
+  let firstEl = null;
+  fieldIds.forEach((id) => {
+    if (id === 'check-terms' || id === 'check-habeas') {
+      const cbContainer = document.querySelector('.auth-checkboxes');
+      if (cbContainer) cbContainer.classList.add('auth-checkboxes--error');
+      if (!firstEl) firstEl = document.getElementById(id);
+    } else {
+      const field = document.getElementById(id);
+      if (field) {
+        field.closest('.input-wrapper')?.classList.add('input-wrapper--error');
+        if (!firstEl) firstEl = field;
+      }
+    }
+  });
+
+  if (firstEl) {
+    firstEl.focus();
+    firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+/**
+ * Show form error with a clean, friendly UI and highlight erroneous fields in red.
+ */
+function showFormError(message, rawError = null, invalidFieldIds = []) {
+  hideStatusMessage();
+  if (rawError) console.warn('🐷 Auth Error Detail:', rawError);
 
   const safeMessage = (message && typeof message === 'string' && message !== '{}' && message !== '[object Object]')
     ? message
@@ -908,6 +826,25 @@ function showFormError(message, rawError = null) {
       </div>
     `;
     errorEl.classList.add('auth-form__error--visible');
+  }
+
+  // Auto-detect field IDs if not explicitly passed
+  let fieldsToHighlight = Array.isArray(invalidFieldIds) && invalidFieldIds.length > 0 ? [...invalidFieldIds] : [];
+  if (fieldsToHighlight.length === 0 && safeMessage) {
+    const lower = safeMessage.toLowerCase();
+    if (lower.includes('nombre')) fieldsToHighlight.push('field-name');
+    if (lower.includes('correo') || lower.includes('email') || lower.includes('registrado')) fieldsToHighlight.push('field-email');
+    if (lower.includes('whatsapp') || lower.includes('celular')) fieldsToHighlight.push('field-whatsapp');
+    if (lower.includes('contraseña') || lower.includes('password') || lower.includes('caracteres')) {
+      fieldsToHighlight.push(activeAuthTab === 'reset' ? 'field-new-password' : 'field-password');
+    }
+    if (lower.includes('términos') || lower.includes('tratamiento') || lower.includes('habeas')) {
+      fieldsToHighlight.push('check-terms', 'check-habeas');
+    }
+  }
+
+  if (fieldsToHighlight.length > 0) {
+    highlightInvalidFields(fieldsToHighlight);
   }
 }
 
@@ -950,5 +887,5 @@ function updateSubmitButton(customText = null) {
 function cleanupAuthView() {
   passwordVisible = false;
   isSubmitting = false;
-  formError = null;
+  clearFieldErrors();
 }
