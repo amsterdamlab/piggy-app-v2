@@ -139,30 +139,7 @@ export function renderAuthView() {
  */
 function renderFormFields() {
   const googleHeaderHTML = (activeAuthTab === 'register' || activeAuthTab === 'login') ? `
-    <button
-      type="button"
-      id="btn-google-auth"
-      style="
-        width: 100%;
-        background: #ffffff;
-        color: #1f2937;
-        border: 1px solid #e2e8f0;
-        border-radius: 30px;
-        padding: 12px 20px;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        margin-bottom: 16px;
-        transition: all 0.2s;
-      "
-      onmouseover="this.style.borderColor='#cbd5e1'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';"
-      onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)';"
-    >
+    <button type="button" id="btn-google-auth" style="width:100%; background:#ffffff; color:#1f2937; border:1px solid #e2e8f0; border-radius:30px; padding:12px 20px; font-size:0.95rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:16px; transition:all 0.2s;">
       <svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0;">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -171,11 +148,10 @@ function renderFormFields() {
       </svg>
       <span>Continuar con Google</span>
     </button>
-
-    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; width: 100%;">
-      <div style="height: 1px; background: #e2e8f0; flex: 1;"></div>
-      <span style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">o con tu correo</span>
-      <div style="height: 1px; background: #e2e8f0; flex: 1;"></div>
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:20px; width:100%;">
+      <div style="height:1px; background:#e2e8f0; flex:1;"></div>
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">o con tu correo</span>
+      <div style="height:1px; background:#e2e8f0; flex:1;"></div>
     </div>
   ` : '';
 
@@ -479,6 +455,18 @@ function attachAuthListeners() {
     }, 600);
   });
 
+  // Auto-clear form error when typing
+  document.getElementById('auth-form')?.addEventListener('input', () => {
+    if (formError) {
+      formError = null;
+      const errorEl = document.getElementById('form-error');
+      if (errorEl) {
+        errorEl.innerHTML = '';
+        errorEl.classList.remove('auth-form__error--visible');
+      }
+    }
+  });
+
   // Form submission
   document.getElementById('auth-form')?.addEventListener('submit', handleSubmit);
 
@@ -521,6 +509,11 @@ async function handleSubmit(e) {
       showFormError('Por favor ingresa tu correo electrónico.');
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showFormError('Por favor ingresa un correo electrónico válido.');
+      return;
+    }
     await performForgotPassword(email);
     return;
   }
@@ -543,6 +536,12 @@ async function handleSubmit(e) {
     return;
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showFormError('Por favor ingresa un correo electrónico válido.');
+    return;
+  }
+
   if (activeAuthTab === 'register') {
     const fullName = formData.get('fullName')?.trim();
     const whatsapp = formData.get('whatsapp')?.trim();
@@ -561,6 +560,11 @@ async function handleSubmit(e) {
     const whatsappDigits = whatsapp.replace(/\D/g, '');
     if (whatsappDigits.length < 10) {
       showFormError('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.');
+      return;
+    }
+
+    if (password.length < 6) {
+      showFormError('Tu contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
@@ -798,7 +802,7 @@ function translateSupabaseError(rawError) {
   if (typeof rawError === 'string') {
     text = rawError.trim();
   } else if (typeof rawError === 'object') {
-    text = rawError.message || rawError.error_description || rawError.msg || '';
+    text = rawError.message || rawError.error_description || rawError.msg || rawError.description || '';
     if (!text && Object.keys(rawError).length > 0) {
       try {
         text = JSON.stringify(rawError);
@@ -810,37 +814,69 @@ function translateSupabaseError(rawError) {
 
   // Check for empty or invalid representation
   if (!text || text === '{}' || text === '[]' || text === '[object Object]') {
-    return 'No se pudo procesar la solicitud. Por favor verifica los datos ingresados o intenta de nuevo.';
+    return 'No se pudo procesar la solicitud. Por favor verifica tus datos o intenta nuevamente.';
   }
 
   const lower = text.toLowerCase();
 
-  if (lower.includes('invalid login') || lower.includes('invalid_grant') || lower.includes('invalid credentials')) {
+  // Credential & Auth Errors
+  if (lower.includes('invalid login') || lower.includes('invalid_grant') || lower.includes('invalid credentials') || lower.includes('wrong password')) {
     return 'Correo o contraseña incorrectos. Por favor verifica tus datos.';
   }
-  if (lower.includes('already registered') || lower.includes('user_already_exists') || lower.includes('already exists') || lower.includes('duplicate key')) {
+  if (lower.includes('already registered') || lower.includes('user_already_exists') || lower.includes('already exists') || lower.includes('duplicate key') || lower.includes('identity_already_exists') || lower.includes('email address already exists')) {
     return 'Este correo ya se encuentra registrado. Intenta iniciar sesión o recuperar tu contraseña.';
   }
-  if (lower.includes('at least 6') || lower.includes('weak_password') || lower.includes('password should be')) {
+  if (lower.includes('at least 6') || lower.includes('weak_password') || lower.includes('password should be') || lower.includes('short password')) {
     return 'Tu contraseña debe tener al menos 6 caracteres.';
   }
-  if (lower.includes('email not confirmed')) {
+  if (lower.includes('email not confirmed') || lower.includes('email_not_confirmed')) {
     return 'Tu correo aún no ha sido confirmado. Revisa tu bandeja de entrada o spam.';
   }
-  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit') || lower.includes('too many requests')) {
+  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit') || lower.includes('too many requests') || lower.includes('over_request_rate_limit')) {
     return 'Has realizado demasiados intentos en poco tiempo. Por favor espera unos minutos antes de intentar de nuevo.';
   }
   if (lower.includes('database error') || lower.includes('saving new user')) {
     return 'No pudimos registrar tu usuario en el servidor en este momento. Por favor intenta nuevamente en unos segundos.';
   }
-  if (lower.includes('signup is not allowed') || lower.includes('signups not allowed')) {
-    return 'El registro no está disponible en este momento. Por favor intenta más tarde.';
+  if (lower.includes('signup is not allowed') || lower.includes('signups not allowed') || lower.includes('signup_disabled')) {
+    return 'El registro de nuevas cuentas no está disponible en este momento. Por favor intenta más tarde.';
   }
-  if (lower.includes('unsupported provider') || lower.includes('provider is not enabled')) {
+  if (lower.includes('unsupported provider') || lower.includes('provider is not enabled') || lower.includes('oauth')) {
     return 'El inicio de sesión con Google aún no se encuentra disponible.';
   }
-  if (lower.includes('network') || lower.includes('failed to fetch') || lower.includes('fetch failed')) {
-    return 'Error de conexión. Revisa tu conexión a internet e inténtalo nuevamente.';
+  if (lower.includes('user not found') || lower.includes('no user found')) {
+    return 'No encontramos una cuenta con este correo. Por favor regístrate.';
+  }
+  if (lower.includes('invalid email') || lower.includes('unable to validate email') || lower.includes('email address is invalid')) {
+    return 'El correo electrónico ingresado no tiene un formato válido.';
+  }
+
+  // Network, ServiceWorker, & Connection Errors
+  if (
+    lower.includes('network') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('fetch failed') ||
+    lower.includes('fetchevent') ||
+    lower.includes('respondwith') ||
+    lower.includes('returned response is null') ||
+    lower.includes('returned response is undefined') ||
+    lower.includes('networkerror') ||
+    lower.includes('aborterror') ||
+    lower.includes('load failed') ||
+    lower.includes('connection refused') ||
+    lower.includes('timeout')
+  ) {
+    return 'Error de conexión con el servidor. Por favor verifica tu internet e inténtalo nuevamente.';
+  }
+
+  // If text contains technical English keywords, don't show raw English to user
+  if (/[a-zA-Z]/.test(text) && (
+    lower.includes('error') || lower.includes('failed') || lower.includes('exception') ||
+    lower.includes('undefined') || lower.includes('null') || lower.includes('status') ||
+    lower.includes('request') || lower.includes('response') || lower.includes('supabase') ||
+    lower.includes('forbidden') || lower.includes('unauthorized') || lower.includes('bad')
+  )) {
+    return 'Ocurrió un inconveniente al procesar tu solicitud. Por favor intenta de nuevo.';
   }
 
   return text;
@@ -871,10 +907,14 @@ function hideStatusMessage() {
 }
 
 /**
- * Show form error with a clean, friendly UI (no raw {} artifacts).
+ * Show form error with a clean, friendly UI (no raw {} or [Ref: ...] artifacts).
  */
 function showFormError(message, rawError = null) {
   hideStatusMessage();
+  if (rawError) {
+    console.warn('🐷 Auth Error Detail:', rawError);
+  }
+
   const safeMessage = (message && typeof message === 'string' && message !== '{}' && message !== '[object Object]')
     ? message
     : 'Ha ocurrido un error al procesar tu solicitud. Intenta nuevamente.';
@@ -882,32 +922,12 @@ function showFormError(message, rawError = null) {
   formError = safeMessage;
   const errorEl = document.getElementById('form-error');
   if (errorEl) {
-    // Sanitize raw error so {} or [object Object] is never shown
-    let safeDetail = '';
-    if (rawError && typeof rawError === 'string' && rawError !== '{}' && rawError !== '[object Object]' && rawError !== safeMessage) {
-      safeDetail = rawError.trim();
-    } else if (rawError && typeof rawError === 'object' && rawError.message && rawError.message !== safeMessage) {
-      safeDetail = rawError.message.trim();
-    }
-
-    if (safeDetail && safeDetail.length > 0 && safeDetail !== safeMessage) {
-      errorEl.innerHTML = `
-        <div style="display: flex; align-items: flex-start; gap: 8px; text-align: left;">
-          <span style="font-size: 1.1rem; line-height: 1.2; flex-shrink: 0;">⚠️</span>
-          <div>
-            <div style="font-weight: 600; font-size: 0.85rem; color: #b91c1c; line-height: 1.35;">${safeMessage}</div>
-            <div style="font-size: 0.72rem; color: #ef4444; font-family: monospace; margin-top: 4px; word-break: break-all; opacity: 0.85;">[Ref: ${safeDetail}]</div>
-          </div>
-        </div>
-      `;
-    } else {
-      errorEl.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center;">
-          <span style="font-size: 1.05rem; flex-shrink: 0;">⚠️</span>
-          <span style="font-weight: 600; font-size: 0.85rem; color: #b91c1c; line-height: 1.35;">${safeMessage}</span>
-        </div>
-      `;
-    }
+    errorEl.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 4px 0;">
+        <span style="font-size: 1.05rem; flex-shrink: 0;">⚠️</span>
+        <span style="font-weight: 600; font-size: 0.85rem; color: #b91c1c; line-height: 1.35;">${safeMessage}</span>
+      </div>
+    `;
     errorEl.classList.add('auth-form__error--visible');
   }
 }
@@ -930,6 +950,18 @@ function updateSubmitButton(customText = null) {
     btn.innerHTML = `
       ${activeAuthTab === 'forgot' ? 'Enviar Enlace' : (activeAuthTab === 'reset' ? 'Guardar Contraseña' : (activeAuthTab === 'register' ? 'Comenzar mi granja' : 'Iniciar Sesión'))}
     `;
+    if (activeAuthTab === 'register') {
+      const checkTerms = document.getElementById('check-terms');
+      const checkHabeas = document.getElementById('check-habeas');
+      if (checkTerms && checkHabeas) {
+        const allChecked = checkTerms.checked && checkHabeas.checked;
+        btn.disabled = !allChecked;
+        btn.style.opacity = allChecked ? '1' : '0.5';
+      }
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
   }
 }
 

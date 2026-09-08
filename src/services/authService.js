@@ -187,8 +187,6 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             const finalProfile = createdProfile || profile;
 
             onProgress('🎁 Asignando bono de bienvenida y configurando tu sesión...');
-            // Background maintenance tasks & cache sync — do not block user
-            clearAppCache().catch(e => console.warn('clearAppCache err:', e));
             
             if (!requiresConfirmation) {
                 // Update AppState immediately with fresh profile
