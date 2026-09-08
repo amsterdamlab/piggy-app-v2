@@ -190,7 +190,7 @@ function renderM2Banner(mission) {
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">🐷 MISIÓN 2</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Compra tu primer Piggy</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">Recarga tu Wallet y empieza a hacer crecer tu granja</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Recarga tu Cuenta Agro y comienza a ver crecer tu granja</div>
                     <div style="margin-top:14px;">
                         <span style="background:white; color:#db2777; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
                             Compra un Piggy →
