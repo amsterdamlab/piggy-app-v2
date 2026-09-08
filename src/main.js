@@ -50,6 +50,21 @@ import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppM
 async function boot() {
   console.log('🐷 Piggy App — Booting...');
 
+  // Capture referral code from URL if present
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    let ref = urlParams.get('ref');
+    if (!ref && window.location.hash.includes('?')) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      ref = hashParams.get('ref');
+    }
+    if (ref) {
+      sessionStorage.setItem('pending_referral_code', ref.trim().toUpperCase());
+    }
+  } catch (e) {
+    console.warn('Could not store referral from URL:', e);
+  }
+
   // Initialize PWA install prompt listener
   initPWAListener();
 

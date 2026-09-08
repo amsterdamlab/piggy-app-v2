@@ -327,20 +327,7 @@ function attachAuthListeners() {
   const referralField = document.getElementById('field-referral');
   let referralDebounce = null;
 
-  // Auto-fill referral code from URL parameter (?ref=CODE)
-  if (referralField) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-    if (refCode) {
-      referralField.value = refCode.toUpperCase();
-      // Trigger validation automatically
-      referralField.dispatchEvent(new Event('input'));
-    }
-  }
-
-  referralField?.addEventListener('input', () => {
-    clearTimeout(referralDebounce);
-    const code = referralField.value.trim();
+  const performReferralValidation = async (code) => {
     const statusEl = document.getElementById('referral-status');
     const feedbackEl = document.getElementById('referral-feedback');
 
@@ -351,22 +338,58 @@ function attachAuthListeners() {
     }
 
     if (statusEl) statusEl.textContent = '⏳';
-    referralDebounce = setTimeout(async () => {
-      try {
-        const result = await validateReferralCode(code);
-        if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
-        if (feedbackEl) {
-          feedbackEl.textContent = result.valid
-            ? `Invitado por: ${result.referrerName}`
-            : 'Código no encontrado';
-          feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
-        }
-      } catch {
-        if (statusEl) statusEl.textContent = '';
-        if (feedbackEl) { feedbackEl.textContent = ''; feedbackEl.style.color = ''; }
+    try {
+      const result = await validateReferralCode(code);
+      if (statusEl) statusEl.textContent = result.valid ? '✅' : '❌';
+      if (feedbackEl) {
+        feedbackEl.textContent = result.valid
+          ? `Invitado por: ${result.referrerName}`
+          : 'Código no encontrado';
+        feedbackEl.style.color = result.valid ? '#16a34a' : '#ef4444';
       }
-    }, 600);
-  });
+    } catch {
+      if (statusEl) statusEl.textContent = '';
+      if (feedbackEl) { feedbackEl.textContent = ''; feedbackEl.style.color = ''; }
+    }
+  };
+
+  if (referralField) {
+    // 1. Listen for manual input
+    referralField.addEventListener('input', () => {
+      clearTimeout(referralDebounce);
+      const code = referralField.value.trim().toUpperCase();
+      referralDebounce = setTimeout(() => {
+        performReferralValidation(code);
+      }, 500);
+    });
+
+    // 2. Auto-fill and immediately validate if arriving via referral link (?ref=CODE)
+    let refCode = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('ref')) {
+      refCode = urlParams.get('ref');
+    } else if (window.location.hash.includes('?')) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      if (hashParams.get('ref')) {
+        refCode = hashParams.get('ref');
+      }
+    }
+
+    if (!refCode) {
+      try {
+        refCode = sessionStorage.getItem('pending_referral_code');
+      } catch (e) {}
+    }
+
+    if (refCode) {
+      const cleanRef = refCode.trim().toUpperCase();
+      try {
+        sessionStorage.setItem('pending_referral_code', cleanRef);
+      } catch (e) {}
+      referralField.value = cleanRef;
+      performReferralValidation(cleanRef);
+    }
+  }
 
   // Auto-clear form error when typing
   document.getElementById('auth-form')?.addEventListener('input', () => {
