@@ -494,17 +494,17 @@ export function renderPiggyCard(piggy, baseROI) {
         </div>
       </div>
 
-      <div class="piggy-card__stats" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
+      <div class="piggy-card__stats" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9;">
         <div>
           <div class="text-xs text-muted" style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-bottom: 2px;">Peso actual</div>
           <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
         </div>
-        <div style="text-align: right; display: flex; flex-direction: column; gap: 3px;">
-          <div style="font-size: 0.76rem; color: #64748b;">
-            <span>Valor Piggy:</span> <span style="font-weight: 600; color: #334155;">${formatCOP(inv)}</span>
+        <div style="text-align: right; display: flex; flex-direction: column; gap: 2px;">
+          <div style="font-size: 0.76rem;">
+            <span style="color: #64748b; font-weight: 600;">VP:</span> <span style="font-weight: 700; color: #475569;">${formatCOP(inv)}</span>
           </div>
-          <div style="font-size: 0.78rem;">
-            <span style="color: #0f172a; font-weight: 500;">Total Liquidar:</span> <span style="color: #059669; font-weight: 800;">${formatCOP(projectedReturn)}</span>
+          <div>
+            <span style="color: #64748b; font-weight: 600; font-size: 0.78rem;">TL:</span> <span style="color: #059669; font-weight: 800; font-size: 0.95rem;">${formatCOP(projectedReturn)}</span>
           </div>
         </div>
       </div>
