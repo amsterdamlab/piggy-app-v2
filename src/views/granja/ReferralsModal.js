@@ -121,9 +121,14 @@ export async function showReferralModal() {
     const pendingCount = stats?.pendingReferrals || 0;
     const currentTier = stats?.currentTier || { amount: 20000, label: '$20.000' };
 
-    // Saldo Comisiones = sum of commission_amount from completed referrals only
+    // Saldo Comisiones = sum of commission_amount from completed/approved referrals only
+    const isApprovedReferral = r => {
+      const s = (r?.status || '').toLowerCase();
+      return s === 'completed' || s === 'approved' || s === 'aprobado' || s === 'completado';
+    };
+
     const commissionsEarned = referrals
-      .filter(r => r.status === 'completed')
+      .filter(isApprovedReferral)
       .reduce((sum, r) => sum + (r.commission_amount || 0), 0);
 
     // Build referrals list
@@ -136,9 +141,11 @@ export async function showReferralModal() {
       `;
     } else {
       referralsListHTML = referrals.map(r => {
-        const isApproved = r.status === 'completed' || r.status === 'approved';
-        const statusIcon = isApproved ? '🟢' : r.status === 'pending' ? '🟡' : '🔴';
-        const statusLabel = isApproved ? 'Aprobado' : r.status === 'pending' ? 'Pendiente' : 'Expirado';
+        const isApproved = isApprovedReferral(r);
+        const s = (r?.status || '').toLowerCase();
+        const isPending = s === 'pending' || s === 'pendiente';
+        const statusIcon = isApproved ? '🟢' : isPending ? '🟡' : '🔴';
+        const statusLabel = isApproved ? 'Aprobado' : isPending ? 'Pendiente' : 'Expirado';
         const commissionText = isApproved ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
         return `

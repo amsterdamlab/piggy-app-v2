@@ -131,8 +131,12 @@ export async function showReferralModal() {
       referralsListHTML = `<div style="text-align:center; padding:16px 0; color:#9ca3af; font-size:0.85rem;">Aún no tienes referidos. ¡Comparte tu código!</div>`;
     } else {
       referralsListHTML = referrals.map(r => {
-        const statusIcon = r.status === 'completed' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
-        const commissionText = r.status === 'completed' ? formatReferralBalance(r.commission_amount) : '-';
+        const s = (r?.status || '').toLowerCase();
+        const isApproved = s === 'completed' || s === 'approved' || s === 'aprobado' || s === 'completado';
+        const isPending = s === 'pending' || s === 'pendiente';
+        const statusIcon = isApproved ? '🟢' : isPending ? '🟡' : '🔴';
+        const statusLabel = isApproved ? 'Aprobado' : isPending ? 'Pendiente' : 'Expirado';
+        const commissionText = isApproved ? formatReferralBalance(r.commission_amount) : '-';
         const dateStr = new Date(r.created_at).toLocaleDateString('es-CO', { day:'numeric', month:'short' });
         return `
           <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f3f4f6;">
@@ -142,10 +146,10 @@ export async function showReferralModal() {
               </div>
               <div>
                 <div style="font-weight:600; font-size:0.85rem; color:#111827;">${r.referredName || 'Usuario'}</div>
-                <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${r.status === 'completed' ? 'Completado' : 'Pendiente'}</div>
+                <div style="font-size:0.7rem; color:#9ca3af;">${dateStr} · ${statusIcon} ${statusLabel}</div>
               </div>
             </div>
-            <div style="font-weight:700; font-size:0.85rem; color:${r.status === 'completed' ? '#059669' : '#9ca3af'};">
+            <div style="font-weight:700; font-size:0.85rem; color:${isApproved ? '#059669' : '#9ca3af'};">
               ${commissionText}
             </div>
           </div>

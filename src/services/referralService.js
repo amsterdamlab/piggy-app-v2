@@ -199,12 +199,18 @@ export async function getMyReferralStats() {
             referredName: profileObj?.full_name || 'Usuario',
         };
     });
-    const completedCount = allReferrals.filter(r => r.status === 'completed').length;
-    const pendingCount = allReferrals.filter(r => r.status === 'pending').length;
+    const completedCount = allReferrals.filter(r => {
+        const s = (r.status || '').toLowerCase();
+        return s === 'completed' || s === 'approved' || s === 'aprobado' || s === 'completado';
+    }).length;
+    const pendingCount = allReferrals.filter(r => {
+        const s = (r.status || '').toLowerCase();
+        return s === 'pending' || s === 'pendiente';
+    }).length;
 
     const consumptionBalance = Number(profile?.consumption_balance) || 0;
 
-    return {
+    const stats = {
         balance: consumptionBalance,
         totalReferrals: allReferrals.length,
         completedReferrals: completedCount,
@@ -212,6 +218,10 @@ export async function getMyReferralStats() {
         currentTier: getCommissionTier(completedCount),
         referrals: allReferrals,
     };
+
+    AppState.set({ referralStats: stats });
+
+    return stats;
 }
 
 /* ─── Share Referral Link ─── */

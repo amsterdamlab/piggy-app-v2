@@ -103,10 +103,12 @@ const _sessionVisitedMissions = new Set();
    based on real AppState data.
    ─────────────────────────────────────────── */
 
-function buildAutoCompletionMap(piggies, profile) {
+function buildAutoCompletionMap(piggies, profile, completedRefsOverride = null) {
     const completedPiggies = piggies.filter(p => p.isComplete);
     const referralStats    = AppState.get('referralStats') || {};
-    const completedRefs    = referralStats.completedReferrals || 0;
+    const completedRefs    = completedRefsOverride !== null
+        ? completedRefsOverride
+        : (referralStats.completedReferrals || 0);
     const visitedSections  = AppState.get('visitedSections') || {};
     const pwaInstalled     = localStorage.getItem('piggy_pwa_installed') === 'true';
 
@@ -214,7 +216,35 @@ export async function getMissions(piggiesOverride = null) {
     // Use passed piggies if available to avoid race condition in parallel Promise.all
     const piggies = piggiesOverride ?? AppState.get('piggies') ?? [];
     const profile = AppState.get('profile');
-    const autoMap = buildAutoCompletionMap(piggies, profile);
+
+    // 1. Fetch real-time referral completion directly from DB to guarantee M9 accuracy
+    let completedRefs = AppState.get('referralStats')?.completedReferrals ?? 0;
+    try {
+        const { data: refRows } = await client
+            .from('referrals')
+            .select('id, status')
+            .eq('referrer_id', user.id);
+
+        if (refRows) {
+            completedRefs = refRows.filter(r => {
+                const s = (r.status || '').toLowerCase();
+                return s === 'completed' || s === 'approved' || s === 'aprobado' || s === 'completado';
+            }).length;
+
+            const currentStats = AppState.get('referralStats') || {};
+            AppState.set({
+                referralStats: {
+                    ...currentStats,
+                    completedReferrals: completedRefs,
+                    totalReferrals: refRows.length,
+                }
+            });
+        }
+    } catch (refErr) {
+        console.warn('Error fetching referrals count in getMissions:', refErr);
+    }
+
+    const autoMap = buildAutoCompletionMap(piggies, profile, completedRefs);
 
     // Fetch existing DB rows for this user
     const { data: dbRows } = await client
@@ -400,7 +430,8 @@ export async function getActiveMissions(piggiesOverride = null) {
 
 /**
  * Get mission progress stats.
- * @returns {Promise<{ total: number, completed: number, percent: number }>}\n */
+ * @returns {Promise<{ total: number, completed: number, percent: number }>}
+ */
 export async function getMissionsProgress() {
     const missions = await getMissions();
     const total     = missions.length;
