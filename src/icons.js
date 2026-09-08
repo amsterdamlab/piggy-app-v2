@@ -76,6 +76,7 @@ export const Icons = {
     scale: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20c0 3-4.5 4.5-10 4.5S2 6 2 3z"/><path d="M10 7.5v2h4v-2"/><path d="M6.5 9.5h11a2 2 0 0 1 2 1.6l1.3 8.4a2 2 0 0 1-2 2.5H5.2a2 2 0 0 1-2-2.5l1.3-8.4a2 2 0 0 1 2-1.6z"/><circle cx="12" cy="15.8" r="3.5"/><path d="m12 15.8-1.6 1.6"/></svg>`,
     scaleElectric: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20c0 3-4.5 4.5-10 4.5S2 6 2 3z"/><path d="M10 7.5v2h4v-2"/><path d="M6.5 9.5h11a2 2 0 0 1 2 1.6l1.3 8.4a2 2 0 0 1-2 2.5H5.2a2 2 0 0 1-2-2.5l1.3-8.4a2 2 0 0 1 2-1.6z"/><circle cx="12" cy="15.8" r="3.5"/><path d="m12 15.8-1.6 1.6"/></svg>`,
     meat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M 12 3 C 7 3 3 7.5 3 13 C 3 18.5 7.5 21 12.5 21 C 17.5 21 21 17.5 21 13.5 C 21 9.5 18 8.5 16.5 7.5 C 15 6.5 15.5 3 12 3 Z"/><path d="M 11.8 5.2 C 8 5.2 4.8 8.8 4.8 13.2 C 4.8 17.2 8.5 19.2 12.2 19.2 C 16 19.2 19.2 16.2 19.2 13.2 C 19.2 10.2 16.8 9.2 15.2 8.2 C 13.8 7.2 14.2 5.2 11.8 5.2 Z"/><circle cx="10" cy="14" r="2"/></svg>`,
+    whatsapp: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.183 8.183 0 0 1 2.41 5.83c.02 4.54-3.68 8.23-8.43 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.53.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.07-.12-.23-.18-.48-.3z"/></svg>`,
 };
 
 /**
@@ -86,7 +87,8 @@ export const Icons = {
  * @returns {string} HTML string for the icon.
  */
 export function renderIcon(name, className = '', size = '24') {
-    const svg = Icons[name];
-    if (!svg) return '';
-    return `<span class="icon ${className}" style="width:${size}px;height:${size}px;display:inline-flex;align-items:center;justify-content:center;" aria-hidden="true">${svg}</span>`;
+    const rawSvg = Icons[name];
+    if (!rawSvg) return '';
+    const svg = rawSvg.includes('width=') ? rawSvg : rawSvg.replace('<svg', '<svg width="100%" height="100%"');
+    return `<span class="icon ${className}" style="width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;" aria-hidden="true">${svg}</span>`;
 }

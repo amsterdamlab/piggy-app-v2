@@ -101,7 +101,7 @@ export function renderProfileView() {
                     Gana Bonos de Consumo por <strong>$20.000</strong> invitando a tus amigos a registrarse y usar PIGGY APP.
                 </p>
                 <button class="profile-banner-referral__btn" id="btn-profile-invite-banner">
-                    Invitar amigos →
+                    Invitar amigos ${renderIcon('arrowRight', '', '16')}
                 </button>
             </div>
 
