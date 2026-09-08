@@ -158,107 +158,54 @@ function renderFormFields() {
   if (activeAuthTab === 'register') {
     return `
       ${googleHeaderHTML}
-
       <div class="input-group">
         <label class="input-group__label" for="field-name">Tu Nombre Completo</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('user', '', '18')}</span>
-          <input
-            type="text"
-            class="input-wrapper__field"
-            id="field-name"
-            name="fullName"
-            placeholder="Ej: Juan Pérez"
-            autocomplete="name"
-            required
-          />
+          <input type="text" class="input-wrapper__field" id="field-name" name="fullName" placeholder="Ej: Juan Pérez" autocomplete="name" required />
         </div>
       </div>
-
       <div class="input-group">
         <label class="input-group__label" for="field-email">Correo Electrónico</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
-          <input
-            type="email"
-            class="input-wrapper__field"
-            id="field-email"
-            name="email"
-            placeholder="tu@correo.com"
-            autocomplete="email"
-            required
-          />
+          <input type="email" class="input-wrapper__field" id="field-email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
         </div>
       </div>
-
       <div class="input-group">
         <label class="input-group__label" for="field-whatsapp">WhatsApp</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('phone', '', '18')}</span>
-          <input
-            type="tel"
-            class="input-wrapper__field"
-            id="field-whatsapp"
-            name="whatsapp"
-            placeholder="Ej: 3001234567"
-            autocomplete="tel"
-            minlength="10"
-            required
-          />
+          <input type="tel" class="input-wrapper__field" id="field-whatsapp" name="whatsapp" placeholder="Ej: 3001234567" autocomplete="tel" minlength="10" required />
         </div>
       </div>
-
       <div class="input-group">
         <label class="input-group__label" for="field-password">Contraseña</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
-          <input
-            type="${passwordVisible ? 'text' : 'password'}"
-            class="input-wrapper__field"
-            id="field-password"
-            name="password"
-            placeholder="••••••••"
-            autocomplete="new-password"
-            required
-            minlength="6"
-          />
+          <input type="${passwordVisible ? 'text' : 'password'}" class="input-wrapper__field" id="field-password" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
           <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
             ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
           </button>
         </div>
       </div>
-
       <div class="input-group" style="margin-bottom: 2px;">
         <label class="input-group__label" for="field-referral">¿Tienes un código de invitación? <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('giftBox', '', '18')}</span>
-          <input
-            type="text"
-            class="input-wrapper__field"
-            id="field-referral"
-            name="referralCode"
-            placeholder="Ej: RAFA1B2"
-            autocomplete="off"
-            style="text-transform: uppercase;"
-          />
+          <input type="text" class="input-wrapper__field" id="field-referral" name="referralCode" placeholder="Ej: RAFA1B2" autocomplete="off" style="text-transform: uppercase;" />
           <span id="referral-status" style="font-size:16px; flex-shrink:0; padding-right:8px;"></span>
         </div>
         <div id="referral-feedback" style="font-size:0.75rem; margin-top:2px;"></div>
       </div>
-      <!-- Checkboxes de Términos y Tratamiento de Datos -->
       <div class="auth-checkboxes" style="margin-top: 18px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 10px; text-align: left;">
         <label class="checkbox" for="check-terms" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-terms" name="acceptTerms" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
-          <span>
-            He leído y acepto los <a href="terminos-y-condiciones.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Términos y Condiciones</a> de Piggy App.
-          </span>
+          <span>He leído y acepto los <a href="terminos-y-condiciones.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Términos y Condiciones</a> de Piggy App.</span>
         </label>
-
         <label class="checkbox" for="check-habeas" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: #4b5563; line-height: 1.4;">
           <input type="checkbox" id="check-habeas" name="acceptHabeas" required style="margin-top: 3px; width: 16px; height: 16px; accent-color: #fb2c74;" />
-          <span>
-            Autorizo el <a href="tratamiento-de-datos.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Tratamiento de Datos Personales</a> (Habeas Data).
-          </span>
+          <span>Autorizo el <a href="tratamiento-de-datos.html" target="_blank" class="text-primary font-semibold" style="text-decoration: underline; color: #fb2c74; font-weight: 700;">Tratamiento de Datos Personales</a> (Habeas Data).</span>
         </label>
       </div>
     `;
@@ -270,15 +217,7 @@ function renderFormFields() {
         <label class="input-group__label" for="field-email">Correo Electrónico</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
-          <input
-            type="email"
-            class="input-wrapper__field"
-            id="field-email"
-            name="email"
-            placeholder="tu@correo.com"
-            autocomplete="email"
-            required
-          />
+          <input type="email" class="input-wrapper__field" id="field-email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
         </div>
       </div>
     `;
@@ -290,15 +229,7 @@ function renderFormFields() {
         <label class="input-group__label" for="field-new-password">Nueva Contraseña</label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
-          <input
-            type="${passwordVisible ? 'text' : 'password'}"
-            class="input-wrapper__field"
-            id="field-new-password"
-            name="newPassword"
-            placeholder="Mínimo 6 caracteres"
-            required
-            minlength="6"
-          />
+          <input type="${passwordVisible ? 'text' : 'password'}" class="input-wrapper__field" id="field-new-password" name="newPassword" placeholder="Mínimo 6 caracteres" required minlength="6" />
           <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
             ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
           </button>
@@ -309,23 +240,13 @@ function renderFormFields() {
 
   return `
     ${googleHeaderHTML}
-
     <div class="input-group">
       <label class="input-group__label" for="field-email">Correo Electrónico</label>
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('mail', '', '18')}</span>
-        <input
-          type="email"
-          class="input-wrapper__field"
-          id="field-email"
-          name="email"
-          placeholder="tu@correo.com"
-          autocomplete="email"
-          required
-        />
+        <input type="email" class="input-wrapper__field" id="field-email" name="email" placeholder="tu@correo.com" autocomplete="email" required />
       </div>
     </div>
-
     <div class="input-group">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <label class="input-group__label" for="field-password">Contraseña</label>
@@ -333,15 +254,7 @@ function renderFormFields() {
       </div>
       <div class="input-wrapper">
         <span class="input-wrapper__icon">${renderIcon('lock', '', '18')}</span>
-        <input
-          type="${passwordVisible ? 'text' : 'password'}"
-          class="input-wrapper__field"
-          id="field-password"
-          name="password"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          required
-        />
+        <input type="${passwordVisible ? 'text' : 'password'}" class="input-wrapper__field" id="field-password" name="password" placeholder="••••••••" autocomplete="current-password" required />
         <button type="button" class="input-wrapper__action" id="toggle-password" aria-label="Mostrar contraseña">
           ${passwordVisible ? renderIcon('eyeOff', '', '18') : renderIcon('eye', '', '18')}
         </button>
@@ -584,6 +497,31 @@ async function handleSubmit(e) {
 }
 
 /**
+ * Helper to render full-screen feedback cards (Email sent, Password saved, Confirm email).
+ */
+function renderAuthMessageScreen({ emoji, title, messageHtml, buttonText, onButtonClick }) {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="auth-page page">
+      <div class="auth-page__content">
+        <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
+          <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
+        </div>
+        <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
+          <div style="font-size: 48px; margin-bottom: 16px;">${emoji}</div>
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">${title}</h2>
+          <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">${messageHtml}</p>
+          <button id="btn-feedback-action" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
+            ${buttonText}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('btn-feedback-action')?.addEventListener('click', onButtonClick);
+}
+
+/**
  * Execute the forgot password flow.
  */
 async function performForgotPassword(email) {
@@ -597,30 +535,12 @@ async function performForgotPassword(email) {
       showFormError(translateSupabaseError(result.error));
     } else {
       formError = null;
-      const app = document.getElementById('app');
-      app.innerHTML = `
-        <div class="auth-page page">
-          <div class="auth-page__content">
-            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
-              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
-            </div>
-            
-            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
-              <div style="font-size: 48px; margin-bottom: 16px;">📧</div>
-              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Correo Enviado!</h2>
-              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
-                Te hemos enviado un enlace de restablecimiento a <strong>${email}</strong>. Revisa tu bandeja de entrada y spam.
-              </p>
-              <button id="btn-success-back" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
-                Volver al Inicio
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('btn-success-back')?.addEventListener('click', () => {
-        activeAuthTab = 'login';
-        renderAuthView();
+      renderAuthMessageScreen({
+        emoji: '📧',
+        title: '¡Correo Enviado!',
+        messageHtml: `Te hemos enviado un enlace de restablecimiento a <strong>${email}</strong>. Revisa tu bandeja de entrada y spam.`,
+        buttonText: 'Volver al Inicio',
+        onButtonClick: () => { activeAuthTab = 'login'; renderAuthView(); }
       });
     }
   } catch (error) {
@@ -646,29 +566,12 @@ async function performUpdatePassword(newPassword) {
       showFormError(translateSupabaseError(result.error));
     } else {
       AppState.set({ isResettingPassword: false });
-      const app = document.getElementById('app');
-      app.innerHTML = `
-        <div class="auth-page page">
-          <div class="auth-page__content">
-            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
-              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
-            </div>
-            
-            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
-              <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
-              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Contraseña Guardada!</h2>
-              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
-                Tu contraseña ha sido actualizada exitosamente. Ya puedes acceder a todas las funciones de tu Cuenta Agro.
-              </p>
-              <button id="btn-success-farm" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
-                Ingresar a Mi Granja
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('btn-success-farm')?.addEventListener('click', () => {
-        navigateTo('granja');
+      renderAuthMessageScreen({
+        emoji: '🎉',
+        title: '¡Contraseña Guardada!',
+        messageHtml: 'Tu contraseña ha sido actualizada exitosamente. Ya puedes acceder a todas las funciones de tu Cuenta Agro.',
+        buttonText: 'Ingresar a Mi Granja',
+        onButtonClick: () => { navigateTo('granja'); }
       });
     }
   } catch (error) {
@@ -711,7 +614,6 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
           console.warn('🐷 Referral link skipped:', linkResult.reason);
         }
       } catch (refErr) {
-        // Don't block signup if referral linking fails
         console.warn('🐷 Referral linking error (non-blocking):', refErr);
       }
     }
@@ -719,29 +621,12 @@ async function performSignUp({ email, password, fullName, whatsapp, referralCode
     // If confirmation email is required by Supabase
     if (result.requiresConfirmation) {
       hideStatusMessage();
-      const app = document.getElementById('app');
-      app.innerHTML = `
-        <div class="auth-page page">
-          <div class="auth-page__content">
-            <div class="auth-hero animate-fade-in" style="display: flex; justify-content: center; margin: 32px 0 40px 0;">
-              <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
-            </div>
-            <div class="animate-fade-in-up" style="text-align: center; padding: 32px 24px; background: var(--color-white); border-radius: 20px; border: 1px solid var(--color-border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 24px; width: 100%; box-sizing: border-box;">
-              <div style="font-size: 48px; margin-bottom: 16px;">📧</div>
-              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 8px; text-transform: none;">¡Confirma tu Correo!</h2>
-              <p style="font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 24px;">
-                Te hemos enviado un enlace a <strong>${email}</strong> para activar tu Cuenta Agro. Revisa tu bandeja de entrada y spam.
-              </p>
-              <button id="btn-conf-back" class="btn btn--primary btn--block" style="border-radius: 30px; font-weight: bold; background: #fb2c74; border: none; padding: 12px; color: white;">
-                Ir a Iniciar Sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById('btn-conf-back')?.addEventListener('click', () => {
-        activeAuthTab = 'login';
-        renderAuthView();
+      renderAuthMessageScreen({
+        emoji: '📧',
+        title: '¡Confirma tu Correo!',
+        messageHtml: `Te hemos enviado un enlace a <strong>${email}</strong> para activar tu Cuenta Agro. Revisa tu bandeja de entrada y spam.`,
+        buttonText: 'Ir a Iniciar Sesión',
+        onButtonClick: () => { activeAuthTab = 'login'; renderAuthView(); }
       });
       return;
     }
@@ -802,56 +687,122 @@ function translateSupabaseError(rawError) {
   if (typeof rawError === 'string') {
     text = rawError.trim();
   } else if (typeof rawError === 'object') {
-    text = rawError.message || rawError.error_description || rawError.msg || rawError.description || '';
+    text = rawError.message ||
+           rawError.error_description ||
+           rawError.msg ||
+           rawError.description ||
+           rawError.error?.message ||
+           (typeof rawError.error === 'string' ? rawError.error : '') ||
+           rawError.details ||
+           rawError.hint ||
+           '';
     if (!text && Object.keys(rawError).length > 0) {
       try {
-        text = JSON.stringify(rawError);
+        const json = JSON.stringify(rawError);
+        if (json !== '{}' && json !== '[]') {
+          text = json;
+        }
       } catch {
         text = '';
       }
     }
   }
 
-  // Check for empty or invalid representation
-  if (!text || text === '{}' || text === '[]' || text === '[object Object]') {
-    return 'No se pudo procesar la solicitud. Por favor verifica tus datos o intenta nuevamente.';
+  const lower = text ? text.toLowerCase() : '';
+
+  // 1. Rate Limit & Cooldown (Supabase 60 seconds email rate limit)
+  if (
+    lower.includes('60 seconds') ||
+    lower.includes('security purposes') ||
+    lower.includes('once every') ||
+    lower.includes('rate limit') ||
+    lower.includes('over_email_send_rate_limit') ||
+    lower.includes('over_request_rate_limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('too_many_requests') ||
+    lower.includes('rate_limit') ||
+    lower.includes('cooldown') ||
+    (rawError && typeof rawError === 'object' && rawError.status === 429)
+  ) {
+    return 'Por seguridad del servidor, debes esperar 60 segundos antes de volver a solicitar un registro con este correo. O si ya te registraste, pulsa "Iniciar Sesión".';
   }
 
-  const lower = text.toLowerCase();
+  // 2. User already registered / already exists
+  if (
+    lower.includes('already registered') ||
+    lower.includes('user_already_exists') ||
+    lower.includes('already exists') ||
+    lower.includes('duplicate key') ||
+    lower.includes('identity_already_exists') ||
+    lower.includes('email_exists') ||
+    lower.includes('email address already exists') ||
+    lower.includes('user with this email')
+  ) {
+    return 'Este correo ya se encuentra registrado. Ve a "Iniciar Sesión" para ingresar o usa la opción "Olvidé mi contraseña".';
+  }
 
-  // Credential & Auth Errors
-  if (lower.includes('invalid login') || lower.includes('invalid_grant') || lower.includes('invalid credentials') || lower.includes('wrong password')) {
-    return 'Correo o contraseña incorrectos. Por favor verifica tus datos.';
-  }
-  if (lower.includes('already registered') || lower.includes('user_already_exists') || lower.includes('already exists') || lower.includes('duplicate key') || lower.includes('identity_already_exists') || lower.includes('email address already exists')) {
-    return 'Este correo ya se encuentra registrado. Intenta iniciar sesión o recuperar tu contraseña.';
-  }
-  if (lower.includes('at least 6') || lower.includes('weak_password') || lower.includes('password should be') || lower.includes('short password')) {
+  // 3. Password requirements
+  if (
+    lower.includes('at least 6') ||
+    lower.includes('weak_password') ||
+    lower.includes('password should be') ||
+    lower.includes('short password') ||
+    lower.includes('6 characters')
+  ) {
     return 'Tu contraseña debe tener al menos 6 caracteres.';
   }
+
+  // 4. Invalid credentials (login)
+  if (
+    lower.includes('invalid login') ||
+    lower.includes('invalid_grant') ||
+    lower.includes('invalid credentials') ||
+    lower.includes('wrong password')
+  ) {
+    return 'Correo o contraseña incorrectos. Por favor verifica tus datos.';
+  }
+
+  // 5. Email not confirmed
   if (lower.includes('email not confirmed') || lower.includes('email_not_confirmed')) {
-    return 'Tu correo aún no ha sido confirmado. Revisa tu bandeja de entrada o spam.';
+    return 'Tu correo aún no ha sido confirmado. Revisa tu bandeja de entrada o carpeta de spam.';
   }
-  if (lower.includes('rate limit') || lower.includes('over_email_send_rate_limit') || lower.includes('too many requests') || lower.includes('over_request_rate_limit')) {
-    return 'Has realizado demasiados intentos en poco tiempo. Por favor espera unos minutos antes de intentar de nuevo.';
-  }
-  if (lower.includes('database error') || lower.includes('saving new user')) {
-    return 'No pudimos registrar tu usuario en el servidor en este momento. Por favor intenta nuevamente en unos segundos.';
-  }
-  if (lower.includes('signup is not allowed') || lower.includes('signups not allowed') || lower.includes('signup_disabled')) {
-    return 'El registro de nuevas cuentas no está disponible en este momento. Por favor intenta más tarde.';
-  }
-  if (lower.includes('unsupported provider') || lower.includes('provider is not enabled') || lower.includes('oauth')) {
-    return 'El inicio de sesión con Google aún no se encuentra disponible.';
-  }
-  if (lower.includes('user not found') || lower.includes('no user found')) {
-    return 'No encontramos una cuenta con este correo. Por favor regístrate.';
-  }
-  if (lower.includes('invalid email') || lower.includes('unable to validate email') || lower.includes('email address is invalid')) {
+
+  // 6. Invalid email format
+  if (
+    lower.includes('invalid email') ||
+    lower.includes('unable to validate email') ||
+    lower.includes('email address is invalid') ||
+    lower.includes('invalid format')
+  ) {
     return 'El correo electrónico ingresado no tiene un formato válido.';
   }
 
-  // Network, ServiceWorker, & Connection Errors
+  // 7. Database or Server error
+  if (
+    lower.includes('database error') ||
+    lower.includes('saving new user') ||
+    lower.includes('unexpected_failure') ||
+    lower.includes('internal_server_error')
+  ) {
+    return 'No pudimos registrar tu usuario en el servidor en este momento. Por favor intenta nuevamente en unos segundos.';
+  }
+
+  // 8. Signups disabled
+  if (lower.includes('signup is not allowed') || lower.includes('signups not allowed') || lower.includes('signup_disabled')) {
+    return 'El registro de nuevas cuentas no está disponible en este momento. Por favor intenta más tarde.';
+  }
+
+  // 9. Google OAuth provider
+  if (lower.includes('unsupported provider') || lower.includes('provider is not enabled')) {
+    return 'El inicio de sesión con Google aún no se encuentra disponible.';
+  }
+
+  // 10. User not found
+  if (lower.includes('user not found') || lower.includes('no user found')) {
+    return 'No encontramos una cuenta con este correo. Por favor regístrate.';
+  }
+
+  // 11. Network, ServiceWorker, & Connection Errors
   if (
     lower.includes('network') ||
     lower.includes('failed to fetch') ||
@@ -869,14 +820,19 @@ function translateSupabaseError(rawError) {
     return 'Error de conexión con el servidor. Por favor verifica tu internet e inténtalo nuevamente.';
   }
 
-  // If text contains technical English keywords, don't show raw English to user
+  // Fallback for empty or unrecognized error strings
+  if (!text || text === '{}' || text === '[]' || text === '[object Object]') {
+    return 'No pudimos procesar el registro con estos datos. Si ya te habías registrado con este correo, intenta "Iniciar Sesión" o espera un momento.';
+  }
+
+  // If text contains unhandled technical English, provide a clean friendly fallback
   if (/[a-zA-Z]/.test(text) && (
     lower.includes('error') || lower.includes('failed') || lower.includes('exception') ||
     lower.includes('undefined') || lower.includes('null') || lower.includes('status') ||
     lower.includes('request') || lower.includes('response') || lower.includes('supabase') ||
     lower.includes('forbidden') || lower.includes('unauthorized') || lower.includes('bad')
   )) {
-    return 'Ocurrió un inconveniente al procesar tu solicitud. Por favor intenta de nuevo.';
+    return 'No se pudo completar el registro. Si ya habías intentado con este correo, intenta "Iniciar Sesión" o espera un minuto para reintentar.';
   }
 
   return text;

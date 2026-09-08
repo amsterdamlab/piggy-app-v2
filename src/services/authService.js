@@ -148,7 +148,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
         });
 
         if (error) {
-            const errorMsg = error.message || error.error_description || (typeof error === 'string' ? error : 'Error al registrar usuario.');
+            const errorMsg = error.message || error.error_description || error.msg || error.description || error.error?.message || (typeof error === 'string' ? error : error);
             return { user: null, error: errorMsg };
         }
 
