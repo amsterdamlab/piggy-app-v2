@@ -452,7 +452,6 @@ export function renderPiggyCard(piggy, baseROI) {
   const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
   const totalROI = baseROI + extraRoi;
   const projectedReturn = inv * (1 + totalROI);
-  const gain = projectedReturn - inv;
   const progressPercent = typeof piggy.progress === 'number' ? piggy.progress : 0;
 
   return `
@@ -500,15 +499,12 @@ export function renderPiggyCard(piggy, baseROI) {
           <div class="text-xs text-muted" style="font-size: 0.72rem; color: #64748b; font-weight: 600; margin-bottom: 2px;">Peso actual</div>
           <div class="font-semibold" style="font-size: 0.95rem; font-weight: 800; color: #0f172a;">${piggy.currentWeight} kg</div>
         </div>
-        <div style="text-align: right; display: flex; flex-direction: column; gap: 2px;">
-          <div style="font-size: 0.75rem; color: #64748b;">
+        <div style="text-align: right; display: flex; flex-direction: column; gap: 3px;">
+          <div style="font-size: 0.76rem; color: #64748b;">
             <span>Valor Piggy:</span> <span style="font-weight: 600; color: #334155;">${formatCOP(inv)}</span>
           </div>
-          <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a;">
-            <span>Total Beneficio:</span> <span style="font-weight: 800; color: #0f172a;">${formatCOP(gain)}</span>
-          </div>
-          <div style="font-size: 0.82rem; font-weight: 800; color: #059669;">
-            <span>Total a Liquidar:</span> <span>${formatCOP(projectedReturn)}</span>
+          <div style="font-size: 0.78rem;">
+            <span style="color: #0f172a; font-weight: 500;">Total Liquidar:</span> <span style="color: #059669; font-weight: 800;">${formatCOP(projectedReturn)}</span>
           </div>
         </div>
       </div>
