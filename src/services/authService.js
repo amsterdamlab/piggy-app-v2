@@ -148,6 +148,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
         });
 
         if (error) {
+            console.error('🐷 Supabase signUp direct error:', error);
             const errorMsg = error.message || error.error_description || error.msg || error.description || error.error?.message || (typeof error === 'string' ? error : error);
             return { user: null, error: errorMsg };
         }

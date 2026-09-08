@@ -832,13 +832,26 @@ function showFormError(message, rawError = null, invalidFieldIds = []) {
   let fieldsToHighlight = Array.isArray(invalidFieldIds) && invalidFieldIds.length > 0 ? [...invalidFieldIds] : [];
   if (fieldsToHighlight.length === 0 && safeMessage) {
     const lower = safeMessage.toLowerCase();
-    if (lower.includes('nombre')) fieldsToHighlight.push('field-name');
-    if (lower.includes('correo') || lower.includes('email') || lower.includes('registrado')) fieldsToHighlight.push('field-email');
-    if (lower.includes('whatsapp') || lower.includes('celular')) fieldsToHighlight.push('field-whatsapp');
-    if (lower.includes('contraseña') || lower.includes('password') || lower.includes('caracteres')) {
+    if (lower.includes('ingresa tu nombre') || lower.includes('nombre completo')) {
+      fieldsToHighlight.push('field-name');
+    }
+    if (
+      lower.includes('ingresa tu correo') ||
+      lower.includes('correo electrónico válido') ||
+      lower.includes('correo ya se encuentra registrado') ||
+      lower.includes('correo inválido') ||
+      lower.includes('invalid email') ||
+      lower.includes('already registered')
+    ) {
+      fieldsToHighlight.push('field-email');
+    }
+    if (lower.includes('número de whatsapp') || lower.includes('número de celular') || lower.includes('corrige tu número')) {
+      fieldsToHighlight.push('field-whatsapp');
+    }
+    if (lower.includes('tu contraseña') || lower.includes('6 caracteres') || lower.includes('contraseña incorrecta')) {
       fieldsToHighlight.push(activeAuthTab === 'reset' ? 'field-new-password' : 'field-password');
     }
-    if (lower.includes('términos') || lower.includes('tratamiento') || lower.includes('habeas')) {
+    if (lower.includes('términos y condiciones') || lower.includes('tratamiento de datos')) {
       fieldsToHighlight.push('check-terms', 'check-habeas');
     }
   }
