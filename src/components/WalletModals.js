@@ -150,12 +150,12 @@ export function showBonusModal(hasPiggies) {
     <div class="modal bonus-modal animate-scale-in">
         <div class="modal__handle"></div>
         <button id="bonus-close-btn" style="background:none; border:none; position:absolute; right:18px; top:18px; font-size:24px; color:#9ca3af; cursor:pointer; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center; transition:color 0.15s; z-index:10;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
-        <div class="bonus-header"><h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3><p class="text-center text-primary font-bold text-lg">$50.000 EN CARNE</p></div>
+        <div class="bonus-header"><h3 class="bonus-title text-center mt-lg">BONO DE BIENVENIDA</h3><p class="text-center text-primary font-bold text-lg">$20.000 EN CARNE</p></div>
         <div class="bonus-content mt-md" style="flex: 2;">
-            <div class="bonus-text-scroll"><p>PIGGY otorga un Bono de Consumo de $50.000 a nuevos usuarios que realicen su primera adopción. Requiere compra mínima de $150.000. Envío gratis en Cali.</p></div>
+            <div class="bonus-text-scroll"><p>PIGGY otorga un Bono de Consumo de $20.000 a nuevos usuarios al registrarse en la plataforma. Requiere compra mínima de $150.000. Envío gratis en Cali.</p></div>
         </div>
         <div class="bonus-footer mt-lg">
-            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $50.000!'}</button>
+            <button class="btn btn--primary btn--block" id="btn-redeem-bonus">${hasPiggies ? 'Redimir Bono Ahora' : '¡Redime tu bono $20.000!'}</button>
         </div>
     </div>
   `;

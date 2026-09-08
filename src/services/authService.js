@@ -85,7 +85,6 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
             whatsapp: fallbackMeta.whatsapp || user.user_metadata?.whatsapp || null,
             terms_accepted: true,
             habeas_data_accepted: true,
-            consumption_balance: 20000,
             welcome_bonus_status: 'active',
         };
 
@@ -172,7 +171,6 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
                 whatsapp: cleanWhatsapp,
                 terms_accepted: true,
                 habeas_data_accepted: true,
-                consumption_balance: 20000,
                 welcome_bonus_status: 'active',
             };
 
@@ -194,7 +192,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
                 // Update AppState immediately with fresh profile
                 AppState.set({
                     currentUser: data.user,
-                    profile: { ...finalProfile },
+                    profile: { ...finalProfile, consumption_balance: finalProfile.consumption_balance ?? 20000 },
                     isAuthenticated: true,
                 });
             }

@@ -130,8 +130,7 @@ export async function ensureWelcomeBonusAssigned(userId) {
         if (!error) {
             console.log('🎁 Welcome consumption bonus ($20.000) assigned via transaction in DB!');
             await client.from('profiles').update({
-                welcome_bonus_status: 'active',
-                consumption_balance: 20000
+                welcome_bonus_status: 'active'
             }).eq('id', targetUserId);
 
             const currentProfile = AppState.get('profile');
