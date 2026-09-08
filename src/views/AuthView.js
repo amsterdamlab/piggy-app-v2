@@ -174,10 +174,10 @@ function renderFormFields() {
         </div>
       </div>
       <div class="input-group">
-        <label class="input-group__label" for="field-whatsapp">WhatsApp</label>
+        <label class="input-group__label" for="field-whatsapp">WhatsApp <span style="font-weight:400; color:#9ca3af;">(opcional)</span></label>
         <div class="input-wrapper">
           <span class="input-wrapper__icon">${renderIcon('phone', '', '18')}</span>
-          <input type="tel" class="input-wrapper__field" id="field-whatsapp" name="whatsapp" placeholder="Ej: 3001234567" autocomplete="tel" minlength="10" required />
+          <input type="tel" class="input-wrapper__field" id="field-whatsapp" name="whatsapp" placeholder="Ej: 3001234567" autocomplete="tel" />
         </div>
       </div>
       <div class="input-group">
@@ -487,7 +487,6 @@ async function handleSubmit(e) {
 
   if (activeAuthTab === 'register') {
     const fullName = formData.get('fullName')?.trim();
-    const whatsapp = formData.get('whatsapp')?.trim();
     const referralCode = formData.get('referralCode')?.trim().toUpperCase() || null;
 
     if (!fullName) {
@@ -506,15 +505,15 @@ async function handleSubmit(e) {
       return;
     }
 
-    if (!whatsapp) {
-      showFormError('Por favor ingresa tu número de celular (WhatsApp).', null, ['field-whatsapp']);
-      return;
-    }
-
-    const whatsappDigits = whatsapp.replace(/\D/g, '');
-    if (whatsappDigits.length < 10) {
-      showFormError('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.', null, ['field-whatsapp']);
-      return;
+    const rawWhatsapp = formData.get('whatsapp')?.trim();
+    let whatsapp = null;
+    if (rawWhatsapp && rawWhatsapp.length > 0) {
+      const whatsappDigits = rawWhatsapp.replace(/\D/g, '');
+      if (whatsappDigits.length < 10) {
+        showFormError('Por favor revisa y corrige tu número de WhatsApp. Debe tener al menos 10 dígitos.', null, ['field-whatsapp']);
+        return;
+      }
+      whatsapp = whatsappDigits;
     }
 
     if (!password) {

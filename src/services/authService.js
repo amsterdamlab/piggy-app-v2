@@ -111,13 +111,14 @@ async function ensureProfileExists(client, user, fallbackMeta = {}) {
  * Terms are already accepted before calling this function.
  */
 export async function signUp({ email, password, fullName, whatsapp }, onProgress = () => {}) {
+    const cleanWhatsapp = (whatsapp && typeof whatsapp === 'string' && whatsapp.trim().length > 0) ? whatsapp.trim() : null;
     if (isUsingMockData()) {
         onProgress('⚙️ Modo demo detectado. Configurando usuario simulado...');
         mockLoggedIn = true;
         mockProfile = {
             ...MOCK_PROFILE,
             full_name: fullName,
-            whatsapp,
+            whatsapp: cleanWhatsapp,
             email,
             terms_accepted: true,
             habeas_data_accepted: true,
@@ -142,7 +143,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
             options: {
                 data: {
                     full_name: fullName,
-                    whatsapp: whatsapp
+                    whatsapp: cleanWhatsapp
                 }
             }
         });
@@ -168,7 +169,7 @@ export async function signUp({ email, password, fullName, whatsapp }, onProgress
                 id: data.user.id,
                 full_name: fullName,
                 email,
-                whatsapp,
+                whatsapp: cleanWhatsapp,
                 terms_accepted: true,
                 habeas_data_accepted: true,
                 consumption_balance: 20000,
