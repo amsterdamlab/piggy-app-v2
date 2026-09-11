@@ -56,7 +56,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Plantilla HTML Perfeccionada con Logo Oficial y Textos Solicitados
+  -- Plantilla HTML Perfeccionada con CDN de GitHub y Textos Solicitados
   v_html_body := '<!DOCTYPE html>'
     || '<html lang="es">'
     || '<head>'
@@ -67,8 +67,7 @@ BEGIN
     || 'body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }'
     || '.container { max-width: 580px; margin: 20px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }'
     || '.header { background-color: #ffffff; padding: 35px 20px 20px; text-align: center; border-bottom: 1px solid #f1f5f9; }'
-    || '.logo-img { max-width: 210px; height: auto; display: block; margin: 0 auto 10px; }'
-    || '.slogan { font-size: 12px; font-weight: 800; color: #880e4f; letter-spacing: 1.5px; text-transform: uppercase; margin: 0; }'
+    || '.slogan { font-size: 12px; font-weight: 800; color: #880e4f; letter-spacing: 1.5px; text-transform: uppercase; margin: 12px 0 0; }'
     || '.content { padding: 30px 25px; color: #334155; }'
     || '.greeting { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }'
     || '.intro-p { font-size: 15px; line-height: 1.6; color: #475569; margin: 0 0 18px; }'
@@ -83,7 +82,7 @@ BEGIN
     || '<body>'
     || '<div class="container">'
     || '<div class="header">'
-    || '<img src="https://piggy-app-v2.vercel.app/piggyapp_logo1.png" alt="Piggy App" class="logo-img" />'
+    || '<img src="https://raw.githubusercontent.com/amsterdamlab/piggy-app-v2/main/public/piggyapp_logo1.png" alt="Piggy" width="190" style="display:block; margin:0 auto; max-width:190px; width:190px; height:auto; border:0; outline:none; text-decoration:none;" />'
     || '<div class="slogan">CRIA INTELIGENTE CON RESULTADOS REALES</div>'
     || '</div>'
     || '<div class="content">'
@@ -95,7 +94,7 @@ BEGIN
     || '<span style="background:#059669; color:#ffffff; font-size:11px; font-weight:800; padding:3px 8px; border-radius:20px; text-transform:uppercase;">🎁 Bono Activo</span>'
     || '<div style="font-size:24px; font-weight:800; color:#065f46; margin:8px 0 4px;">$20.000 COP</div>'
     || '<p style="margin:0; font-size:13px; color:#047857; line-height:1.4;">'
-    || 'Tienes un bono de bienvenida asignado en tu cuenta para que conozcas nuestros productos cárnicos de Granja Vallemorales.<br>'
+    || 'Tienes un bono de bienvenida asignado en tu cuenta para que conozcas nuestros productos cárnicos de Granja Valle Morales.<br>'
     || '<small style="font-size:11px; color:#065f46; display:inline-block; margin-top:4px;">*Aplica solamente para la ciudad de Cali y sus alrededores.</small>'
     || '</p>'
     || '</div>'
