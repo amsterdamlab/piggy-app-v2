@@ -154,6 +154,20 @@ export async function getMarketplaceItems() {
  * Resolves the month (1-5) of a marketplace item using all available metadata.
  */
 function resolveItemMonth(item) {
+    if (item.fixed_end_date || item.fixedEndDate) {
+        const targetDate = new Date(item.fixed_end_date || item.fixedEndDate);
+        if (!isNaN(targetDate.getTime())) {
+            const now = new Date();
+            const diffDays = Math.max(1, Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)));
+            const daysAdv = Math.max(0, FATTENING_CYCLE_TOTAL_DAYS - diffDays);
+            if (daysAdv >= 120) return 5;
+            if (daysAdv >= 90) return 4;
+            if (daysAdv >= 60) return 3;
+            if (daysAdv >= 30) return 2;
+            return 1;
+        }
+    }
+
     if (item.current_month && Number(item.current_month) > 0) return Number(item.current_month);
     if (item.currentMonth && Number(item.currentMonth) > 0) return Number(item.currentMonth);
 
@@ -210,6 +224,17 @@ function enrichItem(item) {
         ? Number(item.days_remaining)
         : Math.max(1, FATTENING_CYCLE_TOTAL_DAYS - daysAdvanced);
 
+    // Dynamic real-time calculation if fixed_end_date is configured
+    const fixedEndDateStr = item.fixed_end_date || item.fixedEndDate;
+    if (fixedEndDateStr) {
+        const targetDate = new Date(fixedEndDateStr);
+        if (!isNaN(targetDate.getTime())) {
+            const now = new Date();
+            daysRemaining = Math.max(1, Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24)));
+            daysAdvanced = Math.max(0, FATTENING_CYCLE_TOTAL_DAYS - daysRemaining);
+        }
+    }
+
     // Extra ROI
     const extraRoi = item.extra_roi !== undefined && item.extra_roi !== null
         ? Number(item.extra_roi)
@@ -242,6 +267,7 @@ function enrichItem(item) {
         currentMonth,
         current_weight: currentWeight,
         extra_roi: extraRoi,
+        fixed_end_date: fixedEndDateStr || null,
         cycleTotalDays: FATTENING_CYCLE_TOTAL_DAYS,
         priceFormatted: formatCOP(price),
         hasBonus: extraRoi > 0,

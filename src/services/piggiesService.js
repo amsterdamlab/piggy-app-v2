@@ -478,6 +478,14 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     const defaultPhotoNum = item.id ? (((Number(item.id) - 1) % 5) + 1) : 1;
     const finalImageUrl = item.image_url || item.imageUrl || `assets/piggies/stage${stage}/et${stage}-${defaultPhotoNum}.jpg`;
 
+    const fixedEndDateStr = item.fixed_end_date || item.fixedEndDate;
+    let calculatedEndDate;
+    if (fixedEndDateStr && !isNaN(new Date(fixedEndDateStr).getTime())) {
+        calculatedEndDate = new Date(fixedEndDateStr).toISOString();
+    } else {
+        calculatedEndDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString();
+    }
+
     let calculatedCode = customContractCode;
     if (!calculatedCode && contractUrl) {
         const match = contractUrl.match(/PGY-TX-([A-Z0-9]+)-([A-Z0-9]+)/i);
@@ -500,7 +508,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             name: finalName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
+            end_date: calculatedEndDate,
+            fixed_end_date: fixedEndDateStr || null,
             investment_amount: item.price,
             extra_roi_bonus: item.extra_roi || 0,
             category: item.category || 'estandar',
@@ -639,7 +648,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
                 current_weight: item.current_weight || 15.0,
                 final_weight: finalWeight,
                 purchase_date: new Date().toISOString(),
-                end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
+                end_date: calculatedEndDate,
+                fixed_end_date: fixedEndDateStr || null,
                 image_url: finalImageUrl,
                 contract_url: contractUrl,
                 contract_code: calculatedCode || `#${String(createdPiggyId).slice(-6).toUpperCase()}`
@@ -679,7 +689,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             current_weight: item.current_weight || 15.0,
             final_weight: parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar'),
             purchase_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString(),
+            end_date: calculatedEndDate,
+            fixed_end_date: fixedEndDateStr || null,
             image_url: finalImageUrl,
             contract_url: contractUrl,
             contract_code: calculatedCode || `#${Date.now().toString().slice(-6)}`,
@@ -744,7 +755,6 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     // 2. Compute parameters
     const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar');
     const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
-    const calculatedEndDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * daysRemaining).toISOString();
     const fallbackCode = calculatedCode || `#${Date.now().toString().slice(-6)}`;
 
     // 3. Insert into piggies
@@ -759,6 +769,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         final_weight: finalWeight,
         purchase_date: new Date().toISOString(),
         end_date: calculatedEndDate,
+        fixed_end_date: fixedEndDateStr || null,
         image_url: finalImageUrl,
         contract_url: contractUrl,
         contract_code: fallbackCode
@@ -775,6 +786,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         console.warn('Error insertando piggy con todos los campos en fallback, reintentando con campos esenciales:', insertError);
         delete insertPayload.contract_code;
         delete insertPayload.final_weight;
+        delete insertPayload.fixed_end_date;
         const { data: retryData, error: retryErr } = await client
             .from('piggies')
             .insert(insertPayload)
