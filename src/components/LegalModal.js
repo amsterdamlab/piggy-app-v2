@@ -17,64 +17,44 @@ let pendingOnReject = null;
  * Full legal text for Terms, Conditions, and Data Treatment.
  */
 const LEGAL_TEXT = `
-<h3 style="text-align:center; margin-bottom: var(--space-md); color: var(--color-primary); font-size: var(--text-lg);">
-  TÉRMINOS, CONDICIONES Y TRATAMIENTO DE DATOS — PIGGY
+<h3 style="text-align:center; margin-bottom: var(--space-md); color: var(--color-primary); font-size: var(--text-lg); font-weight: 800;">
+  TÉRMINOS Y CONDICIONES DE USO — PIGGY APP
 </h3>
 
-<p>Al crear una cuenta en la aplicación <strong>PIGGY APP</strong>, usted (en adelante, el <strong>USUARIO</strong>) acepta de manera libre, expresa e informada los siguientes términos contractuales y la autorización de tratamiento de sus datos personales.</p>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify; margin-bottom: var(--space-sm);">
+  Los presentes Términos y Condiciones regulan el acceso, registro y uso de la plataforma digital <strong>PIGGY APP</strong>, administrada por <strong>VALLE PIGGY S.A.S.</strong> (NIT: 902.097.746-4) en alianza operativa con <strong>GRANJA VILLA MORALES DEL VALLE S.A.S.</strong> (NIT: 900.860.384-7).
+</p>
 
-<hr style="border: none; border-top: 1px solid var(--color-border); margin: var(--space-lg) 0;" />
+<hr style="border: none; border-top: 1px solid var(--color-border); margin: var(--space-md) 0;" />
 
-<h4 style="color: var(--color-primary); margin-bottom: var(--space-sm);">PARTE I: AUTORIZACIÓN PARA EL TRATAMIENTO DE DATOS PERSONALES (HABEAS DATA)</h4>
+<h4 style="color: var(--color-primary); margin-bottom: var(--space-xs); font-size: 0.95rem;">1. NATURALEZA DE LA PLATAFORMA</h4>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify;">
+  PIGGY APP es una plataforma digital orientada a la gestión, seguimiento, trazabilidad y administración operativa de actividades agroproductivas vinculadas a procesos de crianza, custodia, engorde y comercialización de porcinos respaldados en activos agropecuarios reales. <strong>No constituye:</strong> actividad financiera, captación de recursos del público, producto financiero, inversión colectiva, oferta pública de valores ni esquema de rentabilidad garantizada.
+</p>
 
-<p>En cumplimiento de la <strong>Ley 1581 de 2012</strong> y el <strong>Decreto 1377 de 2013</strong>, el USUARIO autoriza a <strong>PIGGY S.A.S.</strong> y a sus aliados operativos <strong>GRANJA VILLA MORALES DEL VALLE SAS</strong> para recolectar, almacenar, circular y utilizar sus datos personales (nombre completo, correo electrónico, número de teléfono móvil y ubicación) para las siguientes finalidades:</p>
+<h4 style="color: var(--color-primary); margin-bottom: var(--space-xs); font-size: 0.95rem;">2. RESULTADO ECONÓMICO Y RIESGOS</h4>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify;">
+  El usuario reconoce expresamente que el Resultado Económico derivado de la operación es variable, depende del comportamiento real del proceso agroproductivo y condiciones de mercado. <strong>No existe rentabilidad fija, retornos garantizados ni utilidad mínima asegurada.</strong> Toda referencia visible en la plataforma tiene carácter informativo.
+</p>
 
-<ol style="padding-left: var(--space-lg); margin: var(--space-md) 0;">
-  <li style="margin-bottom: var(--space-sm);"><strong>Gestión de Cuenta:</strong> Creación, mantenimiento y administración del perfil del usuario en la plataforma.</li>
-  <li style="margin-bottom: var(--space-sm);"><strong>Notificaciones Operativas:</strong> Envío de actualizaciones críticas sobre el estado de los activos (peso, salud, avisos de liquidación) a través de WhatsApp, SMS, correos electrónicos y notificaciones push.</li>
-  <li style="margin-bottom: var(--space-sm);"><strong>Gestión Comercial y Financiera:</strong> Procesamiento de pagos de adopción, transferencias de utilidades y coordinación logística para la entrega de productos cárnicos.</li>
-  <li style="margin-bottom: var(--space-sm);"><strong>Seguridad:</strong> Verificación de identidad y prevención de fraudes.</li>
-</ol>
+<h4 style="color: var(--color-primary); margin-bottom: var(--space-xs); font-size: 0.95rem;">3. REGISTRO, CUMPLIMIENTO Y PREVENCIÓN DE FRAUDE</h4>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify;">
+  El usuario se compromete a suministrar información veraz y actualizada, mantener reserva sobre sus credenciales y abstenerse de usos indebidos o ilícitos. LA PLATAFORMA podrá realizar validaciones de identidad, monitoreo transaccional y consultas en listas restrictivas conforme a sus políticas de cumplimiento.
+</p>
 
-<p>El USUARIO declara conocer que tiene derecho a conocer, actualizar y rectificar sus datos personales, así como a revocar esta autorización en cualquier momento, siempre que no exista un vínculo contractual activo que lo impida.</p>
+<h4 style="color: var(--color-primary); margin-bottom: var(--space-xs); font-size: 0.95rem;">4. AUTORIZACIÓN DE TRATAMIENTO DE DATOS PERSONALES (HABEAS DATA)</h4>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify;">
+  En cumplimiento de la <strong>Ley 1581 de 2012</strong>, el usuario autoriza de manera previa, expresa e informada a <strong>VALLE PIGGY S.A.S.</strong> y <strong>GRANJA VILLA MORALES DEL VALLE S.A.S.</strong> para recolectar, almacenar y tratar sus datos personales con fines de validación de identidad, administración de la relación contractual, cumplimiento regulatorio, notificaciones operativas y funcionamiento general de la plataforma.
+</p>
 
-<hr style="border: none; border-top: 1px solid var(--color-border); margin: var(--space-lg) 0;" />
+<h4 style="color: var(--color-primary); margin-bottom: var(--space-xs); font-size: 0.95rem;">5. BONOS DE CONSUMO Y REFERIDOS DIRECTOS</h4>
+<p style="font-size: 0.85rem; color: var(--color-text-secondary); text-align: justify;">
+  Los Bonos de Consumo son beneficios promocionales no monetarios aplicables exclusivamente como descuento en la Tienda de productos físicos de Piggy App. No constituyen dinero en efectivo ni son transferibles. El Programa de Referidos se rige por las reglas de Referido Directo Calificado y causación única sin jerarquías ni redes comerciales multinivel.
+</p>
 
-<h4 style="color: var(--color-primary); margin-bottom: var(--space-sm);">PARTE II: CONTRATO DE ADHESIÓN — COMPRAVENTA DE ACTIVO PRODUCTIVO PORCINO</h4>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">1. OBJETO</h5>
-<p>El presente contrato regula la adquisición de una <strong>Unidad Productiva Porcina Estándar (UPPE)</strong> por parte del USUARIO. El activo representa un derecho económico sobre el resultado del engorde y comercialización de carne de cerdo procesada al finalizar un ciclo productivo real.</p>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">2. PRECIO Y PAGO ÚNICO</h5>
-<p>El valor de cada UPPE es de <strong>UN MILLÓN DE PESOS M/CTE ($1.000.000 COP)</strong>, pagaderos en una sola cuota mediante los canales de recaudo de la plataforma. El dinero es recibido directamente por la operación de la granja aliada para su puesta en marcha inmediata.</p>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">3. CICLO PRODUCTIVO Y RENTABILIDAD</h5>
-<ul style="padding-left: var(--space-lg); margin: var(--space-sm) 0;">
-  <li style="margin-bottom: var(--space-xs);"><strong>Duración:</strong> El ciclo de engorde y comercialización es de cuatro (4) meses y tres (3) semanas.</li>
-  <li style="margin-bottom: var(--space-xs);"><strong>Márgenes Comerciales:</strong> La rentabilidad se basa en el volumen de activos:
-    <ul style="padding-left: var(--space-md); margin-top: var(--space-xs);">
-      <li>1 Piggy: 8% de margen.</li>
-      <li>2 Piggies: 9% de margen.</li>
-      <li>3 o más Piggies: 10% de margen.</li>
-    </ul>
-  </li>
-</ul>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">4. OPCIONES DE SALIDA</h5>
-<p>Al finalizar el ciclo, el USUARIO elegirá entre:</p>
-<ul style="padding-left: var(--space-lg); margin: var(--space-sm) 0;">
-  <li style="margin-bottom: var(--space-xs);"><strong>Comercialización:</strong> Recibir el capital inicial más el margen de rentabilidad en su billetera digital.</li>
-  <li style="margin-bottom: var(--space-xs);"><strong>Consumo:</strong> Recibir el equivalente en cortes de carne premium (capital + rentabilidad) a precio de mayorista, con envío a domicilio (Cali y áreas aledañas, o nacional con cargo al usuario). El peso final de la carne dependerá del rendimiento biológico digital del ciclo.</li>
-</ul>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">5. NATURALEZA DEL CONTRATO</h5>
-<p>Las partes acuerdan que esta es una operación de <strong>economía real</strong> (Compraventa de cosa futura con mandato de gestión). No constituye captación masiva de dinero ni una inversión financiera. El respaldo del capital es el inventario físico de cárnicos comercializable por parte de <strong>GRANJA VILLA MORALES DEL VALLE SAS</strong>.</p>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">6. CANCELACIÓN ANTICIPADA</h5>
-<p>El USUARIO puede vender su activo en el Marketplace interno. Si solicita el retiro del capital antes de finalizar el ciclo sin haber concretado una venta entre usuarios, se aplicará una penalidad del <strong>diez por ciento (10%)</strong> por ruptura de ciclo productivo.</p>
-
-<h5 style="margin: var(--space-md) 0 var(--space-xs);">7. JURISDICCIÓN</h5>
-<p>Para todos los efectos legales, el domicilio del contrato es la ciudad de <strong>Cali, Colombia</strong>.</p>
+<p style="font-size: 0.8rem; color: var(--color-text-secondary); margin-top: var(--space-md); text-align: center; font-style: italic;">
+  Puedes consultar el texto legal extendido en cualquier momento en <a href="terminos-y-condiciones.html" target="_blank" style="color: var(--color-primary); font-weight: 700; text-decoration: underline;">Términos y Condiciones</a> y <a href="tratamiento-de-datos.html" target="_blank" style="color: var(--color-primary); font-weight: 700; text-decoration: underline;">Tratamiento de Datos</a>.
+</p>
 `;
 
 /**
