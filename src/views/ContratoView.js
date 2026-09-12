@@ -77,12 +77,13 @@ export function renderContratoView() {
                     <span style="font-size:0.8rem; opacity:0.8;">Ley 527 de 1999</span>
                 </div>
                 <h1 class="contrato-hero__title">
-                    CONTRATO MARCO DE OPERACIÓN AGROPRODUCTIVA DIGITAL, CUSTODIA, TRAZABILIDAD Y COMERCIALIZACIÓN
+                    CONTRATO MARCO TRIPARTITO DE OPERACIÓN AGROPRODUCTIVA DIGITAL, CUSTODIA, TRAZABILIDAD Y COMERCIALIZACIÓN
                 </h1>
                 <div class="contrato-hero__meta">
                     <div>🐖 <strong>Piggy a vincular:</strong> "${currentPiggyName}"</div>
                     <div>💰 <strong>Inversión:</strong> ${formatCOP(currentItemPrice)}</div>
-                    <div>🏢 <strong>Operador:</strong> Granja Villa Morales del Valle S.A.S.</div>
+                    <div>🏢 <strong>Operador Productivo:</strong> Granja Villa Morales del Valle S.A.S.</div>
+                    <div>📱 <strong>Operadora Plataforma:</strong> Valle Piggy S.A.S.</div>
                 </div>
             </div>
 
@@ -105,10 +106,17 @@ export function renderContratoView() {
 
             <!-- Representative Legal Stamped Card -->
             <div class="contrato-rep-card animate-fade-in-up">
-                <div class="contrato-rep-card__title">✍️ Firma del Representante Legal (Pre-firmado)</div>
-                <div><strong>LA PLATAFORMA Y COMERCIALIZADORA</strong></div>
-                <div>GRANJA VILLA MORALES DEL VALLE S.A.S. &bull; NIT: 900.860.384-7</div>
-                <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">OSCAR IVÁN MÁRQUEZ MORALES &bull; C.C. 14.590.206</div>
+                <div class="contrato-rep-card__title">✍️ Firmas de Representantes Legales (Pre-firmadas)</div>
+                <div style="margin-bottom: 8px;">
+                    <div><strong>EL OPERADOR PRODUCTIVO Y COMERCIALIZADORA</strong></div>
+                    <div>GRANJA VILLA MORALES DEL VALLE S.A.S. &bull; NIT: 900.860.384-7</div>
+                    <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">OSCAR IVÁN MÁRQUEZ MORALES &bull; C.C. 14.590.206 (Representante Legal)</div>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 8px;">
+                    <div><strong>LA OPERADORA DE LA PLATAFORMA</strong></div>
+                    <div>VALLE PIGGY S.A.S. &bull; NIT: 902.097.746-4</div>
+                    <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">HERMES ANDRÉS LEMOS CAMPOS &bull; C.C. 1130625796 (Representante Legal Suplente)</div>
+                </div>
             </div>
 
             <!-- Buyer Identity & Signature Form Section -->
