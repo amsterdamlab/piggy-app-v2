@@ -164,10 +164,9 @@ export async function stampAndUploadContract({
         hour12: false
     });
 
-    // 4. Get Target Page (Page 15 = index 14)
+    // 4. Get Target Page (Last page of document)
     const pages = pdfDoc.getPages();
-    const pageIndex = Math.min(14, pages.length - 1);
-    const targetPage = pages[pageIndex];
+    const targetPage = pages[pages.length - 1];
 
     // 5. Embed Signature Image (PNG)
     let signatureImage = null;
@@ -182,12 +181,12 @@ export async function stampAndUploadContract({
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // 7. Draw Signature and User Audit Details on Page 15
-    // Coordinates calibrated for page 15 under "EL USUARIO" section
-    const sigX = 85;
-    const sigY = 160;
-    const sigWidth = 140;
-    const sigHeight = 55;
+    // 7. Draw Signature and User Audit Details on the last page
+    // Coordinates calibrated for EL USUARIO section (lower left quadrant)
+    const sigX = 55;
+    const sigY = 95;
+    const sigWidth = 130;
+    const sigHeight = 45;
 
     // Draw user signature image
     targetPage.drawImage(signatureImage, {
@@ -198,9 +197,9 @@ export async function stampAndUploadContract({
     });
 
     // Draw text info under signature
-    const textStartY = sigY - 14;
-    const lineHeight = 11;
-    const fontSize = 8.5;
+    const textStartY = sigY - 11;
+    const lineHeight = 9.5;
+    const fontSize = 8;
 
     targetPage.drawText(`NOMBRE: ${userName.toUpperCase()}`, {
         x: sigX,
@@ -221,7 +220,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`PIGGY: "${piggyName.toUpperCase()}" ($ ${investmentAmount.toLocaleString('es-CO')})`, {
         x: sigX,
         y: textStartY - (lineHeight * 2),
-        size: 7.5,
+        size: 7.2,
         font: helvetica,
         color: rgb(0.25, 0.25, 0.25),
     });
@@ -229,7 +228,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`FIRMADO ELECTRÓNICAMENTE: ${nowBogota} (UTC-5)`, {
         x: sigX,
         y: textStartY - (lineHeight * 3),
-        size: 6.8,
+        size: 6.5,
         font: helvetica,
         color: rgb(0.35, 0.35, 0.35),
     });
@@ -237,7 +236,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`IP: ${ipAddress} | HASH: ${transaccionHash}`, {
         x: sigX,
         y: textStartY - (lineHeight * 4),
-        size: 6.5,
+        size: 6.2,
         font: helvetica,
         color: rgb(0.4, 0.4, 0.4),
     });
