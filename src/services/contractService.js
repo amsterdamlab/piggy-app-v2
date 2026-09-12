@@ -182,11 +182,11 @@ export async function stampAndUploadContract({
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     // 7. Draw Signature and User Audit Details on the last page
-    // Coordinates calibrated for EL USUARIO section (lower left quadrant)
-    const sigX = 55;
-    const sigY = 95;
-    const sigWidth = 130;
-    const sigHeight = 45;
+    // Coordinates calibrated for EL USUARIO section directly under the first column
+    const sigX = 80;
+    const sigY = 52;
+    const sigWidth = 115;
+    const sigHeight = 35;
 
     // Draw user signature image
     targetPage.drawImage(signatureImage, {
@@ -197,9 +197,9 @@ export async function stampAndUploadContract({
     });
 
     // Draw text info under signature
-    const textStartY = sigY - 11;
-    const lineHeight = 9.5;
-    const fontSize = 8;
+    const textStartY = sigY - 8;
+    const lineHeight = 7.5;
+    const fontSize = 7.2;
 
     targetPage.drawText(`NOMBRE: ${userName.toUpperCase()}`, {
         x: sigX,
@@ -220,7 +220,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`PIGGY: "${piggyName.toUpperCase()}" ($ ${investmentAmount.toLocaleString('es-CO')})`, {
         x: sigX,
         y: textStartY - (lineHeight * 2),
-        size: 7.2,
+        size: 6.8,
         font: helvetica,
         color: rgb(0.25, 0.25, 0.25),
     });
@@ -228,7 +228,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`FIRMADO ELECTRÓNICAMENTE: ${nowBogota} (UTC-5)`, {
         x: sigX,
         y: textStartY - (lineHeight * 3),
-        size: 6.5,
+        size: 6.2,
         font: helvetica,
         color: rgb(0.35, 0.35, 0.35),
     });
@@ -236,7 +236,7 @@ export async function stampAndUploadContract({
     targetPage.drawText(`IP: ${ipAddress} | HASH: ${transaccionHash}`, {
         x: sigX,
         y: textStartY - (lineHeight * 4),
-        size: 6.2,
+        size: 5.8,
         font: helvetica,
         color: rgb(0.4, 0.4, 0.4),
     });
