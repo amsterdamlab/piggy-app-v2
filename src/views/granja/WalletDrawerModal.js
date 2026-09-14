@@ -224,13 +224,14 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
 
                ${safeStats.saldoDisponible > 0 ? `
                   <button id="btn-retirar-saldo-drawer" style="
+                     width: 100%;
                      background: white;
                      color: #334155;
                      border: 2px solid #e2e8f0;
-                     padding: 15px 20px;
+                     padding: 16px 20px;
                      border-radius: 14px;
-                     font-weight: 700;
-                     font-size: 0.95rem;
+                     font-weight: 800;
+                     font-size: 1rem;
                      cursor: pointer;
                      display: flex;
                      align-items: center;
@@ -238,7 +239,7 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
                      gap: 10px;
                      transition: all 0.2s;
                   " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white'">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
                         <rect x="6" y="8" width="12" height="12" rx="2" />
                         <path d="M 12 11 v 6" />
