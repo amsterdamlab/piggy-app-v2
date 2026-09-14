@@ -158,7 +158,7 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
             <!-- Bonos de Consumo -->
             ${safeStats.referralBonus > 0 ? `
             <div id="drawer-bonos-consumo-card" style="
-               background: #fff1f2;
+               background: #ffffff;
                border: 1px solid #ffe4e6;
                padding: 14px 18px;
                border-radius: 14px;
@@ -238,7 +238,12 @@ export function showWalletDrawer(firstName, stats = {}, autoOpenRecharge = false
                      gap: 10px;
                      transition: all 0.2s;
                   " onmouseover="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='white'">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M 6 9 C 3 9 2 8 2 6 C 2 3 6 2 12 2 C 18 2 22 3 22 6 C 22 8 21 9 18 9" />
+                        <rect x="6" y="8" width="12" height="12" rx="2" />
+                        <path d="M 12 11 v 6" />
+                        <path d="M 9.5 14.5 l 2.5 2.5 l 2.5 -2.5" />
+                     </svg>
                      Retirar mi Saldo
                   </button>
                ` : ''}
