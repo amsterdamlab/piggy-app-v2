@@ -486,7 +486,7 @@ export function openDatosPersonalesSubscreen(profile) {
             await completeMissionOnVisit('m6').catch(err => console.warn('M6 complete error:', err));
             setTimeout(() => {
                 closeSubscreen();
-                renderProfileView(); // Re-render main profile view with updated data
+                navigateTo('granja');
             }, 1200);
         }
     });
