@@ -82,6 +82,37 @@ ol {
     list-style: none;
 }
 
+/* ---- iOS / PWA Safe Area Status Bar ---- */
+.app-status-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: constant(safe-area-inset-top);
+    height: env(safe-area-inset-top, 0px);
+    background-color: var(--color-status-bar, #b80049);
+    z-index: 9999999;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+/* Rubber-band overscroll protection for iOS Safari */
+.app-status-bar::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    height: 500px;
+    background-color: var(--color-status-bar, #b80049);
+    pointer-events: none;
+}
+
+.ios-pwa-standalone .app-status-bar {
+    height: max(env(safe-area-inset-top, 0px), 44px);
+}
+
 /* ---- App Shell ---- */
 #ui-shell {
     max-width: var(--app-max-width);
@@ -92,6 +123,12 @@ ol {
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.ios-pwa-standalone #ui-shell {
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
 }
 
 #app {

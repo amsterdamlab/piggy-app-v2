@@ -279,7 +279,17 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top, 0px);
     animation: walletSlideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ios-pwa-standalone .wallet-subscreen {
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
+}
+
+.ios-pwa-standalone #wallet-drawer-inner {
+    padding-top: max(env(safe-area-inset-top, 0px), 44px) !important;
 }
 
 @keyframes walletSlideInRight {

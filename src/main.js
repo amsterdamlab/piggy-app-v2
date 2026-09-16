@@ -50,6 +50,17 @@ import { renderWhatsAppModal, removeWhatsAppModal } from './components/WhatsAppM
 async function boot() {
   console.log('🐷 Piggy App — Booting...');
 
+  // Detect iOS standalone PWA and tag html root for safe area styling
+  try {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    if (isIOS && isStandalone) {
+      document.documentElement.classList.add('ios-pwa-standalone');
+    }
+  } catch (e) {
+    console.warn('Error detecting iOS standalone mode:', e);
+  }
+
   // Capture referral code from URL if present
   try {
     const urlParams = new URLSearchParams(window.location.search);

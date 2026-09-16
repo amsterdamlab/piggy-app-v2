@@ -16,9 +16,14 @@
     padding: 16px 20px;
     background: white;
     position: sticky;
-    top: 0;
+    top: constant(safe-area-inset-top);
+    top: env(safe-area-inset-top, 0px);
     z-index: 50;
     border-bottom: 1px solid #f1f5f9;
+}
+
+.ios-pwa-standalone .profile-header {
+    top: max(env(safe-area-inset-top, 0px), 44px);
 }
 
 .profile-header__back {
@@ -299,6 +304,12 @@
     z-index: 100;
     overflow-y: auto;
     animation: slideInRight 0.25s ease-out;
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
+.ios-pwa-standalone .profile-subscreen {
+    padding-top: max(env(safe-area-inset-top, 0px), 44px);
 }
 
 @keyframes slideInRight {

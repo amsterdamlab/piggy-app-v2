@@ -9,6 +9,7 @@
   --color-primary-light: #F48FB1;
   --color-primary-50: #FCE4EC;
   --color-primary-100: #F8BBD0;
+  --color-status-bar: #b80049;
 
   /* ---- Accent / CTA Gradient ---- */
   --gradient-cta: linear-gradient(135deg, #E91E63 0%, #FF4081 50%, #F50057 100%);
