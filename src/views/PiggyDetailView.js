@@ -163,7 +163,7 @@ async function loadPiggyDetail(piggyId) {
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">
                   <span class="text-sm text-muted">Margen x Canal de Venta</span>
-                  <span class="font-semibold text-primary" style="display:flex;align-items:center;gap:6px; color: #E91E63;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
+                  <span class="font-semibold" style="display:flex;align-items:center;gap:6px; color: #b45309;">+${formatPercentage(piggy.extra_roi_bonus)}<span class="info-tooltip-wrapper" data-tooltip="Se establece una adición debido a la venta del cerdo en un mercado premium."><span class="info-icon" style="background: #fffbeb; color: #b45309;">ℹ</span><span class="info-tooltip-bubble">Se establece una adición debido a la venta del cerdo en un mercado premium.</span></span></span>
                 </div>
               ` : ''}
               <div class="divider" style="margin: var(--space-sm) 0;"></div>
@@ -173,7 +173,7 @@ async function loadPiggyDetail(piggyId) {
               </div>
               <div class="piggy-detail__finance-row">
                 <span class="font-semibold">Total a Liquidar</span>
-                <span class="font-bold text-primary" style="font-size:var(--text-lg); color: #E91E63;">${formatCOP(projectedReturn)}</span>
+                <span class="font-bold" style="font-size:var(--text-lg); color: #059669;">${formatCOP(projectedReturn)}</span>
               </div>
             </div>
           </div>
