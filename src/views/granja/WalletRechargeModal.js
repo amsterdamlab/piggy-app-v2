@@ -24,7 +24,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
 
   const profile = AppState.get('profile');
   const userName = profile?.full_name?.split(' ')[0] || 'Usuario';
-  const ADMIN_WHATSAPP = '573154870448';
+  const ADMIN_WHATSAPP = '573044281766';
   const OFFICIAL_BRE_B_KEY = '@piggygranjamoral';
 
   // Preload QR Code and logo assets in background
