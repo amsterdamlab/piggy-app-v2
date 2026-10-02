@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     if (event === 'transaction.updated' && tx.status === 'APPROVED') {
       const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://elhsvitbqzivgajccify.supabase.co';
       // Para escribir desde webhook sin sesión de usuario, usamos Service Role o Anon con RLS permitido
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_GsffdyFVoy0M5t_4WfzZvA_KdpDr1HD';
       const supabase = createClient(supabaseUrl, supabaseKey);
 
       // Extraer user_id de la referencia: REC_{user_id}_{timestamp}
