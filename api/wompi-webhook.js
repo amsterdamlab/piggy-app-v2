@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     const { event, data, environment, signature, timestamp } = payload;
     const tx = data.transaction;
 
-    // 1. Validar Secreto de Eventos según el ambiente informado por Wompi
-    const isTest = environment === 'test' || process.env.VITE_WOMPI_ENV === 'sandbox';
+    // 1. Validar Secreto de Eventos según el ambiente informado por Wompi ('test' vs 'prod')
+    const isTest = environment === 'test';
     const eventsSecret = isTest
       ? (process.env.WOMPI_EVENTS_SECRET_TEST || 'test_events_gEbxSJkbwwn4vLGko05Su9YxcNOs9zNp')
       : (process.env.WOMPI_EVENTS_SECRET_PROD || 'prod_events_3k2B4M6Di6YbPpamggZufSpnvoP76j5M');

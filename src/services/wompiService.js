@@ -13,8 +13,8 @@ const WOMPI_SCRIPT_URL = 'https://checkout.wompi.co/widget.js';
  * @returns {'sandbox' | 'production'}
  */
 export function getWompiEnvironment() {
-  const env = import.meta.env.VITE_WOMPI_ENV || 'sandbox';
-  return env.toLowerCase() === 'production' ? 'production' : 'sandbox';
+  const env = import.meta.env.VITE_WOMPI_ENV || 'production';
+  return env.toLowerCase() === 'sandbox' ? 'sandbox' : 'production';
 }
 
 /**
@@ -39,7 +39,7 @@ export function loadWompiScript() {
       return resolve(true);
     }
 
-    const existingScript = document.querySelector(`script[src=\"${WOMPI_SCRIPT_URL}\"]`);
+    const existingScript = document.querySelector(`script[src="${WOMPI_SCRIPT_URL}"]`);
     if (existingScript) {
       existingScript.addEventListener('load', () => resolve(true));
       existingScript.addEventListener('error', () => reject(new Error('Error al cargar el script de Wompi.')));
