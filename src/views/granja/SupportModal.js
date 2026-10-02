@@ -3,6 +3,8 @@
    Customer service modal accessible from Granja
    ============================================ */
 
+import { AppState } from '../../state.js';
+
 /**
  * SVG headset icon (line/stroke style) for reuse in buttons and modal.
  * Matches the stroke-based aesthetic of the bottom nav icons.
@@ -13,16 +15,18 @@ export const HEADSET_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="cu
   <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/>
 </svg>`;
 
-/** WhatsApp support number */
-const SUPPORT_PHONE = '573154870448';
+/** WhatsApp numbers */
+const CLAUDIA_PHONE = '573014030863';
+const ASESOR_PHONE = '573044281766';
 
 /**
- * Build a WhatsApp link with a given message.
+ * Build a WhatsApp link with a given phone and message.
+ * @param {string} phone - Target phone number
  * @param {string} message - Pre-filled message text
  * @returns {string} Full wa.me URL
  */
-function buildWhatsAppLink(message) {
-  return `https://wa.me/${SUPPORT_PHONE}?text=${encodeURIComponent(message)}`;
+function buildWhatsAppLink(phone, message) {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
 /**
@@ -93,7 +97,7 @@ export function showSupportModal() {
       " onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">&times;</button>
 
       <!-- Headset Icon (large, colored) -->
-      <div style="text-align:center; margin-bottom:20px;">
+      <div style="text-align:center; margin-bottom:20px;\">
         <div style="
           width: 72px;
           height: 72px;
@@ -182,13 +186,16 @@ export function showSupportModal() {
 
   // Action: Habla con ClaudIA → WhatsApp
   document.getElementById('btn-support-talk')?.addEventListener('click', () => {
-    const link = buildWhatsAppLink('¡Hola ClaudIA 👋! Ayudame con algo por favor...');
+    const profile = AppState.get('profile');
+    const userName = profile?.full_name?.trim() || profile?.username || 'Usuario';
+    const message = `¡Hola ClaudIA 👋! Mi nombre de usuario es ${userName} y necesito ayuda en...`;
+    const link = buildWhatsAppLink(CLAUDIA_PHONE, message);
     window.open(link, '_blank');
   });
 
   // Action: Conectame con un Asesor → WhatsApp
   document.getElementById('btn-support-info')?.addEventListener('click', () => {
-    const link = buildWhatsAppLink('Hola! Estoy buscando un asesor...');
+    const link = buildWhatsAppLink(ASESOR_PHONE, 'Hola! Estoy buscando un asesor...');
     window.open(link, '_blank');
   });
 }
