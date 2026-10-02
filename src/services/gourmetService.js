@@ -7,7 +7,7 @@
 import { getClient, isUsingMockData } from './supabase.js';
 import { AppState } from '../state.js';
 
-const WHATSAPP_PHONE = '573154870448';
+const WHATSAPP_PHONE = '573122916522';
 
 /* ─── Default Offers (Fallback / Mock Mode with Real Image URLs) ─── */
 
