@@ -9,7 +9,7 @@ import { formatCOP, MOCK_PROFILE } from './mockData.js';
 import { AppState } from '../state.js';
 
 /** Admin WhatsApp number for notifications */
-const ADMIN_WHATSAPP = '573154870448';
+const ADMIN_WHATSAPP = '573044281766';
 
 /* ─── Mock Mode LocalStorage Persistence ─── */
 let mockBalance = null;
