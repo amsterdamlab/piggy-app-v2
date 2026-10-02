@@ -26,8 +26,7 @@ export default async function handler(req, res) {
     }
 
     // Determinar el secreto de integridad según el entorno activo
-    const currentEnv = environment || process.env.VITE_WOMPI_ENV || 'production';
-    const isTest = currentEnv.toLowerCase() === 'sandbox';
+    const isTest = environment === 'sandbox';
     const integritySecret = isTest 
       ? (process.env.WOMPI_INTEGRITY_SECRET_TEST || 'test_integrity_1vZFBfPoesEb6thA7pYsFGPbh13tKcg3')
       : (process.env.WOMPI_INTEGRITY_SECRET_PROD || 'prod_integrity_ARUDYDydareP2WiFQ7uxk9oodL9RZiFM');

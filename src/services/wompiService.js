@@ -13,8 +13,7 @@ const WOMPI_SCRIPT_URL = 'https://checkout.wompi.co/widget.js';
  * @returns {'sandbox' | 'production'}
  */
 export function getWompiEnvironment() {
-  const env = import.meta.env.VITE_WOMPI_ENV || 'production';
-  return env.toLowerCase() === 'sandbox' ? 'sandbox' : 'production';
+  return 'production';
 }
 
 /**
@@ -22,11 +21,7 @@ export function getWompiEnvironment() {
  * @returns {string}
  */
 export function getWompiPublicKey() {
-  const env = getWompiEnvironment();
-  if (env === 'production') {
-    return import.meta.env.VITE_WOMPI_PUB_KEY_PROD || 'pub_prod_OPvpEQEiVOBRszfS3isZNLi673cNrhFK';
-  }
-  return import.meta.env.VITE_WOMPI_PUB_KEY_TEST || 'pub_test_3btcuuRNe23fLB9ld2Vwq6EG0ys1LJtd';
+  return import.meta.env.VITE_WOMPI_PUB_KEY_PROD || 'pub_prod_OPvpEQEiVOBRszfS3isZNLi673cNrhFK';
 }
 
 /**
