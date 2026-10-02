@@ -45,8 +45,8 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
     subscreen.remove();
   };
 
-  const PRESETS = [1000000, 2000000, 3000000, 5000000];
-  let selectedAmount = 1000000;
+  const PRESETS = [10000, 1000000, 2000000, 3000000];
+  let selectedAmount = 10000;
 
   const formatThousands = (num) => {
     if (!num && num !== 0) return '';
@@ -60,7 +60,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
   };
 
   /* ─────────────────────────────────────────
-     STEP 1 — Amount selector (Min $200.000)
+     STEP 1 — Amount selector (Min $10.000)
   ───────────────────────────────────────── */
   const renderStep1 = () => {
     subscreen.innerHTML = `
@@ -98,7 +98,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
 
           <!-- Custom amount -->
           <div style="margin-bottom:24px;">
-            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O digita tu monto (min. $200.000)</label>
+            <label style="font-size:0.78rem; font-weight:700; color:#475569; display:block; margin-bottom:8px;">O digita tu monto (min. $10.000)</label>
             <div style="position:relative;">
               <span style="position:absolute; left:16px; top:50%; transform:translateY(-50%); font-weight:800; color:#9ca3af; font-size:1rem;">$</span>
               <input type="text" inputmode="numeric" id="rch-custom-amount" placeholder="Ej: 500.000"
@@ -169,8 +169,8 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
     document.getElementById('rch-step1-next')?.addEventListener('click', () => {
       const customVal = parseFormattedNumber(document.getElementById('rch-custom-amount')?.value);
       if (customVal > 0) selectedAmount = customVal;
-      if (!selectedAmount || selectedAmount < 200000) {
-        alert('El monto mínimo de recarga en Piggy es de $200.000 COP.');
+      if (!selectedAmount || selectedAmount < 10000) {
+        alert('El monto mínimo de recarga en Piggy es de $10.000 COP.');
         return;
       }
       renderStep2();
@@ -181,8 +181,8 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
      STEP 2 — Payment method chooser
   ───────────────────────────────────────── */
   const renderStep2 = () => {
-    const wompiFee = Math.round(selectedAmount * 0.03);
-    const wompiTotal = selectedAmount + wompiFee;
+    const wompiFee = 0;
+    const wompiTotal = selectedAmount;
 
     subscreen.innerHTML = `
         <!-- Header Limpio: Volver arriba a la izq y cerrar a la der -->
@@ -260,11 +260,11 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
             <div style="flex:1; min-width:0;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
                 <span style="font-size:1.08rem; font-weight:850; color:#0f172a; letter-spacing:-0.01em; line-height:1.25;">Paga con Wompi</span>
-                <span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">+3% COMISIÓN</span>
+                <span style="background:white; color:#be1260; border:1px solid #fbcfe8; border-radius:6px; padding:3px 8px; font-size:0.7rem; font-weight:800; letter-spacing:0.4px;">SIN COMISIONES</span>
               </div>
-              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Transfiere con comisiones por pasarela de pagos.</div>
+              <div style="font-size:0.86rem; color:#475569; font-weight:500; line-height:1.4; margin-bottom:8px;">Paga en línea con PSE, Bancolombia o tarjeta sin costo adicional.</div>
               <div style="font-size:0.95rem; font-weight:850; color:#0f172a;">
-                Total a pagar: ${formatCOP(wompiTotal)} <span style="font-size:0.78rem; font-weight:600; color:#64748b;">(+${formatCOP(wompiFee)} tarifa)</span>
+                Total a pagar: ${formatCOP(wompiTotal)}
               </div>
             </div>
           </button>
@@ -865,7 +865,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
             </div>
             ${result.totalPaid ? `
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Total pagado (con 3%)</span>
+              <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Total pagado</span>
               <span style="font-size:0.85rem; font-weight:700; color:#475569;">${formatCOP(result.totalPaid)}</span>
             </div>
             ` : ''}
@@ -891,7 +891,7 @@ export function openWalletRechargeSubscreen(mountContainer, liveStats = null, on
 
           ${!isApproved ? `
           <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; padding:14px 16px; margin-bottom:20px; font-size:0.82rem; color:#9a3412; line-height:1.4;">
-            💡 El pago no pudo completarse. Puedes intentarlo con otro medio o utilizar <strong>Bre-B / QR (0% comisión)</strong>.
+            💡 El pago no pudo completarse. Puedes intentarlo nuevamente o utilizar <strong>Bre-B / QR</strong>.
             ${result.reason && result.reason !== 'simulated_rejected' ? `
             <div style="margin-top:10px; padding:10px; background:#fef2f2; border:1px solid #fee2e2; border-radius:8px; color:#991b1b; font-size:0.75rem; word-break:break-all;">
               <strong>Detalle:</strong> ${result.reason}
