@@ -11,6 +11,7 @@ import { showSupportModal } from './granja/SupportModal.js';
 import { showReferralModal } from './granja/ReferralsModal.js';
 import { generateMockReferralCode } from '../services/referralService.js';
 import { completeMissionOnVisit } from '../services/missionsService.js';
+import { triggerPWAInstall } from '../services/pwaService.js';
 
 // Colombian Banks list
 const COLOMBIAN_BANKS = [
@@ -152,6 +153,15 @@ export function renderProfileView() {
                     <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
                 </button>
 
+                <!-- Descargar App -->
+                <button class="profile-menu-item" id="btn-menu-download-app">
+                    <div class="profile-menu-item__left">
+                        <span class="profile-menu-item__icon">${renderIcon('smartphone', '', '22')}</span>
+                        <span class="profile-menu-item__text">Descargar App</span>
+                    </div>
+                    <span class="profile-menu-item__chevron">${renderIcon('chevronRight', '', '20')}</span>
+                </button>
+
                 <!-- 5. Cerrar Sesión -->
                 <button class="profile-menu-item" id="btn-menu-logout">
                     <div class="profile-menu-item__left">
@@ -239,6 +249,11 @@ function attachProfileViewListeners(profile) {
         localStorage.removeItem('piggy_onboarding_completed');
         window._forceLaunchOnboardingTour = true;
         navigateTo('granja');
+    });
+
+    // Menu: Descargar App (PWA install cross-platform)
+    document.getElementById('btn-menu-download-app')?.addEventListener('click', () => {
+        triggerPWAInstall();
     });
 
     // Menu: Cerrar sesión
