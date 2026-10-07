@@ -75,8 +75,8 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm8', sortOrder: 8,
-        title: 'Activa tu 3er Piggy (60 días de engorde)',
-        reward: 'Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)',
+        title: 'Activa tu 3er Piggy (30 días de engorde)',
+        reward: 'Esto no se ve todos los días. Obtén un piggy con 30 días de engorde avanzado. (Por tiempo limitado)',
         icon: '⚡', cta: 'open_buy_advanced30',
         autoType: 'third_piggy',
         requires: 'm7',
