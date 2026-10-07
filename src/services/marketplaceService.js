@@ -107,7 +107,7 @@ const MOCK_MARKETPLACE_ITEMS = [
         id: 5,
         item_name: 'Piggy Dorado',
         description: 'Comercializado en un mercado plus premium con un +2% de margen comercial adicional.',
-        price: 1000000,
+        price: 1200000,
         extra_roi: 0.02,
         stock: 12,
         category: 'dorado',
