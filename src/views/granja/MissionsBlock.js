@@ -372,8 +372,8 @@ function renderM8Banner(mission) {
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
                         text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
                     <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu Piggy Avanzado</div>
-                    <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(60 días de engorde)</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 60 días de engorde avanzado. (Por tiempo limitado)</div>
+                    <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(30 días de engorde)</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 30 días de engorde avanzado. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
@@ -714,13 +714,29 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Dorado checkout modal for M5
+        // ── Special CTA: open Piggy Dorado checkout modal for M5 ($1.200.000 / +2% extra ROI)
         if (ctaUrl === 'open_buy_gold') {
             try {
                 const items = await getMarketplaceItems();
                 const goldPiggy = items.find(i => i.category === 'dorado' || i.category === 'gold' || i.item_name?.toLowerCase().includes('dorado') || i.item_name?.toLowerCase().includes('gold')) || items[0];
-                if (goldPiggy) showCheckoutModal(goldPiggy);
-                else navigateTo('mercado');
+                if (goldPiggy) {
+                    const missionGoldItem = {
+                        ...goldPiggy,
+                        item_name: 'Piggy Dorado',
+                        category: 'dorado',
+                        price: 1200000,
+                        priceFormatted: '$1.200.000',
+                        extra_roi: 0.02,
+                        extraRoi: 0.02,
+                        currentMonth: 1,
+                        current_month: 1,
+                        daysAdvanced: 0,
+                        daysRemaining: 144,
+                    };
+                    showCheckoutModal(missionGoldItem);
+                } else {
+                    navigateTo('mercado');
+                }
             } catch (err) {
                 console.warn('Error launching dorado checkout:', err);
                 navigateTo('mercado');
@@ -728,33 +744,33 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Avanzado (60 días) checkout modal for M8
+        // ── Special CTA: open Piggy Avanzado (30 días) checkout modal for M8
         if (ctaUrl === 'open_buy_advanced30') {
             try {
                 const items = await getMarketplaceItems();
                 const baseItem = items.find(i =>
-                    i.category === 'avanzado60' ||
-                    i.category === 'advanced60' ||
                     i.category === 'avanzado30' ||
                     i.category === 'advanced30' ||
                     i.category === 'avanzado' ||
                     i.category === 'advanced' ||
+                    i.category === 'avanzado60' ||
+                    i.category === 'advanced60' ||
                     i.item_name?.toLowerCase().includes('avanzado') ||
                     i.item_name?.toLowerCase().includes('advanced')
                 ) || items[0];
 
                 if (baseItem) {
-                    // Item independiente exclusivo para la Misión 8 ($1.300.000 / 60 días engorde)
+                    // Item independiente exclusivo para la Misión 8 ($1.300.000 / 30 días engorde / 114 días restantes)
                     const missionItem = {
                         ...baseItem,
-                        item_name: 'Piggy Avanzado (60 días)',
-                        category: 'avanzado60',
+                        item_name: 'Piggy Avanzado (30 días)',
+                        category: 'avanzado30',
                         price: 1300000,
                         priceFormatted: '$1.300.000',
-                        daysAdvanced: 60,
-                        daysRemaining: 84,
-                        currentMonth: 3,
-                        current_month: 3,
+                        daysAdvanced: 30,
+                        daysRemaining: 114,
+                        currentMonth: 2,
+                        current_month: 2,
                     };
                     showCheckoutModal(missionItem);
                 } else {
