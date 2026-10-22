@@ -181,64 +181,134 @@ export async function stampAndUploadContract({
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // 7. Draw Signature and User Audit Details on the last page
-    // Coordinates calibrated for EL USUARIO section directly under the first column
-    const sigX = 100;
-    const sigY = 110;
-    const sigWidth = 135;
-    const sigHeight = 42;
+    // 7. Draw Signature and User Audit Details on the last page (Page 14)
+    // Distributed in two balanced columns directly below legal representatives
+    const col1X = 85.05;  // Aligned with Granja Villa Morales left margin
+    const col2X = 470;    // Aligned with Valle Piggy column
+    const titleY = 320;   // Clean spacing below representatives (which end at Y = 360.76)
+
+    // Column 1: EL USUARIO / COMPRADOR
+    targetPage.drawText('EL USUARIO / ADQUIRENTE', {
+        x: col1X,
+        y: titleY,
+        size: 9.5,
+        font: helveticaBold,
+        color: rgb(0.1, 0.1, 0.1),
+    });
+
+    const sigY = 240;
+    const sigWidth = 145;
+    const sigHeight = 48;
 
     // Draw user signature image
     targetPage.drawImage(signatureImage, {
-        x: sigX,
+        x: col1X,
         y: sigY,
         width: sigWidth,
         height: sigHeight,
     });
 
-    // Draw text info under signature
-    const textStartY = sigY - 13;
-    const lineHeight = 11.5;
-    const fontSize = 9.2;
+    // Signature underline
+    targetPage.drawLine({
+        start: { x: col1X, y: sigY - 2 },
+        end: { x: col1X + 240, y: sigY - 2 },
+        thickness: 0.75,
+        color: rgb(0.7, 0.7, 0.7),
+    });
+
+    // Text under signature
+    const textStartY = sigY - 16;
+    const lineHeight = 12.5;
 
     targetPage.drawText(`NOMBRE: ${userName.toUpperCase()}`, {
-        x: sigX,
+        x: col1X,
         y: textStartY,
-        size: fontSize,
+        size: 9.0,
         font: helveticaBold,
         color: rgb(0.1, 0.1, 0.1),
     });
 
     targetPage.drawText(`C.C. / DNI: ${userCedula}`, {
-        x: sigX,
+        x: col1X,
         y: textStartY - lineHeight,
-        size: fontSize,
-        font: helveticaBold,
-        color: rgb(0.1, 0.1, 0.1),
-    });
-
-    targetPage.drawText(`PIGGY: "${piggyName.toUpperCase()}" ($ ${investmentAmount.toLocaleString('es-CO')})`, {
-        x: sigX,
-        y: textStartY - (lineHeight * 2),
         size: 8.5,
-        font: helvetica,
-        color: rgb(0.25, 0.25, 0.25),
+        font: helveticaBold,
+        color: rgb(0.2, 0.2, 0.2),
     });
 
-    targetPage.drawText(`FIRMADO ELECTRÓNICAMENTE: ${nowBogota} (UTC-5)`, {
-        x: sigX,
-        y: textStartY - (lineHeight * 3),
-        size: 8.0,
-        font: helvetica,
-        color: rgb(0.35, 0.35, 0.35),
-    });
-
-    targetPage.drawText(`IP: ${ipAddress} | HASH: ${transaccionHash}`, {
-        x: sigX,
-        y: textStartY - (lineHeight * 4),
+    targetPage.drawText('Aceptación de Términos y Condiciones mediante firma digital', {
+        x: col1X,
+        y: textStartY - (lineHeight * 2),
         size: 7.5,
         font: helvetica,
         color: rgb(0.4, 0.4, 0.4),
+    });
+
+    // Column 2: Audit & Electronic Verification Box
+    const boxX = col2X - 10;
+    const boxY = textStartY - (lineHeight * 3.2);
+    const boxW = 285;
+    const boxH = 120;
+
+    targetPage.drawRectangle({
+        x: boxX,
+        y: boxY,
+        width: boxW,
+        height: boxH,
+        borderColor: rgb(0.82, 0.86, 0.90),
+        borderWidth: 1,
+        color: rgb(0.97, 0.98, 1.0),
+    });
+
+    targetPage.drawText('CONSTANCIA DE TRAZABILIDAD ELECTRÓNICA', {
+        x: col2X,
+        y: boxY + boxH - 18,
+        size: 8.0,
+        font: helveticaBold,
+        color: rgb(0.12, 0.22, 0.45),
+    });
+
+    const auditStartY = boxY + boxH - 34;
+    const auditLineH = 13;
+
+    targetPage.drawText(`Piggy Vinculado: "${piggyName.toUpperCase()}" ($ ${investmentAmount.toLocaleString('es-CO')})`, {
+        x: col2X,
+        y: auditStartY,
+        size: 7.8,
+        font: helveticaBold,
+        color: rgb(0.2, 0.2, 0.2),
+    });
+
+    targetPage.drawText(`Fecha / Hora: ${nowBogota} (UTC-5)`, {
+        x: col2X,
+        y: auditStartY - auditLineH,
+        size: 7.5,
+        font: helvetica,
+        color: rgb(0.3, 0.3, 0.3),
+    });
+
+    targetPage.drawText(`Dirección IP: ${ipAddress} (Audit Trail)`, {
+        x: col2X,
+        y: auditStartY - (auditLineH * 2),
+        size: 7.5,
+        font: helvetica,
+        color: rgb(0.3, 0.3, 0.3),
+    });
+
+    targetPage.drawText(`Hash Integridad: ${transaccionHash}`, {
+        x: col2X,
+        y: auditStartY - (auditLineH * 3),
+        size: 7.5,
+        font: helveticaBold,
+        color: rgb(0.18, 0.38, 0.68),
+    });
+
+    targetPage.drawText('Validez Legal: Ley 527 de 1999 (Comercio Electrónico)', {
+        x: col2X,
+        y: auditStartY - (auditLineH * 4),
+        size: 7.0,
+        font: helvetica,
+        color: rgb(0.45, 0.45, 0.45),
     });
 
     // 8. Save modified PDF bytes
