@@ -156,24 +156,23 @@ function renderProductCard(item) {
     if (daysMatch) {
       daysAdvanced = Number(daysMatch[1]);
     } else {
-      const monthMatch = itemName.match(/(\\d+)\s*Mes(es)?/i);
+      const monthMatch = itemName.match(/(\d+)\s*Mes(es)?/i);
       if (monthMatch) {
         daysAdvanced = (Number(monthMatch[1]) - 1) * 30;
       } else {
         const cat = (item.category || '').toLowerCase();
-        if (cat.includes('90')) daysAdvanced = 90;
-        else if (cat.includes('75')) daysAdvanced = 75;
-        else if (cat.includes('60')) daysAdvanced = 60;
-        else if (cat.includes('45')) daysAdvanced = 45;
-        else if (cat.includes('30')) daysAdvanced = 30;
+        if (cat.includes('30')) daysAdvanced = 30;
+        else if (cat.includes('15')) daysAdvanced = 15;
         else if (cat === 'avanzado' || cat === 'advanced') daysAdvanced = 30;
         else daysAdvanced = 0;
       }
     }
   }
 
-  let currentMonth = item.currentMonth || item.current_month || (daysAdvanced >= 90 ? 4 : daysAdvanced >= 60 ? 3 : daysAdvanced >= 30 ? 2 : 1);
-  const daysRemaining = item.daysRemaining || Math.max(1, 144 - daysAdvanced);
+  const rawCatLower = (item.category || '').toLowerCase();
+  const cycleTotalDays = item.cycleTotalDays || item.cycle_days || (rawCatLower.includes('dorado') || rawCatLower.includes('gold') || rawCatLower.includes('premium') ? 152 : 122);
+  let currentMonth = item.currentMonth || item.current_month || (daysAdvanced >= 30 ? 2 : 1);
+  const daysRemaining = item.daysRemaining || Math.max(1, cycleTotalDays - daysAdvanced);
   const daysSaved = daysAdvanced;
   const isAdvanced = daysSaved > 0;
   const stage = currentMonth >= 4 ? 3 : currentMonth >= 2 ? 2 : 1;
@@ -188,18 +187,10 @@ function renderProductCard(item) {
     estandard: 'Estandar',
     avanzado: 'Avanzado',
     advanced: 'Avanzado',
+    avanzado15: 'Avanzado',
+    advanced15: 'Avanzado',
     avanzado30: 'Avanzado',
     advanced30: 'Avanzado',
-    avanzado45: 'Avanzado',
-    advanced45: 'Avanzado',
-    avanzado60: 'Avanzado',
-    advanced60: 'Avanzado',
-    avanzado75: 'Avanzado',
-    advanced75: 'Avanzado',
-    avanzado90: 'Avanzado',
-    advanced90: 'Avanzado',
-    plus: 'Plus',
-    silver: 'Plus',
     dorado: 'Dorado',
     gold: 'Dorado',
     premium: 'Premium',
@@ -259,7 +250,7 @@ function renderProductCard(item) {
           <div class="mcard__info-divider"></div>
           <div class="mcard__info-item">
             <span class="mcard__info-label">PESO</span>
-            <span class="mcard__info-value">${item.current_weight !== undefined && item.current_weight !== null ? item.current_weight : (daysAdvanced >= 90 ? 55.4 : daysAdvanced >= 60 ? 39.0 : daysAdvanced >= 30 ? 22.5 : 6.0)} kg</span>
+            <span class="mcard__info-value">${item.current_weight !== undefined && item.current_weight !== null ? item.current_weight : (daysAdvanced >= 30 ? 24.8 : daysAdvanced >= 15 ? 15.4 : 6.0)} kg</span>
           </div>
         </div>
 
@@ -354,7 +345,7 @@ export function showCheckoutModal(item) {
           90deg, 
           rgba(255, 255, 255, 0) 0%, 
           rgba(255, 255, 255, 0.55) 50%, 
-          rgba(255, 255, 255, 100%)
+          rgba(255, 255, 255, 0) 100%
         );
         transform: rotate(25deg);
         animation: shineSweep7s 7s infinite ease-in-out;
@@ -579,7 +570,7 @@ export function showCheckoutModal(item) {
   const confirmBtn = document.getElementById('btn-confirm-purchase');
   const errorMsg = document.getElementById('name-error');
   const recargarBtn = document.getElementById('btn-recargar-checkout');
-  const ADMIN_WHATSAPP = '573154870448';
+  const ADMIN_WHATSAPP = '573044281766';
 
   const itemPrice = Number(item.price || item.investment_amount || item.amount || item.precio || 1000000);
   let currentBalance = 0;
@@ -697,20 +688,17 @@ window.showCategoryInfo = (category) => {
 
   const normalized = (category || '').toLowerCase();
   const infoTexts = {
-    premium: 'Con este cerdito obtienes un extra en comisión (+3%) debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
-    dorado: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    gold: 'Con este cerdito obtienes un extra en comisión (+2%) debido a la venta del cerdo en empresas, colegios y hospitales.',
-    plus: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    silver: 'Con este cerdito obtienes un extra en comisión (+1%) debido a la venta del cerdo en tiendas, mini-markets y supermercados.',
-    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde. Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
-    avanzado30: 'Cerdito con 30 días de engorde avanzado (114 días restantes). Ahorra 1 mes de espera.',
-    avanzado45: 'Cerdito con 45 días de engorde avanzado (99 días restantes). Ahorra 1.5 meses de espera.',
-    avanzado60: 'Cerdito con 60 días de engorde avanzado (84 días restantes). Ahorra 2 meses de espera.',
-    avanzado75: 'Cerdito con 75 días de engorde avanzado (69 días restantes). Ahorra 2.5 meses de espera.',
-    avanzado90: 'Cerdito con 90 días de engorde avanzado (54 días restantes). Máximo ahorro de tiempo.',
-    estandar: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
-    standard: 'Cerdito de raza clásica con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
+    premium: 'Con este cerdito obtienes un extra en beneficio comercial (+4%) en un ciclo de 5 meses (152 días), debido a la venta del cerdo en cadenas de restaurantes y hospedajes premium.',
+    dorado: 'Con este cerdito obtienes un extra en beneficio comercial (+2%) en un ciclo de 5 meses (152 días), debido a la venta del cerdo en empresas, colegios y hospitales.',
+    gold: 'Con este cerdito obtienes un extra en beneficio comercial (+2%) en un ciclo de 5 meses (152 días), debido a la venta del cerdo en empresas, colegios y hospitales.',
+    avanzado: 'Cerdito en etapa avanzada con más tiempo de engorde sobre un ciclo de 4 meses (122 días). Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    advanced: 'Cerdito en etapa avanzada con más tiempo de engorde sobre un ciclo de 4 meses (122 días). Si eres de los que no les gusta esperar, este cerdito te ahorra semanas de espera.',
+    avanzado15: 'Cerdito con 15 días de engorde avanzado (107 días restantes en su ciclo de 4 meses). Ahorra medio mes de espera.',
+    advanced15: 'Cerdito con 15 días de engorde avanzado (107 días restantes en su ciclo de 4 meses). Ahorra medio mes de espera.',
+    avanzado30: 'Cerdito con 30 días de engorde avanzado (92 días restantes en su ciclo de 4 meses). Ahorra 1 mes de espera.',
+    advanced30: 'Cerdito con 30 días de engorde avanzado (92 días restantes en su ciclo de 4 meses). Ahorra 1 mes de espera.',
+    estandar: 'Cerdito de raza clásica en ciclo de 4 meses (122 días) con rendimiento sólido y cuidado óptimo durante todo el ciclo.',
+    standard: 'Cerdito de raza clásica en ciclo de 4 meses (122 días) con rendimiento sólido y cuidado óptimo durante todo el ciclo.'
   };
 
   const text = infoTexts[normalized] || 'Cerdito exclusivo disponible en el mercado Piggy.';
@@ -719,15 +707,12 @@ window.showCategoryInfo = (category) => {
     premium: { bg: 'linear-gradient(135deg, #EC4899, #9D174D)', color: '#FFF' },
     dorado: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
     gold: { bg: 'linear-gradient(135deg, #F59E0B, #B45309)', color: '#FFF' },
-    plus: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
-    silver: { bg: 'linear-gradient(135deg, #0ea5e9, #0284c7)', color: '#FFF' },
     avanzado: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
     advanced: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    avanzado15: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    advanced15: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
     avanzado30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado45: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado60: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado75: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
-    avanzado90: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
+    advanced30: { bg: 'linear-gradient(135deg, #A855F7, #7E22CE)', color: '#FFF' },
     estandar: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' },
     standard: { bg: 'linear-gradient(135deg, #EC4899, #BE185D)', color: '#FFF' }
   };

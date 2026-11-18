@@ -53,10 +53,19 @@ async function loadPiggyDetail(piggyId) {
     }
 
     const stats = getDashboardStats(allPiggies);
-    const baseROI = stats.baseROI;
+    const activeMatch = allPiggies.find(p => String(p.id) === String(piggy.id));
+    const baseROI = activeMatch?.baseROI !== undefined
+      ? activeMatch.baseROI
+      : calculateBaseROI(Math.max(1, stats.activeCount || 1), piggy.plan_version);
     const totalROI = baseROI + (piggy.extra_roi_bonus || 0);
-    const projectedReturn = piggy.investment_amount * (1 + totalROI);
+    const lockedFinalReturn = (piggy.isComplete && piggy.final_return_amount && !isNaN(piggy.final_return_amount))
+      ? parseFloat(piggy.final_return_amount)
+      : null;
+    const projectedReturn = lockedFinalReturn !== null
+      ? lockedFinalReturn
+      : (piggy.investment_amount * (1 + totalROI));
     const gain = projectedReturn - piggy.investment_amount;
+    const marginRangeText = piggy.plan_version === 'v1_legacy' ? '8% al 13%' : '12% al 18%';
 
     const app = document.getElementById('app');
     app.innerHTML = `
@@ -158,7 +167,7 @@ async function loadPiggyDetail(piggyId) {
               </div>
               <div class="piggy-detail__finance-row">
                 <span class="text-sm text-muted">Margen Comercial Granja</span>
-                <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el 8% al 13% según la variación del mercado.</span></span></span>
+                <span class="font-semibold" style="display:flex;align-items:center;gap:6px;">${formatPercentage(baseROI)}<span class="info-tooltip-wrapper" data-tooltip="Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el ${marginRangeText} según la variación del mercado."><span class="info-icon">ℹ</span><span class="info-tooltip-bubble">Identifica el porcentaje sobre la comercialización del cerdo. Se establece entre el ${marginRangeText} según la variación del mercado.</span></span></span>
               </div>
               ${piggy.extra_roi_bonus > 0 ? `
                 <div class="piggy-detail__finance-row">

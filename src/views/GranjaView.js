@@ -257,7 +257,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                 border-radius: 12px; 
                 font-weight: 800; 
                 font-size: 0.85rem; 
-                white-space: nowrap; 
+                white-space: nowrap;
                 cursor: pointer; 
                 display: flex; 
                 align-items: center; 
@@ -274,7 +274,7 @@ function buildGranjaFull(firstName, piggies, stats, tipData, activeMissions, fla
                     border-radius: 50%; 
                     display: flex; 
                     align-items: center; 
-                    justify-content: center; 
+                    justify-content: center;
                     font-size: 16px;
                     font-weight: 800;
                     padding-bottom: 2px;
@@ -406,7 +406,7 @@ function renderEmptyPiggies() {
           border-radius: 14px; 
           font-weight: 800; 
           font-size: 0.82rem; 
-          white-space: nowrap; 
+          white-space: nowrap;
           cursor: pointer; 
           display: inline-flex; 
           align-items: center; 
@@ -423,7 +423,7 @@ function renderEmptyPiggies() {
               border-radius: 50%; 
               display: flex; 
               align-items: center; 
-              justify-content: center; 
+              justify-content: center;
               font-size: 15px;
               font-weight: 800;
               padding-bottom: 2px;
@@ -450,8 +450,12 @@ export function renderPiggiesList(piggies, baseROI) {
 export function renderPiggyCard(piggy, baseROI) {
   const inv = parseFloat(piggy.investment_amount) || 1000000;
   const extraRoi = parseFloat(piggy.extra_roi_bonus) || 0;
-  const totalROI = baseROI + extraRoi;
-  const projectedReturn = inv * (1 + totalROI);
+  const effectiveBaseROI = piggy.baseROI !== undefined ? piggy.baseROI : baseROI;
+  const totalROI = effectiveBaseROI + extraRoi;
+  const lockedFinalReturn = (piggy.isComplete && piggy.final_return_amount && !isNaN(piggy.final_return_amount))
+    ? parseFloat(piggy.final_return_amount)
+    : null;
+  const projectedReturn = lockedFinalReturn !== null ? lockedFinalReturn : (inv * (1 + totalROI));
   const progressPercent = typeof piggy.progress === 'number' ? piggy.progress : 0;
 
   return `
