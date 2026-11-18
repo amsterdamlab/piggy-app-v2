@@ -235,14 +235,14 @@ export async function showReferralModal() {
             <span style="text-align:center; color:#6b7280;">0 - 5</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$20.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 10 ? 'background:#f0fdf4;' : ''}">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 5 && completedCount <= 15 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥈 Plata</span>
-            <span style="text-align:center; color:#6b7280;">6 - 10</span>
+            <span style="text-align:center; color:#6b7280;">6 - 15</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$30.000</span>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 10 ? 'background:#f0fdf4;' : ''}">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 14px; font-size:0.82rem; border-top:1px solid #f3f4f6; ${completedCount > 15 ? 'background:#f0fdf4;' : ''}">
             <span style="font-weight:600;">🥇 Oro</span>
-            <span style="text-align:center; color:#6b7280;">11+</span>
+            <span style="text-align:center; color:#6b7280;">16+</span>
             <span style="text-align:right; font-weight:700; color:#059669;">$50.000</span>
           </div>
         </div>

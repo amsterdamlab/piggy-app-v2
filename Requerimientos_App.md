@@ -1,188 +1,124 @@
-Este es el documento técnico estructural para el desarrollo de Piggy App en Antigravity. Como especialista en automatizaciones, verás que la integración con Supabase facilitará enormemente la gestión de estados y la lógica de rentabilidad variable.
-________________________________________
-Documento de Especificaciones Técnicas: Piggy App
-Piggy App es una plataforma de "Agro-Fintech" que permite a los usuarios participar en el ciclo de engorde porcino de manera digital, obteniendo beneficios económicos o productos físicos al finalizar el proceso.
-1. Arquitectura del Stack
-•	Frontend & Logic: Antigravity (No-code/Low-code builder).
-•	Backend & Auth: Supabase (PostgreSQL + GoTrue for Auth).
-•	Pagos: Integración vía Webhook/API (Recomendado: Wompi o ePayco por el mercado colombiano).
-________________________________________
-2. Modelado de Base de Datos (Supabase)
-Para manejar la rentabilidad variable y el inventario, propongo las siguientes tablas principales:
-Tabla	Campos Clave	Descripción
-profiles	id, full_name, habeas_data_accepted, terms_accepted	Extensión de la tabla auth.users.
-piggies	id, user_id, status (engorde/finalizado), purchase_date, base_roi	Registro de cada cerdo comprado.
-marketplace_items	id, type, extra_roi, price, stock	Piggies especiales con bonos de +1% o +2%.
-missions	id, user_id, description, points, completed	Registro de gamificación para acelerar crecimiento.
-________________________________________
-3. Flujo de Usuario y Lógica de Pantallas
-Fase 1: Onboarding y Legal
-1.	Registro: Formulario estándar (Email/Password).
-2.	Bloqueo Legal (Popup): * Al detectar que terms_accepted es false en la base de datos, Antigravity debe desplegar un modal persistente.
-o	Componentes: Checkbox de Términos y Condiciones + Checkbox de Autorización de Tratamiento de Datos (Habeas Data).
-o	Validación: El botón "Continuar" solo se habilita si ambos checks están activos. Al dar clic, se hace un UPDATE en Supabase a la tabla profiles.
-Fase 2: El Menú Principal
-•	Granja (Dashboard): * Visualización de los cerdos activos.
-o	Barra de progreso del "Ciclo de Engorde" (4 meses y 3 semanas).
-o	Cálculo en tiempo real de la rentabilidad proyectada basada en la cantidad de Piggies:
-	$1 Piggy \rightarrow 8\%$
-	$2 Piggies \rightarrow 9\%$
-	$3+ Piggies \rightarrow 10\%$
-•	Mercado (Marketplace): * Compra de nuevos Piggies.
-o	Sección de "Aceleradores": Piggies exclusivos que suman un (+1%) o (+2%) adicional al margen final de ese activo específico.
-•	Aliados: * Directorio de empresas asociadas, puntos de entrega de carne premium y beneficios adicionales por ser parte de la comunidad.
-________________________________________
-4. Lógica de Rentabilidad y Liquidación
-Para asegurar que el sistema escale correctamente, la lógica de liquidación debe seguir este flujo en el backend (o vía funciones de Antigravity):
-Fórmula de Liquidación:
-$Total = Inversión + (Inversión \times (ROI\_Base + ROI\_Extra))$
-•	ROI_Base: Determinado por el conteo total de piggies activos en la cuenta del usuario.
-•	ROI_Extra: Atributo específico si el Piggy fue adquirido en el Marketplace con bono.
-Opciones de Cierre de Ciclo:
-Al finalizar las 19 semanas (4 meses, 3 semanas), el sistema habilita dos botones:
-1.	Monetizar: Dispara un proceso de transferencia bancaria (Capital + Rentabilidad).
-2.	Consumo: Genera un código QR de canje para reclamar los cortes de carne en la red de Aliados.
-________________________________________
-5. Gamificación (Engagement)
-Para "acelerar" el crecimiento visual en la app, se implementará un sistema de misiones:
-•	Misión Diaria: Entrar a la app a "alimentar" al Piggy.
-•	Misión Social: Compartir el progreso en Instagram/WhatsApp.
-•	Referidos: Por cada referido que compre un Piggy, el usuario recibe un pequeño bono de aceleración o puntos para el Marketplace.
-________________________________________
+# 🐷 Requerimientos y Especificaciones Técnicas — Piggy App
 
-Este es el anexo técnico detallado para el desarrollo de Piggy App. He integrado el campo de WhatsApp como eje central para las automatizaciones de notificaciones y he estructurado los requerimientos siguiendo estándares de documentación de software profesional.
-________________________________________
-Documentación Técnica de Desarrollo: Piggy App
-1. Requerimientos Funcionales (RF)
-Los requerimientos funcionales definen los servicios que el sistema debe proporcionar.
-ID	Requerimiento	Descripción
-RF-01	Registro con WhatsApp	El sistema debe capturar Nombre, Email, Password y WhatsApp (Formato internacional +57).
-RF-02	Validación Legal Obligatoria	Bloqueo de acceso mediante Popup hasta que el usuario acepte Términos y Habeas Data.
-RF-03	Gestión de Compra	Integración de pasarela de pagos para el recaudo de $1.000.000 COP por unidad.
-RF-04	Cálculo de Rentabilidad Dinámica	El sistema debe ajustar el % de retorno (8%, 9%, 10%) automáticamente según el conteo de Piggies activos.
-RF-05	Dashboard de Monitoreo (Granja)	Visualización de progreso (días transcurridos vs. meta) y estado de salud/peso simulado.
-RF-06	Marketplace de Aceleradores	Interfaz para comprar activos con bonos de rentabilidad extra (+1% / +2%).
-RF-07	Módulo de Liquidación	Al cumplirse las 19 semanas, permitir al usuario elegir entre transferencia bancaria o redención en producto físico.
-RF-08	Sistema de Misiones	Lógica de "check-in" diario o referidos para actualizar el estado del Piggy en la base de datos.
-________________________________________
-2. Requerimientos No Funcionales (RNF)
-Definen las propiedades y restricciones del sistema.
-•	Seguridad y Privacidad: * Cifrado de datos en reposo y tránsito mediante SSL.
-o	Autenticación de dos factores (opcional) gestionada por Supabase Auth.
-o	Cumplimiento estricto de la Ley 1581 de 2012 (Habeas Data Colombia).
-•	Disponibilidad: El sistema debe garantizar un uptime del 99.9% al estar alojado en infraestructuras cloud (Supabase/Vercel).
-•	Escalabilidad: La arquitectura debe soportar el incremento de usuarios concurrentes sin degradar el rendimiento de las consultas a la base de datos.
-•	Usabilidad: Diseño Mobile-First optimizado para visualización en dispositivos móviles (PWA).
-•	Integridad de Datos: Uso de triggers en base de datos para asegurar que la rentabilidad no pueda ser alterada manualmente por el frontend.
-________________________________________
-3. Arquitectura Técnica Detallada
-La solución se basa en una arquitectura de Desacoplamiento Total, donde el frontend es puramente visual y la lógica crítica reside en el servidor.
-A. Capa de Presentación (Frontend - Antigravity)
-•	Framework: Basado en React/Vue (según el motor interno de Antigravity).
-•	Estado Global: Gestión de la sesión del usuario y persistencia de los checks legales.
-•	Componentes Clave:
-o	AuthGuard: Verifica si el usuario aceptó términos antes de mostrar el menú.
-o	RentabilityEngine: Componente visual que recalcula el retorno basado en count(piggies).
-B. Capa de Datos y Lógica (Backend - Supabase)
-•	Autenticación: Supabase Auth gestionará los tokens JWT. El campo de WhatsApp se almacenará en la tabla public.profiles.
-•	Base de Datos: PostgreSQL.
-o	Row Level Security (RLS): Los usuarios solo pueden ver sus propios Piggies.
-o	RPC Functions: Funciones del lado del servidor para procesar la liquidación final, evitando manipulaciones externas.
-•	Storage: Para almacenar los contratos digitales firmados o imágenes del Marketplace.
-C. Capa de Integración (Automatización y Notificaciones)
-Como especialista en automatizaciones, aquí es donde la app cobra vida:
-1.	WhatsApp Gateway: Integración con API (Meta Business, Twilio o similares).
-2.	Webhooks de Pago: Al confirmar el pago de $1M COP, la pasarela envía un webhook a una Edge Function de Supabase para crear el registro en la tabla piggies e iniciar el cronómetro de 19 semanas.
-3.	Cron Jobs (Automatización de Notificaciones):
-o	Día 1: Mensaje de bienvenida y "Nacimiento" del Piggy.
-o	Semana 10: Update de peso y recordatorio de misiones.
-o	Semana 19: Notificación push/WhatsApp para elección de liquidación.
-________________________________________
-4. Flujo de Datos de Registro (Detalle Técnico)
-1.	Input: Usuario ingresa datos + WhatsApp.
-2.	Auth Trigger: Supabase crea el usuario en auth.users.
-3.	Profile Trigger: Una función interna inserta automáticamente en public.profiles el registro con habeas_data = false.
-4.	UI Logic: Antigravity detecta el estado false y despliega el Popup.
-5.	Legal Confirmation: El usuario acepta $\rightarrow$ Se actualiza el perfil $\rightarrow$ El AuthGuard libera el acceso a "Granja, Mercado, Aliados".
-________________________________________
+> **Estado:** Documento actualizado y alineado el **18 de Noviembre de 2026** con el Manual de Marca V5 (`MANUAL_DE_MARCA_V5.md`), `PRODUCT.md`, `SYSTEM_BLUEPRINT.md` y el código en producción de `PIGGY APP`.
 
-Aquí tienes la estructura SQL lista para ser ejecutada en el SQL Editor de Supabase. He diseñado estas tablas pensando en tu perfil de automatización: incluyen los campos necesarios para disparar webhooks y manejar la lógica de rentabilidad variable de forma eficiente.
-________________________________________
-Arquitectura de Base de Datos: Piggy App
-Ejecuta este script para crear las tablas, las relaciones y las políticas de seguridad (RLS).
-SQL
--- 1. TABLA DE PERFILES (Extensión de Auth.Users)
+**Piggy App** (*"Tu granja de engorde en tu celular."*) es una plataforma de **agro-comercio digital** operada tecnológicamente por **Valle Piggy S.A.S.** (NIT `902097746-4`) y respaldada productiva y comercialmente por **Granja Villa Morales del Valle S.A.S.** (NIT `900.860.384-7`). Permite a los participantes adquirir cerdos reales en etapa de ceba tecnificada y seguir su crecimiento desde el celular hasta la liquidación en dinero o carne magra fresca. **No constituye una entidad financiera ni un producto de captación.**
+
+---
+
+## 1. Arquitectura del Stack
+
+* **Frontend & Lógica de Interfaz:** Vanilla JavaScript (ES Modules) + Vite 6 + SPA Hash Router (PWA Mobile-First).
+* **Backend, Auth y Base de Datos:** Supabase (PostgreSQL 15 + GoTrue Auth + RLS + Triggers + Storage).
+* **Recaudo y Liquidación:** Pasarela **Wompi** (recargas y compras) + **Llaves Bre-B** (transferencias de liquidación en máx. 72 horas) + entregas directas de carne fresca en Cali y alrededores (máx. 48 horas).
+* **Contratos Digitales:** `pdf-lib` + canvas de firma autógrafa (Contrato Marco Tripartito de 28 cláusulas con código único `PGY-TX-...`).
+* **Despliegue:** GitHub (`amsterdamlab/piggy-app-v2`) vía MCP → Vercel CI/CD.
+
+---
+
+## 2. Requerimientos Funcionales (RF)
+
+| ID | Requerimiento | Descripción Vigente |
+| :--- | :--- | :--- |
+| **RF-01** | Registro con WhatsApp | Captura de Nombre completo, Email, Contraseña, WhatsApp (`+57`), código de Embajador opcional y creación automática del perfil con bono de bienvenida de `$20.000` en Saldo Granja. |
+| **RF-02** | Validación Legal Obligatoria | Modal persistente (`LegalModal`) hasta aceptar Términos, Condiciones y Autorización de Tratamiento de Datos Personales (Ley 1581 de 2012). |
+| **RF-03** | Gestión de Compra Productiva | Compra de Piggies desde `$1.000.000` mediante Cuenta Agro (recarga vía Wompi o Bre-B), emisión inmediata de contrato comercial en PDF firmado y descuento atómico de inventario (`buy_piggy`). |
+| **RF-04** | Cálculo Dinámico de Beneficio Comercial Proyectado | Escala base según Piggies activos: `1 Piggy → 8%`, `2 Piggies → 9%`, `3+ Piggies → 10%`. Bonificaciones adicionales por categoría específica: **Plus (`+1%`)**, **Dorado (`+2%`)**, **Premium (`+3%`)** (rango proyectado total: **`8%` al `13%`**). |
+| **RF-05** | Dashboard de Granja y Curva de Peso | Seguimiento del ciclo oficial de **20 semanas / 144 días (4 meses con 3 semanas)**, con evolución biológica desde **`~6 kg`** (destete) hasta un tope máximo de **`110 kg`** en pie, 3 etapas visuales de fotos y 10 sub-etapas zootécnicas. |
+| **RF-06** | Mercado de Categorías y Avanzados | Catálogo con categorías **Estándar** (`80–90 kg`), **Plus** (`+1%`, `80–90 kg`), **Dorado** (`+2%`, `90–100 kg`), **Premium** (`+3%`, `100–110 kg`) y **Avanzado** (`15–90 días` de avance previo: `avanzado30/45/60/75/90`, `80–90 kg`). |
+| **RF-07** | Liquidación al Día 144 y Doble Saldo | Separación estricta entre **Saldo en Efectivo** (`wallet_balance`, retirable vía Bre-B en máx. 72 h o redimible en carne fresca máx. 48 h en Cali y alrededores) y **Saldo Granja** (`consumption_balance`, no retirable). Libertad total al cierre: 100% dinero, 100% carne, mixto o recompra. |
+| **RF-08** | Gamificación, Misiones y Plan de Embajadores | Misiones permanentes (M1–M9), de ciclo (M10) y Misiones Flash. Plan de Embajadores con liquidación automática en la primera compra del referido: **Bronce (`0–5` → `$20.000`)**, **Plata (`6–15` → `$30.000`)**, **Oro (`16+` → `$50.000`)**. |
+| **RF-09** | Red de Aliados y Piggy Gourmet | Directorio de aliados comerciales y tienda de cortes magros de cerdo con redención de bonos y saldo. |
+
+---
+
+## 3. Requerimientos No Funcionales (RNF)
+
+* **Seguridad y Cumplimiento:** Cifrado SSL, autenticación JWT vía Supabase Auth, Row Level Security (RLS) en todas las tablas y cumplimiento de la Ley 1581 de 2012 (Habeas Data).
+* **Integridad Contable (Veeduría):** El libro mayor `wallet_transactions` es inmutable; ningún saldo en `profiles` puede alterarse sin su registro auditable 1:1.
+* **Usabilidad y Marca V5:** Diseño Mobile-First (`480px` max-width), paleta oficial V5 (`#8A0B52`, `#E91E63`, `#FF4B8B`, `#FF85B3`, `#FFF0F5`, `#FFFFFF`, `#5E0738`, `#2B0519`, `#6E4A5E`), tipografías `Outfit` + `Inter`, iconos SVG `2px` sin emojis en UI, y formato de moneda sin sigla `COP` (`$1.000.000`).
+* **Lenguaje Comercial Estricto:** Se prohíbe el uso de terminología financiera o de promesa fija (*inversión, rentabilidad, ROI, ahorro, capital, fintech, bancos, garantizado*). Todo resultado económico es **proyectado**.
+
+---
+
+## 4. Estructura Base de Tablas en Supabase (Referencia)
+
+> Los nombres de columnas conservan su identificador técnico histórico en PostgreSQL por compatibilidad con producción.
+
+```sql
+-- 1. PERFILES (Extensión de auth.users)
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
+  email TEXT,
   whatsapp TEXT UNIQUE,
+  cedula TEXT,
   terms_accepted BOOLEAN DEFAULT FALSE,
   habeas_data_accepted BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  wallet_balance NUMERIC DEFAULT 0,       -- Saldo en Efectivo
+  consumption_balance NUMERIC DEFAULT 0,  -- Saldo Granja (Bono bienvenida $20.000)
+  referral_code VARCHAR(10) UNIQUE,
+  referred_by UUID REFERENCES public.profiles(id),
+  bank_name TEXT,
+  bank_account_type TEXT,
+  bank_breve_key TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 2. TABLA DE PIGGIES (Activos de los usuarios)
+-- 2. PIGGIES (Activos Agroproductivos)
 CREATE TABLE public.piggies (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  name TEXT,
   status TEXT DEFAULT 'engorde' CHECK (status IN ('engorde', 'completado', 'liquidado')),
-  purchase_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  end_date TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '4 months 3 weeks'),
-  investment_amount NUMERIC DEFAULT 1000000, -- $1.000.000 COP
-  extra_roi_bonus NUMERIC DEFAULT 0, -- Para los aceleradores (+1%, +2%)
-  current_weight NUMERIC DEFAULT 15.0, -- Peso inicial estimado
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  category TEXT DEFAULT 'estandar',       -- estandar, plus, dorado, premium, avanzado30..90
+  purchase_date TIMESTAMPTZ DEFAULT NOW(),
+  end_date TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '144 days'),
+  fixed_end_date TIMESTAMPTZ,
+  investment_amount NUMERIC DEFAULT 1000000, -- Valor de compra ($1.000.000)
+  extra_roi_bonus NUMERIC DEFAULT 0,         -- +0.01 Plus, +0.02 Dorado, +0.03 Premium
+  current_weight NUMERIC DEFAULT 6.0,        -- Peso inicial destete ~6.0 kg
+  final_weight NUMERIC DEFAULT 85.0,         -- Tope estricto 110.0 kg
+  contract_url TEXT,
+  contract_code TEXT,
+  image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. TABLA DE MARKETPLACE (Aceleradores y cerdos especiales)
+-- 3. MARKETPLACE (Inventario de Cerditos)
 CREATE TABLE public.marketplace (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   item_name TEXT NOT NULL,
   description TEXT,
-  price NUMERIC NOT NULL,
-  extra_roi NUMERIC DEFAULT 0, -- Ejemplo: 0.01 para +1%
+  price NUMERIC NOT NULL DEFAULT 1000000,
+  category public.piggy_category_enum DEFAULT 'estandar',
+  extra_roi NUMERIC DEFAULT 0,
+  days_advanced INTEGER DEFAULT 0,
+  days_remaining INTEGER DEFAULT 144,
+  current_weight NUMERIC DEFAULT 6.0,
   stock INTEGER DEFAULT 10,
   image_url TEXT
 );
 
--- 4. TABLA DE ALIADOS
-CREATE TABLE public.allies (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  category TEXT, -- Restaurante, Carnicería, Distribuidor
-  location TEXT, -- Ciudad (Cali, etc.)
-  logo_url TEXT,
-  discount_info TEXT
-);
+-- 4. LIBRO MAYOR INMUTABLE (wallet_transactions)
+-- 5. REFERIDOS / EMBAJADORES (referrals)
+-- 6. ALIADOS (allies), MISIONES (missions / user_flash_missions) Y GOURMET (piggy_gourmet_orders)
+```
 
--- 5. TABLA DE MISIONES (Gamificación)
-CREATE TABLE public.missions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-  mission_name TEXT,
-  is_completed BOOLEAN DEFAULT FALSE,
-  points_earned INTEGER DEFAULT 0,
-  completed_at TIMESTAMP WITH TIME ZONE
-);
-________________________________________
-Seguridad y Privacidad (RLS)
-Es vital activar la seguridad para que un usuario no pueda ver los cerdos de otro.
-SQL
--- Habilitar RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.piggies ENABLE ROW LEVEL SECURITY;
+---
 
--- Políticas: Los usuarios solo ven sus propios datos
-CREATE POLICY "Usuarios pueden ver su propio perfil" 
-ON public.profiles FOR SELECT USING (auth.uid() = id);
+## 5. Fórmulas y Lógica Operativa Clave
 
-CREATE POLICY "Usuarios pueden ver sus propios cerdos" 
-ON public.piggies FOR SELECT USING (auth.uid() = user_id);
-________________________________________
-Puntos Clave de esta Estructura
-•	Lógica de Rentabilidad: No guardamos el "8%, 9% o 10%" de forma estática. En Antigravity, deberás hacer una consulta COUNT a la tabla piggies donde user_id sea el del usuario actual.
-o	Si count == 1 $\rightarrow$ 8%
-o	Si count == 2 $\rightarrow$ 9%
-o	Si count >= 3 $\rightarrow$ 10%
-•	Aceleradores: El campo extra_roi_bonus en la tabla piggies se suma al porcentaje base anterior. Si el usuario compró un acelerador de +1% en el mercado, su rentabilidad final será Base + 0.01.
-•	WhatsApp: He configurado el campo como UNIQUE para evitar duplicados y facilitar tus automatizaciones de notificaciones.
+* **Beneficio comercial proyectado por unidad:**
+  `Total_Proyectado = Valor_Compra + (Valor_Compra * (Beneficio_Base + Extra_Categoría))`
+  * `Beneficio_Base`: `8%` (1 Piggy), `9%` (2 Piggies), `10%` (3+ Piggies).
+  * `Extra_Categoría`: `+1%` (Plus, `80–90 kg`), `+2%` (Dorado, `90–100 kg`), `+3%` (Premium, `100–110 kg`).
+* **Peso objetivo por categoría (tope absoluto `110 kg`):**
+  * Estándar / Avanzado / Plus: `80–90 kg`
+  * Dorado: `90–100 kg`
+  * Premium: `100–110 kg`
+* **Comisiones de Embajadores (en primera compra del referido):**
+  * `0–5` referidos: `$20.000` (Bronce)
+  * `6–15` referidos: `$30.000` (Plata)
+  * `16+` referidos: `$50.000` (Oro)
+* **Respaldo contractual (Contrato Marco Tripartito):** Reserva operativa del `25%` de animales por lote, reserva de contingencia del `5%`, retracto legal en `5` días hábiles y retención del `30%` por desistimiento voluntario extemporáneo.
