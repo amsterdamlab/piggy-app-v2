@@ -49,8 +49,8 @@ export const MOCK_PIGGIES = [
         end_date: new Date(NOW_MS + 49 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0.01,
-        current_weight: 65.5,
-        final_weight: 96.2,
+        current_weight: 60.5,
+        final_weight: 87.2,
         category: 'plus',
         created_at: new Date(NOW_MS - 95 * DAY_MS).toISOString(),
         name: 'Luna',
@@ -66,8 +66,8 @@ export const MOCK_PIGGIES = [
         end_date: new Date(NOW_MS - 6 * DAY_MS).toISOString(),
         investment_amount: 1000000,
         extra_roi_bonus: 0.02,
-        current_weight: 104.5,
-        final_weight: 104.5,
+        current_weight: 96.5,
+        final_weight: 96.5,
         category: 'dorado',
         created_at: new Date(NOW_MS - 150 * DAY_MS).toISOString(),
         name: 'Rocky',
@@ -346,9 +346,9 @@ export function formatCOP(amount) {
 
 /** Calculate days remaining from now until end_date */
 export function getDaysRemaining(endDate) {
-    if (!endDate) return 143;
+    if (!endDate) return 144;
     const end = new Date(endDate);
-    if (isNaN(end.getTime())) return 143;
+    if (isNaN(end.getTime())) return 144;
     const now = new Date();
     const diff = end - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
@@ -384,11 +384,11 @@ export function formatPercentage(value) {
 }
 
 /**
- * Returns a target final weight within the defined category range:
+ * Returns a target final weight within the defined category range (max cap 110.0 kg):
  * - Estándar / Avanzados: 80.0 kg - 90.0 kg
- * - Plus: 90.1 kg - 100.0 kg
- * - Dorado: 100.1 kg - 110.0 kg
- * - Premium: 110.1 kg - 120.0 kg
+ * - Plus (+1%): 80.0 kg - 90.0 kg
+ * - Dorado (+2%): 90.1 kg - 100.0 kg
+ * - Premium (+3%): 100.1 kg - 110.0 kg
  * If a seedId is provided, returns a stable deterministic value.
  */
 export function getCategoryFinalWeight(category, seedId = null) {
@@ -397,14 +397,14 @@ export function getCategoryFinalWeight(category, seedId = null) {
     let max = 90.0;
 
     if (cat.includes('premium')) {
-        min = 110.1;
-        max = 120.0;
-    } else if (cat.includes('dorado') || cat.includes('gold')) {
         min = 100.1;
         max = 110.0;
-    } else if (cat.includes('plus') || cat.includes('silver')) {
+    } else if (cat.includes('dorado') || cat.includes('gold')) {
         min = 90.1;
         max = 100.0;
+    } else if (cat.includes('plus') || cat.includes('silver')) {
+        min = 80.0;
+        max = 90.0;
     }
 
     if (seedId) {
@@ -540,7 +540,7 @@ export function getPiggyGrowthStage(progressPercent, piggyName = 'Tu Piggy') {
  */
 export function formatWeight(weight) {
     const num = Number(weight);
-    if (isNaN(num) || num <= 0) return '15.0 kg';
+    if (isNaN(num) || num <= 0) return '6.0 kg';
     return `${num.toFixed(1)} kg`;
 }
 

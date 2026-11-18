@@ -1,11 +1,11 @@
 -- ==============================================================================
 -- PIGGY APP — BLINDAJE CANÓNICO DEL SISTEMA DE RECOMPENSAS POR REFERIDOS
 -- Escala Oficial:
---   - 0 a 5 referidos completados:  $20.000 COP (Nivel Bronce)
---   - 6 a 10 referidos completados: $30.000 COP (Nivel Plata)
---   - 11+ referidos completados:    $50.000 COP (Nivel Oro)
+--   - 0 a 5 referidos completados:  $20.000 (Nivel Bronce)
+--   - 6 a 15 referidos completados: $30.000 (Nivel Plata)
+--   - 16+ referidos completados:    $50.000 (Nivel Oro)
 --
--- Recompensa permanente en Wallet de Bonos de Consumo (sin fecha de vencimiento)
+-- Bonificación permanente en Saldo Granja (sin fecha de vencimiento)
 -- Ejecutar este script en el SQL Editor de Supabase (Dashboard -> SQL Editor)
 -- ==============================================================================
 
@@ -39,14 +39,14 @@ BEGIN
   FROM public.referrals
   WHERE referrer_id = v_referral.referrer_id AND status = 'completed';
 
-  -- 3. Asignar comisión según la escala oficial acordada:
-  --    - 0 a 5 completados:  $20.000 COP (Bronce)
-  --    - 6 a 10 completados: $30.000 COP (Plata)
-  --    - 11+ completados:    $50.000 COP (Oro)
+  -- 3. Asignar comisión según la escala oficial vigente:
+  --    - 0 a 5 completados:  $20.000 (Bronce)
+  --    - 6 a 15 completados: $30.000 (Plata)
+  --    - 16+ completados:    $50.000 (Oro)
   IF v_completed_count <= 5 THEN
     v_commission := 20000;
     v_tier := 'tier_1';
-  ELSIF v_completed_count <= 10 THEN
+  ELSIF v_completed_count <= 15 THEN
     v_commission := 30000;
     v_tier := 'tier_2';
   ELSE
