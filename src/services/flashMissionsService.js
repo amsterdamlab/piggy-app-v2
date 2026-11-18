@@ -118,9 +118,22 @@ export async function getActiveUserFlashMissions() {
 
     const expiredIds = [];
     const activeList = [];
+    const discontinuedFlashTypes = new Set([
+        'plus', 'silver', 'plata',
+        'avanzado45', 'advanced45',
+        'avanzado60', 'advanced60',
+        'avanzado75', 'advanced75',
+        'avanzado90', 'advanced90',
+    ]);
 
     // Evaluate scheduled_at (start) and expires_at (expiration deadline)
     for (const m of (data || [])) {
+        const rawType = String(m.piggy_type || '').toLowerCase().trim();
+        if (discontinuedFlashTypes.has(rawType)) {
+            expiredIds.push(m.id);
+            continue;
+        }
+
         const expiry = computeExpiry(m.expires_at, m.scheduled_at, m.created_at);
 
         // 1. If scheduled for a future date/time, do not display yet
@@ -163,7 +176,8 @@ export async function getActiveUserFlashMissions() {
  * Supports advanced30 (saves 30 days) and advanced60 (saves 60 days).
  * @param {string} missionId - ID of the user_flash_missions row
  * @param {string} piggyName - Custom name given by user
- * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}\n */
+ * @returns {Promise<{ success: boolean, piggy?: Object, error?: string }>}
+ */
 export async function buyFlashMission(missionId, piggyName, contractUrl = null, contractCode = null) {
     if (isUsingMockData()) {
         const mockPiggy = {
@@ -236,67 +250,50 @@ export async function buyFlashMission(missionId, piggyName, contractUrl = null, 
 
     // Default label fallback if piggyName is missing
     const defaultLabels = {
-        plus: 'Piggy Plus',
-        silver: 'Piggy Plus',
         dorado: 'Piggy Dorado',
         gold: 'Piggy Dorado',
         premium: 'Piggy Premium',
+        avanzado15: 'Piggy Avanzado (15d)',
+        advanced15: 'Piggy Avanzado (15d)',
         avanzado30: 'Piggy Avanzado (30d)',
         advanced30: 'Piggy Avanzado (30d)',
-        avanzado45: 'Piggy Avanzado (45d)',
-        advanced45: 'Piggy Avanzado (45d)',
-        avanzado60: 'Piggy Avanzado (60d)',
-        advanced60: 'Piggy Avanzado (60d)',
-        avanzado75: 'Piggy Avanzado (75d)',
-        advanced75: 'Piggy Avanzado (75d)',
-        avanzado90: 'Piggy Avanzado (90d)',
-        advanced90: 'Piggy Avanzado (90d)',
     };
     const finalName = (piggyName && piggyName.trim().length >= 3)
         ? piggyName.trim()
         : (mission.piggy_label || defaultLabels[mission.piggy_type] || mission.title || 'Piggy Flash');
 
-    // Calculate category, extra ROI bonus, weight and duration based on piggy_type
+    // Calculate category, extra ROI bonus, weight and duration based on piggy_type (V2 rules)
     const rawType = (mission.piggy_type || '').toLowerCase();
     let category = rawType;
     let extraRoiBonus = 0;
-    let daysRemaining = 144;
-    let weight = 15.0;
+    let cycleDays = 122;
+    let daysRemaining = 122;
+    let weight = 6.0;
 
-    if (rawType === 'advanced30' || rawType === 'avanzado30') {
+    if (rawType === 'advanced15' || rawType === 'avanzado15') {
+        category = 'avanzado15';
+        extraRoiBonus = 0;
+        cycleDays = 122;
+        daysRemaining = 107;
+        weight = 15.4;
+    } else if (rawType === 'advanced30' || rawType === 'avanzado30' || rawType === 'avanzado' || rawType === 'advanced') {
         category = 'avanzado30';
         extraRoiBonus = 0;
-        daysRemaining = 114;
-        weight = 35.0;
-    } else if (rawType === 'advanced45' || rawType === 'avanzado45') {
-        category = 'avanzado45';
-        extraRoiBonus = 0;
-        daysRemaining = 99;
-        weight = 45.0;
-    } else if (rawType === 'advanced60' || rawType === 'avanzado60') {
-        category = 'avanzado60';
-        extraRoiBonus = 0;
-        daysRemaining = 84;
-        weight = 55.0;
-    } else if (rawType === 'advanced75' || rawType === 'avanzado75') {
-        category = 'avanzado75';
-        extraRoiBonus = 0;
-        daysRemaining = 69;
-        weight = 65.0;
-    } else if (rawType === 'advanced90' || rawType === 'avanzado90') {
-        category = 'avanzado90';
-        extraRoiBonus = 0;
-        daysRemaining = 54;
-        weight = 75.0;
-    } else if (rawType === 'plus' || rawType === 'silver') {
-        category = 'plus';
-        extraRoiBonus = 0.01;
+        cycleDays = 122;
+        daysRemaining = 92;
+        weight = 24.8;
     } else if (rawType === 'dorado' || rawType === 'gold') {
         category = 'dorado';
         extraRoiBonus = 0.02;
+        cycleDays = 152;
+        daysRemaining = 152;
+        weight = 6.0;
     } else if (rawType === 'premium') {
         category = 'premium';
-        extraRoiBonus = 0.03;
+        extraRoiBonus = 0.04;
+        cycleDays = 152;
+        daysRemaining = 152;
+        weight = 6.0;
     }
 
     const endDate = new Date(Date.now() + (daysRemaining * 24 * 3600000)).toISOString();
@@ -416,20 +413,27 @@ export async function detectAndCreateCycleMissions(piggies) {
     // Si al usuario no le queda ningún cerdo activo (completó su único cerdo), se evalúa con base 1
     const effectivePiggyCount = Math.max(1, activeCount);
 
-    // Encuentra el nivel más alto que cumpla la condición min_piggies configurada en la BD
-    const config = configs.find(c => effectivePiggyCount >= (Number(c.min_piggies) || 1)) || configs[configs.length - 1];
-    if (!config) return;
+    // Propuesta 1 aprobada:
+    // - 1 o 2 Piggies -> Piggy Dorado (+2%, 152 días, 48h)
+    // - 3 o más Piggies -> Piggy Premium (+4%, 152 días, 48h)
+    const rawConfig = configs.find(c => effectivePiggyCount >= (Number(c.min_piggies) || 1)) || configs[configs.length - 1];
+    const isPremiumTier = effectivePiggyCount >= 3 || String(rawConfig?.piggy_type || '').toLowerCase() === 'premium';
+    const targetType = isPremiumTier ? 'premium' : 'dorado';
+    const targetLabel = isPremiumTier ? 'Piggy Premium' : 'Piggy Dorado';
+    const targetExtraRoi = isPremiumTier ? 0.04 : 0.02;
+    const durationHours = rawConfig?.duration_hours || 48;
+    const targetPrice = rawConfig?.price || 1000000;
 
-    const expiresAt = new Date(Date.now() + ((config.duration_hours || 48) * 3600000)).toISOString();
+    const expiresAt = new Date(Date.now() + (durationHours * 3600000)).toISOString();
 
     // Batch insert completed piggies
     const inserts = completedPiggies.map(piggy => ({
         user_id:         user.id,
         piggy_id:        piggy.id,
-        piggy_type:      config.piggy_type,
-        piggy_label:     config.piggy_label,
-        extra_roi_bonus: config.extra_roi_bonus,
-        price:           config.price || 1000000,
+        piggy_type:      targetType,
+        piggy_label:     targetLabel,
+        extra_roi_bonus: targetExtraRoi,
+        price:           targetPrice,
         expires_at:      expiresAt,
     }));
 
@@ -468,10 +472,20 @@ export async function getActiveCycleMissions() {
         return [];
     }
 
-    return (data || []).map(m => ({
-        ...m,
-        remainingMs: Math.max(0, new Date(m.expires_at).getTime() - Date.now()),
-    }));
+    return (data || []).map(m => {
+        const rawT = String(m.piggy_type || '').toLowerCase();
+        const isPrem = rawT === 'premium';
+        const normalizedType = isPrem ? 'premium' : 'dorado';
+        const normalizedLabel = isPrem ? 'Piggy Premium' : 'Piggy Dorado';
+        const normalizedBonus = isPrem ? 0.04 : 0.02;
+        return {
+            ...m,
+            piggy_type: normalizedType,
+            piggy_label: normalizedLabel,
+            extra_roi_bonus: normalizedBonus,
+            remainingMs: Math.max(0, new Date(m.expires_at).getTime() - Date.now()),
+        };
+    });
 }
 
 /**
@@ -536,17 +550,21 @@ export async function buyCycleCompletionMission(missionId, piggyName, contractUr
         ? piggyName.trim()
         : mission.piggy_label;
 
+    const isPremCycle = String(mission.piggy_type || '').toLowerCase() === 'premium';
+    const cycleCategory = isPremCycle ? 'premium' : 'dorado';
+    const cycleExtraRoi = isPremCycle ? 0.04 : 0.02;
+
     const insertPayload = {
         user_id:           user.id,
         name:              finalName,
         full_name:         profile?.full_name || '',
         investment_amount: mission.price || 1000000,
         status:            'engorde',
-        extra_roi_bonus:   mission.extra_roi_bonus || 0,
-        category:          mission.piggy_type,
-        current_weight:    15.0,
+        extra_roi_bonus:   cycleExtraRoi,
+        category:          cycleCategory,
+        current_weight:    6.0,
         purchase_date:     new Date().toISOString(),
-        end_date:          new Date(Date.now() + (143 * 24 * 3600000)).toISOString(),
+        end_date:          new Date(Date.now() + (152 * 24 * 3600000)).toISOString(),
     };
     if (contractUrl) insertPayload.contract_url = contractUrl;
     if (contractCode) insertPayload.contract_code = contractCode;

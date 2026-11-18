@@ -15,6 +15,8 @@ import {
     getDaysRemaining,
     simulateWeight,
     getCategoryFinalWeight,
+    getCategoryCycleDays,
+    resolvePiggyPlanVersion,
     getPiggyGrowthStage,
     formatCOP,
     formatPercentage,
@@ -27,6 +29,8 @@ export {
     getDaysRemaining,
     simulateWeight,
     getCategoryFinalWeight,
+    getCategoryCycleDays,
+    resolvePiggyPlanVersion,
     getPiggyGrowthStage,
     formatCOP,
     formatPercentage,
@@ -129,13 +133,15 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
             name: piggyName,
             status: 'engorde',
             purchase_date: new Date().toISOString(),
-            // default ~4mo 3wk
-            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 144).toISOString(),
+            // default 4 months (122 days) for standard V2 piggy
+            end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 122).toISOString(),
             investment_amount: 1000000,
             extra_roi_bonus: 0,
             category: 'estandar',
+            plan_version: 'v2_2026',
+            cycle_days: 122,
             current_weight: 6.0,
-            final_weight: getCategoryFinalWeight('estandar', mockId),
+            final_weight: getCategoryFinalWeight('estandar', mockId, 'v2_2026'),
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
             image_url: defaultImageUrl,
         };
@@ -170,8 +176,12 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         name: piggyName,
         investment_amount: 1000000,
         status: 'engorde',
+        category: 'estandar',
+        plan_version: 'v2_2026',
+        cycle_days: 122,
+        end_date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 122).toISOString(),
         current_weight: 6.0,
-        final_weight: getCategoryFinalWeight('estandar'),
+        final_weight: getCategoryFinalWeight('estandar', null, 'v2_2026'),
         image_url: defaultImageUrl,
     };
     if (contractUrl) {
@@ -185,10 +195,12 @@ export async function adoptPiggy(piggyName, contractUrl = null) {
         .single();
 
     if (error) {
-        // If contract_url or image_url or final_weight column doesn't exist yet, retry without non-essential fields
+        // If optional columns don't exist yet, retry without non-essential fields
         delete insertPayload.contract_url;
         delete insertPayload.image_url;
         delete insertPayload.final_weight;
+        delete insertPayload.plan_version;
+        delete insertPayload.cycle_days;
         const { data: retryData, error: retryError } = await client
             .from('piggies')
             .insert(insertPayload)
@@ -310,26 +322,35 @@ function enrichPiggyData(piggy) {
     const rawBonus = piggy.extra_roi_bonus ?? piggy.extra_roi ?? 0;
     const extraRoiBonus = parseFloat(rawBonus) || 0;
 
-    // Fixed cycle duration in days (144 days)
-    const CYCLE_TOTAL_DAYS = 144;
+    // Resolve plan cohort ('v1_legacy' vs 'v2_2026')
+    const planVersion = resolvePiggyPlanVersion(piggy);
+
+    // Determine category according to plan version
+    const fallbackCat = planVersion === 'v1_legacy'
+        ? (extraRoiBonus >= 0.03 ? 'premium' : extraRoiBonus >= 0.02 ? 'dorado' : extraRoiBonus >= 0.01 ? 'plus' : 'estandar')
+        : (extraRoiBonus >= 0.04 ? 'premium' : extraRoiBonus >= 0.02 ? 'dorado' : 'estandar');
+    const rawCategory = String(piggy.category || fallbackCat).toLowerCase();
+
+    // Dynamic cycle duration per piggy (144 for v1_legacy; 122 for v2 standard/advanced; 152 for v2 dorado/premium)
+    const CYCLE_TOTAL_DAYS = getCategoryCycleDays(rawCategory, planVersion, piggy.cycle_days || piggy.cycleDays);
 
     // Calculate days remaining with fallback
     const endDateStr = piggy.end_date || piggy.endDate || piggy.purchase_date;
-    let daysLeft = getDaysRemaining(endDateStr);
-    if (isNaN(daysLeft)) daysLeft = 144;
+    let daysLeft = getDaysRemaining(endDateStr, CYCLE_TOTAL_DAYS);
+    if (isNaN(daysLeft)) daysLeft = CYCLE_TOTAL_DAYS;
 
-    // Calculate progress based on REVERSE logic (144 - daysLeft)
+    // Calculate progress based on REVERSE logic (CYCLE_TOTAL_DAYS - daysLeft)
     const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysLeft);
     let progress = Math.round((daysElapsed / CYCLE_TOTAL_DAYS) * 100);
     if (isNaN(progress)) progress = 0;
     progress = Math.min(100, Math.max(0, progress));
 
-    // Determine category and target final weight (strict cap: 110.0 kg)
-    const rawCategory = String(piggy.category || (extraRoiBonus >= 0.03 ? 'premium' : extraRoiBonus >= 0.02 ? 'dorado' : extraRoiBonus >= 0.01 ? 'plus' : 'estandar')).toLowerCase();
+    // Determine target final weight (cap 110 kg for v1_legacy, 120 kg for v2_2026)
+    const maxWeightCap = planVersion === 'v1_legacy' ? 110.0 : 120.0;
     const rawFinalWeight = parseFloat(piggy.final_weight);
     const finalWeight = (rawFinalWeight && !isNaN(rawFinalWeight) && rawFinalWeight > 0)
-        ? Math.min(110.0, rawFinalWeight)
-        : getCategoryFinalWeight(rawCategory, piggy.id);
+        ? Math.min(maxWeightCap, rawFinalWeight)
+        : getCategoryFinalWeight(rawCategory, piggy.id, planVersion);
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
     const dbWeight = parseFloat(piggy.current_weight || piggy.weight);
@@ -343,9 +364,10 @@ function enrichPiggyData(piggy) {
         weight = simulateWeight(progress, finalWeight, 6.0);
     }
 
-    // Determine current growth stage
+    // Determine current visual growth stage (1, 2 or 3)
+    const stage3ThresholdDays = CYCLE_TOTAL_DAYS === 122 ? 75 : 90;
     let currentStage;
-    if (isComplete || daysElapsed > 90) {
+    if (isComplete || daysElapsed > stage3ThresholdDays) {
         currentStage = 3;
     } else if (daysElapsed > 30) {
         currentStage = 2;
@@ -379,6 +401,8 @@ function enrichPiggyData(piggy) {
         investment_amount: investmentAmount,
         extra_roi_bonus: extraRoiBonus,
         category: rawCategory,
+        plan_version: planVersion,
+        cycle_days: CYCLE_TOTAL_DAYS,
         final_weight: finalWeight,
         progress,
         daysLeft,
@@ -394,6 +418,8 @@ function enrichPiggyData(piggy) {
 
 /**
  * Get summary stats for the dashboard.
+ * Supports mixed cohorts: v1_legacy piggies scale on 8/9/10% while v2_2026 piggies scale on 12/13/14%
+ * using the total active piggy count in the user's farm.
  */
 export function getDashboardStats(piggies = []) {
     const validPiggies = (piggies || []).filter(Boolean);
@@ -401,7 +427,26 @@ export function getDashboardStats(piggies = []) {
     const availablePiggies = validPiggies.filter((p) => p.status === 'completado' || p.isComplete || p.status === 'liquidado');
 
     const piggyCount = activePiggies.length;
-    const baseROI = calculateBaseROI(piggyCount);
+
+    // Assign each piggy its cohort-aware baseROI based on current active piggy volume
+    activePiggies.forEach((p) => {
+        const pPlan = p.plan_version || resolvePiggyPlanVersion(p);
+        p.baseROI = calculateBaseROI(piggyCount, pPlan);
+    });
+    availablePiggies.forEach((p) => {
+        const pPlan = p.plan_version || resolvePiggyPlanVersion(p);
+        const lockedBase = parseFloat(p.locked_base_roi);
+        p.baseROI = (!isNaN(lockedBase) && lockedBase > 0)
+            ? lockedBase
+            : calculateBaseROI(Math.max(1, piggyCount), pPlan);
+    });
+
+    // Header display baseROI: if user only has v1_legacy active piggies, show v1_legacy rate (8/9/10%);
+    // if user has any v2_2026 active piggy (or 0 active piggies), show v2_2026 rate (12/13/14%).
+    const onlyLegacyActive = activePiggies.length > 0 && activePiggies.every(
+        (p) => (p.plan_version || resolvePiggyPlanVersion(p)) === 'v1_legacy'
+    );
+    const baseROI = calculateBaseROI(piggyCount, onlyLegacyActive ? 'v1_legacy' : 'v2_2026');
 
     // 1. Adquisición Bonos de Preventa (Active Investment)
     const adquisicionBonos = activePiggies.reduce((sum, p) => {
@@ -409,11 +454,12 @@ export function getDashboardStats(piggies = []) {
         return sum + inv;
     }, 0);
 
-    // 2. Diferencial de Preventa (Projected Gain for Active)
+    // 2. Diferencial de Preventa (Projected Gain for Active, evaluated per piggy cohort)
     const diferencialPreventa = activePiggies.reduce((sum, p) => {
         const inv = parseFloat(p.investment_amount || p.price || p.amount) || 0;
         const extraRoi = parseFloat(p.extra_roi_bonus || p.extra_roi) || 0;
-        const totalReturn = calculateTotalReturn(inv, baseROI, extraRoi);
+        const pBaseRoi = p.baseROI ?? calculateBaseROI(piggyCount, p.plan_version || resolvePiggyPlanVersion(p));
+        const totalReturn = calculateTotalReturn(inv, pBaseRoi, extraRoi);
         const gain = totalReturn - inv;
         return sum + (isNaN(gain) ? 0 : Math.max(0, gain));
     }, 0);
@@ -425,7 +471,8 @@ export function getDashboardStats(piggies = []) {
         }
         const inv = parseFloat(p.investment_amount || p.price || p.amount) || 0;
         const extraRoi = parseFloat(p.extra_roi_bonus || p.extra_roi) || 0;
-        const totalReturn = calculateTotalReturn(inv, baseROI, extraRoi);
+        const pBaseRoi = p.baseROI ?? calculateBaseROI(Math.max(1, piggyCount), p.plan_version || resolvePiggyPlanVersion(p));
+        const totalReturn = calculateTotalReturn(inv, pBaseRoi, extraRoi);
         return sum + (isNaN(totalReturn) ? 0 : totalReturn);
     }, 0);
 
@@ -435,9 +482,9 @@ export function getDashboardStats(piggies = []) {
 
     if (activePiggies.length > 0) {
         const closestPiggy = activePiggies.reduce((prev, curr) =>
-            ((prev.daysLeft ?? 144) < (curr.daysLeft ?? 144)) ? prev : curr
+            ((prev.daysLeft ?? 152) < (curr.daysLeft ?? 152)) ? prev : curr
         );
-        nextCloseDays = closestPiggy.daysLeft ?? 144;
+        nextCloseDays = closestPiggy.daysLeft ?? 122;
         nextCloseProgress = closestPiggy.progress ?? 0;
     }
 
@@ -462,18 +509,18 @@ export function getDashboardStats(piggies = []) {
 
 /**
  * Buy a piggy from the marketplace.
- * The current_month of the item determines how many days remain in the cycle.
+ * Uses V2 cycle durations: 122 days for Estándar/Avanzado, 152 days for Dorado/Premium.
  * @param {Object} item - The marketplace item
  * @param {string|null} customName - Optional custom name for the piggy
  * @param {string|null} contractUrl - Optional URL of the signed contract PDF
  */
 export async function buyMarketplaceItem(item, customName = null, contractUrl = null, customContractCode = null) {
-    // Calculate days remaining based on daysRemaining, daysAdvanced, or current_month
-    const CYCLE_TOTAL_DAYS = 144;
+    const rawCat = String(item.category || 'estandar').toLowerCase();
+    const CYCLE_TOTAL_DAYS = getCategoryCycleDays(rawCat, 'v2_2026', item.cycle_days || item.cycleTotalDays);
     const currentMonth = item.currentMonth || item.current_month || 1;
     let daysRemaining = item.daysRemaining || item.days_remaining;
     if (!daysRemaining || daysRemaining <= 0) {
-        const daysElapsed = item.daysAdvanced || item.days_advanced || Math.max(0, (currentMonth - 1) * 30);
+        const daysElapsed = item.daysAdvanced ?? item.days_advanced ?? (rawCat.includes('30') ? 30 : rawCat.includes('15') ? 15 : 0);
         daysRemaining = Math.max(1, CYCLE_TOTAL_DAYS - daysElapsed);
     }
     const finalName = customName || item.piggy_name || item.item_name || item.name || 'Tu Piggy';
@@ -500,9 +547,11 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         }
     }
 
+    const effectiveExtraRoi = rawCat === 'premium' ? 0.04 : (rawCat === 'dorado' || rawCat === 'gold') ? 0.02 : (item.extra_roi || 0);
+
     if (isUsingMockData()) {
         const mockId = `mock-${Date.now()}`;
-        const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', mockId);
+        const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(rawCat, mockId, 'v2_2026');
         const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysRemaining);
         const currentWeight = item.current_weight || (daysElapsed > 0 ? Number((6.0 + (finalWeight - 6.0) * (daysElapsed / CYCLE_TOTAL_DAYS)).toFixed(1)) : 6.0);
         const newPiggy = {
@@ -514,8 +563,10 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             end_date: calculatedEndDate,
             fixed_end_date: fixedEndDateStr || null,
             investment_amount: item.price,
-            extra_roi_bonus: item.extra_roi || 0,
-            category: item.category || 'estandar',
+            extra_roi_bonus: effectiveExtraRoi,
+            category: rawCat,
+            plan_version: 'v2_2026',
+            cycle_days: CYCLE_TOTAL_DAYS,
             current_weight: currentWeight,
             final_weight: finalWeight,
             contract_url: contractUrl || '/contracts/contrato_base.pdf',
@@ -611,12 +662,16 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             || (typeof parsedRpcData === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsedRpcData.trim()) ? parsedRpcData.trim() : null);
 
         if (createdPiggyId) {
-            const updatePayload = {};
+            const updatePayload = {
+                end_date: calculatedEndDate,
+                extra_roi_bonus: effectiveExtraRoi,
+                category: rawCat,
+            };
             if (contractUrl) updatePayload.contract_url = contractUrl;
             if (calculatedCode) updatePayload.contract_code = calculatedCode;
             if (finalImageUrl) updatePayload.image_url = finalImageUrl;
 
-            const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar', createdPiggyId);
+            const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(rawCat, createdPiggyId, 'v2_2026');
             if (finalWeight) updatePayload.final_weight = finalWeight;
 
             if (Object.keys(updatePayload).length > 0) {
@@ -646,8 +701,10 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
                 name: finalName,
                 investment_amount: item.price,
                 status: 'engorde',
-                extra_roi_bonus: item.extra_roi || 0,
-                category: item.category || 'estandar',
+                extra_roi_bonus: effectiveExtraRoi,
+                category: rawCat,
+                plan_version: 'v2_2026',
+                cycle_days: CYCLE_TOTAL_DAYS,
                 current_weight: item.current_weight || 6.0,
                 final_weight: finalWeight,
                 purchase_date: new Date().toISOString(),
@@ -687,10 +744,12 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             name: finalName,
             investment_amount: item.price,
             status: 'engorde',
-            extra_roi_bonus: item.extra_roi || 0,
-            category: item.category || 'estandar',
+            extra_roi_bonus: effectiveExtraRoi,
+            category: rawCat,
+            plan_version: 'v2_2026',
+            cycle_days: CYCLE_TOTAL_DAYS,
             current_weight: item.current_weight || 6.0,
-            final_weight: parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar'),
+            final_weight: parseFloat(item.final_weight) || getCategoryFinalWeight(rawCat, null, 'v2_2026'),
             purchase_date: new Date().toISOString(),
             end_date: calculatedEndDate,
             fixed_end_date: fixedEndDateStr || null,
@@ -756,8 +815,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
     }
 
     // 2. Compute parameters
-    const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar');
-    const daysElapsed = Math.max(0, (currentMonth - 1) * 30);
+    const finalWeight = parseFloat(item.final_weight) || getCategoryFinalWeight(rawCat, null, 'v2_2026');
+    const daysElapsed = Math.max(0, CYCLE_TOTAL_DAYS - daysRemaining);
     const fallbackCode = calculatedCode || `#${Date.now().toString().slice(-6)}`;
 
     // 3. Insert into piggies
@@ -766,8 +825,10 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         name: finalName,
         investment_amount: item.price,
         status: 'engorde',
-        extra_roi_bonus: item.extra_roi || 0,
-        category: item.category || 'estandar',
+        extra_roi_bonus: effectiveExtraRoi,
+        category: rawCat,
+        plan_version: 'v2_2026',
+        cycle_days: CYCLE_TOTAL_DAYS,
         current_weight: item.current_weight || (daysElapsed > 0 ? Number((6.0 + (finalWeight - 6.0) * (daysElapsed / CYCLE_TOTAL_DAYS)).toFixed(1)) : 6.0),
         final_weight: finalWeight,
         purchase_date: new Date().toISOString(),
@@ -790,6 +851,8 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
         delete insertPayload.contract_code;
         delete insertPayload.final_weight;
         delete insertPayload.fixed_end_date;
+        delete insertPayload.plan_version;
+        delete insertPayload.cycle_days;
         const { data: retryData, error: retryErr } = await client
             .from('piggies')
             .insert(insertPayload)
