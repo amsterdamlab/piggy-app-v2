@@ -324,9 +324,12 @@ function enrichPiggyData(piggy) {
     if (isNaN(progress)) progress = 0;
     progress = Math.min(100, Math.max(0, progress));
 
-    // Determine category and target final weight
+    // Determine category and target final weight (strict cap: 110.0 kg)
     const rawCategory = String(piggy.category || (extraRoiBonus >= 0.03 ? 'premium' : extraRoiBonus >= 0.02 ? 'dorado' : extraRoiBonus >= 0.01 ? 'plus' : 'estandar')).toLowerCase();
-    const finalWeight = parseFloat(piggy.final_weight) || getCategoryFinalWeight(rawCategory, piggy.id);
+    const rawFinalWeight = parseFloat(piggy.final_weight);
+    const finalWeight = (rawFinalWeight && !isNaN(rawFinalWeight) && rawFinalWeight > 0)
+        ? Math.min(110.0, rawFinalWeight)
+        : getCategoryFinalWeight(rawCategory, piggy.id);
 
     const isComplete = progress >= 100 || piggy.status === 'completado' || daysLeft === 0;
     const dbWeight = parseFloat(piggy.current_weight || piggy.weight);
@@ -645,7 +648,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
                 status: 'engorde',
                 extra_roi_bonus: item.extra_roi || 0,
                 category: item.category || 'estandar',
-                current_weight: item.current_weight || 15.0,
+                current_weight: item.current_weight || 6.0,
                 final_weight: finalWeight,
                 purchase_date: new Date().toISOString(),
                 end_date: calculatedEndDate,
@@ -686,7 +689,7 @@ export async function buyMarketplaceItem(item, customName = null, contractUrl = 
             status: 'engorde',
             extra_roi_bonus: item.extra_roi || 0,
             category: item.category || 'estandar',
-            current_weight: item.current_weight || 15.0,
+            current_weight: item.current_weight || 6.0,
             final_weight: parseFloat(item.final_weight) || getCategoryFinalWeight(item.category || 'estandar'),
             purchase_date: new Date().toISOString(),
             end_date: calculatedEndDate,
