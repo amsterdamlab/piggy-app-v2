@@ -90,19 +90,19 @@ export const MOCK_MARKETPLACE = [
     },
     {
         id: 'item-002',
-        item_name: 'Piggy Plus',
-        description: 'Cerdo con comercialización en mercado plus. Bono de +1% adicional.',
+        item_name: 'Piggy Avanzado (15 días)',
+        description: 'Cerdo en etapa de engorde con 15 días de avance. Ahorra tiempo de espera.',
         price: 1000000,
-        extra_roi: 0.01,
+        extra_roi: 0,
         stock: 20,
-        current_weight: 6.0,
+        current_weight: 15.4,
         image_url: null,
-        category: 'plus',
+        category: 'avanzado15',
     },
     {
         id: 'item-003',
         item_name: 'Piggy Dorado',
-        description: 'Cerdo con comercialización plus premium. Bono de +2% adicional.',
+        description: 'Cerdo con comercialización en empresas, colegios y hospitales. Bono de +2% adicional.',
         price: 1000000,
         extra_roi: 0.02,
         stock: 10,
@@ -113,9 +113,9 @@ export const MOCK_MARKETPLACE = [
     {
         id: 'item-004',
         item_name: 'Piggy Premium',
-        description: 'Cerdo con comercialización exclusiva. Bono de +3% adicional.',
+        description: 'Cerdo con comercialización exclusiva en restaurantes y hospedajes premium. Bono de +4% adicional.',
         price: 1000000,
-        extra_roi: 0.03,
+        extra_roi: 0.04,
         stock: 10,
         current_weight: 6.0,
         image_url: null,
@@ -344,11 +344,70 @@ export function formatCOP(amount) {
     }).format(num);
 }
 
+/** Cutoff timestamp for V2 plan (2026-11-18 12:00:00 -05:00) */
+export const PLAN_V2_CUTOFF_ISO = '2026-11-18T17:00:00.000Z';
+
+/**
+ * Determine whether a piggy belongs to 'v1_legacy' (bought before V2 rollout)
+ * or 'v2_2026' (new rules: 12/13/14% base, 122d standard/advanced, 152d dorado/premium).
+ */
+export function resolvePiggyPlanVersion(piggy) {
+    if (!piggy) return 'v2_2026';
+    if (piggy.plan_version === 'v1_legacy' || piggy.planVersion === 'v1_legacy') return 'v1_legacy';
+    if (piggy.plan_version === 'v2_2026' || piggy.planVersion === 'v2_2026') return 'v2_2026';
+
+    // Explicit cycle_days check
+    const explicitDays = Number(piggy.cycle_days || piggy.cycleDays || 0);
+    if (explicitDays === 144 || explicitDays === 143) return 'v1_legacy';
+    if (explicitDays === 122 || explicitDays === 152) return 'v2_2026';
+
+    // Legacy-only categories or legacy-only extra_roi_bonus values
+    const cat = String(piggy.category || '').toLowerCase();
+    if (['plus', 'silver', 'avanzado45', 'advanced45', 'avanzado60', 'advanced60', 'avanzado75', 'advanced75', 'avanzado90', 'advanced90'].includes(cat)) {
+        return 'v1_legacy';
+    }
+    const extraRoi = Number(piggy.extra_roi_bonus ?? piggy.extra_roi ?? 0);
+    if (extraRoi > 0 && Math.abs(extraRoi - 0.01) < 0.001) return 'v1_legacy';
+    if (extraRoi > 0 && Math.abs(extraRoi - 0.03) < 0.001) return 'v1_legacy';
+    if (extraRoi > 0 && Math.abs(extraRoi - 0.016) < 0.001) return 'v1_legacy';
+
+    // Purchase date / creation date check against rollout cutoff
+    const pDateStr = piggy.purchase_date || piggy.created_at;
+    if (pDateStr) {
+        const pMs = new Date(pDateStr).getTime();
+        const cutoffMs = new Date(PLAN_V2_CUTOFF_ISO).getTime();
+        if (!isNaN(pMs) && pMs < cutoffMs) {
+            return 'v1_legacy';
+        }
+    }
+
+    return 'v2_2026';
+}
+
+/**
+ * Get the total cycle duration in days for a given category and plan version.
+ * - v1_legacy: 144 days
+ * - v2_2026:
+ *   - Estándar & Avanzado (15d / 30d): 122 days (4 months)
+ *   - Dorado & Premium: 152 days (5 months)
+ */
+export function getCategoryCycleDays(category, planVersion = 'v2_2026', explicitCycleDays = null) {
+    const exp = Number(explicitCycleDays);
+    if (!isNaN(exp) && exp > 0) return exp;
+    if (planVersion === 'v1_legacy') return 144;
+
+    const cat = String(category || 'estandar').toLowerCase();
+    if (cat.includes('dorado') || cat.includes('gold') || cat.includes('premium')) {
+        return 152;
+    }
+    return 122;
+}
+
 /** Calculate days remaining from now until end_date */
-export function getDaysRemaining(endDate) {
-    if (!endDate) return 144;
+export function getDaysRemaining(endDate, fallbackDays = 122) {
+    if (!endDate) return fallbackDays;
     const end = new Date(endDate);
-    if (isNaN(end.getTime())) return 144;
+    if (isNaN(end.getTime())) return fallbackDays;
     const now = new Date();
     const diff = end - now;
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
@@ -364,11 +423,20 @@ export function getProgressPercentage(purchaseDate, endDate) {
     return Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
 }
 
-/** Get the base ROI percentage based on piggy count */
-export function calculateBaseROI(piggyCount) {
-    if (piggyCount >= 3) return 0.10;
-    if (piggyCount === 2) return 0.09;
-    return 0.08;
+/**
+ * Get the base commercial benefit percentage based on active piggy count and plan version.
+ * - v1_legacy: 1 -> 8%, 2 -> 9%, 3+ -> 10%
+ * - v2_2026:   1 -> 12%, 2 -> 13%, 3+ -> 14%
+ */
+export function calculateBaseROI(piggyCount, planVersion = 'v2_2026') {
+    if (planVersion === 'v1_legacy') {
+        if (piggyCount >= 3) return 0.10;
+        if (piggyCount === 2) return 0.09;
+        return 0.08;
+    }
+    if (piggyCount >= 3) return 0.14;
+    if (piggyCount === 2) return 0.13;
+    return 0.12;
 }
 
 /** Calculate total return for a piggy */
@@ -384,27 +452,43 @@ export function formatPercentage(value) {
 }
 
 /**
- * Returns a target final weight within the defined category range (max cap 110.0 kg):
- * - Estándar / Avanzados: 80.0 kg - 90.0 kg
- * - Plus (+1%): 80.0 kg - 90.0 kg
- * - Dorado (+2%): 90.1 kg - 100.0 kg
- * - Premium (+3%): 100.1 kg - 110.0 kg
+ * Returns a target final weight within the defined category range:
+ * - v2_2026 (New rules):
+ *   - Estándar / Avanzados (122 días): 75.0 kg - 90.0 kg
+ *   - Dorado (+2%, 152 días): 90.1 kg - 105.0 kg
+ *   - Premium (+4%, 152 días): 105.1 kg - 120.0 kg
+ * - v1_legacy (Existing piggies):
+ *   - Estándar / Avanzados / Plus: 80.0 kg - 90.0 kg
+ *   - Dorado: 90.1 kg - 100.0 kg
+ *   - Premium: 100.1 kg - 110.0 kg
  * If a seedId is provided, returns a stable deterministic value.
  */
-export function getCategoryFinalWeight(category, seedId = null) {
+export function getCategoryFinalWeight(category, seedId = null, planVersion = 'v2_2026') {
     const cat = String(category || 'estandar').toLowerCase();
-    let min = 80.0;
+    let min = 75.0;
     let max = 90.0;
 
-    if (cat.includes('premium')) {
-        min = 100.1;
-        max = 110.0;
-    } else if (cat.includes('dorado') || cat.includes('gold')) {
-        min = 90.1;
-        max = 100.0;
-    } else if (cat.includes('plus') || cat.includes('silver')) {
+    if (planVersion === 'v1_legacy') {
         min = 80.0;
         max = 90.0;
+        if (cat.includes('premium')) {
+            min = 100.1;
+            max = 110.0;
+        } else if (cat.includes('dorado') || cat.includes('gold')) {
+            min = 90.1;
+            max = 100.0;
+        }
+    } else {
+        if (cat.includes('premium')) {
+            min = 105.1;
+            max = 120.0;
+        } else if (cat.includes('dorado') || cat.includes('gold')) {
+            min = 90.1;
+            max = 105.0;
+        } else {
+            min = 75.0;
+            max = 90.0;
+        }
     }
 
     if (seedId) {

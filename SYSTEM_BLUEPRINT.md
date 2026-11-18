@@ -60,12 +60,15 @@
 ### D. Tabla `public.piggies` (Activos Agroproductivos en Granja)
 * **`id`** `UUID` (PK): Identificador único del cerdito.
 * **`user_id`** `UUID` (FK `profiles.id`): Titular del activo.
-* **`status`** `TEXT` (`engorde`, `completado`, `liquidado`): Estado del ciclo de **20 semanas / 144 días (4 meses con 3 semanas)**.
+* **`status`** `TEXT` (`engorde`, `completado`, `liquidado`): Estado del ciclo productivo.
+* **`plan_version`** `TEXT` (`v1_legacy`, `v2_2026`): Cohorte de reglas bajo la cual fue adquirido el cerdito.
+* **`cycle_days`** `INTEGER`: Duración total del ciclo del cerdito (`144` días para `v1_legacy`; `122` días [4 meses] para Estándar/Avanzado `v2_2026`; `152` días [5 meses] para Dorado/Premium `v2_2026`).
 * **`purchase_date`**, **`end_date`**, **`fixed_end_date`** `TIMESTAMP`: Fechas de inicio y cosecha del ciclo.
 * **`investment_amount`** `NUMERIC`: Valor de compra del Piggy (desde `$1.000.000`).
-* **`extra_roi_bonus`** `NUMERIC`: Puntos adicionales proyectados de la categoría (`0.01` Plus, `0.02` Dorado, `0.03` Premium).
-* **`category`** `TEXT`: `estandar`, `plus`, `dorado`, `premium`, `avanzado30`, `avanzado45`, `avanzado60`, `avanzado75`, `avanzado90`.
-* **`current_weight`**, **`final_weight`** `NUMERIC`: Evolución biológica desde **`~6 kg`** (destete) hasta un tope estricto de **`110 kg`** en pie según categoría.
+* **`extra_roi_bonus`** `NUMERIC`: Puntos adicionales proyectados de la categoría (`0.02` Dorado, `0.04` Premium en `v2_2026`; `0.01` Plus y `0.03` Premium en `v1_legacy`).
+* **`locked_base_roi`**, **`final_return_amount`** `NUMERIC`: Porcentaje base y monto final congelados en el instante en que el cerdito completa su ciclo.
+* **`category`** `TEXT`: `estandar`, `avanzado15`, `avanzado30`, `dorado`, `premium` *(y categorías históricas `plus`, `avanzado45..90` en `v1_legacy`)*.
+* **`current_weight`**, **`final_weight`** `NUMERIC`: Evolución biológica desde **`~6 kg`** (destete) hasta `75–90 kg` (Estándar/Avanzado), `90–105 kg` (Dorado) o `105–120 kg` (Premium).
 * **`contract_url`**, **`contract_code`** `TEXT`: PDF firmado y código único de propiedad (`PGY-TX-...`).
 * **`image_url`** `TEXT`: Fotografía de la etapa visual actual (`stage1` / `stage2` / `stage3`).
 
@@ -91,21 +94,28 @@
 
 ---
 
-## 💼 4. Reglas de Negocio Inmutables (Alineadas a Manual V5 y `PRODUCT.md`)
+## 💼 4. Reglas de Negocio Inmutables (Modalidad Vigente `v2_2026` + Cohorte Legada `v1_legacy`)
 
-1. **Ciclo Productivo y Escala de Beneficio Comercial Proyectado:**
+1. **Ciclo Productivo, Categorías y Escala de Beneficio Comercial Proyectado (`v2_2026`):**
    * **Valor base de compra:** Desde `$1.000.000` por cerdito en destete (`~6 kg`).
-   * **Duración oficial:** **20 semanas / 144 días (4 meses con 3 semanas)** hasta máximo **`110 kg`** en pie.
-   * **Beneficio comercial base proyectado** (según cantidad de Piggies activos):
-     * **1 Piggy activo:** `8%` (`$1.080.000` proyectado por unidad base).
-     * **2 Piggies activos:** `9%` (`$1.090.000` proyectado por unidad base).
-     * **3 o más Piggies activos:** `10%` (`$1.100.000` proyectado por unidad base).
-   * **Categorías de Cerditos** (el porcentaje adicional aplica **exclusivamente al cerdito específico**; beneficio comercial proyectado total **del 8% al 13%**):
-     * **Estándar:** `80–90 kg` (`+0%`, ciclo completo de 144 días).
-     * **Plus:** `80–90 kg` (**`+1%`** adicional).
-     * **Dorado:** `90–100 kg` (**`+2%`** adicional).
-     * **Premium:** `100–110 kg` (**`+3%`** adicional, tope máximo `110 kg`).
-     * **Avanzado:** `80–90 kg` (`+0%`, lotes con **15 a 90 días de avance previo**: `avanzado30`, `avanzado45`, `avanzado60`, `avanzado75`, `avanzado90`).
+   * **Beneficio comercial base proyectado** (según cantidad total de Piggies activos en engorde en la granja):
+     * **1 Piggy activo:** **`12%`** (`$1.120.000` proyectado sobre `$1.000.000`).
+     * **2 Piggies activos:** **`13%`** (`$1.130.000` proyectado por unidad base).
+     * **3 o más Piggies activos:** **`14%`** (`$1.140.000` proyectado por unidad base).
+   * **Categorías Activas de Cerditos (`v2_2026` — espera mínima 3 meses [92 días] y máxima 5 meses [152 días], beneficio comercial proyectado total del `12%` al `18%`):**
+     * **Estándar (`estandar`):** **4 meses (`122 días`)** · **`75–90 kg`** · **`+0%`** adicional.
+     * **Avanzado 15 días (`avanzado15`):** Base 4 meses (`122 días`, **`107 días` restantes** / 3.5 meses, inicia `~15,4 kg`) · **`75–90 kg`** · **`+0%`** adicional.
+     * **Avanzado 30 días (`avanzado30`):** Base 4 meses (`122 días`, **`92 días` restantes** / 3 meses, inicia `~24,8 kg`) · **`75–90 kg`** · **`+0%`** adicional.
+     * **Dorado (`dorado`):** **5 meses (`152 días`)** · **`90–105 kg`** · **`+2%`** adicional (`14% / 15% / 16%`).
+     * **Premium (`premium`):** **5 meses (`152 días`)** · **`105–120 kg`** · **`+4%`** adicional (`16% / 17% / 18%`).
+     * *(Categorías retiradas para nuevas compras: `Piggy Plus` y `Avanzados > 30 días`).*
+   * **Aislamiento de Cohorte Legada (`v1_legacy`):**
+     * Los cerditos comprados antes de `v2_2026` conservan su ciclo de `144 días`, sus pesos y su tabla base original (`1 activo = 8%`, `2 activos = 9%`, `3+ activos = 10%`).
+     * En granjas mixtas (cerdo viejo + cerdo nuevo), ambos cuentan para el volumen de cerdos activos: el viejo escala dentro de `8%/9%/10%` y el nuevo escala dentro de `12%/13%/14%`. Al completarse el viejo, se liquida con su porcentaje congelado y, si el nuevo queda como único cerdo activo (`1 activo`), ajusta automáticamente su base a `12%`.
+   * **Misiones:**
+     * **M5** (*"Compra tu 2do Piggy"*): **Piggy Dorado (`+2%`, 152 días)** por **48 horas**.
+     * **M8** (*"Activa tu 3er Piggy"*): **Piggy Premium (`+4%`, 152 días)** por **48 horas**.
+     * **M10 (Misión de Ciclo — 48 horas al finalizar un ciclo):** `1 o 2 Piggies` → **Piggy Dorado (`+2%`)**; `3+ Piggies` → **Piggy Premium (`+4%`)**.
 2. **Sistema de Doble Saldo Comercial y Liquidación (Día 144):**
    * **Saldo en Efectivo (`wallet_balance`):** Valor de liquidación de cosechas y recargas confirmadas vía Wompi/Bre-B. **100% transferible** a llave **Bre-B** (SLA máx. **72 horas** hábiles) o redimible en **carne fresca** (SLA máx. **48 horas**, exclusivo Cali y alrededores), o reinvertible en nuevos Piggies (libertad total: 100% dinero, 100% carne, mixto o recompra).
    * **Saldo Granja (`consumption_balance`):** Bono de bienvenida (`$20.000`), comisiones de Embajadores y promociones. **No retirable en efectivo**; redimible en compras internas o productos de aliados/Piggy Gourmet.

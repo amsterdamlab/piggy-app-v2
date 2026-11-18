@@ -48,12 +48,15 @@
 
 ### Pilares del Modelo:
 1. **Compra Productiva de Cerdos de Engorde:** Cada participante adquiere su cerdito desde **`$1.000.000`** respaldado en un animal real, trazable y con contrato comercial legal firmado a su nombre.
-2. **Ciclo Productivo Oficial:** Exactamente **20 semanas / 144 días (4 meses con 3 semanas)**, desde destete (**`~6 kg`**) hasta cosecha en pie (**hasta `110 kg`** según categoría).
-3. **Beneficio Comercial Proyectado Escalonado (8% al 13%):**
-   - **1 Piggy activo:** `8%` beneficio comercial base proyectado (`$1.080.000` sobre `$1.000.000`).
-   - **2 Piggies activos:** `9%` beneficio comercial base proyectado por unidad (`$1.090.000`).
-   - **3 o más Piggies activos:** `10%` beneficio comercial base proyectado por unidad (`$1.100.000`).
-   - **Categorías del Marketplace** suman **`+1%` (Plus)**, **`+2%` (Dorado)** o **`+3%` (Premium)** exclusivamente al cerdito específico (tope proyectado total: `13%`).
+2. **Ciclos Productivos por Categoría (`v2_2026`):**
+   - **Estándar y Avanzado (15d / 30d):** **4 meses (`122 días`)**, desde destete (`~6 kg`) hasta **`75–90 kg`** (espera mínima de 3 meses / `92 días` en Avanzado 30d).
+   - **Dorado y Premium:** **5 meses (`152 días`)**, desde destete (`~6 kg`) hasta **`90–105 kg` (Dorado)** y **`105–120 kg` (Premium)**.
+   - *(Los cerditos adquiridos antes de la migración pertenecen a la cohorte `v1_legacy` y conservan su ciclo original de `144 días` y escala `8% / 9% / 10%` sin alteración).*
+3. **Beneficio Comercial Proyectado Escalonado (`12%` al `18%` en `v2_2026`):**
+   - **1 Piggy activo:** `12%` beneficio comercial base proyectado (`$1.120.000` sobre `$1.000.000`).
+   - **2 Piggies activos:** `13%` beneficio comercial base proyectado por unidad (`$1.130.000`).
+   - **3 o más Piggies activos:** `14%` beneficio comercial base proyectado por unidad (`$1.140.000`).
+   - **Categorías Especiales** suman **`+2%` (Dorado)** o **`+4%` (Premium)** exclusivamente al cerdito específico (tope proyectado total: **`18%`**).
 4. **Cierre de Ciclo al Día 144 (Libertad Total de Liquidación):**
    - **Opción A (Dinero en Efectivo):** Transferencia del valor liquidado a llave **Bre-B** en máximo **72 horas** hábiles.
    - **Opción B (Carne Fresca Magra):** Entrega directa desde Granja Villa Morales en máximo **48 horas** (exclusivo **Cali y alrededores**) o redención en la tienda **Piggy Gourmet** y red de **Aliados**.
@@ -146,41 +149,40 @@ Referencia obligatoria: `MANUAL_DE_MARCA_V5.md` (solo colores derivados del logo
 
 ## 6. MOTOR COMERCIAL, CICLOS DE ENGORDE Y CATEGORÍAS
 
-### 1. Fórmula de Beneficio Comercial Proyectado
-$$\text{Total Proyectado} = \text{Valor de Compra} + \bigl(\text{Valor de Compra} \times (\text{Base} + \text{Extra Categoría})\bigr)$$
+### 1. Fórmula de Beneficio Comercial Proyectado (Modelo Dual por Cohorte)
+$$\text{Total Proyectado} = \text{Valor de Compra} + \bigl(\text{Valor de Compra} \times (\text{Base Cohorte} + \text{Extra Categoría})\bigr)$$
 
-* **Base por cantidad de Piggies activos:**
-  * `1 Piggy` → **`8%`** (`$1.080.000` sobre `$1.000.000`)
-  * `2 Piggies` → **`9%`** (`$1.090.000` c/u)
-  * `3+ Piggies` → **`10%`** (`$1.100.000` c/u)
-* **Bonificación de categoría:** Aplica exclusivamente al cerdito específico (`+1%`, `+2%` o `+3%`), proyectando un beneficio comercial total entre **`8%` y `13%`**.
+* **Base por cantidad total de Piggies activos en engorde (`activeCount`):**
+  * **Nuevas compras (`plan_version = 'v2_2026'`):**
+    * `1 Piggy activo` → **`12%`** (`$1.120.000` sobre `$1.000.000`)
+    * `2 Piggies activos` → **`13%`** (`$1.130.000` c/u)
+    * `3+ Piggies activos` → **`14%`** (`$1.140.000` c/u)
+  * **Compras anteriores (`plan_version = 'v1_legacy'`):**
+    * `1 Piggy activo` → `8%` · `2 Piggies activos` → `9%` · `3+ Piggies activos` → `10%`.
+  * **Comportamiento en Granja Mixta:** Si un cliente con 1 Piggy `v1_legacy` (`8%`) compra 1 Piggy `v2_2026`, pasa a tener `2 activos`: su Piggy `v1_legacy` sube a `9%` (dentro de su tabla original) y su Piggy `v2_2026` entra con `13%`. Cuando el Piggy `v1_legacy` completa su ciclo, se liquida con su `9%` congelado (`locked_base_roi`) y, si el Piggy `v2_2026` queda como único activo (`1 activo`), ajusta automáticamente su base a `12%`.
 
-### 2. Categorías Oficiales de Cerditos (Tope Estricto `110 kg`)
-| Categoría | Código en DB | Adicional | Peso Final Objetivo | Canal / Característica |
-| :--- | :--- | :---: | :---: | :--- |
-| **Estándar** | `estandar` | `+0%` | `80–90 kg` | Ciclo completo de 144 días desde `~6 kg`. |
-| **Plus** | `plus` *(legacy `silver`)* | **`+1%`** | **`80–90 kg`** | Tiendas, mini-markets y supermercados. |
-| **Dorado** | `dorado` *(legacy `gold`)* | **`+2%`** | **`90–100 kg`** | Empresas, colegios y hospitales. |
-| **Premium** | `premium` | **`+3%`** | **`100–110 kg`** | Cadenas de restaurantes y hospedajes premium (tope `110 kg`). |
-| **Avanzado** | `avanzado30` / `45` / `60` / `75` / `90` | `+0%` | **`80–90 kg`** | Lotes con **15 a 90 días de avance previo** (cierre más corto). |
-
-### 3. Curva Biológica y Etapas del Ciclo (144 Días / 20 Semanas)
-* **Peso inicial (post-destete):** `6,0 kg` → **Peso final:** según categoría (máximo absoluto `110,0 kg`).
-* **3 Etapas visuales de fotografía:**
-  * **Stage 1 (Días 0–30):** `et1-{1..5}.jpg`
-  * **Stage 2 (Días 31–90):** `et2-{1..5}.jpg`
-  * **Stage 3 (Día 91 a 144 / Cosecha):** `et3-{1..5}.jpg`
-* **10 Sub-etapas zootécnicas en la App (`getPiggyGrowthStage`):**
-  1. Destete (`0%–<5%`) · 2. Climatización Controlada (`5%–<9%`) · 3. Adaptación de Corral (`9%–<14%`) · 4. Nutrición Adaptativa (`14%–<21%`) · 5. Nutrición Fortificada (`21%–<27%`) · 6. Alimento Proteico (`27%–<35%`) · 7. Desarrollo Acelerado (`35%–<62%`) · 8. Engorde Final (`62%–<98%`) · 9. Preparación de Salida (`98%–<100%`) · 10. Salida al Mercado (`100%`).
+### 2. Categorías Oficiales de Cerditos (`v2_2026`)
+| Categoría | Código en DB | Ciclo Total | Días Restantes | Adicional | Peso Final Objetivo | Canal / Característica |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Estándar** | `estandar` | **4 meses (`122 d`)** | `122 días` | `+0%` | **`75–90 kg`** | Ciclo estándar de 4 meses desde `~6 kg`. |
+| **Avanzado 15d** | `avanzado15` | **4 meses (`122 d`)** | **`107 días`** (3.5 m) | `+0%` | **`75–90 kg`** | Inicia en `~15,4 kg` (ahorra 15 días). |
+| **Avanzado 30d** | `avanzado30` | **4 meses (`122 d`)** | **`92 días`** (3 m) | `+0%` | **`75–90 kg`** | Inicia en `~24,8 kg` (ahorra 30 días, espera mínima 3 meses). |
+| **Dorado** | `dorado` | **5 meses (`152 d`)** | `152 días` | **`+2%`** | **`90–105 kg`** | Empresas, colegios y hospitales (`14% / 15% / 16%`). |
+| **Premium** | `premium` | **5 meses (`152 d`)** | `152 días` | **`+4%`** | **`105–120 kg`** | Cadenas de restaurantes y hospedajes premium (`16% / 17% / 18%`). |
+| *Plus / Avanzados >30d* | *Desactivados* | — | — | — | — | *Retirados del Mercado y de Misiones (`v1_legacy` sigue visible en granjas existentes).* |
 
 ---
 
 ## 7. ECOSISTEMA DE GAMIFICACIÓN, MISIONES Y EMBAJADORES
 
 ### Misiones
-1. **Misiones Permanentes (M1 a M9):** Registro con bono de `$20.000`, compra del primer Piggy, visita/compartido de Embajadores, compra de 2do y 3er Piggy, compra en Aliados, cierre de primer ciclo, ofertas semanales y primera compra de un referido.
-2. **Misiones de Ciclo (M10):** Notificación automática al día 144 para recompra preferencial en cerditos especiales.
-3. **Misiones Relámpago (Flash Missions):** Campañas por tiempo limitado gestionadas desde `PIGGY ADMIN` con cuenta regresiva.
+1. **Misiones Permanentes del Granjero (M1 a M9):**
+   - **M5 (*"Compra tu 2do Piggy (Dorado)"*):** Ofrece **Piggy Dorado (`+2%`, 152 días)** con temporizador de **48 horas**.
+   - **M8 (*"Activa tu 3er Piggy (Premium)"*):** Ofrece **Piggy Premium (`+4%`, 152 días)** con temporizador de **48 horas**.
+2. **Misiones de Ciclo (M10 — Ventana de 48 horas al completar un ciclo):**
+   - **1 o 2 Piggies (`min_piggies = 1, 2`):** Desbloquea **Piggy Dorado (`+2%`, 152 días)**.
+   - **3 o más Piggies (`min_piggies = 3`):** Desbloquea **Piggy Premium (`+4%`, 152 días)**.
+3. **Misiones Relámpago (Flash Missions):** Habilitadas para **Piggy Dorado (`+2%`)**, **Piggy Premium (`+4%`)** y **Avanzado 15d / 30d** (desactivado `Piggy Plus` y avanzados `> 30 días`).
 
 ### Plan de Embajadores (Liquidado en Primera Compra del Referido)
 * **Bono de bienvenida al referido:** `$20.000` en Saldo Granja.

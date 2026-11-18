@@ -75,9 +75,9 @@ const MISSION_DEFINITIONS = [
     },
     {
         key: 'm8', sortOrder: 8,
-        title: 'Activa tu 3er Piggy (30 días de engorde)',
-        reward: 'Esto no se ve todos los días. Obtén un piggy con 30 días de engorde avanzado. (Por tiempo limitado)',
-        icon: '⚡', cta: 'open_buy_advanced30',
+        title: 'Activa tu 3er Piggy (Premium)',
+        reward: 'Aprovecha esta oportunidad exclusiva de tener en tu granja un Piggy Premium con +4% de beneficio comercial adicional. (Por tiempo limitado)',
+        icon: '💎', cta: 'open_buy_premium',
         autoType: 'third_piggy',
         requires: 'm7',
         hasFlashTimer: true,
@@ -130,7 +130,7 @@ function buildAutoCompletionMap(piggies, profile, completedRefsOverride = null) 
 
 /* ─── Merge DB rows with definitions ─────────
    Applies locking rules, fills defaults, and
-   injects 72h flash timers for M5 and M8.
+   injects 48h flash timers for M5 and M8.
    ─────────────────────────────────────────── */
 
 function mergeWithDefinitions(dbRows, autoMap) {
@@ -146,7 +146,7 @@ function mergeWithDefinitions(dbRows, autoMap) {
             const reqKey = def.requires;
             const reqRow = dbMap.get(reqKey);
             if (reqRow?.completed_at) {
-                const windowHours = def.key === 'm8' ? 48 : 72;
+                const windowHours = 48; // 48h flash window for both M5 (Dorado) and M8 (Premium)
                 const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
                 if (Date.now() > expiryMs) {
                     isCompleted = true;
@@ -169,13 +169,13 @@ function mergeWithDefinitions(dbRows, autoMap) {
             if (!reqDone) isLocked = true;
         }
 
-        // M5 (Gold): 72h Flash timer | M8 (Advanced 30): 48h Flash timer
+        // M5 (Dorado): 48h Flash timer | M8 (Premium): 48h Flash timer
         let flashExpiry = null;
         if ((def.key === 'm5' || def.key === 'm8') && !isLocked) {
             const reqKey = def.requires;
             const reqRow = dbMap.get(reqKey);
             if (reqRow?.completed_at) {
-                const windowHours = def.key === 'm8' ? 48 : 72;
+                const windowHours = 48;
                 const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
                 flashExpiry = new Date(expiryMs).toISOString();
             }
@@ -266,7 +266,7 @@ export async function getMissions(piggiesOverride = null) {
             if ((def.key === 'm5' || def.key === 'm8') && !isCompleted && def.requires) {
                 const reqRow = dbMap.get(def.requires);
                 if (reqRow?.completed_at) {
-                    const windowHours = def.key === 'm8' ? 48 : 72;
+                    const windowHours = 48;
                     const expiryMs = new Date(reqRow.completed_at).getTime() + (windowHours * 60 * 60 * 1000);
                     if (Date.now() > expiryMs) {
                         isCompleted = true;
