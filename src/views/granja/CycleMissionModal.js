@@ -471,15 +471,22 @@ export function showCycleMissionModal(mission) {
 
         if (currentBalance < price) return;
 
-        // Structure pending marketplace item for ContratoView
+        // Structure pending marketplace item for ContratoView (M10: Dorado +2% or Premium +4%, 152 days)
+        const isPrem = String(mission.piggy_type || '').toLowerCase() === 'premium';
+        const effectiveType = isPrem ? 'premium' : 'dorado';
+        const effectiveExtraRoi = isPrem ? 0.04 : 0.02;
         const pendingItem = {
             id: `cycle-${mission.id}`,
             name: customName,
-            item_name: mission.piggy_label,
-            category: mission.piggy_type,
+            item_name: isPrem ? 'Piggy Premium' : 'Piggy Dorado',
+            category: effectiveType,
             price: price,
-            extra_roi: mission.extra_roi_bonus || 0,
-            extra_roi_bonus: mission.extra_roi_bonus || 0,
+            extra_roi: effectiveExtraRoi,
+            extra_roi_bonus: effectiveExtraRoi,
+            cycle_days: 152,
+            cycleTotalDays: 152,
+            daysRemaining: 152,
+            plan_version: 'v2_2026',
             cycle_mission_id: mission.id,
             is_cycle_mission: true,
         };

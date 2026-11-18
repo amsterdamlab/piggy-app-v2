@@ -220,21 +220,13 @@ export function showFlashMissionModal(mission) {
     const priceStr     = formatCOP(price);
 
     const piggyLabels = {
-        silver:     'Piggy Silver',
-        gold:       'Piggy Gold',
+        gold:       'Piggy Dorado',
         dorado:     'Piggy Dorado',
         premium:    'Piggy Premium',
-        plus:       'Piggy Plus',
-        advanced30: 'Piggy Advanced (30d)',
+        advanced15: 'Piggy Avanzado (15d)',
+        avanzado15: 'Piggy Avanzado (15d)',
+        advanced30: 'Piggy Avanzado (30d)',
         avanzado30: 'Piggy Avanzado (30d)',
-        advanced45: 'Piggy Advanced (45d)',
-        avanzado45: 'Piggy Avanzado (45d)',
-        advanced60: 'Piggy Advanced (60d)',
-        avanzado60: 'Piggy Avanzado (60d)',
-        advanced75: 'Piggy Advanced (75d)',
-        avanzado75: 'Piggy Avanzado (75d)',
-        advanced90: 'Piggy Advanced (90d)',
-        avanzado90: 'Piggy Avanzado (90d)',
     };
     const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
     const piggyLabel = mission.piggy_label || (mission.title && !mission.title.toLowerCase().includes('misión') ? mission.title : (piggyLabels[rawType] || 'Piggy Flash'));
@@ -244,32 +236,20 @@ export function showFlashMissionModal(mission) {
     let defaultBenefitSub   = '';
     let defaultDescription  = '';
 
-    if (rawType.includes('30')) {
+    if (rawType.includes('15')) {
+        defaultBenefitTitle = 'Reducción de 15 días de espera';
+        defaultBenefitSub   = 'Inicia tu cerdito con 15 días de avance (107 días restantes).';
+        defaultDescription  = 'Piggy acelerado con 15 días de crecimiento incluidos.';
+    } else if (rawType.includes('30')) {
         defaultBenefitTitle = 'Reducción de 30 días de espera';
-        defaultBenefitSub   = 'Inicia tu cerdito en el 2do mes ahorrando tiempo.';
+        defaultBenefitSub   = 'Inicia tu cerdito en el 2do mes (92 días restantes).';
         defaultDescription  = 'Piggy acelerado con 30 días de crecimiento incluidos.';
-    } else if (rawType.includes('45')) {
-        defaultBenefitTitle = 'Reducción de 45 días de espera';
-        defaultBenefitSub   = 'Inicia tu cerdito en el día 45 ahorrando tiempo.';
-        defaultDescription  = 'Piggy acelerado con 45 días de crecimiento incluidos.';
-    } else if (rawType.includes('60')) {
-        defaultBenefitTitle = 'Reducción de 60 días de espera';
-        defaultBenefitSub   = 'Inicia tu cerdito en el 3er mes ahorrando tiempo.';
-        defaultDescription  = 'Piggy acelerado con 60 días de crecimiento incluidos.';
-    } else if (rawType.includes('75')) {
-        defaultBenefitTitle = 'Reducción de 75 días de espera';
-        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 75 días de tiempo.';
-        defaultDescription  = 'Piggy cuántico con 75 días de crecimiento incluidos.';
-    } else if (rawType.includes('90')) {
-        defaultBenefitTitle = 'Reducción de 90 días de espera';
-        defaultBenefitSub   = 'Inicia tu cerdito ahorrando 90 días de tiempo.';
-        defaultDescription  = 'Piggy cuántico con 90 días de crecimiento incluidos.';
     } else {
-        let extraPct = '+1%';
+        let extraPct = '+2%';
         if (rawType === 'gold' || rawType === 'dorado') extraPct = '+2%';
-        if (rawType === 'premium') extraPct = '+3%';
+        if (rawType === 'premium') extraPct = '+4%';
         defaultBenefitTitle = `${extraPct} en Margen Comercial`;
-        defaultBenefitSub   = `${extraPct} adicional sobre tu ROI base de granja.`;
+        defaultBenefitSub   = `${extraPct} adicional sobre tu beneficio base de granja.`;
         defaultDescription  = `Piggy exclusivo de oferta flash con ${extraPct} adicional en tu Margen Comercial.`;
     }
 
@@ -609,15 +589,25 @@ export function showFlashMissionModal(mission) {
 
         if (currentBalance < price) return;
 
-        // Calculate extra ROI bonus for the item structure
+        // Calculate extra ROI bonus and cycle duration for the item structure (V2 rules)
         let extraRoi = 0;
+        let cycleDays = 122;
+        let daysRemaining = 122;
         const rawType = (mission.piggy_type || '').toLowerCase();
-        if (rawType === 'plus' || rawType === 'silver') {
-            extraRoi = 0.01;
-        } else if (rawType === 'dorado' || rawType === 'gold') {
+        if (rawType === 'dorado' || rawType === 'gold') {
             extraRoi = 0.02;
+            cycleDays = 152;
+            daysRemaining = 152;
         } else if (rawType === 'premium') {
-            extraRoi = 0.03;
+            extraRoi = 0.04;
+            cycleDays = 152;
+            daysRemaining = 152;
+        } else if (rawType.includes('15')) {
+            cycleDays = 122;
+            daysRemaining = 107;
+        } else if (rawType.includes('30')) {
+            cycleDays = 122;
+            daysRemaining = 92;
         }
 
         // Structure pending marketplace item for ContratoView
@@ -629,6 +619,10 @@ export function showFlashMissionModal(mission) {
             price: price,
             extra_roi: extraRoi,
             extra_roi_bonus: extraRoi,
+            cycle_days: cycleDays,
+            cycleTotalDays: cycleDays,
+            daysRemaining: daysRemaining,
+            plan_version: 'v2_2026',
             flash_mission_id: mission.id,
             is_flash_mission: true,
         };

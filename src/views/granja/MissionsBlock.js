@@ -6,6 +6,7 @@
    ============================================ */
 
 import { navigateTo } from '../../router.js';
+import { formatCOP } from '../../services/mockData.js';
 import { showReferralModal } from './ReferralsModal.js';
 import { getMarketplaceItems } from '../../services/marketplaceService.js';
 import { showCheckoutModal } from '../MercadoView.js';
@@ -361,19 +362,18 @@ function renderM8Banner(mission) {
 
     return `
         <div class="section animate-fade-in-up" style="animation-delay: 0.3s;">
-            <div class="banner banner--interactive" id="mission-banner" data-mission="m8" data-cta="open_buy_advanced30" style="
-                background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+            <div class="banner banner--interactive" id="mission-banner" data-mission="m8" data-cta="open_buy_premium" style="
+                background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
                 border-radius: 16px; padding: 20px 24px; color: white;
                 position: relative; overflow: hidden; cursor: pointer;
-                box-shadow: 0 8px 25px -5px rgba(124,58,237,0.45);
+                box-shadow: 0 8px 25px -5px rgba(236,72,153,0.45);
             ">
                 <div style="position:relative; z-index:2;">
                     <div style="background:rgba(255,255,255,0.2); display:inline-block; padding:3px 12px;
                         border-radius:20px; font-size:0.65rem; font-weight:700; letter-spacing:1px;
-                        text-transform:uppercase; margin-bottom:10px;">&#9889; MISIÓN 8 - SUBE TU NIVEL</div>
-                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:2px;">Activa tu Piggy Avanzado</div>
-                    <div style="font-size:0.95rem; font-weight:700; opacity:0.85; margin-bottom:4px;">(30 días de engorde)</div>
-                    <div style="font-size:0.82rem; opacity:0.9;">Esto no se ve todos los días. Obtén un piggy con 30 días de engorde avanzado. (Por tiempo limitado)</div>
+                        text-transform:uppercase; margin-bottom:10px;">💎 MISIÓN 8 - SUBE TU NIVEL</div>
+                    <div style="font-size:1.15rem; font-weight:800; margin-bottom:4px;">Activa tu 3er Piggy (Premium)</div>
+                    <div style="font-size:0.82rem; opacity:0.9;">Aprovecha esta oportunidad exclusiva de tener en tu granja un Piggy Premium con +4% de beneficio comercial adicional. (Por tiempo limitado)</div>
 
                     ${withinWindow && remaining ? `
                         <div style="background:rgba(0,0,0,0.2); border-radius:10px; padding:6px 12px; margin-top:8px; display:inline-flex; align-items:center; gap:6px;">
@@ -383,12 +383,12 @@ function renderM8Banner(mission) {
                     ` : ''}
 
                     <div style="margin-top:14px;">
-                        <span style="background:white; color:#5b21b6; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
-                            Comprar Piggy Avanzado &#9889;
+                        <span style="background:white; color:#be185d; padding:8px 20px; border-radius:10px; font-weight:700; font-size:0.85rem; display:inline-block;">
+                            Comprar Piggy Premium 💎
                         </span>
                     </div>
                 </div>
-                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">&#9889;</div>
+                <div style="position:absolute; bottom:-15px; right:-5px; font-size:70px; opacity:0.12; transform:rotate(-15deg);">💎</div>
             </div>
         </div>
     `;
@@ -459,23 +459,15 @@ function renderGenericBanner(mission) {
 function renderFlashMissionBanner(mission) {
     const rawType = (mission.piggy_type || 'avanzado30').toLowerCase();
     const typeThemes = {
-        plus:        { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟', label: 'Plus' },
-        silver:      { gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', shadow: 'rgba(14,165,233,0.45)', btnColor: '#0284c7', icon: '🌟', label: 'Plus' },
         dorado:      { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Dorado' },
         gold:        { gradient: 'linear-gradient(135deg, #f59e0b 0%, #eab308 50%, #ca8a04 100%)', shadow: 'rgba(234,179,8,0.45)',  btnColor: '#92400e', icon: '🥇', label: 'Dorado' },
         premium:     { gradient: 'linear-gradient(135deg, #ec4899 0%, #db2777 60%, #be185d 100%)', shadow: 'rgba(236,72,153,0.45)',  btnColor: '#9d174d', icon: '💎', label: 'Premium' },
+        avanzado15:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (15d)' },
+        advanced15:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (15d)' },
         avanzado30:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (30d)' },
         advanced30:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (30d)' },
-        avanzado45:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (45d)' },
-        advanced45:  { gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7E22CE 50%, #6B21A8 100%)', shadow: 'rgba(139,92,246,0.45)', btnColor: '#6B21A8', icon: '⚡', label: 'Avanzado (45d)' },
-        avanzado60:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (60d)' },
-        advanced60:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (60d)' },
-        avanzado75:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (75d)' },
-        advanced75:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '🚀', label: 'Avanzado (75d)' },
-        avanzado90:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '⚡', label: 'Avanzado (90d)' },
-        advanced90:  { gradient: 'linear-gradient(135deg, #9333EA 0%, #6D28D9 50%, #4C1D95 100%)', shadow: 'rgba(147,51,234,0.45)', btnColor: '#4C1D95', icon: '⚡', label: 'Avanzado (90d)' },
     };
-    const t = typeThemes[rawType] || typeThemes.avanzado30;
+    const t = typeThemes[rawType] || typeThemes.dorado;
     if (mission.icon) t.icon = mission.icon;
     const missionTitle = mission.title || mission.mission_title || 'MISIÓN FLASH';
     const badgeText = (mission.badge && mission.badge.trim() !== '')
@@ -483,22 +475,16 @@ function renderFlashMissionBanner(mission) {
         : `${t.icon} ${mission.mission_title || 'MISIÓN FLASH'} · OFERTA LIMITADA`;
     
     let defaultBenefitText = '';
-    if (rawType.includes('30')) {
-        defaultBenefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (Inicia en 2do Mes)';
-    } else if (rawType.includes('45')) {
-        defaultBenefitText = 'Piggy acelerado con <strong>45 días ahorrados</strong> (Inicia en 45 días)';
-    } else if (rawType.includes('60')) {
-        defaultBenefitText = 'Piggy cuántico con <strong>60 días ahorrados</strong> (Inicia en 3er Mes)';
-    } else if (rawType.includes('75')) {
-        defaultBenefitText = 'Piggy cuántico con <strong>75 días ahorrados</strong> (69 días restantes)';
-    } else if (rawType.includes('90')) {
-        defaultBenefitText = 'Piggy cuántico con <strong>90 días ahorrados</strong> (54 días restantes)';
+    if (rawType.includes('15')) {
+        defaultBenefitText = 'Piggy acelerado con <strong>15 días ahorrados</strong> (107 días restantes)';
+    } else if (rawType.includes('30')) {
+        defaultBenefitText = 'Piggy acelerado con <strong>30 días ahorrados</strong> (92 días restantes)';
     } else if (rawType === 'dorado' || rawType === 'gold') {
         defaultBenefitText = `Piggy exclusivo <strong>Dorado</strong> con <strong>+2% en Margen Comercial</strong>`;
     } else if (rawType === 'premium') {
-        defaultBenefitText = `Piggy exclusivo <strong>Premium</strong> con <strong>+3% en Margen Comercial</strong>`;
+        defaultBenefitText = `Piggy exclusivo <strong>Premium</strong> con <strong>+4% en Margen Comercial</strong>`;
     } else {
-        defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>+1% en Margen Comercial</strong>`;
+        defaultBenefitText = `Piggy exclusivo <strong>${t.label}</strong> con <strong>+2% en Margen Comercial</strong>`;
     }
 
     const benefitText = mission.benefit_description || mission.description || defaultBenefitText;
@@ -714,7 +700,7 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Dorado checkout modal for M5 ($1.200.000 / +2% extra ROI)
+        // ── Special CTA: open Piggy Dorado checkout modal for M5 (+2% extra, 152 days)
         if (ctaUrl === 'open_buy_gold') {
             try {
                 const items = await getMarketplaceItems();
@@ -724,14 +710,17 @@ export function attachMissionListeners() {
                         ...goldPiggy,
                         item_name: 'Piggy Dorado',
                         category: 'dorado',
-                        price: 1200000,
-                        priceFormatted: '$1.200.000',
+                        price: goldPiggy.price || 1000000,
+                        priceFormatted: formatCOP ? formatCOP(goldPiggy.price || 1000000) : '$1.000.000',
                         extra_roi: 0.02,
                         extraRoi: 0.02,
                         currentMonth: 1,
                         current_month: 1,
                         daysAdvanced: 0,
-                        daysRemaining: 144,
+                        daysRemaining: 152,
+                        cycleTotalDays: 152,
+                        cycle_days: 152,
+                        plan_version: 'v2_2026',
                     };
                     showCheckoutModal(missionGoldItem);
                 } else {
@@ -744,40 +733,38 @@ export function attachMissionListeners() {
             return;
         }
 
-        // ── Special CTA: open Piggy Avanzado (30 días) checkout modal for M8
-        if (ctaUrl === 'open_buy_advanced30') {
+        // ── Special CTA: open Piggy Premium checkout modal for M8 (+4% extra, 152 days)
+        if (ctaUrl === 'open_buy_premium' || ctaUrl === 'open_buy_advanced30') {
             try {
                 const items = await getMarketplaceItems();
                 const baseItem = items.find(i =>
-                    i.category === 'avanzado30' ||
-                    i.category === 'advanced30' ||
-                    i.category === 'avanzado' ||
-                    i.category === 'advanced' ||
-                    i.category === 'avanzado60' ||
-                    i.category === 'advanced60' ||
-                    i.item_name?.toLowerCase().includes('avanzado') ||
-                    i.item_name?.toLowerCase().includes('advanced')
+                    i.category === 'premium' ||
+                    i.item_name?.toLowerCase().includes('premium')
                 ) || items[0];
 
                 if (baseItem) {
-                    // Item independiente exclusivo para la Misión 8 ($1.300.000 / 30 días engorde / 114 días restantes)
                     const missionItem = {
                         ...baseItem,
-                        item_name: 'Piggy Avanzado (30 días)',
-                        category: 'avanzado30',
-                        price: 1300000,
-                        priceFormatted: '$1.300.000',
-                        daysAdvanced: 30,
-                        daysRemaining: 114,
-                        currentMonth: 2,
-                        current_month: 2,
+                        item_name: 'Piggy Premium',
+                        category: 'premium',
+                        price: baseItem.price || 1000000,
+                        priceFormatted: '$1.000.000',
+                        extra_roi: 0.04,
+                        extraRoi: 0.04,
+                        daysAdvanced: 0,
+                        daysRemaining: 152,
+                        cycleTotalDays: 152,
+                        cycle_days: 152,
+                        currentMonth: 1,
+                        current_month: 1,
+                        plan_version: 'v2_2026',
                     };
                     showCheckoutModal(missionItem);
                 } else {
                     navigateTo('mercado');
                 }
             } catch (err) {
-                console.warn('Error launching avanzado checkout:', err);
+                console.warn('Error launching premium checkout:', err);
                 navigateTo('mercado');
             }
             return;
