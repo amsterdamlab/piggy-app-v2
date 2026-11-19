@@ -36,7 +36,7 @@ export function renderAuthView() {
         <!-- New Hero Mascot and Title (From Image) -->
         <div class="auth-hero animate-fade-in" style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 32px 0 40px 0;">
           <img src="/piggyapp_logo1.png" alt="Piggy App Logo" style="width: 100%; max-width: 320px; height: auto; display: block; mix-blend-mode: multiply;" />
-          <p style="color: #940856; font-size: 0.8rem; font-weight: 800; letter-spacing: 1.5px; margin-top: 8px; text-align: center;">CRIA INTELIGENTE CON RESULTADOS REALES</p>
+          <p style="color: #940856; font-size: 0.8rem; font-weight: 800; letter-spacing: 1.5px; margin-top: 8px; text-align: center;">TU GRANJA DE ENGORDE EN TUS MANOS</p>
         </div>
 
         <!-- Auth Tabs / Header -->
